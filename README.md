@@ -35,26 +35,9 @@
 $ git clone https://github.com/nilton-medeiros/estoque-rapido.git
 ```
 
-### Após clonar o repositório, use ou abra uma conta do Firebase
+### Após clonar o repositório, use uma conta do Firebase Firestore
 
-```bash
-
-```
-
-### Instruções não finalizadas! Em desenvolvimento.
-
-
-```bash
-### Antes de iniciar o aplicativo, ....
-
-```bash
-
-
-$ flet create estoquerapido
-$ cd estoquerapido
-```
-
-### Crie o Ambiente Virtual (VENV)
+### Crie o Ambiente Virtual
 
 ```bash
 $ python -m venv venv
