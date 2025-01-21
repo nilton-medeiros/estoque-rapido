@@ -43,13 +43,17 @@ $ git clone https://github.com/nilton-medeiros/estoque-rapido.git
 $ python -m venv venv
 ```
 
-### ATIVE: o Ambiente Virtual
+### Ative o Ambiente Virtual
+
+# Linux command:
 
 ```bash
-# Linux command:
 $ source venv/bin/activate
+```
 
-# Windows PwrSll command:
+# Windows command:
+
+```bash
 $ venv\Scripts\activate
 ```
 
