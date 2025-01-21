@@ -30,8 +30,6 @@
 ### Primeiro, nós precisamos clonar ou baixar este repositório.
 
 ```bash
-#Command to clone the repository
-
 $ git clone https://github.com/nilton-medeiros/estoque-rapido.git
 ```
 
