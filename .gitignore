@@ -130,6 +130,7 @@ venv.bak/
 
 # Firestore
 serviceAccountKey.json
+firebaseAdminSDK_fbsvc_13b6b05ac2.json
 
 # Spyder project settings
 .spyderproject
