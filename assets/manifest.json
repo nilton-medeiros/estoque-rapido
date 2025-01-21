@@ -1,0 +1,10 @@
+{
+    "name": "Gestao de Estoque e Financeira",
+    "short_name": "ESTOQUE RAPIDO",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "description": "Projeto desenvolvido pela Sistrom Sistemas Web!",
+    "orientation": "natural"
+}

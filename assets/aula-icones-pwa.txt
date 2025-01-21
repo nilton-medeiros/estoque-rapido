@@ -1,0 +1,4 @@
+P: @programadoraventureiro, O lá Danton, precisava revisar a aula de ícones do aplicativo web, destkop, imagem de reloading enquanto a página carrega. Não estou achando essa aula na plataforma. Pode me lembrar por favor?
+
+R: Opa, maus a demora, na de PWA eu explica um pouco sobre essa questão das imagens, mas na aula "Estrutura dos projetos para deploy com Flutter e personalização do executável" nesse mesmo módulo, eu explico com mais detalhes sobre as imagens e também deixei um PDF pra vocês poderem baixar e revisar mais facilmente depois
+lnk: https://hotmart.com/pt-BR/club/programadoraventureiro/products/3604919/content/k45ovn5P7l

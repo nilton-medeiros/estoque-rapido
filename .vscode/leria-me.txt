@@ -1,0 +1,2 @@
+Pasta de personalização dos ícones "Material Icon Theme" das pastas no VSCode pela extensão Material
+Os ícones podem ser visto aqui: https://github.com/material-extensions/vscode-material-icon-theme/tree/main
