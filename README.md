@@ -4,23 +4,23 @@
 
 # Tecnologias Usadas
 
-## Backend
+### Backend
 
 
-- <a href="https://www.python.org/"> Python</a><img align="center" alt="Python" height="20" width="30" src="https://www.python.org/static/img/python-logo.png">
-- <a href="https://firebase.google.com/products/auth/">Google Authentication</a><img align="center" alt="Google Authentication" height="20" width="30" src="https://www.gstatic.com/devrel-devsite/prod/vda41147226ae308b24384f785d31d739107d2716272d99cd11c490ff3892954d/firebase/images/lockup.svg">
+- <a href="https://www.python.org/"> Python</a><img align="center" alt="Python" height="20" width="30" src="https://logohistory.net/wp-content/uploads/2023/06/Python-Emblem.png">
+- <a href="https://firebase.google.com/products/auth/">Google Authentication</a><img align="center" alt="Google Authentication" height="20" width="30" src="https://vectorseek.com/wp-content/uploads/2023/05/Google-Authenticator-New-Logo-2023-730x730.jpg">
 
 
-## Database
+#### Database
 
-- <a href="https://firebase.google.com/">Firebase Firestore</a><img align="center" alt="Firebase Firestore" height="20" width="30" src="https://www.gstatic.com/devrel-devsite/prod/vda41147226ae308b24384f785d31d739107d2716272d99cd11c490ff3892954d/firebase/images/lockup.svg">
+- <a href="https://firebase.google.com/">Firebase Firestore</a><img align="center" alt="Firebase Firestore" height="20" width="30" src="https://www.svgrepo.com/show/353735/firebase.svg">
 
 
-## Frontend
+### Frontend
 
 
 - <a href="https://flet.dev/"> Python</a><img align="center" alt="Flet framework" height="20" width="30" src="https://flet.dev/img/logo.svg">
-- <a href="https://flutter.dev/">Flutter</a><img align="center" alt="Flutter" height="20" width="30" src="https://www.kindpng.com/picc/m/355-3557482_flutter-logo-png-transparent-png.png">
+- <a href="https://flutter.dev/">Flutter</a><img align="center" alt="Flutter" height="20" width="30" src="https://www.svgrepo.com/show/353751/flutter.svg">
 
 
 <br>
@@ -30,7 +30,7 @@
 ### Primeiro, nós precisamos clonar ou baixar este repositório.
 
 ```bash
-$ git clone https://github.com/nilton-medeiros/estoque-rapido.git
+git clone https://github.com/nilton-medeiros/estoque-rapido.git
 ```
 
 ### Após clonar o repositório, use uma conta do Firebase Firestore
@@ -38,33 +38,33 @@ $ git clone https://github.com/nilton-medeiros/estoque-rapido.git
 ### Crie o Ambiente Virtual
 
 ```bash
-$ python -m venv venv
+python -m venv venv
 ```
 
 ### Ative o Ambiente Virtual
 
-# Linux command:
+#### Linux command:
 
 ```bash
-$ source venv/bin/activate
+source venv/bin/activate
 ```
 
-# Windows command:
+#### Windows command:
 
 ```bash
-$ venv\Scripts\activate
+venv\Scripts\activate
 ```
 
 ### Atualize o pip
 
 ```bash
-$ python.exe -m pip install --upgrade pip
+python.exe -m pip install --upgrade pip
 ```
 
 ### Instale as dependências
 
 ```bash
-$ python install -r requirements.txt
+python install -r requirements.txt
 ```
 
 <br>
