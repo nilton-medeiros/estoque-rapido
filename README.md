@@ -16,9 +16,9 @@
   - <a href="https://firebase.google.com/">Firebase Firestore</a><img align="center" alt="Firebase Firestore" height="20" width="30" src="https://www.svgrepo.com/show/353735/firebase.svg">
 
 
-  #### File Storare
+  #### File Storage
   - <a href="https://aws.amazon.com/pt/s3/">AWS - Amazon S3 </a><img align="center" alt="Amazon S3" height="20" width="30" src="https://www.practical-go-lessons.com/img/amazon_s3.0fd7ad6f.png">
-  -  aws S3
+
 
 ### Frontend
 
