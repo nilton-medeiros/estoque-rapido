@@ -8,7 +8,7 @@
 
 
 - <a href="https://www.python.org/"> Python</a><img align="center" alt="Python" height="20" width="30" src="https://logohistory.net/wp-content/uploads/2023/06/Python-Emblem.png">
-- <a href="https://firebase.google.com/products/auth/">Google Authentication</a><img align="center" alt="Google Authentication" height="20" width="30" src="https://vectorseek.com/wp-content/uploads/2023/05/Google-Authenticator-New-Logo-2023-730x730.jpg">
+- <a href="https://firebase.google.com/products/auth/">Google Authentication</a><img align="center" alt="Google Authentication" height="20" width="30" src="https://upload.wikimedia.org/wikipedia/commons/8/84/Google_Authenticator_%28April_2023%29.svg">
 
 
 #### Database
