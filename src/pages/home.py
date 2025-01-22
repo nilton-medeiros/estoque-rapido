@@ -2,13 +2,14 @@ import flet as ft
 
 
 def home(page: ft.Page):
+    # Se usuário não estiver logado, redireciona para fazer login
     if not page.app_state.user:
             return ft.Container(
                 content=ft.Column(
                     controls=[
                         ft.Text("Sessão expirada"),
                         ft.ElevatedButton(
-                            text="Voltar ao login",
+                            text="Fazer login",
                             on_click=lambda _: page.go('/login')
                         )
                     ]
