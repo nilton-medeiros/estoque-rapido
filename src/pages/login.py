@@ -28,15 +28,29 @@ def login(page: ft.Page):
             controls=[
                 ft.Text('Login em construção!',
                         size=40, color=ft.Colors.WHITE),
-                ft.ElevatedButton(
-                    text="  Voltar à pagina principal  ",
-                    height=45,
-                    color=ft.Colors.WHITE,
-                    bgcolor=ft.Colors.BLACK,
-                    on_click=lambda _: page.go('/')
+                ft.Row(
+                    spacing=20,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    controls=[
+                        ft.ElevatedButton(
+                            text="  Voltar à pagina principal  ",
+                            height=45,
+                            color=ft.Colors.WHITE,
+                            bgcolor=ft.Colors.BLACK,
+                            on_click=lambda _: page.go('/')
+                        ),
+                        ft.ElevatedButton(
+                            text="  Ir para Home  ",
+                            height=45,
+                            color=ft.Colors.WHITE,
+                            bgcolor=ft.Colors.BLACK,
+                            on_click=lambda _: page.go('/home')
+                        ),
+                    ],
                 ),
                 ft.Row(
                     spacing=20,
+                    alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.ElevatedButton(
                             text="  SUCESSO!  ",

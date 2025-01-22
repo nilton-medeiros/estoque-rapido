@@ -83,7 +83,7 @@ class LoginBtn:
                     # Normal
                     "": ft.BorderSide(color=ft.Colors.BLUE_400, width=sizes["border_width"]),
                     # Hover
-                    "hovered": ft.BorderSide(color=ft.Colors.BLUE_700, width=sizes["border_width"]),
+                    "hovered": ft.BorderSide(color=ft.Colors.BLUE_300, width=sizes["border_width"]),
                 },
                 padding=ft.padding.symmetric(
                     horizontal=sizes["spacing"] * 2,
@@ -91,7 +91,7 @@ class LoginBtn:
                 ),
                 bgcolor={
                     "": ft.Colors.TRANSPARENT,  # Normal
-                    "hovered": ft.Colors.BLUE_200  # Hover
+                    "hovered": ft.Colors.BLUE_600  # Hover
                 }
             ),
             on_click=self.handle_login,
