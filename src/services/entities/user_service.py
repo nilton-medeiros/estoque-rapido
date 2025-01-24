@@ -1,3 +1,4 @@
+from typing import Optional
 from src.domain.models.user import User
 from storage.data.interfaces.user_repository import UserRepository
 
@@ -5,7 +6,6 @@ from storage.data.interfaces.user_repository import UserRepository
 class UserService:
     '''
     Serviço de gerenciamento de usuários.
-    Atualiza o método create_user para salvar o novo usuário usando o repositório.
 
     Parâmetros:
         repository: (UserRepository)
@@ -29,14 +29,19 @@ class UserService:
         self.repository = repository
 
     async def create_user(self, user: User) -> User:
-        # print("Debug: Entrou em create_user")
+        """
+        Envia dados do Usuário para o Repositório do database instânciado (repository) em user_controller.
+
+        :param user: Instância do Usuário a salvar
+        :return: ID do documento do Usuário salvo
+        """
         # Verifica se já existe um usuário com este email
         existing_user = await self.repository.find_by_email(user.email)
+
         if existing_user:
             raise ValueError("Já existe um usuário com este email")
 
-        # Salva o novo usuário usando o repositório do banco de dados escolhido
-        # em user_controller
+        # Envia para o repositório selecionado em user_controllrer salvar
         return await self.repository.save(user)
 
     async def update_user(self, user: User) -> User:
@@ -44,3 +49,15 @@ class UserService:
         if not user.id:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(user)
+
+    async def find_user_by_email(self, email: str) -> Optional[User]:
+        """
+        Encontra um usuário pelo email usando o repositório.
+
+        Parâmetros:
+            email (str): Email do usuário a ser encontrado
+
+        Retorna:
+            Optional[User]: Usuário encontrado ou None se não existir
+        """
+        return await self.repository.find_by_email(email)

@@ -1,9 +1,9 @@
 import flet as ft
 
 
-class LoginBtn:
+class LoginButton:
     '''
-    Login Button (LoginBtn):
+    Login Button:
         Cria um Botão de Login totalmente responsivo para a página de Landing Page.
 
     Args:

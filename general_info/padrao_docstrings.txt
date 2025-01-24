@@ -1,0 +1,40 @@
+# Estilo Google
+class MinhaClasse:
+    """Descrição concisa do propósito da classe.
+
+    Descrição mais detalhada sobre o que a classe representa,
+    suas responsabilidades principais e como ela é usada.
+
+    Attributes:
+        atributo1 (str): Descrição do primeiro atributo de classe.
+        atributo2 (int): Descrição do segundo atributo de classe.
+
+    Example:
+        Exemplo de como instanciar e usar a classe:
+        >>> obj = MinhaClasse()
+        >>> resultado = obj.meu_metodo()
+    """
+
+    def meu_metodo(self, parametro1: str, parametro2: int) -> bool:
+        """Breve descrição do que o método faz.
+
+        Descrição mais detalhada do método, incluindo objetivo, comportamento e casos especiais,
+        se necessário.
+
+        Args:
+            parametro1 (str): Descrição do primeiro parâmetro.
+            parametro2 (int): Descrição do segundo parâmetro.
+
+        Returns:
+            bool: Descrição do que o método retorna.
+
+        Raises:
+            ValueError: Descrição da exceção que pode ser lançada, se aplicável.
+
+        Exemplo:
+            Exemplo de como usar o método, se relevante.
+            >>> obj = MinhaClasse()
+            >>> resultado = obj.meu_metodo('teste', 42)
+        """
+        # Implementação do método
+        pass

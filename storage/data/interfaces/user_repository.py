@@ -1,8 +1,7 @@
-# db/interfaces/user_repository.py
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from src.domain.models.user import User
+from models.user import User
 
 
 '''
@@ -18,163 +17,57 @@ Por isso não precisamos implementar os métodos nele.
 
 
 class UserRepository(ABC):
+    """Classe base abstrata que define o contrato para operações de repositório de usuários."""
+
     @abstractmethod
     async def count(self) -> int:
-        """
-        Retorna o número total de usuários da empresa logada.
-
-        Returns:
-            int: Número total de usuários
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Retorna o número total de usuários da empresa logada."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def delete(self, id: str) -> bool:
-        """
-        Remove um usuário do banco de dados.
-
-        Args:
-            id (str): ID do usuário a ser removido
-
-        Returns:
-            bool: True se o usuário foi removido, False se não existia
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Remove um usuário do banco de dados."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def exists_by_email(self, email: str) -> bool:
-        """
-        Verifica se existe um usuário com o email especificado.
-
-        Args:
-            email (str): Email a ser verificado
-
-        Returns:
-            bool: True se existe um usuário com o email, False caso contrário
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Verifica se existe um usuário com o email especificado."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def find_all(self, limit: int = 100, offset: int = 0) -> List[User]:
-        """
-        Retorna uma lista paginada de usuários.
-
-        Args:
-            limit (int): Número máximo de registros a retornar
-            offset (int): Número de registros a pular
-
-        Returns:
-            List[User]: Lista de usuários encontrados
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Retorna uma lista paginada de usuários."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def find_by_email(self, email: str) -> Optional[User]:
-        """
-        Busca um usuário pelo email.
-
-        Args:
-            email (str): Email do usuário
-
-        Returns:
-            Optional[User]: Usuário encontrado ou None se não existir
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Busca um usuário pelo email."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def find_by_id(self, id: str) -> Optional[User]:
-        """
-        Busca um usuário pelo ID.
-
-        Args:
-            id (str): ID do usuário
-
-        Returns:
-            Optional[User]: Usuário encontrado ou None se não existir
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Busca um usuário pelo ID."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def find_by_name(self, name: str) -> List[User]:
         """
         Busca usuários da empresa logada que contenham o nome especificado
         (primeiro nome ou sobrenome).
-
-        Args:
-            name (str): Nome ou parte do nome a ser buscado
-
-        Returns:
-            List[User]: Lista de usuários que correspondem à busca
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
         """
-        raise NotImplementedError
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def find_by_profile(self, profile: str) -> List[User]:
-        """
-        Busca usuários por perfil.
-
-        Args:
-            profile (str): Perfil a ser buscado
-
-        Returns:
-            List[User]: Lista de usuários com o perfil especificado
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Busca usuários por perfil."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def save(self, user: User) -> User:
-        """
-        Salva ou atualiza um usuário no banco de dados.
-
-        Args:
-            user (User): Objeto usuário a ser salvo
-
-        Returns:
-            User: Objeto usuário com ID atualizado (em caso de inserção)
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
-        raise NotImplementedError
+        """Salva ou atualiza um usuário no banco de dados."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def update_profile(self, id: str, new_profile: str) -> Optional[User]:
-        """
-        Atualiza o perfil de um usuário.
-
-        Args:
-            id (str): ID do usuário
-            new_profile (str): Novo perfil a ser atribuído
-
-        Returns:
-            Optional[User]: Usuário atualizado ou None se não existir
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-            ValueError: Se o novo perfil não for válido
-        """
-        raise NotImplementedError
+        """Atualiza o perfil de um usuário."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")

@@ -5,8 +5,6 @@ from firebase_admin import firestore
 from firebase_admin import exceptions
 
 from src.domain.models.user import User
-from src.domain.models.nome_pessoa import NomePessoa
-from src.domain.models.phone_number import PhoneNumber
 from src.utils.deep_translator import deepl_translator
 from src.utils.field_validation_functions import get_first_and_last_name
 from storage.data.interfaces.user_repository import UserRepository
@@ -15,32 +13,12 @@ from storage.data.firebase.firebase_initialize import get_firebase_app
 
 # Repositório do Firebase, usa a classe abstrata UserRepositoy para forçar a implementação de métodos conforme contrato em UserRepository
 class FirebaseUserRepository(UserRepository):
-    '''
-    Firebase user repository:
+    """
+    Implementação de UserRepository usando Firebase Firestore.
     Utiliza Google Authorization para autenticar e salvar os dados dos usuários.
-    Nota: Esta classe Herda da classe abstrata UserRepository as especificações para
-    implementar todos os métodos em conformidade com UserRepository.
+    """
 
-    Args:
-        password (str): Senha do usuário no Google Authorization
-        db (firestore.Client): Objeto do Firestore
-
-    Methods:
-        count: Retorna o número total de usuários da empresa logada
-        delete: Deleta um usuário do Firestore e do Google Authorization
-        exists_by_email: Verifica se existe um usuário com o email especificado
-        find_all: Busca todos os usuários da empresa logada
-        find_by_email: Busca um usuário pelo email
-        find_by_id: Busca um usuário pelo id
-        find_by_name: Busca usuários da empresa logada que contenham o nome especificado
-        find_by_profile: Busca um usuários por perfil
-        save: Salva usuário no Google Authorization e no Firestore (inclui ou altera)
-        update_profile: Atualiza o perfil de um usuário
-
-    deepl_translator: Traduz os erros em inglês recebidos do Firebase para o português brasil
-    '''
-
-    def __init__(self, password: str):
+    def __init__(self, password: str = None):
         get_firebase_app()  # Inicializa o Firebase
         self.db = firestore.client()
         self.collection = self.db.collection('users')
@@ -50,15 +28,7 @@ class FirebaseUserRepository(UserRepository):
             self.password = password
 
     async def count(self, company_id: str) -> int:
-        """
-        Retorna o número total de usuários da empresa logada.
-
-        Returns:
-            int: Número total de usuários
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados
-        """
+        """Retorna o número total de usuários da empresa logada."""
         try:
             query = self.collection.where('company_id', '==', company_id)
             docs = query.stream()
@@ -72,23 +42,24 @@ class FirebaseUserRepository(UserRepository):
             print(f"Erro ao contar usuários: {e}")
             raise e
 
-    async def delete(self, id: str) -> None:
+    async def delete(self, user_id: str) -> None:
         """
         Deleta um usuário do Firestore e do Firebase Authentication.
         """
         try:
             # Deleta do Firebase Authentication
-            auth.delete_user(id)
+            auth.delete_user(user_id)
 
             # Deleta do Firestore
-            self.collection.document(id).delete()
+            self.collection.document(user_id).delete()
+            return True
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
             raise Exception(
-                f"Erro ao deletar usuário com ID '{id}': {translated_error}")
+                f"Erro ao deletar usuário com id '{user_id}': {translated_error}")
         except Exception as e:
             raise Exception(
-                f"Erro inesperado ao deletar usuário com ID '{id}': {str(e)}")
+                f"Erro inesperado ao deletar usuário com id '{user_id}': {str(e)}")
 
     async def exists_by_email(self, email: str) -> bool:
         """
@@ -136,14 +107,9 @@ class FirebaseUserRepository(UserRepository):
 
             users = []
             for doc in docs:
-                data = doc.to_dict()
-                user = User(
-                    id=doc.id,
-                    email=data['email'],
-                    name=NomePessoa(data['display_name']),
-                    phone_number=PhoneNumber(data['phone_number']),
-                    profile=data['profile']
-                )
+                user_data = doc.to_dict()
+                user_data['id'] = doc.id
+                user = self._doc_to_user(user_data)
                 users.append(user)
 
             return users
@@ -158,16 +124,10 @@ class FirebaseUserRepository(UserRepository):
             docs = query.stream()
 
             for doc in docs:
-                data = doc.to_dict()
-                first_name, last_name = get_first_and_last_name(
-                    data['display_name'])
-                return User(
-                    id=doc.id,
-                    email=data['email'],
-                    name=NomePessoa(first_name, last_name),
-                    phone_number=PhoneNumber(data['phone_number']),
-                    profile=data['profile']
-                )
+                user_data = doc.to_dict()
+                user_data['id'] = doc.id
+                return self._doc_to_user(user_data)
+
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
@@ -193,16 +153,9 @@ class FirebaseUserRepository(UserRepository):
         try:
             doc = self.collection.document(id).get()
             if doc.exists:
-                data = doc.to_dict()
-                first_name, last_name = get_first_and_last_name(
-                    data['display_name'])
-                return User(
-                    id=id,
-                    email=data['email'],
-                    name=NomePessoa(first_name, last_name),
-                    phone_number=PhoneNumber(data['phone_number']),
-                    profile=data['profile']
-                )
+                user_data = doc.to_dict()
+                user_data['id'] = doc.id
+                return self._doc_to_user(user_data)
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
@@ -215,7 +168,6 @@ class FirebaseUserRepository(UserRepository):
     async def find_by_name(self, company_id, name: str) -> List[User]:
         """
         Busca usuários da empresa logada que contenham o nome especificado
-        (primeiro nome ou sobrenome).
 
         Args:
             name (str): Nome ou parte do nome a ser buscado
@@ -232,16 +184,10 @@ class FirebaseUserRepository(UserRepository):
             docs = query.stream()
 
             for doc in docs:
-                data = doc.to_dict()
-                first_name, last_name = get_first_and_last_name(
-                    data['display_name'])
-                return User(
-                    id=doc.id,
-                    email=data['email'],
-                    name=NomePessoa(first_name, last_name),
-                    phone_number=PhoneNumber(data['phone_number']),
-                    profile=data['profile']
-                )
+                user_data = doc.to_dict()
+                user_data['id'] = doc.id
+                return self._doc_to_user(user_data)
+
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
@@ -270,16 +216,10 @@ class FirebaseUserRepository(UserRepository):
             docs = query.stream()
 
             for doc in docs:
-                data = doc.to_dict()
-                first_name, last_name = get_first_and_last_name(
-                    data['display_name'])
-                return User(
-                    id=doc.id,
-                    email=data['email'],
-                    name=NomePessoa(first_name, last_name),
-                    phone_number=PhoneNumber(data['phone_number']),
-                    profile=data['profile']
-                )
+                user_data = doc.to_dict()
+                user_data["id"] = doc.id
+                return self._doc_to_user(user_data)
+
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
@@ -290,34 +230,38 @@ class FirebaseUserRepository(UserRepository):
                 f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
 
     async def save(self, user: User) -> User:
-        # print("Degub: Entrou em FirebaseUserRepository.save()")
+        """
+        Salvar um usuário no Firestore.
+
+        :param user: Instância do Usuário a salvar
+        :return: ID do documento do usuário salvo
+        """
+
         try:
-            # Converte o objeto User para um dicionário que o Firestore aceita
-            user_dict = {
-                'email': user.email,
-                'display_name': user.name.nome_completo,
-                'phone_number': user.phone_number.get_e164(),
-                'profile': user.profile
-            }
+            user_dict = self._user_to_dict(user)
 
             if user.id:
-                # Update
+                # Update na coleção users
                 self.collection.document(user.id).set(user_dict)
             else:
-                # 1. Criar usuário no Firebase Authentication
-                user_db = auth.create_user(
-                    email=user.email,
-                    password=self.password,
-                    display_name=user.name.nome_completo,
-                    phone_number=user.phone_number.get_e164()
-                )
 
-                # 2. Cria usuário no Firestore
-                user.id = user_db.uid
-                doc_ref = self.db.collection('users').document(user.id)
-                doc_ref.set(user_dict)
+                if self.password:
+                    # 1. Criar usuário no Firebase Authentication
+                    user_db = auth.create_user(
+                        email=user.email,
+                        password=self.password,
+                        display_name=user.name.nome_completo,
+                        phone_number=user.phone_number.get_e164()
+                    )
 
-            return user
+                    # 2. Obtem o uid do usuário Credenciado e Autenticado e insere o uid em user.id e cria usuário no Firestore
+                    user.id = user_db.uid
+                    doc_ref = self.db.collection('users').document(user.id)  # Cria um novo documento com o mesmo uid da Authentication
+                    doc_ref.set(user_dict)  # Adiciona os demais campos
+                else:
+                    raise Exception("Password é necessário para criar usuário")
+
+            return user.id
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
             raise Exception(f"Erro ao salvar usuário: {translated_error}")
@@ -371,3 +315,40 @@ class FirebaseUserRepository(UserRepository):
             # Lida com possíveis exceções, se necessário
             print(f"Erro ao atualizar o perfil do usuário: {e}")
             raise e
+
+    def _doc_to_user(self, doc_data: dict) -> User:
+        """Converte dados de documento do Firebase para instância de Usuário"""
+
+        from src.domain.models.nome_pessoa import NomePessoa
+        from src.domain.models.phone_number import PhoneNumber
+
+        # Recontruir campos opcionais
+        first_name, last_name = get_first_and_last_name(doc_data['display_name'])
+        companies: List[str] = doc_data.get('companies', [])
+
+        return User(
+            id=doc_data['id'],
+            email=doc_data['email'],
+            name=NomePessoa(first_name, last_name),
+            phone_number=PhoneNumber(doc_data['phone_number']),
+            profile=doc_data['profile'],
+            companies=companies,
+        )
+
+    def _user_to_dict(self, user: User) -> dict:
+        """
+        Converter instância de Usuário para dicionário para armazenamento no Firestore.
+
+        :param user: Instância do Ususário
+        :return: Representação em dicionário do usuário
+        """
+        # Não adicionar o id no user_dict, pois o Firebase criará se não existir
+        user_dict = {
+            "email": user.email,
+            "display_name": user.name.nome_completo,
+            "phone_number": user.phone_number.get_e164,
+            "profile": user.profile,
+            "companies": user.companies,
+        }
+
+        return user_dict
