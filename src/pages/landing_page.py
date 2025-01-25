@@ -1,6 +1,6 @@
 import flet as ft
 
-from src.pages.partials.login_button import LoginBtn
+from src.pages.partials.login_button import LoginButton
 
 
 def landing_page(page: ft.Page):
@@ -41,7 +41,7 @@ def landing_page(page: ft.Page):
 
         page.update()
 
-    login_btn = LoginBtn(page)
+    login_btn = LoginButton(page)
 
     page.appbar = ft.AppBar(
         leading=ft.Icon(name=ft.Icons.INVENTORY_OUTLINED,

@@ -2,13 +2,18 @@ import flet as ft
 
 
 def home(page: ft.Page):
+
+    print("Debug: Entrando em /home")
+    print(f"Debug: page.app_state.user é True? {'SIM' if page.app_state.user else 'NÃO'}")
+
+    # Se usuário não estiver logado, redireciona para fazer login
     if not page.app_state.user:
             return ft.Container(
                 content=ft.Column(
                     controls=[
                         ft.Text("Sessão expirada"),
                         ft.ElevatedButton(
-                            text="Voltar ao login",
+                            text="Fazer login",
                             on_click=lambda _: page.go('/login')
                         )
                     ]
@@ -16,8 +21,15 @@ def home(page: ft.Page):
             )
 
     user_name = page.app_state.user['name'].nome_completo
-    company_name = page.app_state.company['name']
+    company_name = 'NENHUMA EMPRESA REGISTRADA'
 
+    print(f"Debug: page.app_state.company é True? {'SIM' if page.app_state.company else 'NÃO'}")
+    if page.app_state.company:
+         print(f"Debug: page.app_state.company: {page.app_state.company}")
+         if 'name' in page.app_state.company:
+            company_name = page.app_state.company['name']
+
+    print("Debug: Em home, retornando um ft.Container...")
     return ft.Container(
         alignment=ft.alignment.center,
         bgcolor=ft.Colors.AMBER_200,
