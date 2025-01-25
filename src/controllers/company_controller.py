@@ -10,27 +10,29 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 async def handle_save_company(company: Company, create_new: bool) -> dict:
-    """Manipula a operação salvar empresa.
+    """
+    Manipula a operação de salvar empresa.
 
-    Descrição mais detalhada do método, incluindo objetivo, comportamento e casos especiais,
-    se necessário.
+    Esta função manipula a operação de salvar uma empresa no banco de dados, seja criando uma nova
+    empresa ou atualizando uma existente. Ela utiliza um repositório específico para realizar as
+    operações necessárias.
 
     Args:
-        parametro1 (str): Descrição do primeiro parâmetro.
-        parametro2 (int): Descrição do segundo parâmetro.
+        company (Company): A instância da empresa a ser salva.
+        create_new (bool): Um booleano indicando se a empresa deve ser criada (True) ou atualizada (False).
 
     Returns:
-        bool: Descrição do que o método retorna.
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID da empresa.
 
     Raises:
-        ValueError: Descrição da exceção que pode ser lançada, se aplicável.
+        ValueError: Se houver um erro de validação ao salvar a empresa.
+        Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        Exemplo de como usar o método, se relevante.
-        >>> obj = MinhaClasse()
-        >>> resultado = obj.meu_metodo('teste', 42)
+        >>> company = Company(name="Minha Empresa", cnpj=CNPJ("00.000.000/0000-00"))
+        >>> response = await handle_save_company(company, create_new=True)
+        >>> print(response)
     """
-
     response = {
         "is_error": False,
         "message": "",
@@ -52,7 +54,7 @@ async def handle_save_company(company: Company, create_new: bool) -> dict:
             # Alterar empresa existente
             company_id = await company_service.update_company(company)
 
-        response["message"] = f"Empresa {operation} com sucessso!"
+        response["message"] = f"Empresa {operation} com sucesso!"
         response["company_id"] = company_id
 
     except ValueError as e:
@@ -65,10 +67,28 @@ async def handle_save_company(company: Company, create_new: bool) -> dict:
     return response
 
 
-async def handle_get_company(cnpj: CNPJ):
-    '''
+async def handle_get_company(cnpj: CNPJ) -> dict:
+    """
     Manipula a operação de buscar empresa.
-    '''
+
+    Esta função manipula a operação de buscar uma empresa no banco de dados utilizando o CNPJ fornecido.
+    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes da empresa, se encontrada.
+
+    Args:
+        cnpj (CNPJ): O CNPJ da empresa a ser buscada.
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados da empresa.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar a empresa.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> cnpj = CNPJ("00.000.000/0000-00")
+        >>> response = await handle_get_company(cnpj)
+        >>> print(response)
+    """
     response = {
         "is_error": False,
         "message": "",
@@ -76,7 +96,7 @@ async def handle_get_company(cnpj: CNPJ):
     }
 
     try:
-        # Usa o repositório do Firebase para buscar o usuário
+        # Usa o repositório do Firebase para buscar a empresa
         repository = FirebaseCompanyRepository()
         company_service = CompanyService(repository)
 

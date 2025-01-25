@@ -12,10 +12,19 @@ from models.company import Address, Company, CompanySize, ContactInfo, FiscalDat
 
 
 class FirebaseCompanyRepository(CompanyRepository):
-    """Implementação de CompanyRepository usando Firebase Firestore."""
+    """
+    Um repositório para gerenciar empresas utilizando o Firebase Firestore.
+
+    Esta classe fornece métodos para realizar operações de CRUD em dados de empresas
+    armazenados em um banco de dados Firestore.
+    """
 
     def __init__(self):
-        # Inicializar app Firebase se ainda não estiver inicializado
+        """
+        Inicializa o cliente do Firebase Firestore e conecta-se à coleção 'companies'.
+
+        Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
+        """
         fb_app = get_firebase_app()
         print(f"Debug: {fb_app}")
 
@@ -23,15 +32,26 @@ class FirebaseCompanyRepository(CompanyRepository):
         self.collection = self.db.collection('companies')
 
     async def count(self) -> int:
-        """Contar o número total de empresas no Firestore."""
+        """
+        Contar o número total de empresas no banco de dados Firestore.
+
+        Retorna:
+            int: Número total de empresas.
+        """
         return len(self.collection.get())
 
     async def delete(self, company_id: str) -> bool:
         """
-        Excluir uma empresa por seu ID.
+        Excluir uma empresa pelo seu identificador único.
 
-        :param company_id: Identificador único da empresa
-        :return: True se a exclusão foi bem-sucedida, False caso contrário
+        Args:
+            company_id (str): O identificador único da empresa.
+
+        Retorna:
+            bool: True se a exclusão for bem-sucedida, False caso contrário.
+
+        Levanta:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
         """
         try:
             self.collection.document(company_id).delete()
@@ -39,31 +59,40 @@ class FirebaseCompanyRepository(CompanyRepository):
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
             raise Exception(
-                f"Erro ao deletar empresa com id '{company_id}': {translated_error}")
+                f"Erro ao excluir empresa com id '{company_id}': {translated_error}")
         except Exception as e:
             raise Exception(
-                f"Erro inesperado ao deletar empresa com id '{company_id}': {str(e)}")
+                f"Erro inesperado ao excluir empresa com id '{company_id}': {str(e)}")
 
     async def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
         """
         Verificar se uma empresa existe com o CNPJ fornecido.
 
-        :param cnpj: CNPJ da empresa a verificar
-        :return: True se a empresa existe, False caso contrário
+        Args:
+            cnpj (CNPJ): O CNPJ da empresa a ser verificado.
+
+        Retorna:
+            bool: True se a empresa existir, False caso contrário.
         """
         try:
             query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
-            # Lida com possíveis exceções, se necessário
-            print(f"Erro ao verificar se a empresa existe pelo CNPJ: {e}")
+            print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
             return False
 
     async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Company]:
-        """Encontrar uma empresa por seu CNPJ.
+        """
+        Encontrar uma empresa pelo seu CNPJ.
 
-        :param cnpj: CNPJ da empresa a procurar
-        :return: Instância da Empresa se encontrada, None caso contrário
+        Args:
+            cnpj (CNPJ): O CNPJ da empresa a ser encontrada.
+
+        Retorna:
+            Optional[Company]: Uma instância da empresa se encontrada, None caso contrário.
+
+        Levanta:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
             query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
@@ -86,10 +115,13 @@ class FirebaseCompanyRepository(CompanyRepository):
 
     async def find_by_id(self, company_id: str) -> Optional[Company]:
         """
-        Encontrar uma empresa por seu ID.
+        Encontrar uma empresa pelo seu identificador único.
 
-        :param company_id: Identificador único da empresa
-        :return: Instância da Empresa se encontrada, None caso contrário
+        Args:
+            company_id (str): O identificador único da empresa.
+
+        Retorna:
+            Optional[Company]: Uma instância da empresa se encontrada, None caso contrário.
         """
         try:
             doc = self.collection.document(company_id).get()
@@ -104,32 +136,39 @@ class FirebaseCompanyRepository(CompanyRepository):
 
     async def save(self, company: Company) -> str:
         """
-        Salvar uma empresa no Firestore.
+        Salvar uma empresa no banco de dados Firestore.
 
-        :param company: Instância da Empresa a salvar
-        :return: ID do documento da empresa salva
+        Se a empresa já existir pelo seu CNPJ, atualiza o documento existente em vez
+        de criar um novo.
+
+        Args:
+            company (Company): A instância da empresa a ser salva.
+
+        Retorna:
+            str: O ID do documento da empresa salva.
         """
         company_dict = self._company_to_dict(company)
 
-        # Se a empresa já existe por CNPJ, atualizar em vez de criar novo
         existing = self.find_by_cnpj(company.cnpj)
         if existing:
             doc_ref = self.collection.document(existing.id)
             doc_ref.update(company_dict)
             return existing.id
 
-        # Criar novo documento
         doc_ref = self.collection.add(company_dict)[1]
         return doc_ref.id
 
     async def _company_to_dict(self, company: Company) -> dict:
         """
-        Converter instância de Empresa para dicionário para armazenamento no Firestore.
+        Converter uma instância de empresa em um dicionário para armazenamento no Firestore.
 
-        :param company: Instância da Empresa
-        :return: Representação em dicionário da empresa
+        Args:
+            company (Company): A instância da empresa a ser convertida.
+
+        Retorna:
+            dict: A representação da empresa em formato de dicionário.
         """
-        # ATENÇÃO: O ID não faz parte desta lista de campos a serem salvos no banco
+        # Não adicione id no company_dict, pois o Firebase providenciar um uid se não existir
         company_dict = {
             'name': company.name,
             'corporate_name': company.corporate_name,
@@ -138,7 +177,6 @@ class FirebaseCompanyRepository(CompanyRepository):
             'legal_nature': company.legal_nature,
         }
 
-        # Campos opcionais
         if company.municipal_registration:
             company_dict['municipal_registration'] = company.municipal_registration
         if company.founding_date:
@@ -189,15 +227,17 @@ class FirebaseCompanyRepository(CompanyRepository):
 
     async def _doc_to_company(self, doc_data: dict) -> Company:
         """
-        Converter dados de documento do Firestore para instância de Empresa.
+        Converter os dados de um documento do Firestore em uma instância de empresa.
 
-        :param doc_data: Dicionário de dados da empresa do Firestore
-        :return: Instância da Empresa
+        Args:
+            doc_data (dict): Os dados do documento Firestore representando uma empresa.
+
+        Retorna:
+            Company: A instância correspondente da empresa.
         """
         from models.cnpj import CNPJ
         from models.phone_number import PhoneNumber
 
-        # Reconstruir campos opcionais
         contact_info = None
         if doc_data.get('contact'):
             contact_info = ContactInfo(

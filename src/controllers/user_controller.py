@@ -2,11 +2,36 @@ from src.domain.models.user import User
 from src.services.entities.user_service import UserService
 from storage.data.firebase.firebase_user_repository import FirebaseUserRepository
 
+"""
+Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando
+e redirecionando os dados ao repositório de dados.
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
 
 async def handle_save_user(user: User, create_new: bool, password: str = None):
-    '''
-    Manipula a operação salvar usuário.
-    '''
+    """
+    Manipula a operação de salvar usuário.
+
+    Esta função manipula a operação de salvar um usuário no banco de dados, seja criando uma novo
+    usuário ou atualizando uma existente. Ela utiliza um repositório específico para realizar as
+    operações necessárias.
+
+    Args:
+        user (User): A instância do usuário a ser salvo.
+        create_new (bool): Um booleano indicando se o usuário deve ser criado (True) ou atualizado (False).
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao salvar o usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> user = User(name="Luis Alberto", email="luis.a@mail.com")
+        >>> response = await handle_save_user(user, create_new=True)
+        >>> print(response)
+    """
     response = {
         "is_error": False,
         "message": "",
@@ -42,9 +67,27 @@ async def handle_save_user(user: User, create_new: bool, password: str = None):
 
 
 async def handle_get_user(email: str):
-    '''
-    Manipula a operação de buscar usuário (Controller).
-    '''
+    """
+    Manipula a operação de buscar usuário.
+
+    Esta função manipula a operação de buscar um usuário no banco de dados utilizando o email fornecido.
+    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
+
+    Args:
+        email (str): O email do usuário a ser buscado.
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar o usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> email = "angelina.jolie@gmail.com"
+        >>> response = await handle_get_user(email)
+        >>> print(response)
+    """
     response = {
         "is_error": False,
         "message": "",

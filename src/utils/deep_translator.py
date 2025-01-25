@@ -7,10 +7,10 @@ def deepl_translator(texto_ingles: str) -> str:
     """
     Tradução do Inglês para Português Brasil via Deepl.
 
-    Parâmetros:
+    Args:
         texto_ingles (str): Texto em inglês que será traduzido.
 
-    Retorno:
+    Returns:
         str: Texto traduzido para o português.
 
     Exceções:

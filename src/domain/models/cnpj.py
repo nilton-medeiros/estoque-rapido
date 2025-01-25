@@ -1,10 +1,19 @@
 class CNPJ:
     def __init__(self, cnpj: str):
         """
-        Initialize CNPJ with validation and formatting
+        Inicializa o CNPJ com validação e formatação.
 
         Args:
-            cnpj (str): Raw CNPJ number
+            cnpj (str): Número bruto do CNPJ.
+
+        # Exemplo de uso
+        if __name__ == "__main__":
+            try:
+                cnpj = CNPJ("12345678000195")
+                print(cnpj)  # Imprime CNPJ formatado
+            except ValueError as e:
+                print(e)
+
         """
         self.raw_cnpj = ''.join(filter(str.isdigit, cnpj))
         self.formatted_cnpj = self._format()
@@ -14,8 +23,13 @@ class CNPJ:
 
     def _format(self) -> str:
         """
+        Formata o CNPJ.
+
         Returns:
-            str: Formatted CNPJ (XX.XXX.XXX/YYYY-ZZ)
+            str: CNPJ formatado (XX.XXX.XXX/YYYY-ZZ).
+
+        Raises:
+            ValueError: Se o CNPJ não contiver 14 dígitos.
         """
         digits = self.raw_cnpj
 
@@ -26,10 +40,10 @@ class CNPJ:
 
     def is_valid(self) -> bool:
         """
-        Validate CNPJ using official Brazilian rules
+        Valida o CNPJ usando as regras oficiais brasileiras.
 
         Returns:
-            bool: True if CNPJ is valid, False otherwise
+            bool: True se o CNPJ for válido, False caso contrário.
         """
         digits = self.raw_cnpj
 
@@ -53,19 +67,12 @@ class CNPJ:
 
     def __str__(self) -> str:
         """
-        Return formatted CNPJ
+        Retorna o CNPJ formatado.
 
         Returns:
-            str: Formatted CNPJ
+            str: CNPJ formatado.
         """
         return self.formatted_cnpj
 
 """
-# Exemplo de uso
-if __name__ == "__main__":
-    try:
-        cnpj = CNPJ("12345678000195")
-        print(cnpj)  # Imprime CNPJ formatado
-    except ValueError as e:
-        print(e)
 """

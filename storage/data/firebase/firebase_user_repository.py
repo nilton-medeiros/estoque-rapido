@@ -4,6 +4,8 @@ from firebase_admin import auth
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
+from models.nome_pessoa import NomePessoa
+from models.phone_number import PhoneNumber
 from src.domain.models.user import User
 from src.utils.deep_translator import deepl_translator
 from src.utils.field_validation_functions import get_first_and_last_name
@@ -14,12 +16,20 @@ from storage.data.firebase.firebase_initialize import get_firebase_app
 # Repositório do Firebase, usa a classe abstrata UserRepositoy para forçar a implementação de métodos conforme contrato em UserRepository
 class FirebaseUserRepository(UserRepository):
     """
-    Implementação de UserRepository usando Firebase Firestore.
-    Utiliza Google Authorization para autenticar e salvar os dados dos usuários.
+    Um repositório para gerenciar usuários utilizando o Firebase Firestore.
+
+    Esta classe fornece métodos para realizar operações de CRUD em dados de usuários
+    armazenados em um banco de dados Firestore.
+    Utiliza Google Authorization para autenticação de usuarios.
     """
 
     def __init__(self, password: str = None):
-        get_firebase_app()  # Inicializa o Firebase
+        """
+        Inicializa o cliente do Firebase Firestore e conecta-se à coleção 'users'.
+
+        Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
+        """
+        get_firebase_app()
         self.db = firestore.client()
         self.collection = self.db.collection('users')
         self.password = None
@@ -28,7 +38,12 @@ class FirebaseUserRepository(UserRepository):
             self.password = password
 
     async def count(self, company_id: str) -> int:
-        """Retorna o número total de usuários da empresa logada."""
+        """
+        Contar o número total de usuários no banco de dados Firestore.
+
+        Retorna:
+            int: Número total de usuários da empresa logada.
+        """
         try:
             query = self.collection.where('company_id', '==', company_id)
             docs = query.stream()
@@ -44,7 +59,16 @@ class FirebaseUserRepository(UserRepository):
 
     async def delete(self, user_id: str) -> None:
         """
-        Deleta um usuário do Firestore e do Firebase Authentication.
+        Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
+
+        Args:
+            user_id (str): O identificador único da usuário.
+
+        Retorna:
+            bool: True se a exclusão for bem-sucedida, False caso contrário.
+
+        Levanta:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
         """
         try:
             # Deleta do Firebase Authentication
@@ -119,6 +143,18 @@ class FirebaseUserRepository(UserRepository):
             raise e
 
     async def find_by_email(self, email: str) -> Optional[User]:
+        """
+        Encontrar um usuário pelo seu email.
+
+        Args:
+            email (str): O email do usuário a ser encontrado.
+
+        Retorna:
+            Optional[User]: Uma instância do usuário se encontrado, None caso contrário.
+
+        Levanta:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
+        """
         try:
             query = self.collection.where('email', '==', email).limit(1)
             docs = query.stream()
@@ -231,12 +267,17 @@ class FirebaseUserRepository(UserRepository):
 
     async def save(self, user: User) -> User:
         """
-        Salvar um usuário no Firestore.
+        Salvar um usuário no banco de dados Firestore.
 
-        :param user: Instância do Usuário a salvar
-        :return: ID do documento do usuário salvo
+        Se o usuário já existir pelo seu id, atualiza o documento existente em vez
+        de criar um novo.
+
+        Args:
+            user (User): A instância do usuário a ser salvo.
+
+        Retorna:
+            str: O ID do documento do usuário salvo.
         """
-
         try:
             user_dict = self._user_to_dict(user)
 
@@ -317,7 +358,15 @@ class FirebaseUserRepository(UserRepository):
             raise e
 
     def _doc_to_user(self, doc_data: dict) -> User:
-        """Converte dados de documento do Firebase para instância de Usuário"""
+        """
+        Converter os dados de um documento do Firestore em uma instância de usuário.
+
+        Args:
+            doc_data (dict): Os dados do documento Firestore representando um usuário.
+
+        Retorna:
+            User: A instância correspondente do usuário.
+        """
 
         from src.domain.models.nome_pessoa import NomePessoa
         from src.domain.models.phone_number import PhoneNumber
@@ -337,12 +386,15 @@ class FirebaseUserRepository(UserRepository):
 
     def _user_to_dict(self, user: User) -> dict:
         """
-        Converter instância de Usuário para dicionário para armazenamento no Firestore.
+        Converter uma instância de usuário em um dicionário para armazenamento no Firestore.
 
-        :param user: Instância do Ususário
-        :return: Representação em dicionário do usuário
+        Args:
+            user (User): A instância de usuário a ser convertida.
+
+        Retorna:
+            dict: A representação do usuário em formato de dicionário.
         """
-        # Não adicionar o id no user_dict, pois o Firebase criará se não existir
+        # Não adicione id no user_dict, pois o Firebase providenciar um uid se não existir
         user_dict = {
             "email": user.email,
             "display_name": user.name.nome_completo,
