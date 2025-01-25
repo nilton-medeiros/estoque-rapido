@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from models.cnpj import CNPJ
-from models.company import Company
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.company import Company
 
 
 class CompanyRepository(ABC):
@@ -36,4 +36,14 @@ class CompanyRepository(ABC):
     @abstractmethod
     def save(self, company: Company) -> str:
         """Salvar uma empresa e retornar seu ID."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    def _company_to_dict(self, company: Company) -> dict:
+        """Converter uma instância de empresa em um dicionário para armazenamento no Firestore."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    def _doc_to_company(self, doc_data: dict) -> Company:
+        """Converter os dados de um documento do Firestore em uma instância de empresa."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")

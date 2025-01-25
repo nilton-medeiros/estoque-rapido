@@ -1,11 +1,11 @@
 import flet as ft
 from typing import Optional
 
-from models.user import User
-from src.controllers.user_controller import handle_save_user
+from src.domain.models.user import User
 from src.domain.models.nome_pessoa import NomePessoa
 from src.domain.models.phone_number import PhoneNumber
-from src.pages.partials import get_responsive_sizes
+from src.controllers.user_controller import handle_save_user
+from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 from src.utils.message_snackbar import MessageType, message_snackbar
 from src.utils.field_validation_functions import get_first_and_last_name, validate_email, validate_password_strength, validate_phone
@@ -132,7 +132,13 @@ class SignupView:
                     ft.TextButton(
                         text="Já tenho uma conta",
                         on_click=lambda _: self.page.go('/login'),
-                    )
+                    ),
+                    ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                    ft.TextButton(
+                        icon=ft.CupertinoIcons.BACK,
+                        text="Voltar",
+                        on_click=lambda _: self.page.go('/'),
+                    ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             ),
@@ -190,7 +196,7 @@ class SignupView:
             first_name, last_name = get_first_and_last_name(
                 self.name_input.value)
 
-            user = User(
+            user: User = User(
                 email=self.email_input.value,
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(self.phone_input.value),
@@ -300,11 +306,14 @@ def signup(page: ft.Page):
     signup_view = SignupView(page)
 
     return ft.Stack(
+        alignment=ft.alignment.center,
         controls=[
             ft.Image(
-                src="/images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
+                # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
+                # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
+                src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 fit=ft.ImageFit.COVER,
-                expand=True,
+                # expand=True,
                 width=page.width,
                 height=page.height
             ),

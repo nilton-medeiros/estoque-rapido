@@ -1,5 +1,5 @@
-from models.cnpj import CNPJ
-from models.company import Company
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.company import Company
 from src.services.entities.company_service import CompanyService
 from storage.data.firebase.firebase_company_repository import FirebaseCompanyRepository
 
@@ -67,7 +67,7 @@ async def handle_save_company(company: Company, create_new: bool) -> dict:
     return response
 
 
-async def handle_get_company(cnpj: CNPJ) -> dict:
+async def handle_get_company(company_id: str = None, cnpj: CNPJ = None) -> dict:
     """
     Manipula a operação de buscar empresa.
 
@@ -75,7 +75,8 @@ async def handle_get_company(cnpj: CNPJ) -> dict:
     Ela utiliza um repositório específico para realizar a busca e retorna os detalhes da empresa, se encontrada.
 
     Args:
-        cnpj (CNPJ): O CNPJ da empresa a ser buscada.
+        company_id (str): O ID da empresa a ser buscado. Se for None, verifica se a buscar é por CNPJ
+        cnpj (CNPJ): O CNPJ da empresa a ser buscada. Se for None, verifica se a busca é por company_id
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados da empresa.
@@ -100,8 +101,15 @@ async def handle_get_company(cnpj: CNPJ) -> dict:
         repository = FirebaseCompanyRepository()
         company_service = CompanyService(repository)
 
-        # Busca a empresa pelo CNPJ
-        company = await company_service.find_user_by_cnpj(cnpj)
+        company = None
+
+        if company_id:
+            # Busca a empresa pelo ID
+            company = await company_service.find_by_id(company_id)
+        elif cnpj:
+            # Busca a empresa pelo CNPJ
+            company = await company_service.find_by_cnpj(cnpj)
+        else: raise ValueError("Um dos argumentos company_id ou CNPJ deve ser passado")
 
         if company:
             response["message"] = "Empresa encontrada com sucesso!"

@@ -8,7 +8,7 @@ e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
-async def handle_save_user(user: User, create_new: bool, password: str = None):
+async def handle_save_user(user: User, create_new: bool, password: str = None) -> dict:
     """
     Manipula a operação de salvar usuário.
 
@@ -66,7 +66,7 @@ async def handle_save_user(user: User, create_new: bool, password: str = None):
     return response
 
 
-async def handle_get_user(email: str):
+async def handle_get_user(user_id: str = None, email: str = None) -> dict:
     """
     Manipula a operação de buscar usuário.
 
@@ -74,10 +74,11 @@ async def handle_get_user(email: str):
     Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
 
     Args:
-        email (str): O email do usuário a ser buscado.
+        user_id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
+        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por user_id
 
     Returns:
-        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário.
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
 
     Raises:
         ValueError: Se houver um erro de validação ao buscar o usuário.
@@ -94,13 +95,24 @@ async def handle_get_user(email: str):
         "user": None
     }
 
+    print("Debug: Entrou em handle_get_user")
+
     try:
         # Usa o repositório do Firebase para buscar o usuário
         repository = FirebaseUserRepository()
         user_service = UserService(repository)
 
-        # Busca o usuário pelo email
-        user = await user_service.find_user_by_email(email)
+        user = None
+
+        if user_id:
+            print("Debug: Buscando por ID")
+            # Busca o usuário pelo user_id
+            user = await user_service.find_by_id(email)
+        elif email:
+            print("Debug: Buscando por email")
+            # Busca o usuário pelo email
+            user = await user_service.find_by_email(email)
+        else: raise ValueError("Um dos argumentos user_id ou email deve ser passado")
 
         if user:
             response["message"] = "Usuário encontrado com sucesso!"
@@ -109,11 +121,15 @@ async def handle_get_user(email: str):
             response["is_error"] = True
             response["message"] = "Usuário não encontrado"
 
+        print(f"Debug: response dict: {response}")
+
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        print(f"Debug: {response["message"]}")
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        print(f"Debug: {response["message"]}")
 
     return response

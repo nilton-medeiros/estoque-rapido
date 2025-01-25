@@ -4,11 +4,10 @@ from firebase_admin import exceptions
 
 from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.utils.deep_translator import deepl_translator
-from firebase.firebase_initialize import get_firebase_app
-from interfaces.company_repository import CompanyRepository
 
-from models.cnpj import CNPJ
-from models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from storage.data.interfaces.company_repository import CompanyRepository
 
 
 class FirebaseCompanyRepository(CompanyRepository):
@@ -235,8 +234,8 @@ class FirebaseCompanyRepository(CompanyRepository):
         Retorna:
             Company: A instância correspondente da empresa.
         """
-        from models.cnpj import CNPJ
-        from models.phone_number import PhoneNumber
+        from src.domain.models.cnpj import CNPJ
+        from src.domain.models.phone_number import PhoneNumber
 
         contact_info = None
         if doc_data.get('contact'):

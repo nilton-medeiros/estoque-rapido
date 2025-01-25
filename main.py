@@ -11,10 +11,11 @@ def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
     page.clean()
 
-    # Não usado "sessions_data" por enquanto. Usando uma abordagem mais profissional com States e Pubsub
+    # ToDo: Usar sessions_data para armazenar array user_id e company_id para o próximo logon
     # if not hasattr(page, 'sessions_data'):
     #     page.sessions_data = {}
 
+    # Usando uma abordagem mais profissional com States e Pubsub
     app_state = AppStateManager(page)
     page.app_state = app_state  # Torna o app_state acessível globalmente
 
@@ -69,7 +70,7 @@ def main(page: ft.Page):
     page.title = "EstoqueRápido"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.window.width = 992
+    page.window.width = 1680
     page.window.min_width = 300
     page.window.height = 992
     page.window.min_height = 900
@@ -103,6 +104,7 @@ def main(page: ft.Page):
                 pg_view = ft.View(
                     route='/login',
                     controls=[login(page)],
+                    bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
@@ -110,6 +112,8 @@ def main(page: ft.Page):
                 # page.sessions_data.clear()
                 page.route = '/'
             case '/home':
+                print(f"Debug: Redirecionando pra /home se user logado. Logado? {app_state.user}")
+                print(f"Debug: app_state.user é True? {'Sim' if app_state.user else 'Não'}")
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:

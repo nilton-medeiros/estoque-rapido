@@ -4,8 +4,8 @@ from datetime import date
 from typing import List, Optional
 from enum import Enum
 
-from models.cnpj import CNPJ
-from models.phone_number import PhoneNumber
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.phone_number import PhoneNumber
 from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
 
 
@@ -27,11 +27,11 @@ class ContactInfo:
 class Address:
     street: str
     number: str
-    complement: Optional[str] = None
-    neighborhood: Optional[str] = None
     city: str
     state: str
     postal_code: str
+    complement: Optional[str] = None
+    neighborhood: Optional[str] = None
 
 
 @dataclass
@@ -83,7 +83,7 @@ class Company:
 
     Example:
         Exemplo de como instanciar e usar a classe:
-        >>> from models.cnpj import CNPJ
+        >>> from src.domain.models.cnpj import CNPJ
         >>> cnpj = CNPJ("00.000.000/0000-00")
         >>> company = Company(name="Minha Empresa", corporate_name="Minha Empresa Ltda", cnpj=cnpj,
         ...                   state_registration="123456789", legal_nature="Sociedade Limitada")

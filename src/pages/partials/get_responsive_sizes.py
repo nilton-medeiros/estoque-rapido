@@ -1,5 +1,3 @@
-
-
 def get_responsive_sizes(page_width: int) -> dict:
     if page_width < 600:  # Mobile
         return {

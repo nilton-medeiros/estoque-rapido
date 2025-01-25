@@ -1,6 +1,6 @@
 from typing import Optional
-from models.cnpj import CNPJ
-from models.company import Company
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.company import Company
 from storage.data.interfaces.company_repository import CompanyRepository
 
 """

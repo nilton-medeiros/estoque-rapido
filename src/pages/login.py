@@ -1,14 +1,14 @@
 import flet as ft
 from typing import Optional
 
-from src.domain.models.nome_pessoa import NomePessoa
+from src.controllers.company_controller import handle_get_company
+from src.domain.models.user import User
 from src.domain.models.phone_number import PhoneNumber
 from src.controllers.user_controller import handle_get_user
-from src.pages.partials import get_responsive_sizes
+from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 from src.utils.message_snackbar import MessageType, message_snackbar
-from src.utils.field_validation_functions import get_first_and_last_name, validate_email, validate_password_strength
-
+from src.utils.field_validation_functions import validate_email
 
 class LoginView:
     def __init__(self, page: ft.Page):
@@ -34,7 +34,7 @@ class LoginView:
                         size=sizes["font_size"],
                         text_align=ft.TextAlign.CENTER,
                         weight=ft.FontWeight.W_500
-                    )
+                    ),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 spacing=sizes["spacing"],
@@ -53,7 +53,6 @@ class LoginView:
                 )
             ),
             on_click=self.handle_login,
-            # animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT)
         )
 
     def build_form(self) -> ft.Container:
@@ -84,6 +83,7 @@ class LoginView:
                 color="#F5F5F5",  # Cor da sombra
             ),
             width=500,
+            height=700,
             content=ft.Column(
                 controls=[
                     ft.Text(
@@ -109,7 +109,13 @@ class LoginView:
                     ft.TextButton(
                         text="Criar uma conta",
                         on_click=lambda _: self.page.go('/signup'),
-                    )
+                    ),
+                    ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                    ft.TextButton(
+                        icon=ft.CupertinoIcons.BACK,
+                        text="Voltar",
+                        on_click=lambda _: self.page.go('/'),
+                    ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             ),
@@ -136,16 +142,17 @@ class LoginView:
 
         # Detalhes de UX, com o estado de carregamento do botão
         try:
+            print("Debug: Entrou em handle_login")
             # Faz a validação dos campos
             error = self.validate_form()
             if error:
-                # Erro na validação dos campos, retorna sem fazer o credenciamento
+                # Erro na validação dos campos, retorna sem fazer o login
                 self.error_text.value = error
                 self.error_text.visible = True
                 self.error_text.update()
                 return
 
-            # Campos validados, segue com o credenciamento
+            # Campos validados, segue com login
             # Oculta texto de mensagens de erro.
             self.error_text.visible = False
             self.error_text.update()
@@ -154,35 +161,42 @@ class LoginView:
 
             if not result["is_error"]:
                 # Atualiza o estado do app com o novo usuário antes da navegação
-                user = result["user"]
-                first_name, last_name = get_first_and_last_name(user.display_name)
+                user: User = result["user"]
 
                 await self.page.app_state.set_user({
                     "id": user.id,
-                    "name": NomePessoa(first_name, last_name),
+                    "name": user.name,
                     "email": user.email,
-                    "phone_number": PhoneNumber(user.phone_number),
+                    "phone_number": user.phone_number,
                     "profile": user.profile,
+                    "companies": user.companies,
                     # Adicione outros dados relevantes do usuário
                 })
 
-                self.page.pubsub.send_all("user_updated")
+                print(f"Debug: user_companies: {user.companies}")
+                if user.companies:
+                    # ToDo: Usar sessions_data para obter o company_id usado no login anterior
+                    # ToDo: Se existir na sessions_data, verifica se exite em user.companies, se não existir atualiza a sessions_data.
 
-                if user.empresas:
+                    # Usuário tem empresa(s) registrada(s), obtem os dados da primeira empresa ou da sessions_data
+                    company_id = user.companies[0]  # Provisório até criar a sessions_data
+                    result = await handle_get_company(company_id=company_id)
+
+                    # Adiciona o company_id no state e publíca-a
+                    # ToDo: Completar o dict abaixo com outros dados relevantes da empresa
                     await self.page.app_state.set_company({
-                        "id": 'emp_erwerwe34r5ir8u4jdf',
+                        "id": company_id,
                         "name": 'SISTROM SISTEMA WEB',
                     })
-                    self.page.pubsub.send_all("company_updated")
 
+                    print('Debug: Logou com sucesso! Publicando company e redirecionando para /home')
 
-            color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
-            message_snackbar(
-                page=self.page, message=result["message"], message_type=color)
-
-            if not result["is_error"]:
+                print("Debug: Redirecionando para /home")
                 self.page.go('/home')
 
+            else:
+                message_snackbar(
+                    page=self.page, message=result["message"], message_type=MessageType.ERROR)
         finally:
             # Reabilita o botão independente do resultado
             self.login_button.disabled = False
@@ -192,20 +206,11 @@ class LoginView:
         sizes = get_responsive_sizes(e.page.width)
 
         # Atualiza tamanhos dos inputs
-        self.name_input.width = sizes["input_width"]
-        self.name_input.text_size = sizes["font_size"]
-
         self.email_input.width = sizes["input_width"]
         self.email_input.text_size = sizes["font_size"]
 
-        self.phone_input.width = sizes["input_width"]
-        self.phone_input.text_size = sizes["font_size"]
-
         self.password_input.width = sizes["input_width"]
         self.password_input.text_size = sizes["font_size"]
-
-        self.password_again_input.width = sizes["input_width"]
-        self.password_again_input.text_size = sizes["font_size"]
 
         # Atualiza o botão
         icon_control = self.login_button.content.controls[0]
@@ -258,9 +263,12 @@ def login(page: ft.Page):
     login_view = LoginView(page)
 
     return ft.Stack(
+        alignment=ft.alignment.center,
         controls=[
             ft.Image(
-                src="/images/estoquerapido_img_123e4567e89b12d3a456426614174000.svg",
+                # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
+                # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
+                src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 fit=ft.ImageFit.COVER,
                 expand=True,
                 width=page.width,

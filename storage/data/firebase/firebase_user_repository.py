@@ -4,8 +4,8 @@ from firebase_admin import auth
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from models.nome_pessoa import NomePessoa
-from models.phone_number import PhoneNumber
+from src.domain.models.nome_pessoa import NomePessoa
+from src.domain.models.phone_number import PhoneNumber
 from src.domain.models.user import User
 from src.utils.deep_translator import deepl_translator
 from src.utils.field_validation_functions import get_first_and_last_name

@@ -50,7 +50,20 @@ class UserService:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(user)
 
-    async def find_user_by_email(self, email: str) -> Optional[User]:
+    async def find_by_id(self, user_id: str) -> Optional[User]:
+        """
+        Encontra um usuário pelo user_id usando o repositório.
+
+        Parâmetros:
+            user_id (str): ID do usuário a ser encontrado
+
+        Retorna:
+            Optional[User]: Usuário encontrado ou None se não existir
+        """
+        return await self.repository.find_by_id(user_id)
+
+
+    async def find_by_email(self, email: str) -> Optional[User]:
         """
         Encontra um usuário pelo email usando o repositório.
 
