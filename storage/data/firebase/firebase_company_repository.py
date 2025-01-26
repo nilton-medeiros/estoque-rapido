@@ -7,6 +7,7 @@ from src.utils.deep_translator import deepl_translator
 
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from storage.data.firebase.firebase_initialize import get_firebase_app
 from storage.data.interfaces.company_repository import CompanyRepository
 
 
@@ -25,7 +26,7 @@ class FirebaseCompanyRepository(CompanyRepository):
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
         fb_app = get_firebase_app()
-        print(f"Debug: {fb_app}")
+        print(f"Debug firebase_admin.get_app(): {fb_app}")
 
         self.db = firestore.client()
         self.collection = self.db.collection('companies')
@@ -74,7 +75,7 @@ class FirebaseCompanyRepository(CompanyRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
+            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
             print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
@@ -94,7 +95,7 @@ class FirebaseCompanyRepository(CompanyRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
+            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             docs = query.get()
 
             if docs:

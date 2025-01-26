@@ -29,7 +29,9 @@ class FirebaseUserRepository(UserRepository):
 
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
-        get_firebase_app()
+        fb_app = get_firebase_app()
+        print(f"Debug firebase_admin.get_app(): {fb_app}")
+        
         self.db = firestore.client()
         self.collection = self.db.collection('users')
         self.password = None
@@ -45,7 +47,8 @@ class FirebaseUserRepository(UserRepository):
             int: Número total de usuários da empresa logada.
         """
         try:
-            query = self.collection.where('company_id', '==', company_id)
+            query = self.collection.where(
+                field_path='company_id', op_string='==', value=company_id)
             docs = query.stream()
             count = 0
             for _ in docs:
@@ -99,7 +102,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where('email', '==', email).limit(1)
+            query = self.collection.where(
+                field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
 
             for doc in docs:
@@ -126,7 +130,8 @@ class FirebaseUserRepository(UserRepository):
         """
         try:
             query = self.collection.where(
-                'company_id', '==', company_id).offset(offset).limit(limit)
+                field_path='company_id', op_string='==', value=company_id).offset(offset).limit(limit)
+
             docs = query.stream()
 
             users = []
@@ -156,7 +161,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where('email', '==', email).limit(1)
+            query = self.collection.where(
+                field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
 
             for doc in docs:
@@ -215,8 +221,9 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where('company_id', '==', company_id).where(
-                'display_name', '>=', name).where('display_name', '<=', name + '\uf8ff')
+            query = self.collection.where(field_path='company_id', op_string='==', value=company_id).where(
+                'display_name', '>=', name, '<=', name + '\uf8ff')
+
             docs = query.stream()
 
             for doc in docs:
@@ -247,8 +254,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where(
-                'company_id', '==', company_id).where('profile', '==', profile)
+            query = self.collection.where(field_path='company_id', op_string='==', value=company_id).where(
+                field_path='profile', op_string='==', value=profile)
             docs = query.stream()
 
             for doc in docs:
@@ -297,7 +304,8 @@ class FirebaseUserRepository(UserRepository):
 
                     # 2. Obtem o uid do usuário Credenciado e Autenticado e insere o uid em user.id e cria usuário no Firestore
                     user.id = user_db.uid
-                    doc_ref = self.db.collection('users').document(user.id)  # Cria um novo documento com o mesmo uid da Authentication
+                    # Cria um novo documento com o mesmo uid da Authentication
+                    doc_ref = self.collection.document(user.id)
                     doc_ref.set(user_dict)  # Adiciona os demais campos
                 else:
                     raise Exception("Password é necessário para criar usuário")
@@ -372,7 +380,8 @@ class FirebaseUserRepository(UserRepository):
         from src.domain.models.phone_number import PhoneNumber
 
         # Recontruir campos opcionais
-        first_name, last_name = get_first_and_last_name(doc_data['display_name'])
+        first_name, last_name = get_first_and_last_name(
+            doc_data['display_name'])
         companies: List[str] = doc_data.get('companies', [])
 
         return User(

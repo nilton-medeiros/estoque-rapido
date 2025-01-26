@@ -126,10 +126,10 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
-        print(f"Debug: {response["message"]}")
+        print(f"Debug ValueError: {response["message"]}")
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-        print(f"Debug: {response["message"]}")
+        print(f"Debug Exception: {response["message"]}")
 
     return response
