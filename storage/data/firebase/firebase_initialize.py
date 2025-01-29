@@ -17,7 +17,7 @@ def get_firebase_app():
         try:
             cred = credentials.Certificate(CREDENTIALS_PATH)
             firebase_admin.initialize_app(cred)
-            print("INTERFACE: Firebase inicializado com sucesso!")
+            # print("INTERFACE: Firebase inicializado com sucesso!")
         except FileNotFoundError:
             print(
                 f"INTERFACE: Erro: Arquivo de credenciais não encontrado em {CREDENTIALS_PATH}")

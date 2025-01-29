@@ -95,6 +95,7 @@ class Company:
     state_registration: str  # Inscrição Estadual
     legal_nature: str  # Natureza jurídica
     id: Optional[str] = field(default=None)
+    store_name: Optional[str] = None
     municipal_registration: Optional[str] = None  # Inscrição Municipal
     founding_date: Optional[date] = None  # Data da fundação
     contact: Optional[ContactInfo] = None

@@ -30,11 +30,14 @@ class AppStateManager:
         """
         Atualiza os dados do usuário no estado global.
         """
-        print("Debug: Entrou em set_user")
-
         try:
             if user_data is None:
-                print("Debug: em set_user, user_data é None, publicando logout")
+                print(":")
+                print("================================================================================")
+                print(f"Debug | Em set_user, user_data é None, publicando logout")
+                print("================================================================================")
+                print(" ")
+
                 self._state['user'] = None
                 self.page.pubsub.send_all("user_logout")
                 return True
@@ -42,12 +45,15 @@ class AppStateManager:
             is_valid, error = self._validator.validate_user_data(user_data)
             if not is_valid:
                 await self.handle_error(error)
-                print("Debug: em set_user, user_data não é válido, retornado False")
+                print(":")
+                print("================================================================================")
+                print(f"Debug | Em set_user, user_data não é válido, retornado False")
+                print("================================================================================")
+                print(" ")
                 return False
 
             self._state['user'] = user_data
             self.page.pubsub.send_all("user_updated")
-            print("Debug: em set_user, user_data é válido, publicando user_updated")
             return True
 
         except Exception as e:

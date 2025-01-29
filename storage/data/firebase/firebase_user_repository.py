@@ -30,8 +30,7 @@ class FirebaseUserRepository(UserRepository):
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
         fb_app = get_firebase_app()
-        print(f"Debug firebase_admin.get_app(): {fb_app}")
-        
+
         self.db = firestore.client()
         self.collection = self.db.collection('users')
         self.password = None
@@ -170,12 +169,30 @@ class FirebaseUserRepository(UserRepository):
                 user_data['id'] = doc.id
                 return self._doc_to_user(user_data)
 
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 3 - FirebaseUserRepository: Usuário não encontrado por email")
+            print("================================================================================")
+            print(" ")
+
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 4 - FirebaseError: Erro ao buscar usuário pelo email '{email}': {translated_error}")
+            print("================================================================================")
+            print(" ")
+
             raise Exception(
                 f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
         except Exception as e:
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 5 - Exception: Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
+            print("================================================================================")
+            print(" ")
+
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
 
@@ -348,15 +365,19 @@ class FirebaseUserRepository(UserRepository):
             doc_ref.update({"profile": new_profile})
 
             data = doc_ref.get().to_dict()
-            first_name, last_name = get_first_and_last_name(
-                data['display_name'])
+
+            first_name, last_name = get_first_and_last_name(data['display_name'])
+            companies: List[str] = data.get('companies', [])
+            user_photo = str = data.get('photo', None)
 
             updated_user = User(
                 id=doc.id,
                 email=data['email'],
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(data['phone_number']),
-                profile=data['profile']
+                profile=data['profile'],
+                companies=companies,
+                photo=user_photo,
             )
 
             return updated_user
@@ -379,10 +400,17 @@ class FirebaseUserRepository(UserRepository):
         from src.domain.models.nome_pessoa import NomePessoa
         from src.domain.models.phone_number import PhoneNumber
 
+        print(":")
+        print("================================================================================")
+        print(f"Debug | doc_data: {doc_data}")
+        print("================================================================================")
+        print(" ")
+
         # Recontruir campos opcionais
         first_name, last_name = get_first_and_last_name(
             doc_data['display_name'])
         companies: List[str] = doc_data.get('companies', [])
+        user_photo: str = doc_data.get('photo', None)
 
         return User(
             id=doc_data['id'],
@@ -391,6 +419,7 @@ class FirebaseUserRepository(UserRepository):
             phone_number=PhoneNumber(doc_data['phone_number']),
             profile=doc_data['profile'],
             companies=companies,
+            photo=user_photo,
         )
 
     def _user_to_dict(self, user: User) -> dict:
@@ -410,6 +439,7 @@ class FirebaseUserRepository(UserRepository):
             "phone_number": user.phone_number.get_e164,
             "profile": user.profile,
             "companies": user.companies,
+            "photo": user.photo,
         }
 
         return user_dict

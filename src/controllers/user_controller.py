@@ -95,8 +95,6 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
         "user": None
     }
 
-    print("Debug: Entrou em handle_get_user")
-
     try:
         # Usa o repositório do Firebase para buscar o usuário
         repository = FirebaseUserRepository()
@@ -105,11 +103,9 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
         user = None
 
         if user_id:
-            print("Debug: Buscando por ID")
             # Busca o usuário pelo user_id
             user = await user_service.find_by_id(email)
         elif email:
-            print("Debug: Buscando por email")
             # Busca o usuário pelo email
             user = await user_service.find_by_email(email)
         else: raise ValueError("Um dos argumentos user_id ou email deve ser passado")
@@ -121,15 +117,22 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
             response["is_error"] = True
             response["message"] = "Usuário não encontrado"
 
-        print(f"Debug: response dict: {response}")
-
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
-        print(f"Debug ValueError: {response["message"]}")
+        print(":")
+        print("================================================================================")
+        print(f"Debug | ValueError: {response["message"]}")
+        print("================================================================================")
+        print(" ")
+
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-        print(f"Debug Exception: {response["message"]}")
+        print(":")
+        print("================================================================================")
+        print(f"Debug | Exception: {response["message"]}")
+        print("================================================================================")
+        print(" ")
 
     return response

@@ -93,6 +93,7 @@ def landing_page(page: ft.Page):
         return ft.Card(
             col={'xs': 12, 'md': 6, 'lg': 4},
             content=ft.Container(
+                expand=True,
                 padding=20,
                 bgcolor=ft.Colors.GREY_200,
                 border_radius=10,
