@@ -1,7 +1,7 @@
 import flet as ft
 
+from src.pages.home.home_page import home_page
 from src.pages.signup import signup
-from src.pages.home import home
 from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
@@ -10,6 +10,8 @@ from src.services import AppStateManager  # Alterado para AppStateManager
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
     page.clean()
+    page.user_name_text = ft.Text("Nenhum Usuário logado")
+    page.company_name_text = ft.Text("Nenhuma empresa selecionada")
 
     # ToDo: Usar sessions_data para armazenar array user_id e company_id para o próximo logon
     # if not hasattr(page, 'sessions_data'):
@@ -27,7 +29,12 @@ def main(page: ft.Page):
                 # Atualiza elementos da UI que dependem do usuário
                 update_user_dependent_ui()
             else:
-                print("Debug: Usuário foi desconectado.")
+                print(":")
+                print("================================================================================")
+                print(f"Debug | Usuário foi desconectado.")
+                print("================================================================================")
+                print(" ")
+
                 # Limpa elementos da UI relacionados ao usuário
                 clear_user_ui()
 
@@ -38,14 +45,19 @@ def main(page: ft.Page):
                 # Atualiza elementos da UI que dependem da empresa
                 update_company_dependent_ui()
             else:
-                print("Debug: Empresa foi desconectada.")
+                print(":")
+                print("================================================================================")
+                print(f"Debug | Empresa foi desconectada.")
+                print("================================================================================")
+                print(" ")
+
                 # Limpa elementos da UI relacionados à empresa
                 clear_company_ui()
 
     def update_user_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = app_state.user['name']
+            page.user_name_text.value = page.app_state.user['name'].nome_completo
             page.user_name_text.update()
 
     def update_company_dependent_ui():
@@ -112,14 +124,13 @@ def main(page: ft.Page):
                 # page.sessions_data.clear()
                 page.route = '/'
             case '/home':
-                print(f"Debug: Redirecionando pra /home se user logado. Logado? {app_state.user}")
-                print(f"Debug: app_state.user é True? {'Sim' if app_state.user else 'Não'}")
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
                     pg_view = ft.View(
                         route='/home',
-                        controls=[home(page)],
+                        controls=[home_page(page)],
+                        bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )

@@ -7,6 +7,7 @@ from src.utils.deep_translator import deepl_translator
 
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from storage.data.firebase.firebase_initialize import get_firebase_app
 from storage.data.interfaces.company_repository import CompanyRepository
 
 
@@ -25,7 +26,6 @@ class FirebaseCompanyRepository(CompanyRepository):
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
         fb_app = get_firebase_app()
-        print(f"Debug: {fb_app}")
 
         self.db = firestore.client()
         self.collection = self.db.collection('companies')
@@ -74,7 +74,7 @@ class FirebaseCompanyRepository(CompanyRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
+            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
             print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
@@ -94,7 +94,7 @@ class FirebaseCompanyRepository(CompanyRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where('cnpj', '==', str(cnpj)).limit(1)
+            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             docs = query.get()
 
             if docs:
@@ -174,12 +174,12 @@ class FirebaseCompanyRepository(CompanyRepository):
             'cnpj': str(company.cnpj),
             'state_registration': company.state_registration,
             'legal_nature': company.legal_nature,
+            'store_name': company.store_name,
+            'municipal_registration': company.municipal_registration,
+            'founding_date': company.founding_date,
         }
 
-        if company.municipal_registration:
-            company_dict['municipal_registration'] = company.municipal_registration
-        if company.founding_date:
-            company_dict['founding_date'] = company.founding_date
+
         if company.contact:
             company_dict['contact'] = {
                 'email': company.contact.email,
@@ -194,7 +194,9 @@ class FirebaseCompanyRepository(CompanyRepository):
                 'neighborhood': company.address.neighborhood,
                 'city': company.address.city,
                 'state': company.address.state,
-                'postal_code': company.address.postal_code
+                'postal_code': company.address.postal_code,
+                'description': company.description,
+                'logo_path': company.logo_path,
             }
         if company.size:
             company_dict['size'] = company.size.value
@@ -209,10 +211,6 @@ class FirebaseCompanyRepository(CompanyRepository):
                 'nfce_sefaz_id_csc': company.fiscal.nfce_sefaz_id_csc,
                 'nfce_sefaz_csc': company.fiscal.nfce_sefaz_csc,
             }
-        if company.description:
-            company_dict['description'] = company.description
-        if company.logo_path:
-            company_dict['logo_path'] = company.logo_path
         if company.payment_gateway:
             company_dict['payment_gateway'] = {
                 'customer_id': company.payment_gateway.customer_id,
@@ -289,13 +287,14 @@ class FirebaseCompanyRepository(CompanyRepository):
             cnpj=CNPJ(doc_data['cnpj']),
             state_registration=doc_data['state_registration'],
             legal_nature=doc_data['legal_nature'],
+            store_name=doc_data.get('store_name'),
             municipal_registration=doc_data.get('municipal_registration'),
             founding_date=doc_data.get('founding_date'),
             contact=contact_info,
             address=address,
             size=size_info,
             fiscal=fiscal_info,
-            description=doc_data['description'],
-            logo_path=doc_data['logo_path'],
+            description=doc_data.get('description'),
+            logo_path=doc_data.get('logo_path'),
             payment_gateway=payment_gwy,
         )

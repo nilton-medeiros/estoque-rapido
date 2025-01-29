@@ -69,6 +69,10 @@ class LoginView:
         self.email_input.value = 'ajolie@gmail.com'
         self.password_input.value = 'Aj#45678'
 
+        self.page.user_name_text.visible=False
+        self.page.company_name_text.visible=False
+
+
         return ft.Container(
             alignment=ft.alignment.center,
             bgcolor=ft.Colors.BLACK,
@@ -103,6 +107,8 @@ class LoginView:
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     self.password_input,
                     self.error_text,
+                    self.page.user_name_text,
+                    self.page.company_name_text,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -142,7 +148,6 @@ class LoginView:
 
         # Detalhes de UX, com o estado de carregamento do botão
         try:
-            print("Debug: Entrou em handle_login")
             # Faz a validação dos campos
             error = self.validate_form()
             if error:
@@ -170,10 +175,10 @@ class LoginView:
                     "phone_number": user.phone_number,
                     "profile": user.profile,
                     "companies": user.companies,
+                    "photo": user.photo,
                     # Adicione outros dados relevantes do usuário
                 })
 
-                print(f"Debug: user_companies: {user.companies}")
                 if user.companies:
                     # ToDo: Usar sessions_data para obter o company_id usado no login anterior
                     # ToDo: Se existir na sessions_data, verifica se exite em user.companies, se não existir atualiza a sessions_data.
@@ -189,9 +194,13 @@ class LoginView:
                         "name": 'SISTROM SISTEMA WEB',
                     })
 
-                    print('Debug: Logou com sucesso! Publicando company e redirecionando para /home')
+                    print(":")
+                    print("================================================================================")
+                    print(f"Debug | Logou com sucesso! Publicando company e redirecionando para /home")
+                    print("================================================================================")
+                    print(" ")
 
-                print("Debug: Redirecionando para /home")
+
                 self.page.go('/home')
 
             else:

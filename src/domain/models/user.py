@@ -37,9 +37,11 @@ class User:
     profile: str
     id: Optional[str] = field(default=None)
     companies: Optional[List[str]] = field(default_factory=list)
+    photo: Optional[str] = field(default=None)
 
     # Lista de perfis permitidos
-    ALLOWED_PROFILES = {"admin", "cobrança", "contabil", "financeiro", "pagamento", "vendas"}
+    ALLOWED_PROFILES = {"admin", "cobrança",
+                        "contabil", "financeiro", "pagamento", "vendas"}
 
     def __post_init__(self):
         """
@@ -65,3 +67,6 @@ class User:
         # Verificação e atribuição de companies
         if self.companies is None:
             self.companies = []
+
+        if self.photo == '':
+            self.photo = None

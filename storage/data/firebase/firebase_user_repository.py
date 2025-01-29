@@ -29,7 +29,8 @@ class FirebaseUserRepository(UserRepository):
 
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
-        get_firebase_app()
+        fb_app = get_firebase_app()
+
         self.db = firestore.client()
         self.collection = self.db.collection('users')
         self.password = None
@@ -45,7 +46,8 @@ class FirebaseUserRepository(UserRepository):
             int: Número total de usuários da empresa logada.
         """
         try:
-            query = self.collection.where('company_id', '==', company_id)
+            query = self.collection.where(
+                field_path='company_id', op_string='==', value=company_id)
             docs = query.stream()
             count = 0
             for _ in docs:
@@ -99,7 +101,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where('email', '==', email).limit(1)
+            query = self.collection.where(
+                field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
 
             for doc in docs:
@@ -126,7 +129,8 @@ class FirebaseUserRepository(UserRepository):
         """
         try:
             query = self.collection.where(
-                'company_id', '==', company_id).offset(offset).limit(limit)
+                field_path='company_id', op_string='==', value=company_id).offset(offset).limit(limit)
+
             docs = query.stream()
 
             users = []
@@ -156,7 +160,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where('email', '==', email).limit(1)
+            query = self.collection.where(
+                field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
 
             for doc in docs:
@@ -164,12 +169,30 @@ class FirebaseUserRepository(UserRepository):
                 user_data['id'] = doc.id
                 return self._doc_to_user(user_data)
 
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 3 - FirebaseUserRepository: Usuário não encontrado por email")
+            print("================================================================================")
+            print(" ")
+
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 4 - FirebaseError: Erro ao buscar usuário pelo email '{email}': {translated_error}")
+            print("================================================================================")
+            print(" ")
+
             raise Exception(
                 f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
         except Exception as e:
+            print(":")
+            print("================================================================================")
+            print(f"Debug | 5 - Exception: Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
+            print("================================================================================")
+            print(" ")
+
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
 
@@ -215,8 +238,9 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where('company_id', '==', company_id).where(
-                'display_name', '>=', name).where('display_name', '<=', name + '\uf8ff')
+            query = self.collection.where(field_path='company_id', op_string='==', value=company_id).where(
+                'display_name', '>=', name, '<=', name + '\uf8ff')
+
             docs = query.stream()
 
             for doc in docs:
@@ -247,8 +271,8 @@ class FirebaseUserRepository(UserRepository):
             Exception: Em caso de erro na operação de banco de dados
         """
         try:
-            query = self.collection.where(
-                'company_id', '==', company_id).where('profile', '==', profile)
+            query = self.collection.where(field_path='company_id', op_string='==', value=company_id).where(
+                field_path='profile', op_string='==', value=profile)
             docs = query.stream()
 
             for doc in docs:
@@ -297,7 +321,8 @@ class FirebaseUserRepository(UserRepository):
 
                     # 2. Obtem o uid do usuário Credenciado e Autenticado e insere o uid em user.id e cria usuário no Firestore
                     user.id = user_db.uid
-                    doc_ref = self.db.collection('users').document(user.id)  # Cria um novo documento com o mesmo uid da Authentication
+                    # Cria um novo documento com o mesmo uid da Authentication
+                    doc_ref = self.collection.document(user.id)
                     doc_ref.set(user_dict)  # Adiciona os demais campos
                 else:
                     raise Exception("Password é necessário para criar usuário")
@@ -340,15 +365,19 @@ class FirebaseUserRepository(UserRepository):
             doc_ref.update({"profile": new_profile})
 
             data = doc_ref.get().to_dict()
-            first_name, last_name = get_first_and_last_name(
-                data['display_name'])
+
+            first_name, last_name = get_first_and_last_name(data['display_name'])
+            companies: List[str] = data.get('companies', [])
+            user_photo = str = data.get('photo', None)
 
             updated_user = User(
                 id=doc.id,
                 email=data['email'],
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(data['phone_number']),
-                profile=data['profile']
+                profile=data['profile'],
+                companies=companies,
+                photo=user_photo,
             )
 
             return updated_user
@@ -371,9 +400,17 @@ class FirebaseUserRepository(UserRepository):
         from src.domain.models.nome_pessoa import NomePessoa
         from src.domain.models.phone_number import PhoneNumber
 
+        print(":")
+        print("================================================================================")
+        print(f"Debug | doc_data: {doc_data}")
+        print("================================================================================")
+        print(" ")
+
         # Recontruir campos opcionais
-        first_name, last_name = get_first_and_last_name(doc_data['display_name'])
+        first_name, last_name = get_first_and_last_name(
+            doc_data['display_name'])
         companies: List[str] = doc_data.get('companies', [])
+        user_photo: str = doc_data.get('photo', None)
 
         return User(
             id=doc_data['id'],
@@ -382,6 +419,7 @@ class FirebaseUserRepository(UserRepository):
             phone_number=PhoneNumber(doc_data['phone_number']),
             profile=doc_data['profile'],
             companies=companies,
+            photo=user_photo,
         )
 
     def _user_to_dict(self, user: User) -> dict:
@@ -401,6 +439,7 @@ class FirebaseUserRepository(UserRepository):
             "phone_number": user.phone_number.get_e164,
             "profile": user.profile,
             "companies": user.companies,
+            "photo": user.photo,
         }
 
         return user_dict

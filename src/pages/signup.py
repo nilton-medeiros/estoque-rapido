@@ -218,6 +218,7 @@ class SignupView:
                     "phone_number": user.phone_number,
                     "profile": user.profile,
                     "companies": user.companies,
+                    "photo": user.photo,
                     # Adicione outros dados relevantes do usuário
                 })
 
