@@ -12,7 +12,7 @@ class AppTheme:
             background='#111418',
             on_background='#2d2d3a',
             on_inverse_surface='#2d2d3a',
-            primary=ft.Colors.INDIGO,
+            primary=ft.Colors.BLUE,
         ),
         text_theme=ft.TextTheme(
             body_large=ft.TextStyle(
@@ -45,11 +45,11 @@ class AppTheme:
             track_visibility=False,
             thumb_visibility=False,
             track_color={
-                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT,
+                ft.ControlState.DEFAULT: ft.Colors.WHITE10,
             },
             thumb_color={
-                ft.ControlState.HOVERED: ft.Colors.TRANSPARENT,
-                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT,
+                ft.ControlState.HOVERED: ft.Colors.WHITE10,
+                ft.ControlState.DEFAULT: ft.Colors.WHITE10,
             }
         )
     )
@@ -58,27 +58,63 @@ class AppTheme:
 def home_page(page: ft.Page):
     """Página Home do usuário logado"""
     page.theme = AppTheme.theme
+    page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = ft.Colors.BLACK
 
     sidebar = sidebar_container(page)
     content = main_content()
 
+    # Layout inicial (para telas grandes)
     layout = ft.ResponsiveRow(
         columns=12,
-        controls=[
-            ft.Container(
-                content=sidebar,
-                col={"xs": 12, "md": 3, "lg": 3, "xxl": 3},
-            ),
-            ft.Container(
-                content=content,
-                col={"xs": 12, "md": 9, "lg": 9, "xxl": 9},
-            ),
-        ],
+        controls=[sidebar, content],
+        expand=True,
     )
 
-    return ft.Container(
-        content=layout,
-        bgcolor=ft.Colors.BLACK,
-        expand=True,
+    def toggle_sidebar(e):
+        sidebar.visible = not sidebar.visible
+        page.update()
+
+    def on_page_resized(e=None):
+        print(f"DEBUG: page.width = {page.width}")  # Depuração
+
+        if page.width < 768:  # Modo Mobile
+            print("DEBUG: Entrando no modo mobile")
+
+            page.appbar = ft.AppBar(
+                title=ft.Text("Menu"),  # **Título do menu**
+                leading=ft.IconButton(
+                    icon=ft.Icons.MENU,
+                    icon_color=ft.Colors.WHITE,
+                    on_click=toggle_sidebar
+                ),
+                bgcolor="#111418",
+            )
+
+            print(f"DEBUG: page.appbar = {page.appbar}")
+
+            # Ajustar layout para modo mobile
+            sidebar.visible = False
+            content.col = {"xs": 12}  # O conteúdo ocupa toda a largura
+            layout.spacing = 0
+            page.bgcolor = "#111418"
+
+        else:  # Modo Desktop
+            print("DEBUG: Entrando no modo desktop")
+
+            page.appbar = None  # Remover AppBar
+            sidebar.visible = True
+            sidebar.col = {"xs": 3}  # Sidebar com 3 colunas
+            content.col = {"xs": 9}  # Content com 9 colunas
+            layout.spacing = 10
+            page.bgcolor = ft.Colors.BLACK
+
+        page.update()  # **Atualiza a página após modificar AppBar**
+
+    page.on_resized = on_page_resized
+    on_page_resized(None)
+
+    return ft.Column(  # **Troca Container por Column para respeitar AppBar**
+        controls=[layout],
+        expand=True,  # Permite que o layout ocupe toda a tela sem sobrepor a AppBar
     )

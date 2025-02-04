@@ -73,6 +73,4 @@ class CNPJ:
             str: CNPJ formatado.
         """
         return self.formatted_cnpj
-
-"""
-"""
+    

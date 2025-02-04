@@ -4,6 +4,8 @@ from src.pages.partials.login_button import LoginButton
 
 
 def landing_page(page: ft.Page):
+    page.theme_mode = ft.ThemeMode.LIGHT
+
     title_bar = ft.Text(
         value="ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças",
         color=ft.Colors.WHITE,
@@ -12,27 +14,27 @@ def landing_page(page: ft.Page):
     def handle_page_resize(e):
         # Obtém a largura da página de forma segura
         width = page.width
-        size = 20
+        size = 18
 
         title_bar.value = "ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças"
         title_bar.size = size
 
         if width < 600:         # xs
-            size = 14
+            size = 10
             title_bar.max_lines = 2
 
             if width < 576:
-                size = 12
+                size = 8
                 if width < 545:
                     title_bar.value = "ESTOQUE RÁPIDO" if width >= 435 else "ER"
         elif width < 900:       # sm
-            size = 14
+            size = 12
         elif width < 1200:      # md
-            size = 16
+            size = 14
         elif width < 1500:      # lg
-            size = 20
+            size = 16
         else:                   # xl
-            size = 22
+            size = 18
 
         title_bar.size = size
 
@@ -92,13 +94,16 @@ def landing_page(page: ft.Page):
     def landing_card(icons: list, title: str, description: str, show_more: str) -> ft.Card:
         return ft.Card(
             col={'xs': 12, 'md': 6, 'lg': 4},
+            width=250,
+            height=270,
             content=ft.Container(
                 expand=True,
                 padding=20,
-                bgcolor=ft.Colors.GREY_200,
+                bgcolor=ft.Colors.BLUE_GREY_100,
                 border_radius=10,
                 content=ft.Column(
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.Row(
                             controls=icons,
@@ -120,7 +125,6 @@ def landing_page(page: ft.Page):
                     ],
                 ),
             ),
-            width=250,
         )
 
     cards = ft.Container(
@@ -128,6 +132,8 @@ def landing_page(page: ft.Page):
             columns=12,
             expand=True,
             alignment=ft.MainAxisAlignment.CENTER,
+            spacing=30,
+            run_spacing=30,
             controls=[
                 landing_card(
                     icons=[ft.Icon(ft.Icons.INVENTORY, size=40,
@@ -171,7 +177,6 @@ def landing_page(page: ft.Page):
                     show_more="A funcionalidade Multi-plataforma permite acessar o sistema de qualquer dispositivo, seja desktop, tablet ou smartphone. Isso garante que você possa gerenciar seu estoque, vendas e finanças a qualquer hora e em qualquer lugar."
                 ),
             ],
-            spacing=30,
         ),
         alignment=ft.alignment.center,
         expand=True,

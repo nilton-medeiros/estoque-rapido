@@ -24,6 +24,7 @@ class SignupView:
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
 
+    # Botão Registrar
     def build_signup_button(self, sizes: dict) -> ft.OutlinedButton:
         return ft.OutlinedButton(
             content=ft.Row(
@@ -147,6 +148,7 @@ class SignupView:
     def validate_form(self) -> Optional[str]:
         name = self.name_input.value
         email = self.email_input.value
+        email = email.strip().lower()
         phone = self.phone_input.value
         password = self.password_input.value
         password_again = self.password_again_input.value
@@ -163,6 +165,8 @@ class SignupView:
         if not phone_msg.startswith("OK"):
             return phone_msg
 
+        self.email_input.value = email
+
         password_msg = validate_password_strength(password)
         if password_msg.upper() != "SENHA FORTE":
             return password_msg
@@ -172,6 +176,7 @@ class SignupView:
 
         return None
 
+    # handle_signup: Executa ação do botão Registrar
     async def handle_signup(self, _):
         # Desabilita o botão imediatamente para evitar múltiplos cliques
         self.signup_button.disabled = True
@@ -309,12 +314,12 @@ def signup(page: ft.Page):
     return ft.Stack(
         alignment=ft.alignment.center,
         controls=[
+            # Imagem de fundo - background
             ft.Image(
-                # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
+                # Na web, flet 0.26.0 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
                 # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
-                fit=ft.ImageFit.COVER,
-                # expand=True,
+                fit=ft.ImageFit.CONTAIN,
                 width=page.width,
                 height=page.height
             ),
