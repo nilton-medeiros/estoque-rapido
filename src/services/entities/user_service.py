@@ -62,7 +62,6 @@ class UserService:
         """
         return await self.repository.find_by_id(user_id)
 
-
     async def find_by_email(self, email: str) -> Optional[User]:
         """
         Encontra um usuário pelo email usando o repositório.
@@ -74,3 +73,16 @@ class UserService:
             Optional[User]: Usuário encontrado ou None se não existir
         """
         return await self.repository.find_by_email(email)
+
+    async def update_photo(self, user_id: str, photo: str) -> Optional[User]:
+        """
+        Atualiza a foto do usuário para o campo photo usando o repositório.
+
+        Parâmetros:
+            user_id (str): ID do usuário a ser alterado
+            photo (str): Caminho e nome do arquivo (url) a ser atualizado
+
+        Retorna:
+            Optional[User]: Usuário encontrado ou None se não existir
+        """
+        return await self.repository.update_photo(user_id, photo)

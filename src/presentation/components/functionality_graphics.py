@@ -1,12 +1,17 @@
 import flet as ft
 
-class Skill:
+# class FunctionalityGraphics:
+#     def __init__(self, title: str, value: float):
+#         self.title = title
+#         self.value = value
+#         self.expand = True
+
+class Functionalities(ft.Column):
     def __init__(self, title: str, value: float):
+        super().__init__()
         self.title = title
         self.value = value
         self.expand = True
-
-class SkillRing(Skill):
 
     def build(self):
         return ft.Column(
@@ -38,22 +43,20 @@ class SkillRing(Skill):
         )
 
 
-class SkillProgressBar(Skill):
-    def build(self):
-        return ft.Container(
+class FiscalProgressBar(ft.Container):
+    def __init__(self, title: str, value: float):
+        super().__init__(
+            expand=True,
             content=ft.Column(
                 controls=[
                     ft.Row(
                         controls=[
-                            ft.Text(value=self.title,
-                                    theme_style=ft.TextThemeStyle.BODY_LARGE),
-                            ft.Text(value=f'{self.value:.0%}',
-                                    theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                            ft.Text(value=title, theme_style=ft.TextThemeStyle.BODY_LARGE),
+                            ft.Text(value=f'{value:.0%}', theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
-                    ft.ProgressBar(value=self.value, color=ft.Colors.PRIMARY,
-                                   bgcolor=ft.Colors.BLACK26),
+                    ft.ProgressBar(value=value, color=ft.Colors.PRIMARY, bgcolor=ft.Colors.BLACK26),
                     ft.Divider(height=10, color=ft.Colors.BLACK12),
                 ]
             )

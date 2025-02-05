@@ -124,7 +124,6 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
         print("================================================================================")
         print(f"Debug | ValueError: {response["message"]}")
         print("================================================================================")
-        print(" ")
 
     except Exception as e:
         response["is_error"] = True
@@ -133,6 +132,55 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
         print("================================================================================")
         print(f"Debug | Exception: {response["message"]}")
         print("================================================================================")
-        print(" ")
+
+    return response
+
+
+async def handle_update_photo_user(user_id: str, photo: str) -> dict:
+    """
+    Update no campo photo do usuário.
+
+    Esta função manipula a operação de atualizar um único campo 'photo' do usuário. Ela utiliza um repositório
+    específico para realizar as operações necessárias.
+
+    Args:
+        user_id (str): ID do usuário.
+        photo (str): String com o link ou path e nome da foto do usuário a ser atualizado.
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao atualizar o campo photo do usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> user_id = '12345678901234567890123456789012'
+        >>> response = await handle_update_field_user(user_id, photo_url)
+        >>> print(response)
+    """
+    response = {
+        "is_error": False,
+        "message": "",
+        "user": None
+    }
+
+    try:
+        # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
+        repository = FirebaseUserRepository()
+        user_service = UserService(repository)
+
+        # Atualiza o campo photo no usuário
+        user = await user_service.update_photo(user_id, photo)
+
+        response["message"] = "Foto do Usuário atualizada com sucessso!"
+        response["user"] = user
+
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
 
     return response

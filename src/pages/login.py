@@ -2,8 +2,8 @@ import flet as ft
 from typing import Optional
 
 from src.controllers.company_controller import handle_get_company
+from src.domain.models.company import Company
 from src.domain.models.user import User
-from src.domain.models.phone_number import PhoneNumber
 from src.controllers.user_controller import handle_get_user
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
@@ -70,7 +70,7 @@ class LoginView:
         self.password_input.value = 'Aj#45678'
 
         self.page.user_name_text.visible=False
-        self.page.company_name_text.visible=False
+        self.page.company_name_text_btn.visible=False
 
 
         return ft.Container(
@@ -108,7 +108,7 @@ class LoginView:
                     self.password_input,
                     self.error_text,
                     self.page.user_name_text,
-                    self.page.company_name_text,
+                    self.page.company_name_text_btn,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -129,12 +129,16 @@ class LoginView:
 
     def validate_form(self) -> Optional[str]:
         email = self.email_input.value
+        email = email.strip().lower()
+
         password = self.password_input.value
 
         if not email:
             return "Por favor, insira seu email"
         if not validate_email(email):
             return "Email inválido"
+
+        self.email_input.value = email
 
         if len(password) < 8:
             return "A senha deve ter:\n• pelo menos 8 caracteres"
@@ -179,28 +183,74 @@ class LoginView:
                     # Adicione outros dados relevantes do usuário
                 })
 
+                user_color = self.page.session.get("user_color")
+
+                if user_color:
+                    self.page.theme.color_scheme.primary = user_color
+                    self.page.update()
+
                 if user.companies:
                     # ToDo: Usar sessions_data para obter o company_id usado no login anterior
                     # ToDo: Se existir na sessions_data, verifica se exite em user.companies, se não existir atualiza a sessions_data.
 
-                    # Usuário tem empresa(s) registrada(s), obtem os dados da primeira empresa ou da sessions_data
-                    company_id = user.companies[0]  # Provisório até criar a sessions_data
+                    company_id = self.page.session.get("company_id")
+
+                    # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada ou a primeira
+                    if not company_id or company_id not in user.companies:
+                        company_id = user.companies[0]  # Provisório até criar a sessions_data
+                        self.page.session.set("company_id", company_id)
+
                     result = await handle_get_company(company_id=company_id)
 
-                    # Adiciona o company_id no state e publíca-a
-                    # ToDo: Completar o dict abaixo com outros dados relevantes da empresa
-                    await self.page.app_state.set_company({
-                        "id": company_id,
-                        "name": 'SISTROM SISTEMA WEB',
-                    })
+                    if not result["is_error"]:
+                        cia: Company = result["company"]
+
+                        # Adiciona o company_id no state e publíca-a
+                        await self.page.app_state.set_company({
+                            "id": company_id,
+                            "name": cia.name,
+                            "corporate_name": cia.corporate_name,
+                            "cnpj": cia.cnpj,
+                            "state_registration": cia.state_registration,
+                            "legal_nature": cia.legal_nature,
+                            "store_name": cia.store_name,
+                            "municipal_registration": cia.municipal_registration,
+                            "founding_date": cia.founding_date,
+                            "contact": cia.contact,
+                            "address": cia.address,
+                            "size": cia.size,
+                            "fiscal": cia.fiscal,
+                            "description": cia.description,
+                            "logo_path": cia.logo_path,
+                            "payment_gateway": cia.payment_gateway,
+                        })
 
                     print(":")
                     print("================================================================================")
                     print(f"Debug | Logou com sucesso! Publicando company e redirecionando para /home")
                     print("================================================================================")
-                    print(" ")
 
+                else:
+                    await self.page.app_state.set_company({
+                            "id": "",
+                            "name": "NEUMHUMA EMPRESA SELECIONADA",
+                            "corporate_name": "",
+                            "cnpj": "",
+                            "state_registration": "",
+                            "legal_nature": "",
+                            "store_name": "Matriz",
+                            "municipal_registration": "",
+                            "founding_date": None,
+                            "contact": None,
+                            "address": None,
+                            "size": None,
+                            "fiscal": None,
+                            "description": None,
+                            "logo_path": None,
+                            "payment_gateway": None,
+                    })
 
+                self.page.on_resized = None
                 self.page.go('/home')
 
             else:
@@ -278,8 +328,7 @@ def login(page: ft.Page):
                 # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
                 # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
-                fit=ft.ImageFit.COVER,
-                expand=True,
+                fit=ft.ImageFit.CONTAIN,
                 width=page.width,
                 height=page.height
             ),

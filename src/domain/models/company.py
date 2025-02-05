@@ -1,25 +1,18 @@
-import re
 from dataclasses import dataclass, field
 from datetime import date
-from typing import List, Optional
-from enum import Enum
+from typing import Optional
 
+from src.domain.models.company_size import CompanySize
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.phone_number import PhoneNumber
 from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
 
 
-class CompanySize(Enum):
-    MICRO = "Microempresa"
-    SMALL = "Pequena Empresa"
-    MEDIUM = "Média Empresa"
-    LARGE = "Grande Empresa"
-
-
 @dataclass
 class ContactInfo:
     email: str
-    phone: PhoneNumber
+    phone1: PhoneNumber
+    phone2: PhoneNumber
     website: Optional[str] = None
 
 
@@ -95,7 +88,7 @@ class Company:
     state_registration: str  # Inscrição Estadual
     legal_nature: str  # Natureza jurídica
     id: Optional[str] = field(default=None)
-    store_name: Optional[str] = None
+    store_name: Optional[str] = 'Matriz'
     municipal_registration: Optional[str] = None  # Inscrição Municipal
     founding_date: Optional[date] = None  # Data da fundação
     contact: Optional[ContactInfo] = None

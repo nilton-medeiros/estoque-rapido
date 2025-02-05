@@ -36,7 +36,6 @@ class AppStateManager:
                 print("================================================================================")
                 print(f"Debug | Em set_user, user_data é None, publicando logout")
                 print("================================================================================")
-                print(" ")
 
                 self._state['user'] = None
                 self.page.pubsub.send_all("user_logout")
@@ -49,7 +48,6 @@ class AppStateManager:
                 print("================================================================================")
                 print(f"Debug | Em set_user, user_data não é válido, retornado False")
                 print("================================================================================")
-                print(" ")
                 return False
 
             self._state['user'] = user_data
@@ -94,3 +92,5 @@ class AppStateManager:
         """Limpa todo o estado (útil para logout)"""
         self._state['user'] = None
         self._state['company'] = None
+        self.page.pubsub.send_all("user_updated")
+        self.page.pubsub.send_all("company_updated")

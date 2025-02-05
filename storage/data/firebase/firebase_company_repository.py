@@ -183,7 +183,8 @@ class FirebaseCompanyRepository(CompanyRepository):
         if company.contact:
             company_dict['contact'] = {
                 'email': company.contact.email,
-                'phone': company.contact.phone.get_e164(),
+                'phone1': company.contact.phone1.get_e164(),
+                'phone2': company.contact.phone2.get_e164(),
                 'website': company.contact.website
             }
         if company.address:
@@ -239,7 +240,8 @@ class FirebaseCompanyRepository(CompanyRepository):
         if doc_data.get('contact'):
             contact_info = ContactInfo(
                 email=doc_data['contact']['email'],
-                phone=PhoneNumber(doc_data['contact']['phone']),
+                phone1=PhoneNumber(doc_data['contact']['phone1']),
+                phone2=PhoneNumber(doc_data['contact']['phone2']),
                 website=doc_data['contact'].get('website')
             )
 
@@ -287,7 +289,7 @@ class FirebaseCompanyRepository(CompanyRepository):
             cnpj=CNPJ(doc_data['cnpj']),
             state_registration=doc_data['state_registration'],
             legal_nature=doc_data['legal_nature'],
-            store_name=doc_data.get('store_name'),
+            store_name=doc_data.get('store_name', "Matriz"),
             municipal_registration=doc_data.get('municipal_registration'),
             founding_date=doc_data.get('founding_date'),
             contact=contact_info,

@@ -1,4 +1,6 @@
 import flet as ft
+from dotenv import load_dotenv
+import os
 
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
@@ -6,16 +8,33 @@ from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
 
+load_dotenv()
+flet_key = os.getenv('FLET_SECRET_KEY')
+# Definindo a chave secreta - em produção, use variáveis de ambiente
+os.environ["FLET_SECRET_KEY"] = flet_key
+
 
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
     page.clean()
     page.user_name_text = ft.Text("Nenhum Usuário logado")
-    page.company_name_text = ft.Text("Nenhuma empresa selecionada")
+    page.company_name_text_btn = ft.TextButton(
+        text="NENHUMA EMPRESA SELECIONADA",
+        style=ft.ButtonStyle(
+            alignment=ft.alignment.center,
+            mouse_cursor="pointer",
+            text_style=ft.TextStyle(
+                color=ft.Colors.GREY,
+                size=14,
+                weight=ft.FontWeight.NORMAL,
+            )
+        ),
+        tooltip="Clique aqui e preencha os dados da empresa"
+    )
 
-    # ToDo: Usar sessions_data para armazenar array user_id e company_id para o próximo logon
-    # if not hasattr(page, 'sessions_data'):
-    #     page.sessions_data = {}
+    #  Uso de sessions
+    if not hasattr(page, 'sessions_data'):
+        page.sessions_data = {}
 
     # Usando uma abordagem mais profissional com States e Pubsub
     app_state = AppStateManager(page)
@@ -30,10 +49,11 @@ def main(page: ft.Page):
                 update_user_dependent_ui()
             else:
                 print(":")
-                print("================================================================================")
+                print(
+                    "================================================================================")
                 print(f"Debug | Usuário foi desconectado.")
-                print("================================================================================")
-                print(" ")
+                print(
+                    "================================================================================")
 
                 # Limpa elementos da UI relacionados ao usuário
                 clear_user_ui()
@@ -46,10 +66,11 @@ def main(page: ft.Page):
                 update_company_dependent_ui()
             else:
                 print(":")
-                print("================================================================================")
+                print(
+                    "================================================================================")
                 print(f"Debug | Empresa foi desconectada.")
-                print("================================================================================")
-                print(" ")
+                print(
+                    "================================================================================")
 
                 # Limpa elementos da UI relacionados à empresa
                 clear_company_ui()
@@ -62,9 +83,9 @@ def main(page: ft.Page):
 
     def update_company_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
-        if hasattr(page, 'company_name_text'):
-            page.company_name_text.value = app_state.company['name']
-            page.company_name_text.update()
+        if hasattr(page, 'company_name_text_btn'):
+            page.company_name_text_btn.text = app_state.company['name']
+            page.company_name_text_btn.update()
 
     def clear_user_ui():
         if hasattr(page, 'user_name_text'):
@@ -72,9 +93,9 @@ def main(page: ft.Page):
             page.user_name_text.update()
 
     def clear_company_ui():
-        if hasattr(page, 'company_name_text'):
-            page.company_name_text.value = ""
-            page.company_name_text.update()
+        if hasattr(page, 'company_name_text_btn'):
+            page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
+            page.company_name_text_btn.update()
 
     # Registra o handler do PubSub
     page.pubsub.subscribe(handle_pubsub)
@@ -127,6 +148,7 @@ def main(page: ft.Page):
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
+                    page.on_resized = None
                     pg_view = ft.View(
                         route='/home',
                         controls=[home_page(page)],
@@ -173,4 +195,9 @@ def main(page: ft.Page):
 
 
 if __name__ == '__main__':
-    ft.app(target=main, assets_dir="assets", view=ft.WEB_BROWSER)
+    ft.app(
+        target=main,
+        assets_dir="assets",
+        upload_dir="uploads",
+        view=ft.WEB_BROWSER
+    )

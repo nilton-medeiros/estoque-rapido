@@ -173,7 +173,6 @@ class FirebaseUserRepository(UserRepository):
             print("================================================================================")
             print(f"Debug | 3 - FirebaseUserRepository: Usuário não encontrado por email")
             print("================================================================================")
-            print(" ")
 
             return None
         except exceptions.FirebaseError as e:
@@ -182,7 +181,6 @@ class FirebaseUserRepository(UserRepository):
             print("================================================================================")
             print(f"Debug | 4 - FirebaseError: Erro ao buscar usuário pelo email '{email}': {translated_error}")
             print("================================================================================")
-            print(" ")
 
             raise Exception(
                 f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
@@ -191,7 +189,6 @@ class FirebaseUserRepository(UserRepository):
             print("================================================================================")
             print(f"Debug | 5 - Exception: Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
             print("================================================================================")
-            print(" ")
 
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
@@ -386,6 +383,59 @@ class FirebaseUserRepository(UserRepository):
             print(f"Erro ao atualizar o perfil do usuário: {e}")
             raise e
 
+
+    async def update_photo(self, id: str, new_photo: str) -> Optional[User]:
+        """
+        Atualiza a foto de um usuário.
+
+        Args:
+            id (str): ID do usuário
+            new_profile (str): Novo perfil a ser atribuído
+
+        Returns:
+            Optional[User]: Usuário atualizado ou None se não existir
+
+        Raises:
+            Exception: Em caso de erro na operação de banco de dados
+            ValueError: Se o novo perfil não for válido
+        """
+
+        try:
+            # Verifica se a nova foto é válido
+            if not new_photo:
+                raise ValueError("A nova foto não pode ser vazio")
+
+            doc_ref = self.collection.document(id)
+            doc = doc_ref.get()
+
+            if not doc.exists:
+                return None
+
+            # Atualiza a foto do usuário
+            doc_ref.update({"photo": new_photo})
+
+            data = doc_ref.get().to_dict()
+
+            first_name, last_name = get_first_and_last_name(data['display_name'])
+            companies: List[str] = data.get('companies', [])
+            user_photo: str = data.get('photo', None)
+
+            updated_user = User(
+                id=doc.id,
+                email=data['email'],
+                name=NomePessoa(first_name, last_name),
+                phone_number=PhoneNumber(data['phone_number']),
+                profile=data['profile'],
+                companies=companies,
+                photo=user_photo,
+            )
+
+            return updated_user
+        except Exception as e:
+            # Lida com possíveis exceções, se necessário
+            print(f"Erro ao atualizar o perfil do usuário: {e}")
+            raise e
+
     def _doc_to_user(self, doc_data: dict) -> User:
         """
         Converter os dados de um documento do Firestore em uma instância de usuário.
@@ -400,11 +450,10 @@ class FirebaseUserRepository(UserRepository):
         from src.domain.models.nome_pessoa import NomePessoa
         from src.domain.models.phone_number import PhoneNumber
 
-        print(":")
-        print("================================================================================")
-        print(f"Debug | doc_data: {doc_data}")
-        print("================================================================================")
-        print(" ")
+        # print(":")
+        # print("================================================================================")
+        # print(f"Debug | doc_data: {doc_data}")
+        # print("================================================================================")
 
         # Recontruir campos opcionais
         first_name, last_name = get_first_and_last_name(
