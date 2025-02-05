@@ -57,7 +57,6 @@ def landing_page(page: ft.Page):
                 margin=ft.margin.only(right=10),
             )
         ],
-
     )
 
     lp_title = ft.Text(

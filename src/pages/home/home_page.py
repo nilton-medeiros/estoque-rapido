@@ -59,40 +59,47 @@ def home_page(page: ft.Page):
     """Página Home do usuário logado"""
     page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
-    page.bgcolor = ft.Colors.BLACK
+    # page.bgcolor = ft.Colors.BLACK
 
     sidebar = sidebar_container(page)
     content = main_content()
+
+    def toggle_sidebar(e):
+        sidebar.visible = not sidebar.visible
+        content.visible = not sidebar.visible if page.width < 768 else True
+        page.update()
+
+    page.appbar = ft.AppBar(
+        leading_width=40,
+        leading=ft.IconButton(
+            icon=ft.Icons.MENU,
+            icon_color=ft.Colors.WHITE,
+            on_click=toggle_sidebar
+        ),
+        title="MENU",
+        # bgcolor="#111418",
+        bgcolor=ft.Colors.BLUE_700,
+        actions=[
+            ft.Container(
+                content=ft.Icons.CLOSE,
+                margin=ft.margin.only(right=10),
+            )
+        ],
+    )
 
     # Layout inicial (para telas grandes)
     layout = ft.ResponsiveRow(
         columns=12,
         controls=[sidebar, content],
         expand=True,
+        alignment=ft.MainAxisAlignment.CENTER,
     )
-
-    def toggle_sidebar(e):
-        sidebar.visible = not sidebar.visible
-        page.update()
 
     def on_page_resized(e=None):
         print(f"DEBUG: page.width = {page.width}")  # Depuração
 
         if page.width < 768:  # Modo Mobile
             print("DEBUG: Entrando no modo mobile")
-
-            page.appbar = ft.AppBar(
-                title=ft.Text("Menu"),  # **Título do menu**
-                leading=ft.IconButton(
-                    icon=ft.Icons.MENU,
-                    icon_color=ft.Colors.WHITE,
-                    on_click=toggle_sidebar
-                ),
-                bgcolor="#111418",
-            )
-
-            print(f"DEBUG: page.appbar = {page.appbar}")
-
             # Ajustar layout para modo mobile
             sidebar.visible = False
             content.col = {"xs": 12}  # O conteúdo ocupa toda a largura
@@ -114,7 +121,19 @@ def home_page(page: ft.Page):
     page.on_resized = on_page_resized
     on_page_resized(None)
 
-    return ft.Column(  # **Troca Container por Column para respeitar AppBar**
-        controls=[layout],
-        expand=True,  # Permite que o layout ocupe toda a tela sem sobrepor a AppBar
+    parent_container = ft.Container(
+        expand=True,
+        height=page.height,
+        alignment=ft.alignment.center,
+        content=ft.Column(
+            spacing=0,
+            alignment=ft.alignment.center,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO,
+            controls=[layout]
+        )
     )
+
+    page.update()
+
+    return parent_container

@@ -166,7 +166,7 @@ def sidebar_header(page: ft.Page):
 
                 print(":")
                 print("======================================================================================")
-                print(f"Debug 161 | {result["message"]}")
+                print(f"Debug 169 | {result["message"]}")
                 print("======================================================================================")
 
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
@@ -183,7 +183,7 @@ def sidebar_header(page: ft.Page):
             except Exception as e:
                 print(":")
                 print("======================================================================================")
-                print(f"Debug 178 | {str(e)}")
+                print(f"Debug 186 | {str(e)}")
                 print("======================================================================================")
 
 
@@ -311,13 +311,11 @@ def sidebar_header(page: ft.Page):
 
         print(f"company_form: {company_form}")
 
-
-        # Adiciona o formulário à página
+        # Adiciona o formulário diretamente à página
+        print("Debug | Adicionando CompanyForm à página")
         page.add(company_form)
-
-
-        # Adiciona uma mensagem no console para garantir que ele foi adicionado
         print("Debug | CompanyForm foi adicionado à página")
+        page.update()  # Força a atualização da página
 
         # Define a função salvar
         async def save_company(e):
