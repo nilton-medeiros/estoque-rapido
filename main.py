@@ -148,6 +148,10 @@ def main(page: ft.Page):
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
+                    print(":")
+                    print("Debug signup | Redirecionando para /home")
+                    print(" ")
+
                     page.on_resized = None
                     pg_view = ft.View(
                         route='/home',

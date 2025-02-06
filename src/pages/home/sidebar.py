@@ -17,17 +17,19 @@ def sidebar_header(page: ft.Page):
     page.company_name_text_btn.visible = True
 
     current_user = page.app_state.user
-    profile = ft.Text(value=current_user['profile'],theme_style=ft.TextThemeStyle.BODY_SMALL)
+    profile = ft.Text(
+        value=current_user['profile'], theme_style=ft.TextThemeStyle.BODY_SMALL)
     user_photo = None
 
     if current_user['photo']:
         user_photo = ft.Image(
-            src=current_user["photo"],
-            # width=100,
-            # height=100,
-            fit=ft.ImageFit.COVER,
-            repeat=ft.ImageRepeat.NO_REPEAT,
+            src=current_user['photo'],
             error_content=ft.Text(current_user['name'].iniciais),
+            repeat=ft.ImageRepeat.NO_REPEAT,
+            fit=ft.ImageFit.FILL,
+            border_radius=ft.border_radius.all(100),
+            width=100,
+            height=100,
         )
     else:
         user_photo = ft.Text(current_user['name'].iniciais)
@@ -43,7 +45,10 @@ def sidebar_header(page: ft.Page):
     progress_bar = ft.ProgressBar(visible=False)
 
     def show_image_dialog(e):
-        user_avatar.bgcolor = ft.Colors.PRIMARY
+        user_avatar.bgcolor = ft.Colors.TRANSPARENT
+        user_avatar.update()
+
+        previous_user_photo = current_user['photo']
 
         async def handle_file_picker_result(e: ft.FilePickerResultEvent):
             if not e.files:
@@ -108,7 +113,8 @@ def sidebar_header(page: ft.Page):
 
                 # Aguarda até que o upload seja concluído
                 while not upload_complete:
-                    await asyncio.sleep(0.1)  # Pequena pausa para não sobrecarregar o CPU
+                    # Pequena pausa para não sobrecarregar o CPU
+                    await asyncio.sleep(0.1)
 
                 # Agora que o upload está concluído, podemos prosseguir com o upload para S3
                 cnpj = current_company["cnpj"]
@@ -125,26 +131,49 @@ def sidebar_header(page: ft.Page):
                 max_retries = 10
                 retry_count = 0
                 while not os.path.exists(local_file) and retry_count < max_retries:
-                    await asyncio.sleep(0.5)  # Espera meio segundo entre tentativas
+                    # Espera meio segundo entre tentativas
+                    await asyncio.sleep(0.5)
                     retry_count += 1
 
                 if not os.path.exists(local_file):
-                    raise FileNotFoundError(f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
+                    raise FileNotFoundError(
+                        f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
 
                 s3_manager = S3FileManager()
-                s3_manager.upload(local_file, file_s3_name)
+                s3_manager.upload(local_path=local_file, key=file_s3_name)
 
-                photo_url = f"https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/{file_s3_name}"
+                photo_url = s3_manager.get_url()
 
                 # Atualiza a foto do usuário
                 result = await handle_update_photo_user(user_id=current_user["id"], photo=photo_url)
 
-                if not result["is_error"]:
+                if result["is_error"]:
+                    # Photo não pode ser salva no database, remove do s3
+                    s3_manager.delete(key=file_s3_name)
+                else:
+                    # Nova foto salva no database, remover a antiga do s3 se existir
+                    # https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/PuT0e8GPhnSx7o7NEXQmmrgm0XC3/user_img_26c8eb41f2b64ae2b0e4001e6c4aeb48.png
+
+                    if previous_user_photo:
+                        # String completa
+                        url = previous_user_photo
+                        # Dividindo a string pelo termo "public/"
+                        parts = url.split("public/")
+                        # Extraindo a parte desejada (key)
+                        key = parts[1]
+                        # Excluíndo do bucket
+                        if key:
+                            s3_manager.delete(key=key)
+
+                    # Atualiza a foto na página
                     user_photo = ft.Image(
                         src=photo_url,
-                        fit=ft.ImageFit.COVER,
-                        repeat=ft.ImageRepeat.NO_REPEAT,
                         error_content=ft.Text(current_user['name'].iniciais),
+                        repeat=ft.ImageRepeat.NO_REPEAT,
+                        fit=ft.ImageFit.FILL,
+                        border_radius=ft.border_radius.all(100),
+                        width=100,
+                        height=100,
                     )
 
                     user_avatar.content = user_photo
@@ -163,14 +192,16 @@ def sidebar_header(page: ft.Page):
 
                     page.pubsub.send_all("user_updated")
 
-
                 print(":")
-                print("======================================================================================")
+                print(
+                    "======================================================================================")
                 print(f"Debug 169 | {result["message"]}")
-                print("======================================================================================")
+                print(
+                    "======================================================================================")
 
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
-                message_snackbar(page=page, message=result["message"], message_type=color)
+                message_snackbar(
+                    page=page, message=result["message"], message_type=color)
 
                 # Limpa o arquivo local após o upload
                 try:
@@ -182,10 +213,11 @@ def sidebar_header(page: ft.Page):
 
             except Exception as e:
                 print(":")
-                print("======================================================================================")
+                print(
+                    "======================================================================================")
                 print(f"Debug 186 | {str(e)}")
-                print("======================================================================================")
-
+                print(
+                    "======================================================================================")
 
                 message_snackbar(
                     page=page,
@@ -246,7 +278,7 @@ def sidebar_header(page: ft.Page):
                 controls=[
                     image_type_dd,
                     url_field,
-                    ft.Text("Dica: use imagem com fundo transparente!"),
+                    status_text,
                 ],
                 height=150,
             ),
@@ -264,9 +296,8 @@ def sidebar_header(page: ft.Page):
         icon_container = e.control
         icon_container.content.color = ft.Colors.PRIMARY if e.data == "true" else ft.Colors.GREY_400
         icon_container.update()
-        user_avatar.bgcolor = ft.Colors.SECONDARY if e.data == "true" else ft.Colors.PRIMARY
+        user_avatar.bgcolor = ft.Colors.PRIMARY if e.data == "true" else ft.Colors.TRANSPARENT
         user_avatar.update()
-
 
     # Container do ícone com hover effect
     camera_icon = ft.Container(
@@ -279,13 +310,14 @@ def sidebar_header(page: ft.Page):
         ink=True,
         on_hover=on_hover_icon,
         on_click=show_image_dialog,
-        border_radius=ft.border_radius.all(20),  # Opcional: adiciona um border radius para melhorar o efeito ink
+        # Opcional: adiciona um border radius para melhorar o efeito ink
+        border_radius=ft.border_radius.all(20),
         padding=8,  # Opcional: adiciona um padding para aumentar a área clicável
     )
 
     user_avatar = ft.Container(
         content=user_photo,
-        bgcolor=ft.Colors.PRIMARY,
+        bgcolor=ft.Colors.TRANSPARENT,
         padding=10,
         alignment=ft.alignment.center,
         width=100,
@@ -307,7 +339,8 @@ def sidebar_header(page: ft.Page):
         print("Debug | Entrou no evento on_click_cpn_btn")
 
         # Cria o formulário
-        company_form = CompanyForm(current_company if current_company.get('id') else None)
+        company_form = CompanyForm(
+            current_company if current_company.get('id') else None)
 
         print(f"company_form: {company_form}")
 
@@ -334,7 +367,6 @@ def sidebar_header(page: ft.Page):
         save_btn = ft.ElevatedButton("Salvar", on_click=save_company)
         page.add(save_btn)
         print("Debug | Botão Salvar foi adicionado à página")
-
 
     page.company_name_text_btn.on_click = on_click_cpny_btn
 
