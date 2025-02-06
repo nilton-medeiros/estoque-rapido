@@ -328,7 +328,6 @@ def login(page: ft.Page):
         controls=[
             ft.Image(
                 # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
-                # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 fit=ft.ImageFit.CONTAIN,
                 width=page.width,
