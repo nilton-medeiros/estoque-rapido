@@ -42,7 +42,7 @@ def main(page: ft.Page):
 
     images.controls.append(
         ft.Image(
-            src=f"https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_573fb1fd83694697a597095be2d107ca.jpg",
+            src=f"https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_573fb1fd83694697a597095be2d107ca.jpg",
             width=200,
             height=200,
             fit=ft.ImageFit.CONTAIN,
@@ -54,7 +54,7 @@ def main(page: ft.Page):
 
     images.controls.append(
         ft.Image(
-            src=f"https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_6c7335a1d3604b088b93c12897da19f3.JPG",
+            src=f"https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_6c7335a1d3604b088b93c12897da19f3.JPG",
             width=200,
             height=200,
             fit=ft.ImageFit.COVER,
@@ -66,7 +66,7 @@ def main(page: ft.Page):
 
     images.controls.append(
         ft.Image(
-            src=f"https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_f31b0323a63c46f389c65547f280161d.jpg",
+            src=f"https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_f31b0323a63c46f389c65547f280161d.jpg",
             width=200,
             height=200,
             fit=ft.ImageFit.FILL,
@@ -78,7 +78,7 @@ def main(page: ft.Page):
 
     images.controls.append(
         ft.Image(
-            src=f"https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_f62e2d06847046f38a98feb653d3317d.jpg",
+            src=f"https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/bkKAjpVLEdXyqlCrnziCih6H5WJ3/user_img_f62e2d06847046f38a98feb653d3317d.jpg",
             width=200,
             height=200,
             fit=ft.ImageFit.CONTAIN,

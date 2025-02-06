@@ -152,7 +152,6 @@ def sidebar_header(page: ft.Page):
                     s3_manager.delete(key=file_s3_name)
                 else:
                     # Nova foto salva no database, remover a antiga do s3 se existir
-                    # https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/PuT0e8GPhnSx7o7NEXQmmrgm0XC3/user_img_26c8eb41f2b64ae2b0e4001e6c4aeb48.png
 
                     if previous_user_photo:
                         # String completa

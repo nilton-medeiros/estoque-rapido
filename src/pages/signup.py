@@ -324,7 +324,6 @@ def signup(page: ft.Page):
             # Imagem de fundo - background
             ft.Image(
                 # Na web, flet 0.26.0 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
-                # src="https://sistrom-global-bucket.s3.sa-east-1.amazonaws.com/estoquerapido/public/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
                 fit=ft.ImageFit.CONTAIN,
                 width=page.width,

@@ -39,10 +39,21 @@ class S3FileManager:
         )
 
         self.prefix = 'estoquerapido/public'
-        self._url = f""
         self.relativ_key = ''
 
     def get_url(self) -> str:
+        """
+        Constrói a url completa do arquivo no S3.
+
+        Args: None
+
+        Returns:
+            str: URL completa.
+
+        Example:
+            Para key="pasta/arquivo.txt" e prefix="estoquerapido/public",
+            retorna "https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/pasta/arquivo.txt"
+        """
         return f"https://{self.bucket}.s3.{self.region_name}.amazonaws.com/{self.relativ_key}"
 
     def _get_full_key(self, key: str) -> str:
