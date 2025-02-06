@@ -28,15 +28,22 @@ class S3FileManager:
         """
         load_dotenv()
 
+        self.region_name = os.getenv('AWS_DEFAULT_REGION')
+        self.bucket = os.getenv('AWS_BUCKET')
+
         self.s3_client = boto3.client(
             's3',
             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
             aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name=os.getenv('AWS_DEFAULT_REGION'),
+            region_name=self.region_name,
         )
 
-        self.bucket = 'sistrom-global-bucket'
         self.prefix = 'estoquerapido/public'
+        self._url = f""
+        self.relativ_key = ''
+
+    def get_url(self) -> str:
+        return f"https://{self.bucket}.s3.{self.region_name}.amazonaws.com/{self.relativ_key}"
 
     def _get_full_key(self, key: str) -> str:
         """
@@ -53,7 +60,8 @@ class S3FileManager:
             retorna "estoquerapido/public/pasta/arquivo.txt"
         """
         clean_key = key.lstrip('/')
-        return f"{self.prefix}/{clean_key}"
+        self._relativ_key = f"{self.prefix}/{clean_key}"
+        return self._relativ_key
 
     def upload(self, local_path: str, key: str) -> str:
         """

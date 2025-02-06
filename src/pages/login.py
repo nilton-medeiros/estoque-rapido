@@ -44,7 +44,7 @@ class LoginView:
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
-                    color=ft.Colors.BLUE_400,
+                    color=ft.Colors.YELLOW_ACCENT_400,
                     width=sizes["border_width"]
                 ),
                 padding=ft.padding.symmetric(
@@ -113,15 +113,17 @@ class LoginView:
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        text="Criar uma conta",
+                        content=ft.Text(value="Criar uma conta", color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/signup'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        icon=ft.CupertinoIcons.BACK,
                         text="Voltar",
+                        icon=ft.CupertinoIcons.BACK,
+                        icon_color=ft.Colors.YELLOW_ACCENT_400,
+                        style=ft.ButtonStyle(color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/'),
-                    ),
+                    )
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             ),
@@ -284,7 +286,7 @@ class LoginView:
         self.login_button.style = ft.ButtonStyle(
             color=ft.Colors.WHITE,
             side=ft.BorderSide(
-                color=ft.Colors.BLUE_400,
+                color=ft.Colors.YELLOW_ACCENT_400,
                 width=sizes["border_width"]
             ),
             padding=ft.padding.symmetric(

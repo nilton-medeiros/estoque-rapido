@@ -327,8 +327,16 @@ class FirebaseUserRepository(UserRepository):
             return user.id
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            print(":")
+            print("===========================================================")
+            print(f"Debug | FirebaseError: {translated_error}")
+            print(" ")
             raise Exception(f"Erro ao salvar usuário: {translated_error}")
         except Exception as e:
+            print(":")
+            print("===========================================================")
+            print(f"Debug | Exception: {str(e)}")
+            print(" ")
             raise Exception(f"Erro inesperado ao salvar usuário: {str(e)}")
 
     async def update_profile(self, id: str, new_profile: str) -> Optional[User]:
@@ -485,7 +493,7 @@ class FirebaseUserRepository(UserRepository):
         user_dict = {
             "email": user.email,
             "display_name": user.name.nome_completo,
-            "phone_number": user.phone_number.get_e164,
+            "phone_number": user.phone_number.get_e164(),
             "profile": user.profile,
             "companies": user.companies,
             "photo": user.photo,

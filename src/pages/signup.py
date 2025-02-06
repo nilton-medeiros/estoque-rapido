@@ -49,7 +49,7 @@ class SignupView:
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
-                    color=ft.Colors.BLUE_400,
+                    color=ft.Colors.YELLOW_ACCENT_400,
                     width=sizes["border_width"]
                 ),
                 padding=ft.padding.symmetric(
@@ -131,13 +131,15 @@ class SignupView:
                     self.signup_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        text="Já tenho uma conta",
+                        content=ft.Text(value="Já tenho uma conta", color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/login'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        icon=ft.CupertinoIcons.BACK,
                         text="Voltar",
+                        icon=ft.CupertinoIcons.BACK,
+                        icon_color=ft.Colors.YELLOW_ACCENT_400,
+                        style=ft.ButtonStyle(color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/'),
                     ),
                 ],
@@ -235,7 +237,12 @@ class SignupView:
                 page=self.page, message=result["message"], message_type=color)
 
             if not result["is_error"]:
+                print(":")
+                print("Debug signup | Redirecionando para /home")
+                print(" ")
+                self.page.on_resized = None
                 self.page.go('/home')
+
 
         finally:
             # Reabilita o botão independente do resultado
