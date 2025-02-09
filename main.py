@@ -125,14 +125,6 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
-            case '/signup':  # Registro
-                pg_view = ft.View(
-                    route='/signup',
-                    controls=[signup(page)],
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
             case '/login':
                 pg_view = ft.View(
                     route='/login',
@@ -142,26 +134,33 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             case '/logout':
-                # page.sessions_data.clear()
+                page.app_state.clear_state()
+                page.sessions_data.clear()
                 page.route = '/'
             case '/home':
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
-                    print(":")
-                    print("Debug signup | Redirecionando para /home")
-                    print(" ")
-
                     page.on_resized = None
+                    home  = home_page(page)
+
                     pg_view = ft.View(
                         route='/home',
-                        controls=[home_page(page)],
+                        controls=[home],
+                        appbar=home.data,
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
+            case '/signup':  # Registro
+                pg_view = ft.View(
+                    route='/signup',
+                    controls=[signup(page)],
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case _:
-                print('rota selecionada:', e.route)
                 # Opcional: tratamento para rotas não encontradas
                 pg_view = ft.View(
                     route="/404",
