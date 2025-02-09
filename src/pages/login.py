@@ -20,6 +20,9 @@ class LoginView:
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
 
+        self.page.update()
+
+
     def build_login_button(self, sizes: dict) -> ft.OutlinedButton:
         return ft.OutlinedButton(
             content=ft.Row(
@@ -69,8 +72,8 @@ class LoginView:
         self.email_input.value = 'ajolie@gmail.com'
         self.password_input.value = 'Aj#45678'
 
-        self.page.user_name_text.visible=False
-        self.page.company_name_text_btn.visible=False
+        self.page.user_name_text.visible=False  # Invisible, sem uso
+        self.page.company_name_text_btn.visible=False # Invisible, sem uso
 
 
         return ft.Container(
@@ -107,8 +110,8 @@ class LoginView:
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     self.password_input,
                     self.error_text,
-                    self.page.user_name_text,
-                    self.page.company_name_text_btn,
+                    self.page.user_name_text,   # Invisible, sem uso
+                    self.page.company_name_text_btn,   # Invisible, sem uso
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -120,7 +123,7 @@ class LoginView:
                     ft.TextButton(
                         text="Voltar",
                         icon=ft.CupertinoIcons.BACK,
-                        icon_color=ft.Colors.YELLOW_ACCENT_400,
+                        icon_color=ft.Colors.PRIMARY,
                         style=ft.ButtonStyle(color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/'),
                     )
@@ -184,12 +187,6 @@ class LoginView:
                     "photo": user.photo,
                     # Adicione outros dados relevantes do usuário
                 })
-
-                user_color = self.page.session.get("user_color")
-
-                if user_color:
-                    self.page.theme.color_scheme.primary = user_color
-                    self.page.update()
 
                 if user.companies:
                     # ToDo: Usar sessions_data para obter o company_id usado no login anterior
@@ -286,7 +283,7 @@ class LoginView:
         self.login_button.style = ft.ButtonStyle(
             color=ft.Colors.WHITE,
             side=ft.BorderSide(
-                color=ft.Colors.YELLOW_ACCENT_400,
+                color=ft.Colors.PRIMARY,
                 width=sizes["border_width"]
             ),
             padding=ft.padding.symmetric(

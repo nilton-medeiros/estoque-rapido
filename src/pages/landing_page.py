@@ -109,8 +109,12 @@ def landing_page(page: ft.Page):
                             alignment=ft.MainAxisAlignment.CENTER,
                         ),
                         ft.Text(
-                            title, size=16, weight=ft.FontWeight.BOLD),
-                        ft.Text(description),
+                            title,
+                            color=ft.Colors.BLACK54,
+                            size=16,
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                        ft.Text(description, color=ft.Colors.BLACK87),
                         ft.ElevatedButton(
                             "Saiba Mais",
                             style=ft.ButtonStyle(
@@ -260,7 +264,5 @@ def landing_page(page: ft.Page):
             ]
         )
     )
-
-    page.update()
 
     return parent_container

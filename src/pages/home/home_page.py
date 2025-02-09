@@ -59,33 +59,9 @@ def home_page(page: ft.Page):
     """Página Home do usuário logado"""
     page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
-    # page.bgcolor = ft.Colors.BLACK
 
     sidebar = sidebar_container(page)
     content = main_content()
-
-    def toggle_sidebar(e):
-        sidebar.visible = not sidebar.visible
-        content.visible = not sidebar.visible if page.width < 768 else True
-        page.update()
-
-    page.appbar = ft.AppBar(
-        leading_width=40,
-        leading=ft.IconButton(
-            icon=ft.Icons.MENU,
-            icon_color=ft.Colors.WHITE,
-            on_click=toggle_sidebar
-        ),
-        title="MENU",
-        # bgcolor="#111418",
-        bgcolor=ft.Colors.BLUE_700,
-        actions=[
-            ft.Container(
-                content=ft.Icons.CLOSE,
-                margin=ft.margin.only(right=10),
-            )
-        ],
-    )
 
     # Layout inicial (para telas grandes)
     layout = ft.ResponsiveRow(
@@ -93,6 +69,50 @@ def home_page(page: ft.Page):
         controls=[sidebar, content],
         expand=True,
         alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    def toggle_sidebar(e):
+        if page.width < 768:
+            # Mobile
+            sidebar.visible = not sidebar.visible
+            content.visible = not sidebar.visible
+            if sidebar.visible:
+                sidebar.col = {"xs": 12}
+                content.col = {"xs": 0}
+            else:
+                sidebar.col = {"xs": 0}
+                content.col = {"xs": 12}
+        else:
+            # Desktop
+            sidebar.visible = not sidebar.visible
+            content.visible = True
+        page.update()
+
+    def logoff_user(e):
+        page.app_state.clear_state()
+        page.go('/logout')
+
+    """
+    O page.appbar não tem efeito aqui, pois a View já possui um AppBar!
+    Solução: Envio a variável appbar como data para a View, para que possa ser acessada através de appbar=home.data
+    Nota: Na View rora /home, appbar=page.appbar não tem efeito, pois a AppBar já foi definida.
+    """
+    appbar = ft.AppBar(
+        leading=ft.IconButton(
+            icon=ft.Icons.MENU,
+            on_click=toggle_sidebar,
+        ),
+        actions=[
+            ft.Container(
+                content=ft.IconButton(
+                    icon=ft.Icons.POWER_SETTINGS_NEW,
+                    icon_color="white",
+                    on_click=logoff_user,
+                ),
+
+                margin=ft.margin.only(right=10),
+            )
+        ],
     )
 
     def on_page_resized(e=None):
@@ -131,9 +151,8 @@ def home_page(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=ft.ScrollMode.AUTO,
             controls=[layout]
-        )
+        ),
+        data=appbar,
     )
-
-    page.update()
 
     return parent_container

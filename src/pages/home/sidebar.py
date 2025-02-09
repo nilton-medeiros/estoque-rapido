@@ -522,8 +522,7 @@ def sidebar_content(page: ft.Page):
 
 def sidebar_footer(page: ft.Page):
     def logoff_user(e):
-        page.app_state.clear_state()
-        page.go('/')
+        page.go('/logout')
 
     def change_primary_color(e):
         e.page.theme.color_scheme.primary = e.control.data
