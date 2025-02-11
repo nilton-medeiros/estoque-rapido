@@ -1,19 +1,11 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import datetime, date
 from typing import Optional
 
 from src.domain.models.company_size import CompanySize
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.phone_number import PhoneNumber
 from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
-
-
-@dataclass
-class ContactInfo:
-    email: str
-    phone1: PhoneNumber
-    phone2: PhoneNumber
-    website: Optional[str] = None
 
 
 @dataclass
@@ -32,19 +24,20 @@ class FiscalData:
     """
     Dados fiscais e de configuração do sistema.
 
-    Regime tributário (tax_regime):
+    Código Regime tributário (CRT):
         1 – Simples Nacional;
         2 – Simples Nacional – Excesso de sublimite de receita bruta;
         3 - Regime Normal;
         4 - Simples Nacional - Microempreendedor Individual (MEI).
     """
-    tax_regime: Optional[int] = 3
-    nfce_series: Optional[str] = None
+    crt: Optional[int] = 3   # CRT - Código de Regime Tributário
+    nfce_series: Optional[int] = None
+    nfce_number: Optional[int] = None
     nfce_environment: Optional[str] = field(default='homologacao')  # Valores aceitos: homologacao, producao
     nfce_certificate: str = None  # Binário do certificado digital (.pfx ou .p12) codificado em base64
     nfce_certificate_password: str = None
-    nfce_certificate_date: Optional[date] = None
-    nfce_sefaz_id_csc: Optional[int] = None  # Número de identificação do CSC.
+    nfce_certificate_date: Optional[datetime] = None    # Data e hora de validade do certificado
+    nfce_sefaz_id_csc: Optional[int] = None  # Número de identificação do CSC - Código de Segurança do Contribuínte.
     nfce_sefaz_csc: Optional[str] = None   # Código do CSC.
 
 
@@ -57,19 +50,19 @@ class Company:
     dados fiscais, de contato, endereço, porte e configurações específicas.
 
     Attributes:
-        name (str): Nome fantasia da empresa.
         corporate_name (str): Razão Social da empresa.
-        cnpj (CNPJ): CNPJ da empresa.
-        state_registration (str): Inscrição Estadual da empresa.
-        legal_nature (str): Natureza jurídica da empresa.
+        email: str: E-mail da empresa.
+        store_name (Optional[str]): Nome da loja.
         id (Optional[str]): ID opcional da empresa.
-        municipal_registration (Optional[str]): Inscrição Municipal da empresa.
-        founding_date (Optional[date]): Data da fundação da empresa.
-        contact (Optional[ContactInfo]): Informações de contato da empresa.
+        name (Optional[str]): Nome fantasia da empresa.
+        cnpj (CNPJ): CNPJ da empresa.
+        cpf (CPF): CPF do emitente da NFCe.
+        ie (str): Inscrição Estadual da empresa.
+        im (Optional[str]): Inscrição Municipal da empresa.
+        phone (Optional[PhoneNumber]): Telefone da empresa.
         address (Optional[Address]): Endereço da empresa.
         size (Optional[CompanySize]): Porte da empresa.
         fiscal (Optional[FiscalData]): Dados fiscais da empresa.
-        description (Optional[str]): Descrição opcional da empresa.
         logo_path (Optional[str]): Caminho para o logo da empresa.
         payment_gateway (Optional[AsaasPaymentGateway]): Gateway de pagamento da empresa.
         ALLOWED_ENVIRONMENT (set): Ambientes permitidos para NFCe.
@@ -79,25 +72,24 @@ class Company:
         >>> from src.domain.models.cnpj import CNPJ
         >>> cnpj = CNPJ("00.000.000/0000-00")
         >>> company = Company(name="Minha Empresa", corporate_name="Minha Empresa Ltda", cnpj=cnpj,
-        ...                   state_registration="123456789", legal_nature="Sociedade Limitada")
+        ...                   ie="123456789")
         >>> print(company)
     """
-    name: str  # Nome fantasia
-    corporate_name: str  # Razão Social
-    cnpj: CNPJ
-    state_registration: str  # Inscrição Estadual
-    legal_nature: str  # Natureza jurídica
-    id: Optional[str] = field(default=None)
+    corporate_name: str  # Razão Social ou Nome do Emitente qdo CPF
+    email: str  # E-mail
     store_name: Optional[str] = 'Matriz'
-    municipal_registration: Optional[str] = None  # Inscrição Municipal
-    founding_date: Optional[date] = None  # Data da fundação
-    contact: Optional[ContactInfo] = None
+    id: Optional[str] = field(default=None)
+    name: Optional[str]  # Nome fantasia
+    cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
+    cpf: Optional[str] = None  # CPF do responsável
+    ie: Optional[str] = None  # Inscrição Estadual
+    im: Optional[str] = None  # Inscrição Municipal
+    phone: Optional[PhoneNumber] = None  # Telefone
     address: Optional[Address] = None
     size: Optional[CompanySize] = None  # Porte da empresa
     fiscal: Optional[FiscalData] = None
 
     # Metadados opcionais
-    description: Optional[str] = None
     logo_path: Optional[str] = None
 
     # Gateway de pagamento | Troque aqui o gateway de pagamento conforme contratado: Default Asaas
@@ -120,9 +112,9 @@ class Company:
             raise ValueError(
                 f"O ambiente '{self.nfce_environment}' não é permitido. Ambientes permitidos: {', '.join(self.ALLOWED_ENVIRONMENT)}.")
 
-        if self.tax_regime < 1 or self.tax_regime > 4:
+        if self.crt < 1 or self.crt > 4:
             raise ValueError(
-                f"Código de Regime Tributário (CRT) '{self.tax_regime}' não permitido. CRT permitidos: 1, 2, 3 ou 4")
+                f"Código de Regime Tributário (CRT) '{self.crt}' não permitido. CRT permitidos: 1, 2, 3 ou 4")
 
     def is_nfce_enabled(self) -> bool:
         """
@@ -164,7 +156,7 @@ class Company:
             "certificado": self.nfce_certificate,
             "certificado_date": self.nfce_certificate_date,
             "certificado_password": self.nfce_certificate_password,
-            "crt": self.tax_regime,
+            "crt": self.crt,
             "series": self.nfce_series,
             "sefaz_id_csc": self.nfce_sefaz_id_csc,
             "sefaz_csc": self.nfce_sefaz_csc

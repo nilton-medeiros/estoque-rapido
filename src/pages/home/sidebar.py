@@ -2,7 +2,6 @@ import asyncio
 import os
 import flet as ft
 
-from src.presentation.components.company_form import CompanyForm
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
 from src.controllers.user_controller import handle_update_photo_user
 from src.services.aws.s3_file_manager import S3FileManager
@@ -336,36 +335,7 @@ def sidebar_header(page: ft.Page):
 
     def on_click_cpny_btn(e):
         print("Debug | Entrou no evento on_click_cpn_btn")
-
-        # Cria o formulário
-        company_form = CompanyForm(
-            current_company if current_company.get('id') else None)
-
-        print(f"company_form: {company_form}")
-
-        # Adiciona o formulário diretamente à página
-        print("Debug | Adicionando CompanyForm à página")
-        page.add(company_form)
-        print("Debug | CompanyForm foi adicionado à página")
-        page.update()  # Força a atualização da página
-
-        # Define a função salvar
-        async def save_company(e):
-            try:
-                form_data = company_form.get_form_data()  # Obtém os dados do formulário
-
-                if current_company.get('id'):
-                    form_data['id'] = current_company['id']
-
-                print(f"Dados do formulário: {form_data}")  # Debug
-
-            except ValueError as err:
-                page.show_snack_bar(ft.SnackBar(content=ft.Text(str(err))))
-
-        # Adiciona o botão "Salvar"
-        save_btn = ft.ElevatedButton("Salvar", on_click=save_company)
-        page.add(save_btn)
-        print("Debug | Botão Salvar foi adicionado à página")
+        page.go('/company/form')
 
     page.company_name_text_btn.on_click = on_click_cpny_btn
 
@@ -423,7 +393,7 @@ def sidebar_content(page: ft.Page):
                     ft.Text(value='I.E.:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
                     ft.Text(
-                        value=current_company['state_registration'], theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                        value=current_company['ie'], theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
         ]

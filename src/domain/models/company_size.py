@@ -3,7 +3,8 @@ from enum import Enum
 
 
 class CompanySize(Enum):
-    MICRO = "Microempresa"
-    SMALL = "Pequena Empresa"
+    MEI = "Microempreendedor Individual"  # MEI
+    MICRO = "Microempresa"  # ME
+    SMALL = "Pequena Empresa"  # EPP
     MEDIUM = "Média Empresa"
     LARGE = "Grande Empresa"

@@ -1,6 +1,8 @@
 {
   "material-icon-theme.folders.associations": {
     "adaptadores": "Connection",
+    "companies": "Stack",
+    "company": "Store",
     "domain": "Guard",
     "mariadb": "database",
     "mysql": "database",

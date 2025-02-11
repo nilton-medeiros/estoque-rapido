@@ -2,6 +2,7 @@ import flet as ft
 from dotenv import load_dotenv
 import os
 
+from src.pages.companies.form_cia import company_form
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page
@@ -152,6 +153,23 @@ def main(page: ft.Page):
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
+            case '/company/form':  # Registro
+                print("Debug | Rota /company/form")
+                pg_view = ft.View(
+                    route='/company/form',
+                    appbar=ft.AppBar(
+                        title=ft.Text("home/empresa/formulario/", size=20),
+                        leading=ft.IconButton(
+                            icon=ft.Icons.ARROW_BACK,
+                            on_click=lambda _: page.go("/home"),
+                        ),
+                    ),
+                    controls=[company_form(page)],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',

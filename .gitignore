@@ -133,6 +133,9 @@ venv.bak/
 serviceAccountKey.json
 firebaseAdminSDK_fbsvc_13b6b05ac2.json
 
+# Docs
+general_info/
+
 # Spyder project settings
 .spyderproject
 .spyproject

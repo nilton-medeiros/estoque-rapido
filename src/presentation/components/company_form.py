@@ -8,36 +8,34 @@ from src.domain.models.company_size import CompanySize
 class CompanyForm(ft.Container):
     def __init__(self, company_data: dict = None):
         super().__init__()
-        self.bgcolor = "blue"
-        self.width = 500
-        self.height = 500
+        self.bgcolor = "#111418"
+        self.width = 1500
+        self.height = 850
         self.company_data = company_data
         self.padding = 20
+        self.scroll = ft.ScrollMode.ALWAYS
         self._create_form_fields()
 
-        self.content = ft.Column([
-            ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.name, self.corporate_name], wrap=True),
-            ft.Row([self.cnpj, self.state_registration,
-                   self.municipal_registration], wrap=True),
-            ft.Row([self.legal_nature, self.founding_date], wrap=True),
+        self.content = ft.Column(
+            [
+                ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
+                ft.Row([self.doc], wrap=True),
+                ft.Row([self.name, self.corporate_name], wrap=True),
+                ft.Row([self.phone, self.ie, self.im], wrap=True),
 
-            ft.Divider(),
-            ft.Text("Contato", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.email, self.website], wrap=True),
-            ft.Row([self.phone1, self.phone2], wrap=True),
+                ft.Divider(),
+                ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
+                ft.Row([self.street, self.number], wrap=True),
+                ft.Row([self.complement, self.neighborhood], wrap=True),
+                ft.Row([self.city, self.state, self.postal_code], wrap=True),
 
-            ft.Divider(),
-            ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.street, self.number], wrap=True),
-            ft.Row([self.complement, self.neighborhood], wrap=True),
-            ft.Row([self.city, self.state, self.postal_code], wrap=True),
-
-            ft.Divider(),
-            ft.Text("Informações Adicionais", size=20,
-                    weight=ft.FontWeight.BOLD),
-            ft.Row([self.size, self.tax_regime], wrap=True),
-        ], scroll=ft.ScrollMode.AUTO)
+                ft.Divider(),
+                ft.Text("Informações Adicionais", size=20,
+                        weight=ft.FontWeight.BOLD),
+                ft.Row([self.size, self.crt], wrap=True),
+            ],
+            scroll=ft.ScrollMode.AUTO,
+        )
 
     def _create_form_fields(self):
         """Cria todos os campos do formulário"""
@@ -53,47 +51,31 @@ class CompanyForm(ft.Container):
             border=ft.InputBorder.UNDERLINE,
             width=400,
         )
-        self.cnpj = ft.TextField(
-            label="CNPJ",
+        self.doc = ft.TextField(
+            label="CNPJ/CPF",
+            keyboard_type=ft.KeyboardType.NUMBER,
             border=ft.InputBorder.UNDERLINE,
             width=200,
         )
-        self.state_registration = ft.TextField(
+        self.ie = ft.TextField(
             label="Inscrição Estadual",
             border=ft.InputBorder.UNDERLINE,
             width=200,
         )
-        self.legal_nature = ft.TextField(
-            label="Natureza Jurídica",
-            border=ft.InputBorder.UNDERLINE,
-            width=400,
-        )
-        self.municipal_registration = ft.TextField(
+        self.im = ft.TextField(
             label="Inscrição Municipal",
             border=ft.InputBorder.UNDERLINE,
             width=200,
         )
-        self.founding_date = ft.TextField(
-            label="Data de Fundação",
-            border=ft.InputBorder.UNDERLINE,
-            width=200,
-            hint_text="DD/MM/AAAA"
-        )
-
         # Informações de Contato
         self.email = ft.TextField(
             label="Email",
+            keyboard_type=ft.KeyboardType.EMAIL,
             border=ft.InputBorder.UNDERLINE,
             width=400,
         )
-        self.phone1 = ft.TextField(
-            label="Telefone 1",
-            border=ft.InputBorder.UNDERLINE,
-            width=200,
-            hint_text="+55(11)99999-9999"
-        )
-        self.phone2 = ft.TextField(
-            label="Telefone 2",
+        self.phone = ft.TextField(
+            label="Telefone",
             border=ft.InputBorder.UNDERLINE,
             width=200,
             hint_text="+55(11)99999-9999"
@@ -152,7 +134,7 @@ class CompanyForm(ft.Container):
         )
 
         # Dados Fiscais
-        self.tax_regime = ft.Dropdown(
+        self.crt = ft.Dropdown(
             label="Regime Tributário",
             width=300,
             options=[
@@ -174,14 +156,8 @@ class CompanyForm(ft.Container):
         self.content = ft.Column([
             ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
             ft.Row([self.name, self.corporate_name], wrap=True),
-            ft.Row([self.cnpj, self.state_registration,
-                   self.municipal_registration], wrap=True),
-            ft.Row([self.legal_nature, self.founding_date], wrap=True),
-
-            ft.Divider(),
-            ft.Text("Contato", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.email, self.website], wrap=True),
-            ft.Row([self.phone1, self.phone2], wrap=True),
+            ft.Row([self.cnpj, self.phone], wrap=True),
+            ft.Row([self.ie, self.im], wrap=True),
 
             ft.Divider(),
             ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
@@ -192,7 +168,7 @@ class CompanyForm(ft.Container):
             ft.Divider(),
             ft.Text("Informações Adicionais", size=20,
                     weight=ft.FontWeight.BOLD),
-            ft.Row([self.size, self.tax_regime], wrap=True),
+            ft.Row([self.size, self.crt], wrap=True),
         ], scroll=ft.ScrollMode.AUTO)
         print(f"Debug | Content definido: {self.content}")
 
@@ -210,22 +186,9 @@ class CompanyForm(ft.Container):
         self.name.value = self.company_data.get('name', '')
         self.corporate_name.value = self.company_data.get('corporate_name', '')
         self.cnpj.value = str(self.company_data.get('cnpj', ''))
-        self.state_registration.value = self.company_data.get(
-            'state_registration', '')
-        self.legal_nature.value = self.company_data.get('legal_nature', '')
-        self.municipal_registration.value = self.company_data.get(
-            'municipal_registration', '')
-
-        # Formata a data de fundação se existir
-        if founding_date := self.company_data.get('founding_date'):
-            self.founding_date.value = founding_date.strftime('%d/%m/%Y')
-
-        # Informações de Contato
-        if contact := self.company_data.get('contact'):
-            self.email.value = contact.get('email', '')
-            self.phone1.value = str(contact.get('phone1', ''))
-            self.phone2.value = str(contact.get('phone2', ''))
-            self.website.value = contact.get('website', '')
+        self.phone.value = str(self.company_data.get('phone', ''))
+        self.ie.value = self.company_data.get('ie', '')
+        self.im.value = self.company_data.get('im', '')
 
         # Endereço
         if address := self.company_data.get('address'):
@@ -242,39 +205,22 @@ class CompanyForm(ft.Container):
             self.size.value = size.name
 
         if fiscal := self.company_data.get('fiscal'):
-            self.tax_regime.value = str(fiscal.get('tax_regime', '3'))
+            self.crt.value = str(fiscal.get('crt', '3'))
 
     def get_form_data(self) -> dict:
         """Obtém os dados do formulário como um dicionário"""
         try:
             # Analisa e valida os dados
             cnpj_obj = CNPJ(self.cnpj.value)
-            phone1_obj = PhoneNumber(
-                self.phone1.value) if self.phone1.value else None
-            phone2_obj = PhoneNumber(
-                self.phone2.value) if self.phone2.value else None
-
-            # Analisa a data de fundação
-            founding_date = None
-            if self.founding_date.value:
-                founding_date = datetime.strptime(
-                    self.founding_date.value, '%d/%m/%Y'
-                ).date()
+            phone_obj = PhoneNumber(
+                self.phone.value) if self.phone.value else None
 
             return {
                 "name": self.name.value,
                 "corporate_name": self.corporate_name.value,
                 "cnpj": cnpj_obj,
-                "state_registration": self.state_registration.value,
-                "legal_nature": self.legal_nature.value,
-                "municipal_registration": self.municipal_registration.value,
-                "founding_date": founding_date,
-                "contact": {
-                    "email": self.email.value,
-                    "phone1": phone1_obj,
-                    "phone2": phone2_obj,
-                    "website": self.website.value
-                },
+                "ie": self.ie.value,
+                "im": self.im.value,
                 "address": {
                     "street": self.street.value,
                     "number": self.number.value,
@@ -286,7 +232,7 @@ class CompanyForm(ft.Container):
                 },
                 "size": CompanySize[self.size.value] if self.size.value else None,
                 "fiscal": {
-                    "tax_regime": int(self.tax_regime.value) if self.tax_regime.value else 3
+                    "crt": int(self.crt.value) if self.crt.value else 3
                 }
             }
         except ValueError as e:
