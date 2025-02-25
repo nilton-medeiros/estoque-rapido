@@ -1,5 +1,6 @@
 import flet as ft
 from src.presentation.components.company_form import CompanyForm
+from src.utils.message_snackbar import MessageType, message_snackbar
 
 
 def company_form(page: ft.Page):
@@ -9,7 +10,9 @@ def company_form(page: ft.Page):
     print("Debug | current_company: {current_company}")
     # Cria o formulário
     form = CompanyForm(
-        current_company if current_company.get('id') else None)
+        page=page,
+        company_data=current_company if current_company.get('id') else None
+    )
 
     print(f"form: {form}")
 
@@ -25,7 +28,7 @@ def company_form(page: ft.Page):
             # Todo: Implementar a lógica de salvar os dados da empresa
 
         except ValueError as err:
-            page.show_snack_bar(ft.SnackBar(content=ft.Text(str(err))))
+            message_snackbar(page=page, message=str(err), message_type=MessageType.ERROR)
 
     # Adiciona o botão "Salvar"
     save_btn = ft.ElevatedButton("Salvar", on_click=save_company)

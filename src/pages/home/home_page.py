@@ -89,7 +89,6 @@ def home_page(page: ft.Page):
         page.update()
 
     def logoff_user(e):
-        page.app_state.clear_state()
         page.go('/logout')
 
     """

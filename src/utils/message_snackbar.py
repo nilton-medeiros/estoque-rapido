@@ -38,6 +38,7 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
         margin=ft.margin.all(10),
     )
 
+    # page.show_snack_bar(snack_bar) # Este método não existe em page
     page.overlay.append(snack_bar)
     page.update()
     snack_bar.open = True

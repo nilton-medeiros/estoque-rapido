@@ -11,7 +11,6 @@ estoquerapido/
 │   ├── styles/
 │   └── manifest.json
 ├── src/
-│   ├── components/
 │   ├── controllers/
 │   │   ├── __init__.py
 │   │   └── user_controller.py
@@ -22,6 +21,12 @@ estoquerapido/
 │   │       ├── phone_number.py
 │   │       └── user.py
 │   ├── pages/
+│   │   ├── companyes/
+│   │   │   ├── __init__.py
+│   │   │   └── form_cia.py
+│   │   ├── home/
+│   │   │   ├── __init__.py
+│   │   │   └── home_page.py
 │   │   ├── partials/
 │   │   │   ├── __init__.py
 │   │   │   └── login_button.py
@@ -30,22 +35,33 @@ estoquerapido/
 │   │   ├── landing_page.py
 │   │   ├── login.py
 │   │   └── signup.py
+│   ├── presentation/
+│   │   ├── components/
+│   │   │   ├── __init__.py
+│   │   │   └── carousel.py
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── app_events.py
-│   │   ├── app_state.py
-│   │   ├── auth_manager.py
-│   │   ├── estoque-rapido-firebase-adminsdk-fbsvc-13b6b05ac2.json
-│   │   ├── serviceAccountKey-EXEMPLO.json
-│   │   ├── serviceAccountKey.json
-│   │   ├── state_validator.py
-│   │   └── user_service.py
+│   │   ├── aws/
+│   │   │   └── s3_file_manager.py
+│   │   ├── entities/
+│   │   │   ├── comany_service.py
+│   │   │   └── user_service.py
+│   │   ├── google/
+│   │   │   ├── firebaseAdminSDK-SAMPLE.json
+│   │   │   └── serviceAccountKey-SAMPLE.json
+│   │   ├── payment_gateways/
+│   │   │   └── asaas_payment_gateway.py
+│   │   ├── states/
+│   │   │   ├── __init__.py
+│   │   │   ├── app_state_manager.py
+│   │   │   └── state_validatgor.py
 │   ├── tests/
 │   ├── utils/
+│   │   ├── __init__.py
 │   │   ├── deep_translator.py
 │   │   ├── field_validation_functions.py
 │   │   └── message_snackbar.py
-├── └── __init__.py
+│   │   ├── __init__.py
 ├── storage/
 │   ├── data/
 │   │   ├── firebase/

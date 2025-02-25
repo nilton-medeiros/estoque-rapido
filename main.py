@@ -9,6 +9,7 @@ from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
 
+# Carrega a chave do Flet para assinar URLs temporárias de upload
 load_dotenv()
 flet_key = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
@@ -138,6 +139,7 @@ def main(page: ft.Page):
                 page.app_state.clear_state()
                 page.sessions_data.clear()
                 page.route = '/'
+                page.go("/")
             case '/home':
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado

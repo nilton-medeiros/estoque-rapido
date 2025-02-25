@@ -86,7 +86,7 @@ class CompanyService:
             raise ValueError("ID da empresa é necessário para atualização")
         return await self.repository.save(company)
 
-    async def find_user_by_cnpj(self, cnpj: CNPJ) -> Optional[Company]:
+    async def find_company_by_cnpj(self, cnpj: CNPJ) -> Optional[Company]:
         """Busca uma empresa no banco de dados utilizando o CNPJ.
 
         Este método busca uma empresa no banco de dados utilizando o CNPJ fornecido.

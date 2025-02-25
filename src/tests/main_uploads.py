@@ -22,8 +22,8 @@ class UploadDialog(ft.AlertDialog):
             content=ft.Column(
                 controls=[
                     ft.Text(
-                        value='Carregar arquivos', 
-                        size=24, 
+                        value='Carregar arquivos',
+                        size=24,
                         weight=ft.FontWeight.BOLD
                     ),
                     ft.Container(
@@ -60,11 +60,11 @@ class UploadDialog(ft.AlertDialog):
         else:
             on_upload.subtitle.value = e.progress
             on_upload.trailing.name = ft.icons.VERIFIED if e.progress == 1 else ft.icons.CANCEL
-        
+
         self.files_progress.update()
 
     def pick_files(self, e: ft.FilePickerResultEvent):
-        if not e.files: return;
+        if not e.files: return
 
         for file in e.files:
             filename = file.name
@@ -74,8 +74,8 @@ class UploadDialog(ft.AlertDialog):
                 self.pick_files_dialog.upload(
                     files=[
                         ft.FilePickerUploadFile(
-                            name=filename, 
-                            upload_url=self.page.get_upload_url(filename, 60), 
+                            name=filename,
+                            upload_url=self.page.get_upload_url(filename, 60),
                             method="PUT"
                         )
                     ]
@@ -112,11 +112,11 @@ def main(page: ft.Page):
         else:
             on_upload.subtitle.value = e.progress
             on_upload.trailing.name = ft.icons.VERIFIED if e.progress == 1 else ft.icons.CANCEL
-        
+
         files_progress.update()
 
     def pick_files(e: ft.FilePickerResultEvent):
-        if not e.files: return;
+        if not e.files: return
 
         for file in e.files:
             filename = file.name
@@ -126,8 +126,8 @@ def main(page: ft.Page):
                 pick_files_dialog.upload(
                     files=[
                         ft.FilePickerUploadFile(
-                            name=filename, 
-                            upload_url=page.get_upload_url(filename, 60), 
+                            name=filename,
+                            upload_url=page.get_upload_url(filename, 60),
                             method="PUT"
                         )
                     ]
@@ -154,8 +154,8 @@ def main(page: ft.Page):
         content=ft.Column(
             controls=[
                 ft.Text(
-                    value='Carregar arquivos', 
-                    size=24, 
+                    value='Carregar arquivos',
+                    size=24,
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Container(

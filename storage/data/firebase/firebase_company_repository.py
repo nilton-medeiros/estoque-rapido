@@ -2,11 +2,11 @@ from typing import Optional
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
+from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.utils.deep_translator import deepl_translator
 
 from src.domain.models.cnpj import CNPJ
-from src.domain.models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from src.domain.models.company import Address, Company, CompanySize, FiscalData
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from storage.data.interfaces.company_repository import CompanyRepository
 
@@ -25,7 +25,8 @@ class FirebaseCompanyRepository(CompanyRepository):
 
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
-        fb_app = get_firebase_app()
+        # fb_app = get_firebase_app()
+        get_firebase_app()
 
         self.db = firestore.client()
         self.collection = self.db.collection('companies')
@@ -74,7 +75,8 @@ class FirebaseCompanyRepository(CompanyRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+            query = self.collection.where(
+                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
             print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
@@ -94,7 +96,8 @@ class FirebaseCompanyRepository(CompanyRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+            query = self.collection.where(
+                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             docs = query.get()
 
             if docs:
@@ -146,16 +149,22 @@ class FirebaseCompanyRepository(CompanyRepository):
         Retorna:
             str: O ID do documento da empresa salva.
         """
-        company_dict = self._company_to_dict(company)
+        try:
+            company_dict = self._company_to_dict(company)
 
-        existing = self.find_by_cnpj(company.cnpj)
-        if existing:
-            doc_ref = self.collection.document(existing.id)
-            doc_ref.update(company_dict)
-            return existing.id
+            existing = self.find_by_cnpj(company.cnpj)
+            if existing:
+                doc_ref = self.collection.document(existing.id)
+                doc_ref.set(company_dict, merge=True)
+                return existing.id
 
-        doc_ref = self.collection.add(company_dict)[1]
-        return doc_ref.id
+            doc_ref = self.collection.add(company_dict)[1]
+            return doc_ref.id  # Garante que o ID retornado seja o ID real do documento
+
+        except Exception as e:
+            # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
+            print(f"Erro ao salvar empresa: {e}")
+            raise  # Re-lançar a exceção para que seja tratada em camadas superiores
 
     async def _company_to_dict(self, company: Company) -> dict:
         """
@@ -238,7 +247,8 @@ class FirebaseCompanyRepository(CompanyRepository):
                 postal_code=doc_data['address']['postal_code']
             )
 
-        size_info = CompanySize(doc_data.get('size')) if doc_data.get('size') else None
+        size_info = CompanySize(doc_data.get(
+            'size')) if doc_data.get('size') else None
 
         fiscal_info = None
         if doc_data.get("fiscal"):

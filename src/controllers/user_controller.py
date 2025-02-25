@@ -12,8 +12,8 @@ async def handle_save_user(user: User, create_new: bool, password: str = None) -
     """
     Manipula a operação de salvar usuário.
 
-    Esta função manipula a operação de salvar um usuário no banco de dados, seja criando uma novo
-    usuário ou atualizando uma existente. Ela utiliza um repositório específico para realizar as
+    Esta função manipula a operação de salvar um usuário no banco de dados, seja criando um novo
+    usuário ou atualizando um existente. Ela utiliza um repositório específico para realizar as
     operações necessárias.
 
     Args:

@@ -190,13 +190,6 @@ def sidebar_header(page: ft.Page):
 
                     page.pubsub.send_all("user_updated")
 
-                print(":")
-                print(
-                    "======================================================================================")
-                print(f"Debug 169 | {result["message"]}")
-                print(
-                    "======================================================================================")
-
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                 message_snackbar(
                     page=page, message=result["message"], message_type=color)
@@ -210,13 +203,6 @@ def sidebar_header(page: ft.Page):
                 page.close(dialog)
 
             except Exception as e:
-                print(":")
-                print(
-                    "======================================================================================")
-                print(f"Debug 186 | {str(e)}")
-                print(
-                    "======================================================================================")
-
                 message_snackbar(
                     page=page,
                     message=f"Erro no upload: {str(e)}",
@@ -267,6 +253,9 @@ def sidebar_header(page: ft.Page):
 
         def close_dialog(e):
             page.close(dialog)
+            if page.overlay:
+                page.overlay.pop()
+                page.update()
 
         # Criando o diálogo
         dialog = ft.AlertDialog(
@@ -334,7 +323,6 @@ def sidebar_header(page: ft.Page):
     )
 
     def on_click_cpny_btn(e):
-        print("Debug | Entrou no evento on_click_cpn_btn")
         page.go('/company/form')
 
     page.company_name_text_btn.on_click = on_click_cpny_btn
@@ -358,11 +346,6 @@ def sidebar_header(page: ft.Page):
 
 def sidebar_content(page: ft.Page):
     current_company = page.app_state.company
-
-    # print(":")
-    # print("===================================================================================")
-    # print(f"Debug | current_company: {current_company}")
-    # print("===================================================================================")
 
     store = ft.Column(
         controls=[
