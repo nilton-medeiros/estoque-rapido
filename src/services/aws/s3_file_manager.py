@@ -39,7 +39,7 @@ class S3FileManager:
         )
 
         self.prefix = 'estoquerapido/public'
-        self.relativ_key = ''
+        self._relativ_key = ''
 
     def get_url(self) -> str:
         """
@@ -54,7 +54,7 @@ class S3FileManager:
             Para key="pasta/arquivo.txt" e prefix="estoquerapido/public",
             retorna "https://<bucket>.s3.<region>.amazonaws.com/estoquerapido/public/pasta/arquivo.txt"
         """
-        return f"https://{self.bucket}.s3.{self.region_name}.amazonaws.com/{self.relativ_key}"
+        return f"https://{self.bucket}.s3.{self.region_name}.amazonaws.com/{self._relativ_key}"
 
     def _get_full_key(self, key: str) -> str:
         """

@@ -29,7 +29,7 @@ class FirebaseUserRepository(UserRepository):
 
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
-        fb_app = get_firebase_app()
+        get_firebase_app()
 
         self.db = firestore.client()
         self.collection = self.db.collection('users')
@@ -64,7 +64,7 @@ class FirebaseUserRepository(UserRepository):
         Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
 
         Args:
-            user_id (str): O identificador único da usuário.
+            user_id (str): O identificador único do usuário.
 
         Retorna:
             bool: True se a exclusão for bem-sucedida, False caso contrário.
@@ -286,7 +286,7 @@ class FirebaseUserRepository(UserRepository):
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
 
-    async def save(self, user: User) -> User:
+    async def save(self, user: User) -> str:
         """
         Salvar um usuário no banco de dados Firestore.
 
@@ -303,8 +303,8 @@ class FirebaseUserRepository(UserRepository):
             user_dict = self._user_to_dict(user)
 
             if user.id:
-                # Update na coleção users
-                self.collection.document(user.id).set(user_dict)
+                # Update na coleção users, merge=True para não sobrescrever (remover) os campos não mencionados no user_dict
+                self.collection.document(user.id).set(user_dict, merge=True)
             else:
 
                 if self.password:

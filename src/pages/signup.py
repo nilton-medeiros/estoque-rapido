@@ -233,8 +233,7 @@ class SignupView:
 
             color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
 
-            message_snackbar(
-                page=self.page, message=result["message"], message_type=color)
+            message_snackbar(page=self.page, message=result["message"], message_type=color)
 
             if not result["is_error"]:
                 print(":")

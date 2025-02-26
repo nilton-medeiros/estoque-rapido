@@ -89,7 +89,6 @@ def home_page(page: ft.Page):
         page.update()
 
     def logoff_user(e):
-        page.app_state.clear_state()
         page.go('/logout')
 
     """
@@ -116,7 +115,8 @@ def home_page(page: ft.Page):
     )
 
     def on_page_resized(e=None):
-        print(f"DEBUG: page.width = {page.width}")  # Depuração
+        print(f"Debug | page.width = {page.width}")
+        print(f"Debug | page.height = {page.height}")
 
         if page.width < 768:  # Modo Mobile
             print("DEBUG: Entrando no modo mobile")

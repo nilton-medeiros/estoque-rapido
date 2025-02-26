@@ -2,11 +2,11 @@ from typing import Optional
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.services.payment_gateways.asaas_payment_gateway import AsaasPaymentGateway
+from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.utils.deep_translator import deepl_translator
 
 from src.domain.models.cnpj import CNPJ
-from src.domain.models.company import Address, Company, CompanySize, ContactInfo, FiscalData
+from src.domain.models.company import Address, Company, CompanySize, FiscalData
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from storage.data.interfaces.company_repository import CompanyRepository
 
@@ -25,7 +25,8 @@ class FirebaseCompanyRepository(CompanyRepository):
 
         Garante que o aplicativo Firebase seja inicializado antes de criar o cliente Firestore.
         """
-        fb_app = get_firebase_app()
+        # fb_app = get_firebase_app()
+        get_firebase_app()
 
         self.db = firestore.client()
         self.collection = self.db.collection('companies')
@@ -74,7 +75,8 @@ class FirebaseCompanyRepository(CompanyRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+            query = self.collection.where(
+                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
             print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
@@ -94,7 +96,8 @@ class FirebaseCompanyRepository(CompanyRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where(field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+            query = self.collection.where(
+                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             docs = query.get()
 
             if docs:
@@ -146,16 +149,22 @@ class FirebaseCompanyRepository(CompanyRepository):
         Retorna:
             str: O ID do documento da empresa salva.
         """
-        company_dict = self._company_to_dict(company)
+        try:
+            company_dict = self._company_to_dict(company)
 
-        existing = self.find_by_cnpj(company.cnpj)
-        if existing:
-            doc_ref = self.collection.document(existing.id)
-            doc_ref.update(company_dict)
-            return existing.id
+            existing = self.find_by_cnpj(company.cnpj)
+            if existing:
+                doc_ref = self.collection.document(existing.id)
+                doc_ref.set(company_dict, merge=True)
+                return existing.id
 
-        doc_ref = self.collection.add(company_dict)[1]
-        return doc_ref.id
+            doc_ref = self.collection.add(company_dict)[1]
+            return doc_ref.id  # Garante que o ID retornado seja o ID real do documento
+
+        except Exception as e:
+            # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
+            print(f"Erro ao salvar empresa: {e}")
+            raise  # Re-lançar a exceção para que seja tratada em camadas superiores
 
     async def _company_to_dict(self, company: Company) -> dict:
         """
@@ -172,21 +181,12 @@ class FirebaseCompanyRepository(CompanyRepository):
             'name': company.name,
             'corporate_name': company.corporate_name,
             'cnpj': str(company.cnpj),
-            'state_registration': company.state_registration,
-            'legal_nature': company.legal_nature,
+            'ie': company.ie,
             'store_name': company.store_name,
-            'municipal_registration': company.municipal_registration,
-            'founding_date': company.founding_date,
+            'im': company.im,
+            'phone': company.phone.get_e164(),
         }
 
-
-        if company.contact:
-            company_dict['contact'] = {
-                'email': company.contact.email,
-                'phone1': company.contact.phone1.get_e164(),
-                'phone2': company.contact.phone2.get_e164(),
-                'website': company.contact.website
-            }
         if company.address:
             company_dict['address'] = {
                 'street': company.address.street,
@@ -196,14 +196,13 @@ class FirebaseCompanyRepository(CompanyRepository):
                 'city': company.address.city,
                 'state': company.address.state,
                 'postal_code': company.address.postal_code,
-                'description': company.description,
                 'logo_path': company.logo_path,
             }
         if company.size:
             company_dict['size'] = company.size.value
         if company.fiscal:
             company_dict['fiscal'] = {
-                'tax_regime': company.fiscal.tax_regime,
+                'crt': company.fiscal.crt,
                 'nfce_series': company.fiscal.nfce_series,
                 'nfce_environment': company.fiscal.nfce_environment,
                 'nfce_certificate': company.fiscal.nfce_certificate,
@@ -236,15 +235,6 @@ class FirebaseCompanyRepository(CompanyRepository):
         from src.domain.models.cnpj import CNPJ
         from src.domain.models.phone_number import PhoneNumber
 
-        contact_info = None
-        if doc_data.get('contact'):
-            contact_info = ContactInfo(
-                email=doc_data['contact']['email'],
-                phone1=PhoneNumber(doc_data['contact']['phone1']),
-                phone2=PhoneNumber(doc_data['contact']['phone2']),
-                website=doc_data['contact'].get('website')
-            )
-
         address = None
         if doc_data.get('address'):
             address = Address(
@@ -257,12 +247,13 @@ class FirebaseCompanyRepository(CompanyRepository):
                 postal_code=doc_data['address']['postal_code']
             )
 
-        size_info = CompanySize(doc_data.get('size')) if doc_data.get('size') else None
+        size_info = CompanySize(doc_data.get(
+            'size')) if doc_data.get('size') else None
 
         fiscal_info = None
         if doc_data.get("fiscal"):
             fiscal_info = FiscalData(
-                tax_regime=doc_data['fiscal']['tax_regime'],
+                crt=doc_data['fiscal']['crt'],
                 nfce_series=doc_data['fiscal']['nfce_series'],
                 nfce_environment=doc_data['fiscal']['nfce_environment'],
                 nfce_certificate=doc_data['fiscal']['nfce_certificate'],
@@ -287,16 +278,13 @@ class FirebaseCompanyRepository(CompanyRepository):
             name=doc_data['name'],
             corporate_name=doc_data['corporate_name'],
             cnpj=CNPJ(doc_data['cnpj']),
-            state_registration=doc_data['state_registration'],
-            legal_nature=doc_data['legal_nature'],
+            ie=doc_data['ie'],
+            im=doc_data.get('im'),
+            phone=PhoneNumber(doc_data['phone']),
             store_name=doc_data.get('store_name', "Matriz"),
-            municipal_registration=doc_data.get('municipal_registration'),
-            founding_date=doc_data.get('founding_date'),
-            contact=contact_info,
             address=address,
             size=size_info,
             fiscal=fiscal_info,
-            description=doc_data.get('description'),
             logo_path=doc_data.get('logo_path'),
             payment_gateway=payment_gwy,
         )

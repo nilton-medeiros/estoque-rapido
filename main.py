@@ -2,12 +2,18 @@ import flet as ft
 from dotenv import load_dotenv
 import os
 
+import logging
+
+from src.pages.companies.form_cia import company_form
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
 
+logger = logging.getLogger(__name__)
+
+# Carrega a chave do Flet para assinar URLs temporárias de upload
 load_dotenv()
 flet_key = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
@@ -136,7 +142,8 @@ def main(page: ft.Page):
             case '/logout':
                 page.app_state.clear_state()
                 page.sessions_data.clear()
-                page.route = '/'
+                page.update()
+                page.go('/')
             case '/home':
                 if not app_state.user:
                     page.go('/login')  # Redireciona se não estiver autenticado
@@ -152,6 +159,23 @@ def main(page: ft.Page):
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
+            case '/company/form':  # Registro
+                print("Debug | Rota /company/form")
+                pg_view = ft.View(
+                    route='/company/form',
+                    appbar=ft.AppBar(
+                        title=ft.Text("home/empresa/formulario/", size=16),
+                        leading=ft.IconButton(
+                            icon=ft.Icons.ARROW_BACK,
+                            on_click=lambda _: page.go("/home"),
+                        ),
+                    ),
+                    controls=[company_form(page)],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
