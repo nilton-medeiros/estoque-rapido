@@ -30,10 +30,10 @@ class LogConfig:
         file_handler.setLevel(log_level)
         root_logger.addHandler(file_handler)
 
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        console_handler.setLevel(log_level)
-        root_logger.addHandler(console_handler)
+        # console_handler = logging.StreamHandler()
+        # console_handler.setFormatter(formatter)
+        # console_handler.setLevel(log_level)
+        # root_logger.addHandler(console_handler)
 
 # Instancia a configuração do log uma única vez
 LogConfig()

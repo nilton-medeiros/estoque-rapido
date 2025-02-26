@@ -1,20 +1,19 @@
 import asyncio
-import logging
+# import logging
 import os
 
 import flet as ft
 
-from src.config.logging_config import LogConfig
 from src.controllers.dfe_controller import handle_upload_certificate_a1
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.cpf import CPF
 from src.domain.models.phone_number import PhoneNumber
 from src.domain.models.company_subclass import CompanySize, CodigoRegimeTributario, Environment
 from src.domain.models.certificate_status import CertificateStatus
-from src.services.apis import consult_cnpj_api
+from src.services.apis.consult_cnpj_api import consult_cnpj_api
 from src.utils.message_snackbar import MessageType, message_snackbar
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 class CompanyForm(ft.Container):
@@ -57,7 +56,7 @@ class CompanyForm(ft.Container):
             on_change=self._handle_cnpj_change
         )
         self.consult_cnpj_button = ft.IconButton(
-            icon=ft.icons.SEARCH,
+            icon=ft.Icons.SEARCH,
             tooltip="Consultar CNPJ",
             visible=False,
             disabled=True,
@@ -68,6 +67,7 @@ class CompanyForm(ft.Container):
             label="CPF",
             border=ft.InputBorder.UNDERLINE,
             width=200,
+            on_change=self._handle_cpf_change
         )
 
         # Campos de nome com labels iniciais (CNPJ por padrão)
@@ -94,9 +94,9 @@ class CompanyForm(ft.Container):
         )
         self.store_name = ft.TextField(
             label="Nome da Loja",
-            hint_text="Nome da Loja ou comércio, Matriz, Filial, etc.",
+            hint_text="Loja Centro, Loja Shop.Iguatemi-0325",
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=400,
         )
 
         # Informações de Contato
@@ -117,7 +117,7 @@ class CompanyForm(ft.Container):
         self.street = ft.TextField(
             label="Rua",
             border=ft.InputBorder.UNDERLINE,
-            width=300,
+            width=400,
         )
         self.number = ft.TextField(
             label="Número",
@@ -127,17 +127,17 @@ class CompanyForm(ft.Container):
         self.complement = ft.TextField(
             label="Complemento",
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=400,
         )
         self.neighborhood = ft.TextField(
             label="Bairro",
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=300,
         )
         self.city = ft.TextField(
             label="Cidade",
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=400,
         )
         self.state = ft.TextField(
             label="Estado",
@@ -153,7 +153,7 @@ class CompanyForm(ft.Container):
         # Porte da Empresa
         self.size = ft.Dropdown(
             label="Porte da Empresa",
-            width=200,
+            width=400,
             options=[
                 ft.dropdown.Option(key=size.name, text=size.value)
                 for size in CompanySize
@@ -163,7 +163,7 @@ class CompanyForm(ft.Container):
         # Dados Fiscais
         self.crt = ft.Dropdown(
             label="Regime Tributário",
-            width=300,
+            width=400,
             options=[
                 ft.dropdown.Option(key=regime.name,  text=regime.value[1])
                 for regime in CodigoRegimeTributario
@@ -180,7 +180,7 @@ class CompanyForm(ft.Container):
             hint_text="Próximo número a ser emitido",
             keyboard_type=ft.KeyboardType.NUMBER,
             border=ft.InputBorder.UNDERLINE,
-            width=100,
+            width=300,
         )
         # Tipo de Ambiente
         self.nfce_environment = ft.Dropdown(
@@ -195,16 +195,16 @@ class CompanyForm(ft.Container):
         )
         self.nfce_sefaz_id_csc = ft.TextField(
             label="Identificação do CSC",
-            hint_text="Número de identificação do CSC (Código Segurança do Contribuínte)",
+            hint_text="Id. Código Segurança do Contribuínte",
             keyboard_type=ft.KeyboardType.NUMBER,
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=400,
         )
         self.nfce_sefaz_csc = ft.TextField(
             label="Código do CSC",
-            hint_text="Código do CSC (Código Segurança do Contribuínte)",
+            hint_text="Código Segurança do Contribuínte",
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=400,
         )
 
         # Certificado A1 (PFX/P12)
@@ -407,33 +407,32 @@ class CompanyForm(ft.Container):
         return ft.Column(
             [
                 ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([self.tipo_doc], wrap=True),
-                ft.Row([self.cnpj, self.consult_cnpj_button], wrap=True),
-                ft.Row([self.cpf], wrap=True),
-                ft.Row([self.ie, self.im], wrap=True),
-                ft.Row([self.name, self.corporate_name], wrap=True),
-                ft.Row([self.store_name, self.phone, self.email], wrap=True),
+                ft.Row([self.tipo_doc, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.store_name, self.phone, self.email], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
                 ft.Divider(),
                 ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([self.street, self.number], wrap=True),
-                ft.Row([self.complement, self.neighborhood], wrap=True),
-                ft.Row([self.city, self.state, self.postal_code], wrap=True),
+                ft.Row([self.street, self.number], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.complement, self.neighborhood], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.city, self.state, self.postal_code], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
                 ft.Divider(),
                 ft.Text("Informações Fiscais - Obrigatório se for emitir Nota ao Consumidor (NFC-e)", size=20,
                         weight=ft.FontWeight.BOLD),
                 ft.Text("Consulte o seu contador para obter dados corretos", size=16),
-                ft.Row([self.size, self.crt], wrap=True),
-                ft.Row([self.nfce_series, self.nfce_number], wrap=True),
-                ft.Row([self.nfce_environment, self.nfce_sefaz_id_csc, self.nfce_sefaz_csc], wrap=True),
+                ft.Row([self.size, self.crt], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.nfce_series, self.nfce_number], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.nfce_environment, self.nfce_sefaz_id_csc, self.nfce_sefaz_csc], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
                 ft.Divider(),
                 ft.Text("Certificado Digital A1 (PFX/P12)", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], wrap=True),
-                ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], wrap=True),
-                ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], wrap=True),
-                ft.Row([self.subject_name, self.certificate_a1_file], wrap=True),
+                ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.subject_name, self.certificate_a1_file], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ],
             scroll=ft.ScrollMode.AUTO,
         )
@@ -470,19 +469,34 @@ class CompanyForm(ft.Container):
 
     def _handle_cnpj_change(self, e):
         """Atualiza o estado do botão de consulta baseado no valor do CNPJ"""
-        if self.tipo_doc.value == "CNPJ":
-            self.consult_cnpj_button.disabled = not bool(self.cnpj.value)
+        cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
+
+        if not self.consult_cnpj_button.disabled and len(cnpj_clean) < 14:
+            self.consult_cnpj_button.disabled = True
+            self.update()
+        elif len(cnpj_clean) == 14:
+            self.cnpj.value = cnpj_clean
+            self.consult_cnpj_button.disabled = not self.tipo_doc.value == "CNPJ"
+            self.update()
+
+    def _handle_cpf_change(self, e):
+        cpf_clean =  ''.join(filter(str.isdigit, self.cpf.value))
+        if len(cpf_clean) == 11:
+            self.cpf.value = cpf_clean
             self.update()
 
     async def _consult_cnpj(self, e):
         """Consulta o CNPJ na API da Receita"""
         try:
             # Mostra loading no botão
-            self.consult_cnpj_button.icon = ft.icons.PENDING
+            self.consult_cnpj_button.icon = ft.Icons.PENDING
             self.consult_cnpj_button.disabled = True
             self.update()
 
             response = await consult_cnpj_api(self.cnpj.value)
+
+            print("DEBUG 1 ========================================================================")
+            print(response)
 
             if response['is_error']:
                 # Mostra erro
@@ -495,7 +509,7 @@ class CompanyForm(ft.Container):
                 local_response = response.get('response')
                 data = response.get('data')
 
-                if local_response.status_code in (200, 304):
+                if local_response.status in (200, 304):
                     # Preenche os campos com os dados retornados
                     self.name.value = data.get('nome_fantasia', '')
                     self.corporate_name.value = data.get('razao_social', '')
@@ -510,6 +524,22 @@ class CompanyForm(ft.Container):
                     self.state.value = data.get('uf', '')
                     self.postal_code.value = data.get('cep', '')
 
+                    # Fiscal
+                    porte = data.get('codigo_porte', 5)
+                    self.size.value = CompanySize.OTHER
+
+                    match porte:
+                        case 1:
+                            self.size.value = CompanySize.MICRO
+                        case 2:
+                            self.size.value = CompanySize.SMALL
+                        case 3:
+                            self.size.value = CompanySize.SMALL
+                        case 4:
+                            self.size.value = CompanySize.MEDIUM
+                        case 5:
+                            self.size.value = CompanySize.LARGE
+
                     # Mostra mensagem de sucesso
                     message_snackbar(page=self.page, message="Dados do CNPJ carregados com sucesso!", message_type=MessageType.SUCCESS)
                 else:
@@ -522,6 +552,8 @@ class CompanyForm(ft.Container):
 
         except Exception as error:
             # Mostra erro genérico
+            print("DEBUG 2 ========================================================================")
+            print(str(error))
             message_snackbar(
                 page=self.page,
                 message=f"Erro ao consultar CNPJ: {str(error)}",
@@ -530,7 +562,7 @@ class CompanyForm(ft.Container):
 
         finally:
             # Restaura o botão
-            self.consult_cnpj_button.icon = ft.icons.SEARCH
+            self.consult_cnpj_button.icon = ft.Icons.SEARCH
             self.consult_cnpj_button.disabled = not bool(self.cnpj.value)
             self.update()
 
@@ -633,40 +665,41 @@ class CompanyForm(ft.Container):
         # Cria uma lista de campos que sempre aparecem
         base_fields = [
             ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.tipo_doc], wrap=True),
-            ft.Row([self.name, self.corporate_name], wrap=True),
-            ft.Row([self.store_name, self.phone, self.email], wrap=True),
+            ft.Row([self.tipo_doc], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ]
 
         # Adiciona campos específicos de CNPJ se necessário
         if self.tipo_doc.value == "CNPJ":
-            base_fields.append(ft.Row([self.cnpj, self.consult_cnpj_button], wrap=True))
-            base_fields.append(ft.Row([self.ie, self.im], wrap=True))
+            base_fields.append(ft.Row([self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
+            base_fields.append(ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
         else:
-            base_fields.append(ft.Row([self.cpf], wrap=True))
+            base_fields.append(ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
+
+        base_fields.append(ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
+        base_fields.append(ft.Row([self.store_name, self.phone, self.email], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
 
         # Adiciona o resto dos campos comuns
         base_fields.extend([
             ft.Divider(),
             ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.street, self.number], wrap=True),
-            ft.Row([self.complement, self.neighborhood], wrap=True),
-            ft.Row([self.city, self.state, self.postal_code], wrap=True),
+            ft.Row([self.street, self.number], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.complement, self.neighborhood], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.city, self.state, self.postal_code], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
             ft.Divider(),
             ft.Text("Informações Fiscais - Obrigatório se for emitir Nota ao Consumidor (NFC-e)", size=20,
                         weight=ft.FontWeight.BOLD),
             ft.Text("Consulte o seu contador para obter dados corretos", size=16),
-            ft.Row([self.size, self.crt], wrap=True),
-            ft.Row([self.nfce_series, self.nfce_number, self.crt], wrap=True),
-            ft.Row([self.nfce_environment, self.nfce_sefaz_id_csc, self.nfce_sefaz_csc], wrap=True),
+            ft.Row([self.size, self.crt], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.nfce_series, self.nfce_number], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.nfce_environment, self.nfce_sefaz_id_csc, self.nfce_sefaz_csc], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
             ft.Divider(),
             ft.Text("Certificado Digital A1 (PFX/P12)", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], wrap=True),
-            ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], wrap=True),
-            ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], wrap=True),
-            ft.Row([self.subject_name, self.certificate_a1_file], wrap=True),
+            ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.subject_name, self.certificate_a1_file], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ])
 
         # Atualiza o conteúdo

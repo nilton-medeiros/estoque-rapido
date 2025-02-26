@@ -13,6 +13,7 @@ class CompanySize(Enum):
     SMALL = "Pequena Empresa"  # EPP
     MEDIUM = "Média Empresa"
     LARGE = "Grande Empresa"
+    OTHER = "DEMAIS"
 
 
 class CodigoRegimeTributario(Enum):
@@ -30,5 +31,3 @@ class CodigoRegimeTributario(Enum):
     SIMPLES_NACIONAL_EXCESSO_SUB = (2, "Simples Nacional Excesso Sublimite")
     REGIME_NORMAL = (3, "Regime Normal")
     SIMPLES_NACIONAL_MEI = (4, "Microempreendedor Individual (MEI)")
-
-
