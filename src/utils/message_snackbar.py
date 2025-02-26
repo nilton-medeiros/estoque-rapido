@@ -33,7 +33,7 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
         show_close_icon=True,
         # close_icon_color=icon_color,
         padding=ft.padding.all(10),
-        duration=10000,
+        duration=5000,
         behavior=ft.SnackBarBehavior.FLOATING,
         margin=ft.margin.all(10),
     )

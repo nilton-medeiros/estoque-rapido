@@ -94,7 +94,12 @@ class CompanyForm(ft.Container):
         )
         self.store_name = ft.TextField(
             label="Nome da Loja",
-            hint_text="Loja Centro, Loja Shop.Iguatemi-0325",
+            hint_text="Loja Moema, Loja Iguatemi-0325",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
+             hint_fade_duration=5,
             border=ft.InputBorder.UNDERLINE,
             width=400,
         )
@@ -110,7 +115,11 @@ class CompanyForm(ft.Container):
             label="Telefone",
             border=ft.InputBorder.UNDERLINE,
             width=200,
-            hint_text="+55(99)99999-9999"
+            hint_text="+55(99)99999-9999",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
         )
 
         # Endereço
@@ -178,6 +187,10 @@ class CompanyForm(ft.Container):
         self.nfce_number = ft.TextField(
             label="Número NFC-e",
             hint_text="Próximo número a ser emitido",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
             keyboard_type=ft.KeyboardType.NUMBER,
             border=ft.InputBorder.UNDERLINE,
             width=300,
@@ -196,6 +209,10 @@ class CompanyForm(ft.Container):
         self.nfce_sefaz_id_csc = ft.TextField(
             label="Identificação do CSC",
             hint_text="Id. Código Segurança do Contribuínte",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
             keyboard_type=ft.KeyboardType.NUMBER,
             border=ft.InputBorder.UNDERLINE,
             width=400,
@@ -203,6 +220,10 @@ class CompanyForm(ft.Container):
         self.nfce_sefaz_csc = ft.TextField(
             label="Código do CSC",
             hint_text="Código Segurança do Contribuínte",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
             border=ft.InputBorder.UNDERLINE,
             width=400,
         )
@@ -218,8 +239,8 @@ class CompanyForm(ft.Container):
 
         """Os componentes abaixo são apenas para exibição de informações do certificado digital."""
         self.certificate_a1_status = ft.TextField(
-            value=CertificateStatus.EMPTY.value,
-            label="Status do Certificado",
+            value="VAZIO",
+            label="Status Certificado",
             read_only=True,
             border=ft.InputBorder.UNDERLINE,
             width=200,
@@ -257,10 +278,14 @@ class CompanyForm(ft.Container):
         self.certificate_a1_password = ft.TextField(
             label="Senha do Certificado",
             hint_text="Senha do certificado digital",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
             password=True,
             can_reveal_password=True,
             border=ft.InputBorder.UNDERLINE,
-            width=200,
+            width=300,
         )
         self.certificate_a1_file = ft.TextField(
             label="Arquivo do Certificado",
@@ -378,7 +403,7 @@ class CompanyForm(ft.Container):
                     self.certificate_a1_issuer_name.value = data.get("issuer_name", "")
                     self.certificate_a1_not_valid_before.value = data.get("not_valid_before", "")
                     self.certificate_a1_not_valid_after.value = data.get("not_valid_after", "")
-                    self.certificate_a1_status.value = CertificateStatus.ACTIVE.value
+                    self.certificate_a1_status.value = "ATIVO"
 
                     # Exibe mensagem de sucesso
                     success_message = response.get('message', 'Certificado enviado com sucesso!')
@@ -404,7 +429,7 @@ class CompanyForm(ft.Container):
 
     def _build_content(self):
         """Constrói o conteúdo do formulário"""
-        return ft.Column(
+        build_content = ft.Column(
             [
                 ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
                 ft.Row([self.tipo_doc, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
@@ -434,7 +459,14 @@ class CompanyForm(ft.Container):
                 ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.subject_name, self.certificate_a1_file], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ],
+            spacing=20,
+            run_spacing=20,
             scroll=ft.ScrollMode.AUTO,
+        )
+
+        return ft.Container(
+            build_content,
+            padding=ft.padding.all(20),
         )
 
     def _handle_doc_type_change(self, e):
@@ -525,20 +557,15 @@ class CompanyForm(ft.Container):
                     self.postal_code.value = data.get('cep', '')
 
                     # Fiscal
-                    porte = data.get('codigo_porte', 5)
-                    self.size.value = CompanySize.OTHER
+                    porte = data.get('codigo_porte', 0)
 
                     match porte:
                         case 1:
                             self.size.value = CompanySize.MICRO
-                        case 2:
-                            self.size.value = CompanySize.SMALL
                         case 3:
                             self.size.value = CompanySize.SMALL
-                        case 4:
-                            self.size.value = CompanySize.MEDIUM
                         case 5:
-                            self.size.value = CompanySize.LARGE
+                            self.size.value = CompanySize.OTHER
 
                     # Mostra mensagem de sucesso
                     message_snackbar(page=self.page, message="Dados do CNPJ carregados com sucesso!", message_type=MessageType.SUCCESS)
@@ -577,6 +604,7 @@ class CompanyForm(ft.Container):
         self.update()
 
     def populate_form(self):
+        # ToDo: Incompleto: Concluir preenchimento de todos os campos do form
         """Preenche o formulário com os dados existentes"""
         # Define o tipo de documento baseado nos dados
         self.tipo_doc.value = "CPF" if self.company_data.get('cpf') else "CNPJ"
@@ -609,6 +637,7 @@ class CompanyForm(ft.Container):
         self._handle_doc_type_change(None)
 
     def get_form_data(self) -> dict:
+        # ToDo: Verificar, talvez esteja incompleto
         """Obtém os dados do formulário como um dicionário"""
         try:
             # Base do dicionário
@@ -703,7 +732,11 @@ class CompanyForm(ft.Container):
         ])
 
         # Atualiza o conteúdo
-        self.content = ft.Column(base_fields, scroll=ft.ScrollMode.AUTO)
+        content = ft.Column(base_fields, spacing=20, run_spacing=20, scroll=ft.ScrollMode.AUTO)
+        self.content = ft.Container(
+            content=content,
+            padding=ft.padding.all(20),
+        )
 
     def clear_form(self):
         """Limpa todos os campos do formulário"""

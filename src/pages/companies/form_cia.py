@@ -14,8 +14,6 @@ def company_form(page: ft.Page):
         company_data=current_company if current_company.get('id') else None
     )
 
-    print(f"form: {form}")
-
     # Define a função salvar
     async def save_company(e):
         try:
@@ -28,13 +26,10 @@ def company_form(page: ft.Page):
             # Todo: Implementar a lógica de salvar os dados da empresa
 
         except ValueError as err:
-            message_snackbar(page=page, message=str(err), message_type=MessageType.ERROR)
+            message_snackbar(page=page, message=str(
+                err), message_type=MessageType.ERROR)
 
     # Adiciona o botão "Salvar"
     save_btn = ft.ElevatedButton("Salvar", on_click=save_company)
 
-    print("Debug | Botão Salvar foi adicionado à página")
-
-    return ft.Column(
-        controls=[form, save_btn]
-    )
+    return ft.Column(controls=[form, save_btn])
