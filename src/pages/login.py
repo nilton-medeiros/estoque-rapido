@@ -220,12 +220,6 @@ class LoginView:
                             "logo_path": cia.logo_path,
                             "payment_gateway": cia.payment_gateway,
                         })
-
-                    print(":")
-                    print("================================================================================")
-                    print(f"Debug | Logou com sucesso! Publicando company e redirecionando para /home")
-                    print("================================================================================")
-
                 else:
                     await self.page.app_state.set_company({
                             "id": "",

@@ -1,5 +1,5 @@
 import asyncio
-# import logging
+import logging
 import os
 
 import flet as ft
@@ -9,11 +9,10 @@ from src.domain.models.cnpj import CNPJ
 from src.domain.models.cpf import CPF
 from src.domain.models.phone_number import PhoneNumber
 from src.domain.models.company_subclass import CompanySize, CodigoRegimeTributario, Environment
-from src.domain.models.certificate_status import CertificateStatus
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
 from src.utils.message_snackbar import MessageType, message_snackbar
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CompanyForm(ft.Container):
@@ -410,6 +409,7 @@ class CompanyForm(ft.Container):
                     message_snackbar(page=self.page, message=success_message, message_type=MessageType.SUCCESS)
 
             except Exception as error:
+                logger.error(f"Erro ao carregar certificado: {str(error)}")
                 # Exibe mensagem de erro
                 message_snackbar(page=self.page, message=f"Erro ao carregar certificado: {str(error)}", message_type=MessageType.ERROR)
 
@@ -527,9 +527,6 @@ class CompanyForm(ft.Container):
 
             response = await consult_cnpj_api(self.cnpj.value)
 
-            print("DEBUG 1 ========================================================================")
-            print(response)
-
             if response['is_error']:
                 # Mostra erro
                 message_snackbar(
@@ -579,8 +576,7 @@ class CompanyForm(ft.Container):
 
         except Exception as error:
             # Mostra erro genérico
-            print("DEBUG 2 ========================================================================")
-            print(str(error))
+            logger.error(f"Erro ao consultar CNPJ: {str(error)}")
             message_snackbar(
                 page=self.page,
                 message=f"Erro ao consultar CNPJ: {str(error)}",
@@ -686,6 +682,7 @@ class CompanyForm(ft.Container):
             return form_data
 
         except ValueError as e:
+            logger.error(f"Erro ao validar dados do formulário: {str(e)}")
             raise ValueError(f"Erro ao validar dados do formulário: {str(e)}")
 
 

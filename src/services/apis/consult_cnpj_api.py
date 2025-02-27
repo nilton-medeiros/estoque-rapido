@@ -1,5 +1,7 @@
+import logging
 import aiohttp
 
+logger = logging.getLogger(__name__)
 
 async def consult_cnpj_api(cnpj):
 
@@ -33,6 +35,7 @@ async def consult_cnpj_api(cnpj):
                 }
 
     except Exception as error:
+        logger.error(f"Erro ao consultar CNPJ: {str(error)}")
         # Mostra erro genérico
         return {
             'is_error': True,

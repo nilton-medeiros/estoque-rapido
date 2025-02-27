@@ -236,9 +236,6 @@ class SignupView:
             message_snackbar(page=self.page, message=result["message"], message_type=color)
 
             if not result["is_error"]:
-                print(":")
-                print("Debug signup | Redirecionando para /home")
-                print(" ")
                 self.page.on_resized = None
                 self.page.go('/home')
 

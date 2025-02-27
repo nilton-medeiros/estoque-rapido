@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 from src.domain.models.app_config import AppConfig
 from src.services.entities.app_config_service import AppConfigService
@@ -9,6 +10,7 @@ e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
+logger = logging.getLogger(__name__)
 
 async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     """
@@ -61,9 +63,11 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
 
@@ -118,9 +122,10 @@ async def handle_get_config(config_id: str = None) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
-
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-
+        logger.error(response["message"])
+        
     return response

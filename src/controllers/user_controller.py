@@ -1,6 +1,10 @@
+import logging
 from src.domain.models.user import User
 from src.services.entities.user_service import UserService
 from storage.data.firebase.firebase_user_repository import FirebaseUserRepository
+
+logger = logging.getLogger(__name__)
+
 
 """
 Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando
@@ -59,9 +63,11 @@ async def handle_save_user(user: User, create_new: bool, password: str = None) -
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
 
@@ -120,18 +126,11 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
-        print(":")
-        print("================================================================================")
-        print(f"Debug | ValueError: {response["message"]}")
-        print("================================================================================")
-
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-        print(":")
-        print("================================================================================")
-        print(f"Debug | Exception: {response["message"]}")
-        print("================================================================================")
+        logger.error(response["message"])
 
     return response
 
@@ -179,8 +178,10 @@ async def handle_update_photo_user(user_id: str, photo: str) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response

@@ -1,3 +1,5 @@
+import logging
+
 from src.domain.models.app_config import AppConfig
 from src.utils.deep_translator import deepl_translator
 from storage.data.interfaces.app_config_repository import AppConfigRepository
@@ -5,6 +7,8 @@ from storage.data.interfaces.app_config_repository import AppConfigRepository
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from firebase_admin import firestore
 from firebase_admin import exceptions
+
+logger = logging.getLogger(__name__)
 
 
 class FirebaseAppConfigRepository(AppConfigRepository):
@@ -44,7 +48,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
             else:
                 print('Documento não encontrado!')
         except Exception as e:
-            print(f'Erro ao buscar documento: {e}')
+            logger.error(f'Erro ao buscar documento: {e}')
 
         return None
 
@@ -76,13 +80,13 @@ class FirebaseAppConfigRepository(AppConfigRepository):
         except exceptions.FirebaseError as e:
             # Registrar o erro em um sistema de log com contexto e mensagem original
             # Manter mensagem original para depuração
-            print(f"Erro ao salvar configuração do sistema: {e}")
+            logger.error(f"Erro ao salvar configuração do sistema: {e}")
             raise  # Re-lançar o erro original
 
         except Exception as e:
             # Registrar o erro em um sistema de log com contexto e mensagem original
             # Manter mensagem original para depuração
-            print(f"Erro inesperado ao salvar configuração do sistema: {e}")
+            logger.error(f"Erro inesperado ao salvar configuração do sistema: {e}")
             raise  # Re-lançar o erro original
 
     def delete(self, config_id: str) -> bool:
@@ -104,9 +108,11 @@ class FirebaseAppConfigRepository(AppConfigRepository):
             return True
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao deletar a configuração de sistema com id '{config_id}': {translated_error}")
             raise Exception(
                 f"Erro ao deletar a configuração de sistema com id '{config_id}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao deletar configuração de sistema com id '{config_id}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao deletar configuração de sistema com id '{config_id}': {str(e)}")
 

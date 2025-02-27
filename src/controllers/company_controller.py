@@ -1,7 +1,10 @@
+import logging
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.company import Company
 from src.services.entities.company_service import CompanyService
 from storage.data.firebase.firebase_company_repository import FirebaseCompanyRepository
+
+logger = logging.getLogger(__name__)
 
 """
 Essa estrutura garante um controle claro de responsabilidades, onde company_controller atua organizando
@@ -60,9 +63,11 @@ async def handle_save_company(company: Company, create_new: bool) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
 
@@ -121,8 +126,10 @@ async def handle_get_company(company_id: str = None, cnpj: CNPJ = None) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response

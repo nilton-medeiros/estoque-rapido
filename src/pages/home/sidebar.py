@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import flet as ft
 
@@ -7,6 +8,8 @@ from src.controllers.user_controller import handle_update_photo_user
 from src.services.aws.s3_file_manager import S3FileManager
 from src.utils.gen_uuid import get_uuid
 from src.utils.message_snackbar import MessageType, message_snackbar
+
+logger = logging.getLogger(__name__)
 
 
 def sidebar_header(page: ft.Page):
@@ -135,6 +138,7 @@ def sidebar_header(page: ft.Page):
                     retry_count += 1
 
                 if not os.path.exists(local_file):
+                    logger.debug(f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
                     raise FileNotFoundError(
                         f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
 
@@ -145,6 +149,18 @@ def sidebar_header(page: ft.Page):
 
                 # Atualiza a foto do usuário
                 result = await handle_update_photo_user(user_id=current_user["id"], photo=photo_url)
+
+                # Debug:
+                # print(" ")
+                # print(" ")
+                # print("DEBUG-154 ====================================================")
+                # print(f"file_s3_name: {file_s3_name}")
+                # print(f"local_file: {local_file}")
+                # print(f"photo_url: {photo_url}")
+                # print(f"result: {str(result)}")
+                # print("DEBUG-154 ====================================================")
+                # print(" ")
+                # print(" ")
 
                 if result["is_error"]:
                     # Photo não pode ser salva no database, remove do s3
@@ -161,7 +177,7 @@ def sidebar_header(page: ft.Page):
                         key = parts[1]
                         # Excluíndo do bucket
                         if key:
-                            s3_manager.delete(key=key)
+                            s3_manager.delete(key)
 
                     # Atualiza a foto na página
                     user_photo = ft.Image(
@@ -173,6 +189,7 @@ def sidebar_header(page: ft.Page):
                         width=100,
                         height=100,
                     )
+
 
                     user_avatar.content = user_photo
                     user_avatar.update()
@@ -203,9 +220,10 @@ def sidebar_header(page: ft.Page):
                 page.close(dialog)
 
             except Exception as e:
+                logger.error(f"Erro de upload: {str(e)}")
                 message_snackbar(
                     page=page,
-                    message=f"Erro no upload: {str(e)}",
+                    message=f"Erro de upload: {str(e)}",
                     message_type=MessageType.ERROR
                 )
                 page.close(dialog)
@@ -482,6 +500,9 @@ def sidebar_footer(page: ft.Page):
         e.page.session.set("user_color", e.control.data)
         e.page.update()
 
+    def on_click_business_btn(e):
+        page.go('/company/form')
+
     return ft.Container(
         padding=ft.padding.symmetric(vertical=20),
         content=ft.Row(
@@ -496,7 +517,7 @@ def sidebar_footer(page: ft.Page):
                     icon=ft.Icons.BUSINESS,
                     icon_color="white",
                     height=18,
-                    # on_click=,
+                    on_click=on_click_business_btn,
                 ),
                 ft.IconButton(
                     icon=ft.Icons.GROUPS,

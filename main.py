@@ -54,13 +54,6 @@ def main(page: ft.Page):
                 # Atualiza elementos da UI que dependem do usuário
                 update_user_dependent_ui()
             else:
-                print(":")
-                print(
-                    "================================================================================")
-                print(f"Debug | Usuário foi desconectado.")
-                print(
-                    "================================================================================")
-
                 # Limpa elementos da UI relacionados ao usuário
                 clear_user_ui()
 
@@ -71,13 +64,6 @@ def main(page: ft.Page):
                 # Atualiza elementos da UI que dependem da empresa
                 update_company_dependent_ui()
             else:
-                print(":")
-                print(
-                    "================================================================================")
-                print(f"Debug | Empresa foi desconectada.")
-                print(
-                    "================================================================================")
-
                 # Limpa elementos da UI relacionados à empresa
                 clear_company_ui()
 
@@ -160,7 +146,6 @@ def main(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
             case '/company/form':  # Registro
-                print("Debug | Rota /company/form")
                 pg_view = ft.View(
                     route='/company/form',
                     appbar=ft.AppBar(

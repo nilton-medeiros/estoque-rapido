@@ -1,13 +1,14 @@
+import logging
 import flet as ft
 from src.presentation.components.company_form import CompanyForm
 from src.utils.message_snackbar import MessageType, message_snackbar
 
+logger = logging.getLogger(__name__)
+
 
 def company_form(page: ft.Page):
     current_company = page.app_state.company
-    print(f"current_company: {current_company}")
 
-    print("Debug | current_company: {current_company}")
     # Cria o formulário
     form = CompanyForm(
         page=page,
@@ -26,6 +27,7 @@ def company_form(page: ft.Page):
             # Todo: Implementar a lógica de salvar os dados da empresa
 
         except ValueError as err:
+            logger.error(f"{str(err)}")
             message_snackbar(page=page, message=str(
                 err), message_type=MessageType.ERROR)
 

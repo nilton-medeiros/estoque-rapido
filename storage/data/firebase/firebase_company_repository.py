@@ -1,3 +1,5 @@
+import logging
+
 from typing import Optional
 from firebase_admin import firestore
 from firebase_admin import exceptions
@@ -9,6 +11,8 @@ from src.domain.models.cnpj import CNPJ
 from src.domain.models.company import Address, Company, CompanySize, FiscalData
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from storage.data.interfaces.company_repository import CompanyRepository
+
+logger = logging.getLogger(__name__)
 
 
 class FirebaseCompanyRepository(CompanyRepository):
@@ -58,9 +62,11 @@ class FirebaseCompanyRepository(CompanyRepository):
             return True
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao excluir empresa com id '{company_id}': {translated_error}")
             raise Exception(
                 f"Erro ao excluir empresa com id '{company_id}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao excluir empresa com id '{company_id}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao excluir empresa com id '{company_id}': {str(e)}")
 
@@ -79,7 +85,7 @@ class FirebaseCompanyRepository(CompanyRepository):
                 field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
-            print(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
+            logger.error(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
             return False
 
     async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Company]:
@@ -109,9 +115,11 @@ class FirebaseCompanyRepository(CompanyRepository):
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
 
@@ -163,7 +171,7 @@ class FirebaseCompanyRepository(CompanyRepository):
 
         except Exception as e:
             # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
-            print(f"Erro ao salvar empresa: {e}")
+            logger.error(f"Erro ao salvar empresa: {e}")
             raise  # Re-lançar a exceção para que seja tratada em camadas superiores
 
     async def _company_to_dict(self, company: Company) -> dict:

@@ -1,3 +1,4 @@
+import logging
 import os
 import firebase_admin
 from firebase_admin import credentials
@@ -7,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CREDENTIALS_PATH = os.path.join(BASE_DIR, '..', '..', '..', 'src', 'services', '.keys', 'serviceAccountKey.json')
 CREDENTIALS_PATH = os.path.normpath(CREDENTIALS_PATH)
 
-# print("CREDENTIALS_PATH:", CREDENTIALS_PATH)
+logger = logging.getLogger(__name__)
 
 
 # Singleton para inicialização do Firebase
@@ -19,6 +20,7 @@ def get_firebase_app():
             firebase_admin.initialize_app(cred)
             # print("INTERFACE: Firebase inicializado com sucesso!")
         except FileNotFoundError:
+            logger.error(f"INTERFACE: Erro: Arquivo de credenciais não encontrado em {CREDENTIALS_PATH}")
             print(
                 f"INTERFACE: Erro: Arquivo de credenciais não encontrado em {CREDENTIALS_PATH}")
     return firebase_admin.get_app()

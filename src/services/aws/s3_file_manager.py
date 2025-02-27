@@ -1,9 +1,8 @@
 import boto3
-from botocore.exceptions import ClientError
-from dotenv import load_dotenv
 import os
 
-from src.utils.gen_uuid import get_uuid
+from botocore.exceptions import ClientError
+from dotenv import load_dotenv
 
 
 class S3FileManager:
@@ -133,6 +132,7 @@ class S3FileManager:
             self.s3_client.head_object(Bucket=self.bucket, Key=full_key)
             return True
         except ClientError as e:
+            # O arquivo não existe: status 404
             if e.response['Error']['Code'] == '404':
                 return False
             raise

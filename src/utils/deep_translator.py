@@ -1,7 +1,10 @@
-from dotenv import load_dotenv
+import logging
 import os
 import deepl
 
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 def deepl_translator(texto_ingles: str) -> str:
     """
@@ -22,9 +25,11 @@ def deepl_translator(texto_ingles: str) -> str:
     auth_key = os.getenv('DEEPL_API_KEY')
 
     if auth_key is None:
+        logger.warning("API key is required. Configure a variável DEEPL_API_KEY no arquivo .env.")
         raise Exception("API key is required. Configure a variável DEEPL_API_KEY no arquivo .env.")
 
     if not texto_ingles or not isinstance(texto_ingles, str):
+        logger.warning("Texto inválido. Forneça um texto em inglês válido para tradução.")
         raise ValueError("Texto inválido. Forneça um texto em inglês válido para tradução.")
 
     try:
@@ -33,4 +38,5 @@ def deepl_translator(texto_ingles: str) -> str:
         traducao = translator.translate_text(texto_ingles, source_lang="EN", target_lang="PT-BR")
         return traducao.text  # Retorna apenas o texto traduzido
     except deepl.DeepLException as e:
+        logger.error(f"Erro ao usar a API Deepl: {e}")
         raise Exception(f"Erro ao usar a API Deepl: {e}")

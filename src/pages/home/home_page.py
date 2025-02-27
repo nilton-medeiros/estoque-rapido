@@ -115,11 +115,7 @@ def home_page(page: ft.Page):
     )
 
     def on_page_resized(e=None):
-        print(f"Debug | page.width = {page.width}")
-        print(f"Debug | page.height = {page.height}")
-
         if page.width < 768:  # Modo Mobile
-            print("DEBUG: Entrando no modo mobile")
             # Ajustar layout para modo mobile
             sidebar.visible = False
             content.col = {"xs": 12}  # O conteúdo ocupa toda a largura
@@ -127,7 +123,6 @@ def home_page(page: ft.Page):
             page.bgcolor = "#111418"
 
         else:  # Modo Desktop
-            print("DEBUG: Entrando no modo desktop")
 
             page.appbar = None  # Remover AppBar
             sidebar.visible = True

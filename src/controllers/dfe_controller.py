@@ -1,12 +1,15 @@
+import logging
 from src.domain.models.company_subclass import Environment
 from src.services.apis.dfe_service import DFeService
 from src.services.providers.nuvemfiscal_provider import NuvemFiscalDFeProvider
+
+logger = logging.getLogger(__name__)
+
 """
 Essa estrutura garante um controle claro de responsabilidades, onde dfe_controller atua organizando
 e redirecionando os dados ao repositório de dados do provedor DFe (Documento Fiscal Eletrônico).
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
-
 
 async def handle_upload_certificate_a1(
         cpf_cnpj: str, certificate_content: bytes,
@@ -61,8 +64,10 @@ async def handle_upload_certificate_a1(
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response

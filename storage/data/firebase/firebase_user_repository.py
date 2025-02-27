@@ -1,3 +1,5 @@
+import logging
+
 from typing import List, Optional
 
 from firebase_admin import auth
@@ -11,6 +13,8 @@ from src.utils.deep_translator import deepl_translator
 from src.utils.field_validation_functions import get_first_and_last_name
 from storage.data.interfaces.user_repository import UserRepository
 from storage.data.firebase.firebase_initialize import get_firebase_app
+
+logger = logging.getLogger(__name__)
 
 
 # Repositório do Firebase, usa a classe abstrata UserRepositoy para forçar a implementação de métodos conforme contrato em UserRepository
@@ -56,7 +60,7 @@ class FirebaseUserRepository(UserRepository):
             return count
         except Exception as e:
             # Lida com possíveis exceções, se necessário
-            print(f"Erro ao contar usuários: {e}")
+            logger.error(f"Erro ao contar usuários: {e}")
             raise e
 
     async def delete(self, user_id: str) -> None:
@@ -81,9 +85,11 @@ class FirebaseUserRepository(UserRepository):
             return True
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao deletar usuário com id '{user_id}': {translated_error}")
             raise Exception(
                 f"Erro ao deletar usuário com id '{user_id}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao deletar usuário com id '{user_id}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao deletar usuário com id '{user_id}': {str(e)}")
 
@@ -110,7 +116,7 @@ class FirebaseUserRepository(UserRepository):
             return False
         except Exception as e:
             # Lida com possíveis exceções, se necessário
-            print(f"Erro ao verificar se o usuário existe: {e}")
+            logger.error(f"Erro ao verificar se o usuário existe: {e}")
             return False
 
     async def find_all(self, company_id, limit: int = 100, offset: int = 0) -> List[User]:
@@ -143,7 +149,7 @@ class FirebaseUserRepository(UserRepository):
             return users
         except Exception as e:
             # Lida com possíveis exceções, se necessário
-            print(f"Erro ao buscar usuários: {e}")
+            logger.error(f"Erro ao buscar usuários: {e}")
             raise e
 
     async def find_by_email(self, email: str) -> Optional[User]:
@@ -169,27 +175,14 @@ class FirebaseUserRepository(UserRepository):
                 user_data['id'] = doc.id
                 return self._doc_to_user(user_data)
 
-            print(":")
-            print("================================================================================")
-            print(f"Debug | 3 - FirebaseUserRepository: Usuário não encontrado por email")
-            print("================================================================================")
-
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
-            print(":")
-            print("================================================================================")
-            print(f"Debug | 4 - FirebaseError: Erro ao buscar usuário pelo email '{email}': {translated_error}")
-            print("================================================================================")
-
+            logger.error(f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
         except Exception as e:
-            print(":")
-            print("================================================================================")
-            print(f"Debug | 5 - Exception: Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
-            print("================================================================================")
-
+            logger.error(f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
 
@@ -215,9 +208,11 @@ class FirebaseUserRepository(UserRepository):
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao buscar usuário com ID '{id}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar usuário com ID '{id}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao buscar usuário com ID '{id}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar usuário com ID '{id}': {str(e)}")
 
@@ -248,9 +243,11 @@ class FirebaseUserRepository(UserRepository):
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao buscar usuário pelo nome '{name}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar usuário pelo nome '{name}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao buscar usuário pelo nome '{name}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo nome '{name}': {str(e)}")
 
@@ -280,9 +277,11 @@ class FirebaseUserRepository(UserRepository):
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
+            logger.error(f"Erro ao buscar usuário pelo perfil '{profile}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar usuário pelo perfil '{profile}': {translated_error}")
         except Exception as e:
+            logger.error(f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
 
@@ -327,16 +326,10 @@ class FirebaseUserRepository(UserRepository):
             return user.id
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
-            print(":")
-            print("===========================================================")
-            print(f"Debug | FirebaseError: {translated_error}")
-            print(" ")
+            logger.error(f"Erro ao salvar usuário: {translated_error}")
             raise Exception(f"Erro ao salvar usuário: {translated_error}")
         except Exception as e:
-            print(":")
-            print("===========================================================")
-            print(f"Debug | Exception: {str(e)}")
-            print(" ")
+            logger.error(f"Erro inesperado ao salvar usuário: {str(e)}")
             raise Exception(f"Erro inesperado ao salvar usuário: {str(e)}")
 
     async def update_profile(self, id: str, new_profile: str) -> Optional[User]:
@@ -388,7 +381,7 @@ class FirebaseUserRepository(UserRepository):
             return updated_user
         except Exception as e:
             # Lida com possíveis exceções, se necessário
-            print(f"Erro ao atualizar o perfil do usuário: {e}")
+            logger.error(f"Erro ao atualizar o perfil do usuário: {e}")
             raise e
 
 
@@ -441,7 +434,7 @@ class FirebaseUserRepository(UserRepository):
             return updated_user
         except Exception as e:
             # Lida com possíveis exceções, se necessário
-            print(f"Erro ao atualizar o perfil do usuário: {e}")
+            logger.error(f"Erro ao atualizar o perfil do usuário: {e}")
             raise e
 
     def _doc_to_user(self, doc_data: dict) -> User:
@@ -457,11 +450,6 @@ class FirebaseUserRepository(UserRepository):
 
         from src.domain.models.nome_pessoa import NomePessoa
         from src.domain.models.phone_number import PhoneNumber
-
-        # print(":")
-        # print("================================================================================")
-        # print(f"Debug | doc_data: {doc_data}")
-        # print("================================================================================")
 
         # Recontruir campos opcionais
         first_name, last_name = get_first_and_last_name(

@@ -45,7 +45,6 @@ class UserService:
         return await self.repository.save(user)
 
     async def update_user(self, user: User) -> User:
-        # print("Debug: Entrou em update_user")
         if not user.id:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(user)

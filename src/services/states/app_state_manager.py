@@ -1,8 +1,11 @@
+import logging
 import flet as ft
-from typing import Optional, Dict, Any
 
+from typing import Optional, Dict, Any
 from .state_validator import StateValidator
 from src.utils.message_snackbar import MessageType, message_snackbar
+
+logger = logging.getLogger(__name__)
 
 
 class AppStateManager:
@@ -32,11 +35,6 @@ class AppStateManager:
         """
         try:
             if user_data is None:
-                print(":")
-                print("================================================================================")
-                print(f"Debug | Em set_user, user_data é None, publicando logout")
-                print("================================================================================")
-
                 self._state['user'] = None
                 self.page.pubsub.send_all("user_logout")
                 return True
@@ -44,10 +42,6 @@ class AppStateManager:
             is_valid, error = self._validator.validate_user_data(user_data)
             if not is_valid:
                 await self.handle_error(error)
-                print(":")
-                print("================================================================================")
-                print(f"Debug | Em set_user, user_data não é válido, retornado False")
-                print("================================================================================")
                 return False
 
             self._state['user'] = user_data
@@ -83,8 +77,9 @@ class AppStateManager:
             return False
 
     async def handle_error(self, error_message: str):
+        logger.error(f"Erro: {error_message}")
+
         """Centraliza o tratamento de erros"""
-        print(f"Erro: {error_message}")  # Log para debug
         self.page.pubsub.send_all("error_occurred")
         await message_snackbar(self.page, error_message, MessageType.ERROR)
 
