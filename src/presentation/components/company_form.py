@@ -646,7 +646,7 @@ class CompanyForm(ft.Container):
             # Adiciona campos específicos baseado no tipo de documento
             if self.tipo_doc.value == "CNPJ":
                 form_data.update({
-                    "cnpj": CNPJ(self.cnpj.value),
+                    "cnpj": self.cnpj.value,
                     "ie": self.ie.value,
                     "im": self.im.value,
                 })

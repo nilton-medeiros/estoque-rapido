@@ -28,7 +28,7 @@ def sidebar_header(page: ft.Page):
             src=current_user['photo'],
             error_content=ft.Text(current_user['name'].iniciais),
             repeat=ft.ImageRepeat.NO_REPEAT,
-            fit=ft.ImageFit.FILL,
+            fit=ft.ImageFit.COVER,
             border_radius=ft.border_radius.all(100),
             width=100,
             height=100,
@@ -149,18 +149,6 @@ def sidebar_header(page: ft.Page):
 
                 # Atualiza a foto do usuário
                 result = await handle_update_photo_user(user_id=current_user["id"], photo=photo_url)
-
-                # Debug:
-                # print(" ")
-                # print(" ")
-                # print("DEBUG-154 ====================================================")
-                # print(f"file_s3_name: {file_s3_name}")
-                # print(f"local_file: {local_file}")
-                # print(f"photo_url: {photo_url}")
-                # print(f"result: {str(result)}")
-                # print("DEBUG-154 ====================================================")
-                # print(" ")
-                # print(" ")
 
                 if result["is_error"]:
                     # Photo não pode ser salva no database, remove do s3

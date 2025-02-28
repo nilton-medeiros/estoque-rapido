@@ -42,7 +42,7 @@ git clone https://github.com/nilton-medeiros/estoque-rapido.git
 ### Crie o Ambiente Virtual
 
 ```bash
-python -m venv venv
+python -m venv .venv
 ```
 
 ### Ative o Ambiente Virtual
@@ -144,7 +144,7 @@ Pequenas e médias empresas que necessitam de soluções práticas e acessíveis
 - **Frontend:** React, NextJS, Vue.js ou Flutter através do Flet para acessibilidade multiplataforma (PWA & Mobile).
 - **Backend:** Python (Django/FastAPI) ou Node.js.
 - **Banco de Dados:** Firestore, PostgreSQL ou MySQL.
-- **Outros:** 
+- **Outros:**
   - Firebase Auth (autenticação e notificações).
   - Docker (para deploy).
   - APIs REST para integração futura.

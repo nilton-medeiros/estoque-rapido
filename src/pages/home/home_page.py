@@ -144,7 +144,7 @@ def home_page(page: ft.Page):
             spacing=0,
             alignment=ft.alignment.center,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            scroll=ft.ScrollMode.AUTO,
+            scroll=None,
             controls=[layout]
         ),
         data=appbar,
