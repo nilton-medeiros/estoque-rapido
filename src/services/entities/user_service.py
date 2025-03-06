@@ -1,6 +1,6 @@
 from typing import Optional
 from src.domain.models.user import User
-from storage.data.interfaces.user_repository import UserRepository
+from storage.data.contracts.user_repository import UserRepository
 
 
 class UserService:

@@ -11,7 +11,7 @@ from src.domain.models.phone_number import PhoneNumber
 from src.domain.models.user import User
 from src.utils.deep_translator import deepl_translator
 from src.utils.field_validation_functions import get_first_and_last_name
-from storage.data.interfaces.user_repository import UserRepository
+from storage.data.contracts.user_repository import UserRepository
 from storage.data.firebase.firebase_initialize import get_firebase_app
 
 logger = logging.getLogger(__name__)

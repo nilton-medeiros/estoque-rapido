@@ -93,8 +93,8 @@ def landing_page(page: ft.Page):
     def landing_card(icons: list, title: str, description: str, show_more: str) -> ft.Card:
         return ft.Card(
             col={'xs': 12, 'md': 6, 'lg': 4},
-            width=250,
-            height=270,
+            width=350,
+            height=300,
             content=ft.Container(
                 expand=True,
                 padding=20,
@@ -113,17 +113,25 @@ def landing_page(page: ft.Page):
                             color=ft.Colors.BLACK54,
                             size=16,
                             weight=ft.FontWeight.BOLD,
+                            text_align=ft.TextAlign.CENTER,
                         ),
-                        ft.Text(description, color=ft.Colors.BLACK87),
-                        ft.ElevatedButton(
-                            "Saiba Mais",
-                            style=ft.ButtonStyle(
-                                color=ft.Colors.WHITE,
-                                bgcolor=ft.Colors.BLUE_700,
-                                padding=ft.padding.all(20),
+                        ft.Text(
+                            description,
+                            color=ft.Colors.BLACK87,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Container(
+                            content=ft.ElevatedButton(
+                                "Saiba Mais",
+                                style=ft.ButtonStyle(
+                                    color=ft.Colors.WHITE,
+                                    bgcolor=ft.Colors.BLUE_700,
+                                    padding=ft.padding.all(20),
+                                ),
+                                on_click=lambda e: card_show_more(
+                                    e, title, show_more),
                             ),
-                            on_click=lambda e: card_show_more(
-                                e, title, show_more),
+                            margin=ft.margin.only(bottom=20),
                         ),
                     ],
                 ),

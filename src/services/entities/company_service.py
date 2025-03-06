@@ -1,7 +1,7 @@
 from typing import Optional
 from src.domain.models.company import Company
 from src.domain.models.cnpj import CNPJ
-from storage.data.interfaces.company_repository import CompanyRepository
+from storage.data.contracts.company_repository import CompanyRepository
 
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a CompanyService atua como intermediária,

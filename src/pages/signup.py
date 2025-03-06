@@ -178,7 +178,7 @@ class SignupView:
 
         return None
 
-    # handle_signup: Executa ação do botão Registrar
+    # Executa ação do botão Registrar
     async def handle_signup(self, _):
         # Desabilita o botão imediatamente para evitar múltiplos cliques
         self.signup_button.disabled = True

@@ -1,5 +1,5 @@
 from typing import Optional
-from storage.data.interfaces.app_config_repository import AppConfigRepository
+from storage.data.contracts.app_config_repository import AppConfigRepository
 from src.domain.models.app_config import AppConfig
 
 """

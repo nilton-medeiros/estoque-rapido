@@ -4,13 +4,15 @@ from typing import Optional
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
+from src.domain.models.certificate_a1 import CertificateA1
+from src.domain.models.cnpj import CNPJ
+from src.domain.models.cpf import CPF
+from src.domain.models.company import Address, Company, CompanySize, FiscalData, TypeOfDocument
+from src.domain.models.company_subclass import CodigoRegimeTributario, Environment
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.utils.deep_translator import deepl_translator
-
-from src.domain.models.cnpj import CNPJ
-from src.domain.models.company import Address, Company, CompanySize, FiscalData
 from storage.data.firebase.firebase_initialize import get_firebase_app
-from storage.data.interfaces.company_repository import CompanyRepository
+from storage.data.contracts.company_repository import CompanyRepository
 
 logger = logging.getLogger(__name__)
 
@@ -185,15 +187,20 @@ class FirebaseCompanyRepository(CompanyRepository):
             dict: A representação da empresa em formato de dicionário.
         """
         # Não adicione id no company_dict, pois o Firebase providenciar um uid se não existir
+
         company_dict = {
             'name': company.name,
             'corporate_name': company.corporate_name,
-            'cnpj': str(company.cnpj),
-            'ie': company.ie,
             'store_name': company.store_name,
-            'im': company.im,
             'phone': company.phone.get_e164(),
         }
+
+        if company.document_type.name == "CNPJ":
+            company_dict['cnpj'] = str(company.cnpj)
+            company_dict['ie'] = company.ie
+            company_dict['im'] = company.im
+        else:
+            company_dict['cpf'] = str(company.cpf)
 
         if company.address:
             company_dict['address'] = {
@@ -204,21 +211,36 @@ class FirebaseCompanyRepository(CompanyRepository):
                 'city': company.address.city,
                 'state': company.address.state,
                 'postal_code': company.address.postal_code,
-                'logo_path': company.logo_path,
+                'logo_url': company.logo_url,
             }
+
         if company.size:
-            company_dict['size'] = company.size.value
-        if company.fiscal:
+            company_dict['size'] = company.size.name  # Armazena o name do enum size
+
+        if fiscal := company.get_nfce_data():
             company_dict['fiscal'] = {
-                'crt': company.fiscal.crt,
-                'nfce_series': company.fiscal.nfce_series,
-                'nfce_environment': company.fiscal.nfce_environment,
-                'nfce_certificate': company.fiscal.nfce_certificate,
-                'nfce_certificate_password': company.fiscal.nfce_certificate_password,
-                'nfce_certificate_date': company.fiscal.nfce_certificate_date,
-                'nfce_sefaz_id_csc': company.fiscal.nfce_sefaz_id_csc,
-                'nfce_sefaz_csc': company.fiscal.nfce_sefaz_csc,
+                'crt_name': fiscal.get('crt_name'),  # Armazena o name do enum CodigoRegimeTributario
+                'environment_name': fiscal.get('environment_name'),  # Armazena o name do enum Environment
+                'nfce_series': fiscal.get('nfce_series'),
+                'nfce_number': fiscal.get('nfce_number'),
+                'nfce_sefaz_id_csc': fiscal.get('nfce_sefaz_id_csc'),
+                'nfce_sefaz_csc': fiscal.get('nfce_sefaz_csc'),
             }
+
+        if certificate := company.get_certificate_data():
+            company_dict['certificate_a1'] = {
+                'serial_number': certificate.serial_number,
+                'not_valid_before': certificate.not_valid_before,
+                'not_valid_after': certificate.not_valid_after,
+                'subject_name': certificate.subject_name,
+                'file_name': certificate.file_name,
+                'cpf_cnpj': certificate.cpf_cnpj,
+                'nome_razao_social': certificate.nome_razao_social,
+                'password_encrypted': certificate.password_encrypted,
+                'storage_path': certificate.storage_path,
+            }
+
+        # ToDo: Verificar estes campos quando for implementado o gateway de pagamento
         if company.payment_gateway:
             company_dict['payment_gateway'] = {
                 'customer_id': company.payment_gateway.customer_id,
@@ -255,44 +277,87 @@ class FirebaseCompanyRepository(CompanyRepository):
                 postal_code=doc_data['address']['postal_code']
             )
 
-        size_info = CompanySize(doc_data.get(
-            'size')) if doc_data.get('size') else None
+        size_info = None
+        if size_name := doc_data.get('size'):
+            size_info = CompanySize[size_name]
 
         fiscal_info = None
-        if doc_data.get("fiscal"):
+        if fiscal := doc_data.get('fiscal'):
+
+            # Obtem o enum CodigoRegimeTributario correspondente ao código crt_code
+            crt_enum = None
+            amb_enum = None
+
+            # Obtem o 'name' do enum CRT vindo do banco
+            if fiscal.get('crt_name'):
+                crt_enum = CodigoRegimeTributario[fiscal.get('crt_name')]
+
+            # Obtem o 'name' do ambiente fiscal vindo do banco
+            if fiscal.get('environment_name'):
+                amb_enum = Environment[fiscal.get('environment_name')]
+
             fiscal_info = FiscalData(
-                crt=doc_data['fiscal']['crt'],
-                nfce_series=doc_data['fiscal']['nfce_series'],
-                nfce_environment=doc_data['fiscal']['nfce_environment'],
-                nfce_certificate=doc_data['fiscal']['nfce_certificate'],
-                nfce_certificate_password=doc_data['fiscal']['nfce_certificate_password'],
-                nfce_certificate_date=doc_data['fiscal']['nfce_certificate_date'],
-                nfce_sefaz_id_csc=doc_data['fiscal']['nfce_sefaz_id_csc'],
-                nfce_sefaz_csc=doc_data['fiscal']['nfce_sefaz_csc'],
+                crt=crt_enum,
+                environment=amb_enum,
+                nfce_series=fiscal.get('nfce_series', None),
+                nfce_number=fiscal.get('nfce_number', None),
+                nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc', None),
+                nfce_sefaz_csc=fiscal.get('nfce_sefaz_csc', None),
             )
 
-        payment_gwy = None
-        if doc_data.get("payment_gateway"):
-            payment_gwy = AsaasPaymentGateway(
-                customer_id=doc_data['payment_gateway']['customer_id'],
-                nextDueDate=doc_data['payment_gateway']['nextDueDate'],
-                billingType=doc_data['payment_gateway']['billingType'],
-                status=doc_data['payment_gateway']['status'],
-                dateCreated=doc_data['payment_gateway']['dateCreated'],
+        certificate_a1 = None
+
+        if certificate := doc_data.get("certificate_a1"):
+            certificate_a1 = CertificateA1(
+                serial_number = certificate.serial_number,
+                not_valid_before = certificate.not_valid_before,
+                not_valid_after = certificate.not_valid_after,
+                subject_name = certificate.subject_name,
+                file_name = certificate.file_name,
+                cpf_cnpj = certificate.cpf_cnpj,
+                nome_razao_social = certificate.nome_razao_social,
+                storage_path = certificate.storage_path,
             )
+            certificate_a1.password_encrypted = certificate.password_encrypted
+
+        payment_gateway = None
+        if pg := doc_data.get("payment_gateway"):
+            payment_gateway = AsaasPaymentGateway(
+                customer_id=pg.get('customer_id'),
+                nextDueDate=pg.get('nextDueDate'),
+                billingType=pg.get('billingType'),
+                status=pg.get('status'),
+                dateCreated=pg.get('dateCreated'),
+            )
+
+
+        document_type = None
+        cnpj = None
+        cpf = None
+
+        if doc_data.get('cnpj'):
+            document_type = TypeOfDocument.CNPJ
+            cnpj = CNPJ(doc_data.get('cnpj'))
+        elif doc_data.get("cpf"):
+            document_type = TypeOfDocument.CPF
+            cpf = CPF(doc_data.get("cpf"))
 
         return Company(
-            id=doc_data["id"],
-            name=doc_data['name'],
-            corporate_name=doc_data['corporate_name'],
-            cnpj=CNPJ(doc_data['cnpj']),
+            id=doc_data.get('id'),
+            document_type=document_type,
+            corporate_name=doc_data.get('corporate_name'),
+            name=doc_data.get('name'),
+            email=doc_data.get('email'),
+            cnpj=cnpj,
+            cpf=cpf,
+            store_name=doc_data.get('store_name', "Matriz"),
             ie=doc_data['ie'],
             im=doc_data.get('im'),
             phone=PhoneNumber(doc_data['phone']),
-            store_name=doc_data.get('store_name', "Matriz"),
             address=address,
             size=size_info,
             fiscal=fiscal_info,
-            logo_path=doc_data.get('logo_path'),
-            payment_gateway=payment_gwy,
+            certificate_a1=certificate_a1,
+            logo_url=doc_data.get('logo_url'),
+            payment_gateway=payment_gateway,
         )

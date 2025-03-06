@@ -4,12 +4,15 @@ import os
 
 import flet as ft
 
+from src.controllers.bucket_controller import handle_upload_bucket
 from src.controllers.dfe_controller import handle_upload_certificate_a1
+from src.domain.models.company import TypeOfDocument
+from src.domain.models.company_subclass import CompanySize, CodigoRegimeTributario, Environment
 from src.domain.models.cnpj import CNPJ
 from src.domain.models.cpf import CPF
 from src.domain.models.phone_number import PhoneNumber
-from src.domain.models.company_subclass import CompanySize, CodigoRegimeTributario, Environment
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
+from src.utils.gen_uuid import get_uuid
 from src.utils.message_snackbar import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
@@ -30,7 +33,7 @@ class CompanyForm(ft.Container):
         self._status_text = ft.Text()
 
         # Bind the dropdown change event
-        self.tipo_doc.on_change = self._handle_doc_type_change
+        self.document_type.on_change = self._handle_doc_type_change
 
         self.content = self._build_content()
 
@@ -38,7 +41,7 @@ class CompanyForm(ft.Container):
         """Cria todos os campos do formulário"""
 
         # Tipo de Documento
-        self.tipo_doc = ft.Dropdown(
+        self.document_type = ft.Dropdown(
             label="Tipo de Documento",
             width=200,
             value="CNPJ",  # Default value
@@ -197,7 +200,7 @@ class CompanyForm(ft.Container):
         # Tipo de Ambiente
         self.nfce_environment = ft.Dropdown(
             label="Ambiente",
-            hint_content="Ambiente de emissão da NFC-e (Homologação ou Produção)",
+            hint_text="Ambiente de emissão da NFC-e (Homologação ou Produção)",
             width=200,
             value=Environment.HOMOLOGACAO,  # Default value
             options=[
@@ -205,6 +208,7 @@ class CompanyForm(ft.Container):
                 for ambiente in Environment
             ],
         )
+        # Credenciais Sefaz concedido ao emissor de NFCe
         self.nfce_sefaz_id_csc = ft.TextField(
             label="Identificação do CSC",
             hint_text="Id. Código Segurança do Contribuínte",
@@ -228,7 +232,6 @@ class CompanyForm(ft.Container):
         )
 
         # Certificado A1 (PFX/P12)
-
         self.certificate_a1_btn = ft.ElevatedButton(
             text="Carregar Certificado A1 (PFX/P12)",
             tooltip="Certificado digital no formato PFX ou P12",
@@ -268,7 +271,7 @@ class CompanyForm(ft.Container):
             border=ft.InputBorder.UNDERLINE,
             width=200,
         )
-        self.subject_name = ft.TextField(
+        self.certificate_a1_subject_name = ft.TextField(
             label="Nome Assunto",
             read_only=True,
             border=ft.InputBorder.UNDERLINE,
@@ -286,28 +289,91 @@ class CompanyForm(ft.Container):
             border=ft.InputBorder.UNDERLINE,
             width=300,
         )
-        self.certificate_a1_file = ft.TextField(
-            label="Arquivo do Certificado",
+        self.certificate_a1_file_name = ft.TextField(
+            label="Nome do arquivo A1",
             read_only=True,
             border=ft.InputBorder.UNDERLINE,
             width=300,
         )
 
-        # ToDo: Implementar upload de arquivo para logotipo da empresa
-        self.logo_btn = ft.ElevatedButton()
+# Definindo o evento on_hover_logo
+        async def on_hover_logo(e):
+            print(f"Entrou no hover e self.page é: {'None' if self.page is None else 'DEFINIDO'}")
+            print(f"Evento disparado por: {'camera_icon' if e.control == self.camera_icon else 'logo_frame'}")
+
+            if self.page is not None:
+                print(f"ON HOVER: {'ATIVO' if e.data == 'true' else 'INATIVO'}")
+
+                # pequeno delay para garantir que os componetnes estejam disponíveis
+                await asyncio.sleep(0.1)
+
+                # Atualiza o camera_icon
+                if self.camera_icon.page is not None:
+                    print("Atualizando a cor do ícone da câmera")
+                    self.camera_icon.content.color = ft.Colors.PRIMARY if e.data == "true" else ft.Colors.GREY_400
+                    self.camera_icon.update()
+
+                # Atualiza o logo_frame
+                if self.logo_frame.page is not None:
+                    print("Atualizando bgcolor do logo_frame")
+                    self.logo_frame.bgcolor = ft.Colors.RED if e.data == "true" else ft.Colors.TRANSPARENT
+
+        # Construção do campo Logo do emitente de NFCe
+        self.camera_icon = ft.Container(
+            content=ft.Icon(
+                name=ft.Icons.ADD_A_PHOTO_OUTLINED,
+                size=20,
+                color=ft.Colors.WHITE30,
+            ),
+            margin=ft.margin.only(top=-15),
+            ink=True,
+            on_hover=on_hover_logo,
+            on_click=self._show_logo_dialog,
+            border_radius=ft.border_radius.all(10),
+            padding=8,
+        )
+
+        """
+        # ToDo:
+            - Implemnetar hover no logo e da câmera
+        """
+
+        self.logo_url: str = None
+
+        logo = ft.Text("Logo", italic=True)
+
+        self.logo_frame = ft.Container(
+            # content=logo,
+            bgcolor=ft.Colors.TRANSPARENT,
+            padding=10,
+            alignment=ft.alignment.center,
+            width=300,
+            height=200,
+            border=ft.border.all(color=ft.Colors.PRIMARY, width=1),
+            border_radius=ft.border_radius.all(10),
+            on_hover=on_hover_logo,
+            on_click=self._show_logo_dialog,  # Também permite clicar na imagem
+        )
+
+        self.logo_section = ft.Column(
+            controls=[
+                self.logo_frame,
+                self.camera_icon,
+            ]
+        )
 
     # Mostra um diálogo para selecionar o arquivo PFX/P12
     def _show_certificate_dialog(self, e):
 
         async def pick_file_certificate_result(e: ft.FilePickerResultEvent):
             if not e.files:
-                self.certificate_a1_file.value = "Nenhum arquivo selecionado"
-                self.certificate_a1_file.update()
+                self.certificate_a1_file_name.value = "Nenhum arquivo selecionado"
+                self.certificate_a1_file_name.update()
                 return
 
             # Atualiza o nome do arquivo selecionado
-            self.certificate_a1_file.value = e.files[0].name
-            self.certificate_a1_file.update()
+            self.certificate_a1_file_name.value = e.files[0].name
+            self.certificate_a1_file_name.update()
 
             # Inicia o upload do arquivo
             await upload_certificate(e.files)
@@ -316,12 +382,12 @@ class CompanyForm(ft.Container):
             # Atualiza a barra de progresso
             if e.progress == 1:
                 self._progress_bar.visible = False
-                self.certificate_a1_file.value = "Upload concluído!"
+                self.certificate_a1_file_name.value = "Upload concluído!"
             else:
                 self._progress_bar.visible = True
                 self._progress_bar.vallue = e.progress
 
-            self.certificate_a1_file.update()
+            self.certificate_a1_file_name.update()
             self._progress_bar.update()
 
         # Cria o FilePicker
@@ -380,7 +446,7 @@ class CompanyForm(ft.Container):
                     file_content = file.read()
 
                 # Envia o certificado para a API do provedor (DFe Provider)
-                cpf_cnpj = self.cnpj.value if self.tipo_doc.value == "CNPJ" else self.cpf.value
+                cpf_cnpj = self.cnpj.value if self.document_type.value == "CNPJ" else self.cpf.value
 
                 response = handle_upload_certificate_a1(
                     cpf_cnpj=cpf_cnpj,
@@ -427,16 +493,219 @@ class CompanyForm(ft.Container):
             allowed_extensions=[".pfx", ".p12"],
         )
 
+    def _show_logo_dialog(self, e):
+        self.logo_frame.bgcolor = ft.Colors.TRANSPARENT
+        self.logo_frame.update()
+
+        async def handle_file_picker_result(e: ft.FilePickerResultEvent):
+            if not e.files:
+                self._status_text.value = "Nenhum Logo selecionado"
+                self._status_text.update()
+                return
+
+            # Atualiza o texto com o nome do arquivo selecionado
+            self._status_text.value = f"Logo selecionado: {e.files[0].name}"
+            self._status_text.update()
+
+            # Inicia o upload do arquivo
+            await upload_file(e.files)
+
+        def handle_upload_progress(e: ft.FilePickerUploadEvent):
+            # Atualiza a barra de progresso
+            if e.progress == 1:
+                self._progress_bar.visible = False
+                self._status_text.value = "Upload concluído!"
+            else:
+                self._progress_bar.visible = True
+                self._progress_bar.value = e.progress
+
+            self._status_text.update()
+            self._progress_bar.update()
+
+        # Cria o FilePicker
+        pick_files_dialog = ft.FilePicker(
+            on_result=handle_file_picker_result,
+            on_upload=handle_upload_progress
+        )
+
+        async def upload_file(files):
+            self._progress_bar.visible = True
+            self._progress_bar.value = 0
+            self._progress_bar.update()
+
+            file_name = files[0].name
+            # Gera uma URL assinada para upload (válida por 60 segundos)
+            upload_url = self.page.get_upload_url(file_name, 60)
+
+            # Configura o upload
+            upload_files = [
+                ft.FilePickerUploadFile(
+                    name=file_name,
+                    upload_url=upload_url
+                )
+            ]
+
+            # Inicia o upload para o servidor do estoquerapido
+            # Criamos uma Promise para aguardar a conclusão do upload
+            upload_complete = False
+
+            def on_upload_completed(e):
+                nonlocal upload_complete
+                if e.progress == 1:
+                    upload_complete = True
+
+            pick_files_dialog.on_upload = on_upload_completed
+            pick_files_dialog.upload(upload_files)
+
+            # Aguarda até que o upload seja concluído
+            while not upload_complete:
+                # Pequena pausa para não sobrecarregar o CPU
+                await asyncio.sleep(0.1)
+
+            # Agora que o upload está concluído, podemos prosseguir com o upload para S3
+            # pegar cpf ou cnpj, devem estar preenchidos
+
+            cpf_cnpj = self.cnpj.value if self.document_type.value == "CNPJ" else self.cpf.value
+
+            if not cpf_cnpj:
+                # Cancelar o upload
+                return
+
+            prefix = cpf_cnpj
+            file_uid = get_uuid()
+
+            _, dot_extension = os.path.splitext(file_name)
+            dot_extension = dot_extension.lower()
+
+            file_name_bucket = f"{prefix}/cia_logo_{file_uid}{dot_extension}"
+            local_file = f"uploads/{file_name}"
+
+            # Adiciona uma verificação extra para garantir que o arquivo existe
+            max_retries = 10
+            retry_count = 0
+            while not os.path.exists(local_file) and retry_count < max_retries:
+                # Espera meio segundo entre tentativas
+                await asyncio.sleep(0.5)
+                retry_count += 1
+
+            if not os.path.exists(local_file):
+                logger.debug(f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
+                raise FileNotFoundError(
+                    f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
+
+            message_snackbar = "Logo carregado com sucesso!"
+            message_type = MessageType.INFO
+
+            try:
+                self.logo_url = await handle_upload_bucket(local_path=local_file, key=file_name_bucket)
+                # O logo só será salvo no database quando o usuário clicar no botão salvar, para salvar todos os dados do formulário
+
+            except ValueError as e:
+                logger.error(str(e))
+                self.logo_url = None
+                message_snackbar = f"Erro: {str(e)}"
+                message_type = MessageType.ERROR
+            except RuntimeError as e:
+                logger.error(str(e))
+                self.logo_url=None
+                message_snackbar = f"Erro no upload: {str(e)}"
+                message_type = MessageType.ERROR
+
+            message_snackbar(page=self.page, message=message_snackbar, message_type=message_type)
+
+            # Limpa o arquivo local independente do upload ou falha
+            try:
+                os.remove(local_file)
+            except:
+                pass  # Ignora erros na limpeza do arquivo
+
+            self.page.close(dialog)
+
+
+        # Adiciona o FilePicker ao overlay da página
+        self.page.overlay.append(pick_files_dialog)
+
+        # Dropdown para escolher tipo de imagem
+        image_type_dd = ft.Dropdown(
+            width=200,
+            options=[
+                ft.dropdown.Option("arquivo", "Arquivo Local"),
+                ft.dropdown.Option("url", "URL da Web"),
+            ],
+            value="arquivo",
+            label="Tipo de Imagem",
+        )
+
+        url_field = ft.TextField(
+            label="URL da Imagem",
+            width=200,
+            visible=False
+        )
+
+        def type_changed(e):
+            url_field.visible = image_type_dd.value == "url"
+            self.page.update()
+
+        image_type_dd.on_change = type_changed
+
+        def update_image(e):
+            print(f"Atualizando imagem...")
+
+            selected_type = image_type_dd.value
+            if selected_type == "arquivo":
+                pick_files_dialog.pick_files(
+                    allow_multiple=False,
+                    allowed_extensions=["png", "jpg", "jpeg", "svg"]
+                )
+            else:
+                if url_field.value:
+                    """
+                    O Logo só será salvo no database quando o usuário clicar no botão salvar
+                    do formulário para salvar todos os dados.
+                    """
+                    self.logo_url = url_field.value
+                    self.page.close(dialog)
+
+        def close_dialog(e):
+            self.page.close(dialog)
+            if self.page.overlay:
+                self.page.overlay.pop()
+                self.page.update()
+
+        # Criando o diálogo
+        dialog = ft.AlertDialog(
+            modal=True,  # Garante que o diálogo bloqueie interações com a página
+            title=ft.Text("Selecionar Imagem Logo"),
+            content=ft.Column(
+                controls=[
+                    image_type_dd,
+                    url_field,
+                    self._status_text,
+                ],
+                height=150,
+            ),
+            actions=[
+                ft.TextButton("Cancelar", on_click=close_dialog),
+                ft.TextButton("Selecionar", on_click=update_image),
+            ],
+        )
+
+        # Abrindo o diálogo
+        self.page.open(dialog)
+
     def _build_content(self):
         """Constrói o conteúdo do formulário"""
         build_content = ft.Column(
             [
                 ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([self.tipo_doc, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.document_type, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.store_name, self.phone, self.email], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+
+                ft.Divider(),
+                ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
                 ft.Divider(),
                 ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
@@ -457,7 +726,7 @@ class CompanyForm(ft.Container):
                 ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
-                ft.Row([self.subject_name, self.certificate_a1_file], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.certificate_a1_subject_name, self.certificate_a1_file_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ],
             spacing=20,
             run_spacing=20,
@@ -471,7 +740,7 @@ class CompanyForm(ft.Container):
 
     def _handle_doc_type_change(self, e):
         """Atualiza os labels e visibilidade dos campos baseado no tipo de documento"""
-        is_cnpj = self.tipo_doc.value == "CNPJ"
+        is_cnpj = self.document_type.value == "CNPJ"
 
         if not is_cnpj:
             # Atualiza labels para pessoa física
@@ -508,7 +777,7 @@ class CompanyForm(ft.Container):
             self.update()
         elif len(cnpj_clean) == 14:
             self.cnpj.value = cnpj_clean
-            self.consult_cnpj_button.disabled = not self.tipo_doc.value == "CNPJ"
+            self.consult_cnpj_button.disabled = not self.document_type.value == "CNPJ"
             self.update()
 
     def _handle_cpf_change(self, e):
@@ -590,7 +859,7 @@ class CompanyForm(ft.Container):
             self.update()
 
     def did_mount(self):
-        """Chamado quando o controle é montado"""
+        """Chamado quando o controle é montado a pagina"""
         if self.company_data:
             self.populate_form()
         else:
@@ -602,15 +871,18 @@ class CompanyForm(ft.Container):
     def populate_form(self):
         # ToDo: Incompleto: Concluir preenchimento de todos os campos do form
         """Preenche o formulário com os dados existentes"""
-        # Define o tipo de documento baseado nos dados
-        self.tipo_doc.value = "CPF" if self.company_data.get('cpf') else "CNPJ"
 
+        # Define o tipo de documento baseado nos dados
+        self.document_type.value = "CPF" if self.company_data.get('cpf') else "CNPJ"
+        self.cnpj.value = str(self.company_data.get('cnpj', ''))
+        self.cpf.value = str(self.company_data.get('cpf', ''))
         self.name.value = self.company_data.get('name', '')
         self.corporate_name.value = self.company_data.get('corporate_name', '')
-        self.cnpj.value = str(self.company_data.get('cnpj', ''))
-        self.phone.value = str(self.company_data.get('phone', ''))
         self.ie.value = self.company_data.get('ie', '')
         self.im.value = self.company_data.get('im', '')
+        self.store_name.value = self.company_data.get("store_name", '')
+        self.email.value = self.company_data.get("email", '')
+        self.phone.value = str(self.company_data.get('phone', ''))
 
         # Endereço
         if address := self.company_data.get('address'):
@@ -626,41 +898,69 @@ class CompanyForm(ft.Container):
         if size := self.company_data.get('size'):
             self.size.value = size.name
 
+        # Logo
+        if self.company_data.get('logo_url'):
+            self.logo_url = self.company_data.get('logo_url')
+            self.logo_frame.content = ft.Image(
+                src=self.logo_url,
+                error_content=ft.Text(self.company_data.get("initials_corporate_name")),
+                repeat=ft.ImageRepeat.NO_REPEAT,
+                fit=ft.ImageFit.FILL,
+                border_radius=ft.border_radius.all(10),
+                width=300,
+                height=300,
+            )
+
         if fiscal := self.company_data.get('fiscal'):
-            self.crt.value = str(fiscal.get('crt', '3'))
+            if crt_enum := fiscal.get('crt'):
+                self.crt.value = crt_enum.name  # Seta o default Dropdown pelo name do enum
+
+            self.nfce_series.value = fiscal.get('nfce_series')
+            self.nfce_number.value = fiscal.get('nfce_number')
+
+        # ToDo: Implementar dados do certificado aqui
 
         # Atualiza os labels e visibilidade após popular
         self._handle_doc_type_change(None)
 
     def get_form_data(self) -> dict:
-        # ToDo: Verificar, talvez esteja incompleto
         """Obtém os dados do formulário como um dicionário"""
         try:
             # Base do dicionário
             form_data = {
+                "document_type": TypeOfDocument(self.document_type.value),
                 "name": self.name.value,
                 "corporate_name": self.corporate_name.value,
                 "phone": PhoneNumber(self.phone.value) if self.phone.value else None,
+                "store_name": self.store_name.value,
+                "email": self.email.value,
             }
 
             # Adiciona campos específicos baseado no tipo de documento
-            if self.tipo_doc.value == "CNPJ":
+            if self.document_type.value == "CNPJ":
                 form_data.update({
-                    "cnpj": self.cnpj.value,
+                    "cnpj": CNPJ(self.cnpj.value),
                     "ie": self.ie.value,
                     "im": self.im.value,
                 })
             else:  # CPF
                 form_data["cpf"] = CPF(self.cnpj.value)
 
-            crt = self.crt.value
+            form_data.update({
+                "logo_url": self.logo_url
+            })
 
-            if not crt:
+            crt = None
+
+            if self.crt.value:
+                # Obtem o Enum selecionado pelo usuário
+                crt = CodigoRegimeTributario(self.crt.value)
+            else:
                 # Padrão
-                if self.tipo_doc.value == "CNPJ":
-                    crt = 3  # Regime Normal
+                if self.document_type.value == "CNPJ":
+                    crt = CodigoRegimeTributario.REGIME_NORMAL
                 else:
-                    crt = 1  # Simples Nacional
+                    crt = CodigoRegimeTributario.SIMPLES_NACIONAL
 
             # Adiciona endereço e outros campos comuns
             form_data.update({
@@ -675,9 +975,28 @@ class CompanyForm(ft.Container):
                 },
                 "size": CompanySize[self.size.value] if self.size.value else None,
                 "fiscal": {
-                    "crt": crt
+                    "crt": crt,
+                    "nfce_series": self.nfce_series.value,
+                    "nfce_number": self.nfce_number.value,
+                    "nfce_environment": Environment(self.nfce_environment.value),
+                    "nfce_sefaz_id_csc": self.nfce_sefaz_id_csc.value,
+                    "nfce_sefaz_csc": self.nfce_sefaz_csc.value,
                 }
             })
+
+            # Adiciona dados do Certificado Digital A1
+            if self.certificate_a1_status.value == "ATIVO":
+                form_data.update({
+                    "certificate_a1": {
+                        "serial_number": self.certificate_a1_serial_number.value,
+                        "issuer_name": self.certificate_a1_issuer_name.value,
+                        "not_valid_before": self.certificate_a1_not_valid_before.value,
+                        "not_valid_after": self.certificate_a1_not_valid_after.value,
+                        "subject_name": self.certificate_a1_subject_name.value,
+                        "file_name": self.certificate_a1_file_name.value,
+                        "password": self.certificate_a1_password.value,
+                    }
+                })
 
             return form_data
 
@@ -691,11 +1010,11 @@ class CompanyForm(ft.Container):
         # Cria uma lista de campos que sempre aparecem
         base_fields = [
             ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.tipo_doc], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.document_type], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ]
 
         # Adiciona campos específicos de CNPJ se necessário
-        if self.tipo_doc.value == "CNPJ":
+        if self.document_type.value == "CNPJ":
             base_fields.append(ft.Row([self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
             base_fields.append(ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
         else:
@@ -713,6 +1032,9 @@ class CompanyForm(ft.Container):
             ft.Row([self.city, self.state, self.postal_code], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
             ft.Divider(),
+            ft.Text("Logo na NFCe", size=20, weight=ft.FontWeight.BOLD),
+            ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Divider(),
             ft.Text("Informações Fiscais - Obrigatório se for emitir Nota ao Consumidor (NFC-e)", size=20,
                         weight=ft.FontWeight.BOLD),
             ft.Text("Consulte o seu contador para obter dados corretos", size=16),
@@ -725,7 +1047,7 @@ class CompanyForm(ft.Container):
             ft.Row([self.certificate_a1_password, self.certificate_a1_btn, self.certificate_a1_status], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ft.Row([self.certificate_a1_serial_number, self.certificate_a1_issuer_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ft.Row([self.certificate_a1_not_valid_before, self.certificate_a1_not_valid_after], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
-            ft.Row([self.subject_name, self.certificate_a1_file], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Row([self.certificate_a1_subject_name, self.certificate_a1_file_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ])
 
         # Atualiza o conteúdo
@@ -744,6 +1066,6 @@ class CompanyForm(ft.Container):
                     field.error_text = None
 
         # Reseta o tipo de documento para CNPJ (valor padrão)
-        self.tipo_doc.value = "CNPJ"
+        self.document_type.value = "CNPJ"
         # Atualiza os labels e visibilidade
         self._handle_doc_type_change(None)

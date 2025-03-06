@@ -1,6 +1,7 @@
 import boto3
 import os
 
+import boto3.exceptions
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
@@ -73,7 +74,7 @@ class S3FileManager:
         self._relativ_key = f"{self.prefix}/{clean_key}"
         return self._relativ_key
 
-    def upload(self, local_path: str, key: str) -> str:
+    async def upload(self, local_path: str, key: str):
         """
         Faz upload de um arquivo local para o S3.
 
@@ -90,9 +91,9 @@ class S3FileManager:
             >>> s3_manager.upload('/path/local/arquivo.txt', 'pasta/arquivo.txt')
         """
         full_key = self._get_full_key(key)
-        self.s3_client.upload_file(local_path, self.bucket, full_key)
+        return await self.s3_client.upload_file(local_path, self.bucket, full_key)
 
-    def delete(self, key: str) -> None:
+    async def delete(self, key: str) -> None:
         """
         Remove um arquivo do S3.
 
@@ -107,9 +108,9 @@ class S3FileManager:
             >>> s3_manager.delete('pasta/arquivo.txt')
         """
         full_key = self._get_full_key(key)
-        self.s3_client.delete_object(Bucket=self.bucket, Key=full_key)
+        await self.s3_client.delete_object(Bucket=self.bucket, Key=full_key)
 
-    def exists(self, key: str) -> bool:
+    async def exists(self, key: str) -> bool:
         """
         Verifica se um arquivo existe no S3.
 
@@ -129,7 +130,7 @@ class S3FileManager:
         """
         full_key = self._get_full_key(key)
         try:
-            self.s3_client.head_object(Bucket=self.bucket, Key=full_key)
+            await self.s3_client.head_object(Bucket=self.bucket, Key=full_key)
             return True
         except ClientError as e:
             # O arquivo não existe: status 404

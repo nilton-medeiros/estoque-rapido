@@ -1,4 +1,7 @@
 estoquerapido/
+├── .venv/
+├── .vscode/
+│   └── settings.json
 ├── assets/
 │   ├── audios/
 │   ├── fonts/
@@ -9,14 +12,32 @@ estoquerapido/
 │   │   └── estoquerapido_img_123e4567e89b12d3a456426614174000.jpg
 │   ├── media/
 │   ├── styles/
+│   ├── favicon.png
+│   ├── icon.png
 │   └── manifest.json
+├── logs/
+│   └── app.log
 ├── src/
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── logging_config.py
 │   ├── controllers/
 │   │   ├── __init__.py
+│   │   ├── app_config_controller.py
+│   │   ├── bucket__controller.py
+│   │   ├── company_controller.py
+│   │   ├── dfe_controller.py
 │   │   └── user_controller.py
 │   ├── domain/
 │   │   └── models/
 │   │       ├── __init__.py
+│   │       ├── app_config.py
+│   │       ├── certificate_a1.py
+│   │       ├── certificate_status.py
+│   │       ├── cnpj.py
+│   │       ├── company_subclass.py
+│   │       ├── company.py
+│   │       ├── cpf.py
 │   │       ├── nome_pessoa.py
 │   │       ├── phone_number.py
 │   │       └── user.py
@@ -26,31 +47,53 @@ estoquerapido/
 │   │   │   └── form_cia.py
 │   │   ├── home/
 │   │   │   ├── __init__.py
-│   │   │   └── home_page.py
+│   │   │   ├── content.py
+│   │   │   ├── home_page.py
+│   │   │   └── sidebar.py
 │   │   ├── partials/
 │   │   │   ├── __init__.py
+│   │   │   ├── build_input_responsive.py
+│   │   │   ├── get_responsive_sizes.py
 │   │   │   └── login_button.py
 │   │   ├── __init__.py
-│   │   ├── home.py
 │   │   ├── landing_page.py
 │   │   ├── login.py
 │   │   └── signup.py
 │   ├── presentation/
-│   │   ├── components/
-│   │   │   ├── __init__.py
-│   │   │   └── carousel.py
+│   │   └── components/
+│   │       ├── __init__.py
+│   │       ├── carousel.py
+│   │       ├── company_form.py
+│   │       └── functionality_graphics.py
 │   ├── services/
+│   │   ├── .keys/
+│   │   │   ├── firebaseAdminSDK.json
+│   │   │   └── serviceAccountKey.json
 │   │   ├── __init__.py
+│   │   ├── apis/
+│   │   │   ├── __init__.py
+│   │   │   ├── consult_cnpj_api.py
+│   │   │   └── dfe_service.py
 │   │   ├── aws/
 │   │   │   └── s3_file_manager.py
+│   │   ├── buckets/
+│   │   │   ├── __init__.py
+│   │   │   └── bucket_service.py
+│   │   ├── contracts/
+│   │   │   ├── __init__.py
+│   │   │   └── dfe_provider.py
 │   │   ├── entities/
+│   │   │   ├── app_config_service.py
 │   │   │   ├── comany_service.py
 │   │   │   └── user_service.py
+│   │   ├── gateways/
+│   │   │   └── asaas_payment_gateway.json
 │   │   ├── google/
 │   │   │   ├── firebaseAdminSDK-SAMPLE.json
 │   │   │   └── serviceAccountKey-SAMPLE.json
-│   │   ├── payment_gateways/
-│   │   │   └── asaas_payment_gateway.py
+│   │   ├── providers/
+│   │   │   ├── __init__.py
+│   │   │   └── nuvemfiscal_provider.py
 │   │   ├── states/
 │   │   │   ├── __init__.py
 │   │   │   ├── app_state_manager.py
@@ -60,22 +103,32 @@ estoquerapido/
 │   │   ├── __init__.py
 │   │   ├── deep_translator.py
 │   │   ├── field_validation_functions.py
+│   │   ├── gen_uuid.py
 │   │   └── message_snackbar.py
-│   │   ├── __init__.py
+│   └── __init__.py
 ├── storage/
+│   ├── buckets/
+│   │   ├── __init__.py
+│   │   └── aws_s3_storage.py
 │   ├── data/
+│   │   ├── contracts/
+│   │   │   ├── __init__.py
+│   │   │   ├── app_config_repository.py
+│   │   │   ├── bucket_storage.py
+│   │   │   ├── company_repository.py
+│   │   │   └── user_repository.py
 │   │   ├── firebase/
 │   │   │   ├── __init__.py
+│   │   │   ├── firebase_app_config_repository.py
+│   │   │   ├── firebase_company_repository.py
 │   │   │   ├── firebase_initialize.py
 │   │   │   └── firebase_user_repository.py
-│   │   ├── interfaces/
-│   │   │   ├── __init__.py
-│   │   │   └── user_repository.py
+│   │   ├── temp/
 │   └── temp/
-├── venv/
 ├── .env
 ├── .gitignore
-├── estrutura de diretórios.txt
+├── estrutura de diretórios.txt ## este arquivo! ##
+├── LICENSE
 ├── main.py
 ├── README.md
 └── requirements.txt

@@ -1,6 +1,7 @@
 {
   "material-icon-theme.folders.associations": {
     "adaptadores": "Connection",
+    "adapters": "Connection",
     "companies": "Stack",
     "company": "Store",
     "domain": "Guard",
@@ -9,8 +10,10 @@
     "portas": "Circleci",
     "storage": "database",
     "usuario": "admin",
+    "buckets": "container",
+    "entities": "supabase",
+    "gateways": "routes",
+    "google": "connection",
+    "states": "context"
   },
-  "python.analysis.extraPaths": [
-    "./src/domain"
-  ]
 }

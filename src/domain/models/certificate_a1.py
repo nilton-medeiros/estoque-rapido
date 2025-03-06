@@ -8,16 +8,17 @@ class CertificateA1:
     """Certificado digital (PFX ou P12)."""
     serial_number: Optional[str] = None  # Número de série do certificado
     issuer_name: Optional[str] = None  # Emissor do certificado
-    # Data e hora de início da validade do certificado
-    not_valid_before: Optional[datetime] = None
-    # Data e hora do fim da validade do certificado
-    not_valid_after: Optional[datetime] = None
+    not_valid_before: Optional[datetime] = None  # Data e hora de início da validade do certificado
+    not_valid_after: Optional[datetime] = None  # Data e hora do fim da validade do certificado
+
     # O thumbprint (ou impressão digital) de um certificado digital A1 é uma representação única e compacta do certificado
-    thumbprint: Optional[str] = None
-    subject_name: Optional[str] = None
-    cpf_cnpj: Optional[str] = None
+    # thumbprint: Optional[str] = None  NÃO USADO
+    subject_name: Optional[str] = None  # Nome do assunto
+    file_name: Optional[str] = None  # Nome do arquivo
+    cpf_cnpj: Optional[str] = None  # Documento da pessoa ou empresa dona do certificado A1
     nome_razao_social: Optional[str] = None
     _encrypted_password: str = None  # Senha do certificado digital criptografada
+    storage_path: str = None
 
     def _encrypt(self, password: str) -> str:
         """
@@ -54,6 +55,16 @@ class CertificateA1:
             return None
         return self._decrypt()
 
+    @property
+    def password_encrypted(self) -> Optional[str]:
+        """
+        Getter para a senha encriptografada do certificado.
+
+        Returns:
+            Optional[str]: Senha encriptografada ou None se não houver senha.
+        """
+        return self._encrypted_password
+
     @password.setter
     def password(self, password: Optional[str]) -> None:
         """
@@ -66,3 +77,17 @@ class CertificateA1:
             self._encrypted_password = None
         else:
             self._encrypted_password = self._encrypt(password)
+
+    @password_encrypted.setter
+    def password_encrypted(self, password: Optional[str]) -> None:
+        """
+        Setter para a senha do certificado encriptada.
+
+        Args:
+            password (Optional[str]): Senha emcriptografada oriunda do database.
+        """
+        # ToDo: Criar consistência se password foi realmente encriptografado pelo app
+        if password is None:
+            self._encrypted_password = None
+        else:
+            self._encrypted_password = password

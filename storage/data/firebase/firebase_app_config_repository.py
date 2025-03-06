@@ -2,7 +2,7 @@ import logging
 
 from src.domain.models.app_config import AppConfig
 from src.utils.deep_translator import deepl_translator
-from storage.data.interfaces.app_config_repository import AppConfigRepository
+from storage.data.contracts.app_config_repository import AppConfigRepository
 
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from firebase_admin import firestore

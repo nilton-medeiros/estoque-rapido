@@ -1,5 +1,5 @@
 from src.domain.models.company_subclass import Environment
-from src.services.interfaces.dfe_provider import DFeProvider
+from src.services.contracts.dfe_provider import DFeProvider
 
 
 class DFeService:

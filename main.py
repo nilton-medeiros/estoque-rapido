@@ -60,7 +60,7 @@ def main(page: ft.Page):
         elif message.startswith("company_updated:"):
             company = app_state.company
             if company:
-                print(f"Empresa atualizada: {company['name']}")
+                # print(f"Empresa atualizada: {company['name']}")
                 # Atualiza elementos da UI que dependem da empresa
                 update_company_dependent_ui()
             else:
@@ -146,10 +146,17 @@ def main(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
             case '/company/form':  # Registro
+                route_title = "home/empresa/form"
+                company = app_state.company
+                if company.get('id'):
+                    route_title += f"/{company.get('id')}"
+                else:
+                    route_title += "/new"
+
                 pg_view = ft.View(
                     route='/company/form',
                     appbar=ft.AppBar(
-                        title=ft.Text("home/empresa/formulario/", size=16),
+                        title=ft.Text(route_title, size=16),
                         leading=ft.IconButton(
                             icon=ft.Icons.ARROW_BACK,
                             on_click=lambda _: page.go("/home"),

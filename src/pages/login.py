@@ -217,7 +217,7 @@ class LoginView:
                             "address": cia.address,
                             "size": cia.size,
                             "fiscal": cia.fiscal,
-                            "logo_path": cia.logo_path,
+                            "logo_url": cia.logo_url,
                             "payment_gateway": cia.payment_gateway,
                         })
                 else:
@@ -232,7 +232,7 @@ class LoginView:
                             "address": None,
                             "size": None,
                             "fiscal": None,
-                            "logo_path": None,
+                            "logo_url": None,
                             "payment_gateway": None,
                     })
 

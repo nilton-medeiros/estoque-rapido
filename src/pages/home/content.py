@@ -1,9 +1,18 @@
 import flet as ft
-
 import datetime
 import locale
+import platform
 
-locale.setlocale(locale.LC_TIME, 'pt_BR.utf8')
+# Problemas de acentuação ao mostrar texto no navegdor quando sob S.O. Windows. Corrigido desta forma:
+# Configurar o locate dinamicamente
+if platform.system() == "Windows":
+    locale.setlocale(locale.LC_TIME, 'pt_BR')
+else:
+    try:
+        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+    except locale.Error:
+        # Fallback para o locale padrão do sistema, se o desejado não estiver disponível
+        locale.setlocale(locale.LC_TIME, '')
 
 from typing import Callable
 
@@ -28,7 +37,7 @@ def main_content():
                             title,
                             color=ft.Colors.WHITE,
                             size=16,
-                            weight=ft.FontWeight.BOLD,
+                            weight=ft.FontWeight.NORMAL,
                         ),
                     ],
                 ),
@@ -44,7 +53,10 @@ def main_content():
             height=250,
         )
 
+    # Obter a data corrente, ex: '04 de março'
     date_description = datetime.datetime.now().strftime("%d de %B")
+    # Garantir que o texto esteja em UTF-8
+    # date_description = date_description.encode().decode('utf-8')
 
     def news_text(prefix: str, description: str):
         return ft.Text(
@@ -70,17 +82,25 @@ def main_content():
         )
 
     banner = ft.Container(
-        shadow=ft.BoxShadow(
-            color='#2d2d3a',
-            offset=ft.Offset(x=0, y=-60),
-            spread_radius=-30,
-        ),
-        image=ft.Image(src='images/bg.jpg', fit=ft.ImageFit.COVER, repeat=ft.ImageRepeat.NO_REPEAT, opacity=0.5),
+        # shadow=ft.BoxShadow(
+        #     color='#2d2d3a',
+        #     offset=ft.Offset(x=0, y=-60),
+        #     spread_radius=-30,
+        # ),
+        # image=ft.Image(
+        #     src='images/bg.jpg',
+        #     # fit=ft.ImageFit.NONE,
+        #     repeat=ft.ImageRepeat.NO_REPEAT,
+        #     opacity=0.5,
+        #     # width=100,
+        #     # height=200,
+        # ),
         bgcolor='#111418',
-        margin=ft.margin.only(top=30),
+        margin=ft.margin.only(top=0),
+        height=200,
         content=ft.ResponsiveRow(
             columns=12,
-            vertical_alignment=ft.CrossAxisAlignment.END,
+            vertical_alignment=ft.CrossAxisAlignment.START,
             controls=[
                 ft.Container(
                     col={'md': 12, 'lg': 8},
@@ -133,16 +153,17 @@ def main_content():
                                 ],
                             ),
                         ],
-                        spacing=30,
-                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=20,
+                        alignment=ft.MainAxisAlignment.START,
                     )
                 ),
                 ft.Container(
+                    margin=ft.margin.only(top=20),
                     col={'md': 12, 'lg': 4},
                     content=ft.Image(
                         src='images/face-2.png',
                         width=20,
-                        # scale=ft.Scale(scale=1.8, alignment=ft.alignment.bottom_center),
+                        scale=ft.Scale(scale=1, alignment=ft.alignment.top_center),
                     )
                 )
             ]
@@ -160,7 +181,8 @@ def main_content():
             ]
         ),
         bgcolor="#111418",
-        # padding=ft.padding.all(20),
+        margin=ft.margin.only(top=40, bottom=40),
+        padding=0,
     )
 
     def on_click_registrar(e):
@@ -198,15 +220,15 @@ def main_content():
                     click_action=on_click_nfce,
                 ),
             ],
-            spacing=30,
-            run_spacing=30,
+            # spacing=30,
+            # run_spacing=30,
         ),
         col={"xs": 12, "md": 7, "lg": 8, "xxl": 9},
         expand=True,
         bgcolor="#111418",
         border_radius=10,
-        alignment=ft.alignment.center,
-        margin=ft.margin.symmetric(vertical=40),
+        alignment=ft.alignment.top_center,
+        margin=ft.margin.only(top=30, bottom=30),
         # padding=ft.padding.all(20),
     )
 
@@ -232,7 +254,7 @@ def main_content():
 
     def sections_title(title: str):
         return ft.Container(
-            padding=ft.padding.symmetric(vertical=20),
+            # padding=ft.padding.symmetric(vertical=20),
             content=ft.Text(value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM),
         )
 
@@ -249,7 +271,10 @@ def main_content():
                 financial,
             ],
             scroll=ft.ScrollMode.HIDDEN,
+            alignment=ft.MainAxisAlignment.START,
+            spacing=0,
         ),
         bgcolor="#111418",
-        padding=ft.padding.all(30),
+        # padding=ft.padding.all(20),
+        padding=ft.padding.only(left=20, right=20, bottom=20),
     )

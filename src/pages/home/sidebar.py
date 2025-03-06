@@ -237,14 +237,12 @@ def sidebar_header(page: ft.Page):
         )
 
         def type_changed(e):
-            print(f"Tipo alterado para: {image_type_dd.value}")
             url_field.visible = image_type_dd.value == "url"
             page.update()
 
         image_type_dd.on_change = type_changed
 
-        def update_image(e):
-            print(f"Atualizando imagem...")
+        async def update_image(e):
             selected_type = image_type_dd.value
             if selected_type == "arquivo":
                 pick_files_dialog.pick_files(
@@ -252,9 +250,52 @@ def sidebar_header(page: ft.Page):
                     allowed_extensions=["png", "jpg", "jpeg", "svg"]
                 )
             else:
-                if url_field.value:
-                    print(f"URL da imagem: {url_field.value}")
-                    # Implementar lógica de atualização com URL
+                if url_field.value:                                    # Atualiza a foto do usuário
+                    result = await handle_update_photo_user(user_id=current_user["id"], photo=url_field.value)
+                    if not result["is_error"]:
+                        # Nova foto salva no database, remover a antiga do s3 se existir
+                        if previous_user_photo:
+                            # String completa
+                            url = previous_user_photo
+                            # Dividindo a string pelo termo "public/"
+                            parts = url.split("public/")
+                            # Extraindo a parte desejada (key)
+                            key = parts[1]
+                            # Excluíndo do bucket
+                            if key:
+                                s3_manager = S3FileManager()
+                                s3_manager.delete(key)
+
+                        # Atualiza a foto na página
+                        user_photo = ft.Image(
+                            src=url_field.value,
+                            error_content=ft.Text(current_user['name'].iniciais),
+                            repeat=ft.ImageRepeat.NO_REPEAT,
+                            fit=ft.ImageFit.FILL,
+                            border_radius=ft.border_radius.all(100),
+                            width=100,
+                            height=100,
+                        )
+
+                        user_avatar.content = user_photo
+                        user_avatar.update()
+                        user = result["user"]
+
+                        await page.app_state.set_user({
+                            "id": user.id,
+                            "name": user.name,
+                            "email": user.email,
+                            "phone_number": user.phone_number,
+                            "profile": user.profile,
+                            "companies": user.companies,
+                            "photo": user.photo,
+                        })
+
+                        page.pubsub.send_all("user_updated")
+
+                    color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
+                    message_snackbar(
+                        page=page, message=result["message"], message_type=color)
                     page.close(dialog)
 
         def close_dialog(e):
@@ -272,6 +313,7 @@ def sidebar_header(page: ft.Page):
                     image_type_dd,
                     url_field,
                     status_text,
+                    progress_bar,
                 ],
                 height=150,
             ),

@@ -9,7 +9,7 @@ from src.controllers.app_config_controller import handle_get_config, handle_save
 from src.domain.models.certificate_a1 import CertificateA1
 from src.domain.models.company import Company
 from src.domain.models.company_subclass import Environment
-from src.services.interfaces.dfe_provider import DFeProvider
+from src.services.contracts.dfe_provider import DFeProvider
 
 logger = logging.getLogger(__name__)
 

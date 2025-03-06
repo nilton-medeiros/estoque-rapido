@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import os
 
-from typing import Optional
+from typing import Optional, Dict
 
 from src.domain.models.company_subclass import Environment, CodigoRegimeTributario, CompanySize
 from src.domain.models.certificate_a1 import CertificateA1
@@ -22,7 +22,7 @@ from src.services.gateways.asaas_payment_gateway import PaymentGateway
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 
 
-class TipoDoc(Enum):
+class TypeOfDocument(Enum):
     CNPJ = "CNPJ"
     CPF = "CPF"
 
@@ -42,15 +42,12 @@ class Address:
 @dataclass
 class FiscalData:
     """Dados fiscais e de configuração do sistema."""
-    crt: Optional[CodigoRegimeTributario] = field(
-        default=CodigoRegimeTributario.REGIME_NORMAL)
+    crt: Optional[CodigoRegimeTributario] = field(default=CodigoRegimeTributario.REGIME_NORMAL)
+    environment: Optional[Environment] = field(default=Environment.HOMOLOGACAO)  # Valores aceitos: HOMOLOGACAO, PRODUCAO
     nfce_series: Optional[int] = None
     nfce_number: Optional[int] = None
-    nfce_environment: Optional[Environment] = field(
-        default=Environment.HOMOLOGACAO)  # Valores aceitos: HOMOLOGACAO, PRODUCAO
-    # Número de identificação do CSC - Código de Segurança do Contribuínte.
-    nfce_sefaz_id_csc: Optional[int] = None
-    nfce_sefaz_csc: Optional[str] = None   # Código do CSC.
+    nfce_sefaz_id_csc: Optional[int] = None  # ID do Número de identificação do CSC - Código de Segurança do Contribuínte.
+    nfce_sefaz_csc: Optional[str] = None   # Código de Segurança do Contribuínte.
 
 
 @dataclass
@@ -62,7 +59,7 @@ class Company:
     dados fiscais, de contato, endereço, porte e configurações específicas.
 
     Attributes:
-        tipo_doc (TipoDoc): Tipo de documento: CNPJ ou CPF
+        document_type (TypeOfDocument): Tipo de documento: CNPJ ou CPF
         corporate_name (str): Razão Social da empresa.
         email: str: E-mail da empresa.
         cnpj (CNPJ): CNPJ da empresa.
@@ -77,7 +74,7 @@ class Company:
         size (Optional[CompanySize]): Porte da empresa.
         fiscal (Optional[FiscalData]): Dados fiscais da empresa.
         cetificate_a1 (Optional[CertificateA1]): Certificado digital A1.
-        logo_path (Optional[str]): Caminho para o logo da empresa.
+        logo_url (Optional[str]): Caminho para o logo da empresa.
         payment_gateway (Optional[AsaasPaymentGateway]): Gateway de pagamento da empresa.
 
     Example:
@@ -88,10 +85,11 @@ class Company:
         ...                   ie="123456789")
         >>> print(company)
     """
-    tipo_doc: TipoDoc
+    document_type: TypeOfDocument
     corporate_name: str  # Razão Social ou Nome do Emitente qdo CPF
     email: str  # E-mail
     name: Optional[str]  # Nome fantasia
+    initials_corporate_name: Optional[str] = None
     cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
     cpf: Optional[CPF] = None  # CPF do responsável
     store_name: Optional[str] = 'Matriz'
@@ -105,7 +103,7 @@ class Company:
     certificate_a1: Optional[CertificateA1] = None
 
     # Metadados opcionais
-    logo_path: Optional[str] = None
+    logo_url: Optional[str] = None
 
     # Gateway de pagamento | Troque aqui o gateway de pagamento conforme contratado: Default Asaas
     payment_gateway: Optional[AsaasPaymentGateway] = None
@@ -121,12 +119,9 @@ class Company:
         """
         self.name = self.name.upper()
         self.corporate_name = self.corporate_name.upper()
+        self.initials_corporate_name = self.initials()
 
-        if self.crt < 1 or self.crt > 4:
-            raise ValueError(
-                f"Código de Regime Tributário (CRT) '{self.crt}' não permitido. CRT permitidos: 1, 2, 3 ou 4")
-
-        # Carrega a chave de criptografia da senha do certificado digital
+        # Carrega a chave de criptografia para senhas usadas no app
         load_dotenv()
         self._key = os.getenv("FERNET_KEY")
         self._cipher_suite = Fernet(self._key)
@@ -138,7 +133,20 @@ class Company:
         Returns:
             bool: True se a emissão de NFC-e estiver configurada, False caso contrário.
         """
-        return self.nfce_series is not None
+        f = self.fiscal
+        if not f:
+            return False
+
+        required_attributes = [
+            f.crt,
+            f.environment,
+            f.nfce_series,
+            f.nfce_number,
+            f.nfce_sefaz_id_csc,
+            f.nfce_sefaz_csc,
+        ]
+
+        return all(required_attributes)
 
     def get_complete_address(self) -> str:
         """
@@ -159,17 +167,40 @@ class Company:
         ]
         return ", ".join(filter(bool, components))
 
-    def get_nfce_data(self) -> dict:
+    def get_nfce_data(self) -> Optional[Dict]:
         """
         Retorna um dicionário com os dados necessários para emissão da NFC-e.
 
         Returns:
             dict: Dicionário com dados da NFC-e.
         """
-        return {
-            "ambiente": self.nfce_environment,
-            "crt": self.crt,
-            "series": self.nfce_series,
-            "sefaz_id_csc": self.nfce_sefaz_id_csc,
-            "sefaz_csc": self.nfce_sefaz_csc
-        }
+        if f := self.fiscal:
+            return {
+                "crt_name": f.crt.name if f.crt else None,
+                "emvironment_name": f.environment.name if f.environment else None,
+                "nfce_series": f.nfce_series,
+                "nfce_number": f.nfce_number,
+                "nfce_sefaz_id_csc": f.nfce_sefaz_id_csc,
+                "nfce_sefaz_csc": f.nfce_sefaz_csc
+            }
+
+    def get_certificate_data(self) -> Optional[Dict]:
+        if cert := self.certificate_a1:
+            return {
+                'serial_number': cert.serial_number,
+                'not_valid_before': cert.not_valid_before,
+                'not_valid_after': cert.not_valid_after,
+                'subject_name': cert.subject_name,
+                'file_name': cert.file_name,
+                'cpf_cnpj': cert.cpf_cnpj,
+                'nome_razao_social': cert.nome_razao_social,
+                'password_encrypted': cert.password_encrypted,
+                'storage_path': cert.storage_path,
+            }
+
+    def initials(self) -> str:
+        """Retorna as iniciais do nome completo"""
+        palavras_ignoradas = {'da', 'de', 'do'}
+        palavras = self.corporate_name.split()
+        iniciais = [palavra[0] for palavra in palavras if palavra not in palavras_ignoradas]
+        return ''.join(iniciais)
