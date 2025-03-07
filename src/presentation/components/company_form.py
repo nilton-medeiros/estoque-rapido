@@ -296,16 +296,13 @@ class CompanyForm(ft.Container):
             width=300,
         )
 
-# Definindo o evento on_hover_logo
-        async def on_hover_logo(e):
+        # Definindo o evento on_hover_logo
+        def on_hover_logo(e):
             print(f"Entrou no hover e self.page é: {'None' if self.page is None else 'DEFINIDO'}")
             print(f"Evento disparado por: {'camera_icon' if e.control == self.camera_icon else 'logo_frame'}")
 
             if self.page is not None:
                 print(f"ON HOVER: {'ATIVO' if e.data == 'true' else 'INATIVO'}")
-
-                # pequeno delay para garantir que os componetnes estejam disponíveis
-                await asyncio.sleep(0.1)
 
                 # Atualiza o camera_icon
                 if self.camera_icon.page is not None:
@@ -332,11 +329,6 @@ class CompanyForm(ft.Container):
             border_radius=ft.border_radius.all(10),
             padding=8,
         )
-
-        """
-        # ToDo:
-            - Implemnetar hover no logo e da câmera
-        """
 
         self.logo_url: str = None
 
