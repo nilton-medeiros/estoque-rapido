@@ -1,7 +1,7 @@
 import logging
 import flet as ft
 from src.presentation.components.company_form import CompanyForm
-from src.utils.message_snackbar import MessageType, message_snackbar
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 

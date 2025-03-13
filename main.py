@@ -135,8 +135,7 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
                     page.on_resized = None
-                    home  = home_page(page)
-
+                    home = home_page(page)
                     pg_view = ft.View(
                         route='/home',
                         controls=[home],
@@ -148,8 +147,9 @@ def main(page: ft.Page):
             case '/company/form':  # Registro
                 route_title = "home/empresa/form"
                 company = app_state.company
-                if company.get('id'):
-                    route_title += f"/{company.get('id')}"
+                id = company.get('id', None)
+                if id is not None:
+                    route_title += f"/{id}"
                 else:
                     route_title += "/new"
 

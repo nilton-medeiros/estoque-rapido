@@ -1,12 +1,11 @@
 from typing import List, Optional
 from dataclasses import dataclass, field
 
-from src.domain.models.nome_pessoa import NomePessoa
-from src.domain.models.phone_number import PhoneNumber
+from src.domains.shared import NomePessoa, PhoneNumber
 
 
 @dataclass
-class User:
+class Usuario:
     """
     Representa os dados de um usuário.
 
@@ -19,7 +18,7 @@ class User:
         phone_number (PhoneNumber): Número de telefone do usuário.
         profile (str): Perfil do usuário.
         id (Optional[str]): ID opcional do usuário.
-        companies (Optional[List[str]]): Lista de IDs de empresas associadas ao usuário.
+        empresas (Optional[List[str]]): Lista de IDs de empresas associadas ao usuário.
 
     Example:
         Exemplo de como instanciar e usar a classe:
@@ -27,7 +26,7 @@ class User:
         >>> from src.domain.models.phone_number import PhoneNumber
         >>> name = NomePessoa("João", "Silva")
         >>> phone = PhoneNumber("+5511999999999")
-        >>> user = User(email="joao.silva@example.com", name=name, phone_number=phone, profile="admin")
+        >>> user = Usuario(email="joao.silva@example.com", name=name, phone_number=phone, profile="admin")
         >>> print(user)
     """
 
@@ -36,7 +35,7 @@ class User:
     phone_number: PhoneNumber
     profile: str
     id: Optional[str] = field(default=None)
-    companies: Optional[List[str]] = field(default_factory=list)
+    empresas: Optional[List[str]] = field(default_factory=list)
     photo: Optional[str] = field(default=None)
 
     # Lista de perfis permitidos
@@ -64,9 +63,9 @@ class User:
             raise ValueError(
                 f"O perfil '{self.profile}' não é permitido. Perfis permitidos: {', '.join(self.ALLOWED_PROFILES)}.")
 
-        # Verificação e atribuição de companies
-        if self.companies is None:
-            self.companies = []
+        # Verificação e atribuição de empresas
+        if self.empresas is None:
+            self.empresas = []
 
         if self.photo == '':
             self.photo = None

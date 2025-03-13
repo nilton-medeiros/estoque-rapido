@@ -7,8 +7,8 @@ from src.domain.models.phone_number import PhoneNumber
 from src.controllers.user_controller import handle_save_user
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
-from src.utils.message_snackbar import MessageType, message_snackbar
-from src.utils.field_validation_functions import get_first_and_last_name, validate_email, validate_password_strength, validate_phone
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared.utils.field_validation_functions import get_first_and_last_name, validate_email, validate_password_strength, validate_phone
 
 
 class SignupView:
@@ -88,6 +88,9 @@ class SignupView:
         self.password_input.value = 'Aj#45678'
         self.password_again_input.value = 'Aj#45678'
 
+        self.page.user_name_text.visible=False  # Invisible, sem uso
+        self.page.company_name_text_btn.visible=False # Invisible, sem uso
+
         return ft.Container(
             alignment=ft.alignment.center,
             bgcolor=ft.Colors.BLACK,
@@ -116,6 +119,8 @@ class SignupView:
                         color=ft.Colors.WHITE70,
                         weight=ft.FontWeight.W_300
                     ),
+                    self.page.user_name_text,   # Invisible, sem uso
+                    self.page.company_name_text_btn,   # Invisible, sem uso
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.name_input,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
@@ -217,9 +222,10 @@ class SignupView:
             )
 
             if not result["is_error"]:
+                user.id = result["user_id"]
                 # Atualiza o estado do app com o novo usuário antes da navegação
                 await self.page.app_state.set_user({
-                    "id": result['user_id'],
+                    "id": user.id,
                     "name": user.name,
                     "email": user.email,
                     "phone_number": user.phone_number,
@@ -229,17 +235,26 @@ class SignupView:
                     # Adicione outros dados relevantes do usuário
                 })
 
-                self.page.pubsub.send_all("user_updated")
-
-            color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
-
-            message_snackbar(page=self.page, message=result["message"], message_type=color)
-
-            if not result["is_error"]:
+                # No registro de um novo user, não há empresas definidas para este usuário
+                await self.page.app_state.set_company({
+                        "id": "",
+                        "name": "NEUMHUMA EMPRESA SELECIONADA",
+                        "corporate_name": "",
+                        "cnpj": "",
+                        "ie": "",
+                        "store_name": "Matriz",
+                        "im": "",
+                        "address": None,
+                        "size": None,
+                        "fiscal": None,
+                        "logo_url": None,
+                        "payment_gateway": None,
+                })
+                message_snackbar(page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
                 self.page.on_resized = None
                 self.page.go('/home')
-
-
+            else:
+                message_snackbar(page=self.page, message=result["message"], message_type=MessageType.ERROR)
         finally:
             # Reabilita o botão independente do resultado
             self.signup_button.disabled = False

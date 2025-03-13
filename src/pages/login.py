@@ -7,8 +7,8 @@ from src.domain.models.user import User
 from src.controllers.user_controller import handle_get_user
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
-from src.utils.message_snackbar import MessageType, message_snackbar
-from src.utils.field_validation_functions import validate_email
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared.utils.field_validation_functions import validate_email
 
 class LoginView:
     def __init__(self, page: ft.Page):
@@ -74,7 +74,6 @@ class LoginView:
 
         self.page.user_name_text.visible=False  # Invisible, sem uso
         self.page.company_name_text_btn.visible=False # Invisible, sem uso
-
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -220,6 +219,7 @@ class LoginView:
                             "logo_url": cia.logo_url,
                             "payment_gateway": cia.payment_gateway,
                         })
+
                 else:
                     await self.page.app_state.set_company({
                             "id": "",

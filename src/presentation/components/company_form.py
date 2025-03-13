@@ -12,8 +12,8 @@ from src.domain.models.cnpj import CNPJ
 from src.domain.models.cpf import CPF
 from src.domain.models.phone_number import PhoneNumber
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
-from src.utils.gen_uuid import get_uuid
-from src.utils.message_snackbar import MessageType, message_snackbar
+from src.shared.utils.gen_uuid import get_uuid
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
@@ -298,29 +298,21 @@ class CompanyForm(ft.Container):
 
         # Definindo o evento on_hover_logo
         def on_hover_logo(e):
-            print(f"Entrou no hover e self.page é: {'None' if self.page is None else 'DEFINIDO'}")
-            print(f"Evento disparado por: {'camera_icon' if e.control == self.camera_icon else 'logo_frame'}")
-
-            if self.page is not None:
-                print(f"ON HOVER: {'ATIVO' if e.data == 'true' else 'INATIVO'}")
-
-                # Atualiza o camera_icon
-                if self.camera_icon.page is not None:
-                    print("Atualizando a cor do ícone da câmera")
-                    self.camera_icon.content.color = ft.Colors.PRIMARY if e.data == "true" else ft.Colors.GREY_400
-                    self.camera_icon.update()
-
-                # Atualiza o logo_frame
-                if self.logo_frame.page is not None:
-                    print("Atualizando bgcolor do logo_frame")
-                    self.logo_frame.bgcolor = ft.Colors.RED if e.data == "true" else ft.Colors.TRANSPARENT
+            # control = e.control
+            # Atualiza o ícone da câmera
+            ci = self.camera_icon
+            ci.content.color = ft.Colors.BLUE_400 if e.data == 'true' else ft.Colors.PRIMARY
+            # Atualiza a borda do logo_frame
+            lf = self.logo_frame
+            lf.border = ft.border.all(color=ft.Colors.BLUE_400, width=3) if e.data == 'true' else ft.border.all(color=ft.Colors.PRIMARY, width=1)
+            self.update()
 
         # Construção do campo Logo do emitente de NFCe
         self.camera_icon = ft.Container(
             content=ft.Icon(
                 name=ft.Icons.ADD_A_PHOTO_OUTLINED,
                 size=20,
-                color=ft.Colors.WHITE30,
+                color=ft.Colors.PRIMARY,
             ),
             margin=ft.margin.only(top=-15),
             ink=True,
@@ -335,7 +327,7 @@ class CompanyForm(ft.Container):
         logo = ft.Text("Logo", italic=True)
 
         self.logo_frame = ft.Container(
-            # content=logo,
+            content=logo,
             bgcolor=ft.Colors.TRANSPARENT,
             padding=10,
             alignment=ft.alignment.center,
@@ -348,6 +340,7 @@ class CompanyForm(ft.Container):
         )
 
         self.logo_section = ft.Column(
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
                 self.logo_frame,
                 self.camera_icon,
@@ -486,8 +479,11 @@ class CompanyForm(ft.Container):
         )
 
     def _show_logo_dialog(self, e):
-        self.logo_frame.bgcolor = ft.Colors.TRANSPARENT
-        self.logo_frame.update()
+        lf = self.logo_frame
+        lf.border = ft.border.all(color=ft.Colors.PRIMARY, width=1)
+        self.update()
+
+        print("Entrou em _show_logo_dialog")
 
         async def handle_file_picker_result(e: ft.FilePickerResultEvent):
             if not e.files:
@@ -689,15 +685,16 @@ class CompanyForm(ft.Container):
         """Constrói o conteúdo do formulário"""
         build_content = ft.Column(
             [
+                ft.Text("Logo na NFCe", size=20, weight=ft.FontWeight.BOLD),
+                ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+
+                ft.Divider(),
                 ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
                 ft.Row([self.document_type, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.store_name, self.phone, self.email], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
-
-                ft.Divider(),
-                ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
                 ft.Divider(),
                 ft.Text("Endereço", size=20, weight=ft.FontWeight.BOLD),
@@ -1001,6 +998,9 @@ class CompanyForm(ft.Container):
         """Atualiza o conteúdo do container antes de renderizar"""
         # Cria uma lista de campos que sempre aparecem
         base_fields = [
+            ft.Text("Logo na NFCe", size=20, weight=ft.FontWeight.BOLD),
+            ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+            ft.Divider(),
             ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
             ft.Row([self.document_type], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ]
@@ -1023,9 +1023,6 @@ class CompanyForm(ft.Container):
             ft.Row([self.complement, self.neighborhood], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ft.Row([self.city, self.state, self.postal_code], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
 
-            ft.Divider(),
-            ft.Text("Logo na NFCe", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ft.Divider(),
             ft.Text("Informações Fiscais - Obrigatório se for emitir Nota ao Consumidor (NFC-e)", size=20,
                         weight=ft.FontWeight.BOLD),

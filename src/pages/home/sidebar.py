@@ -3,11 +3,11 @@ import logging
 import os
 import flet as ft
 
+from src.controllers.bucket_controller import handle_delete_bucket, handle_upload_bucket
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
 from src.controllers.user_controller import handle_update_photo_user
-from src.services.aws.s3_file_manager import S3FileManager
-from src.utils.gen_uuid import get_uuid
-from src.utils.message_snackbar import MessageType, message_snackbar
+from src.shared.utils.gen_uuid import get_uuid
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def sidebar_header(page: ft.Page):
 
     current_company = page.app_state.company
 
-    if current_company["id"]:
+    if current_company and current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
     else:
         page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"
@@ -119,14 +119,24 @@ def sidebar_header(page: ft.Page):
                     await asyncio.sleep(0.1)
 
                 # Agora que o upload está concluído, podemos prosseguir com o upload para S3
-                cnpj = current_company["cnpj"]
-                prefix = cnpj.raw_cnpj if cnpj else current_user["id"]
+                cnpj = current_company.get("cnpj")
+                prefix = None
+
+                if cnpj:
+                    prefix = cnpj.raw_cnpj
+                else:
+                    cpf = current_company.get("cpf")
+                    if cpf:
+                        prefix = cpf.raw_cpf
+                    else:
+                        prefix = current_user.get("id")
+
                 file_uid = get_uuid()
 
                 _, dot_extension = os.path.splitext(file_name)
                 dot_extension = dot_extension.lower()
 
-                file_s3_name = f"{prefix}/user_img_{file_uid}{dot_extension}"
+                file_name_bucket = f"{prefix}/user_img_{file_uid}{dot_extension}"
                 local_file = f"uploads/{file_name}"
 
                 # Adiciona uma verificação extra para garantir que o arquivo existe
@@ -138,38 +148,81 @@ def sidebar_header(page: ft.Page):
                     retry_count += 1
 
                 if not os.path.exists(local_file):
-                    logger.debug(f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
+                    logger.debug(
+                        f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
                     raise FileNotFoundError(
                         f"Arquivo {local_file} não foi encontrado após {max_retries} tentativas")
 
-                s3_manager = S3FileManager()
-                s3_manager.upload(local_path=local_file, key=file_s3_name)
+                msg_snack = "Avatar carregado com sucesso!"
+                message_type = MessageType.INFO
+                is_success = True
 
-                photo_url = s3_manager.get_url()
+                try:
+                    avatar_url = handle_upload_bucket(
+                        local_path=local_file, key=file_name_bucket)
 
-                # Atualiza a foto do usuário
-                result = await handle_update_photo_user(user_id=current_user["id"], photo=photo_url)
+                    # Verificar se o avatar_url é válido antes de continuar
+                    if not avatar_url:
+                        message_snackbar(
+                            page=page,
+                            message="Erro: URL da imagem não foi gerada corretamente",
+                            message_type=MessageType.ERROR
+                        )
+                        page.close(dialog)
+                        return
 
-                if result["is_error"]:
-                    # Photo não pode ser salva no database, remove do s3
-                    s3_manager.delete(key=file_s3_name)
-                else:
-                    # Nova foto salva no database, remover a antiga do s3 se existir
+                    # Agora que temos uma URL válida, atualizar o usuário
+                    result = await handle_update_photo_user(user_id=current_user.get("id"), photo=avatar_url)
 
-                    if previous_user_photo:
-                        # String completa
-                        url = previous_user_photo
-                        # Dividindo a string pelo termo "public/"
-                        parts = url.split("public/")
-                        # Extraindo a parte desejada (key)
-                        key = parts[1]
-                        # Excluíndo do bucket
-                        if key:
-                            s3_manager.delete(key)
+                    if result["is_error"]:
+                        message_type = MessageType.ERROR
+                        msg_snack = result["message"]
+                        is_success = False
+                        # Photo não pode ser salva no database, remove do Bucket Storage a nova se não for a mesma anterior
+                        if not previous_user_photo or previous_user_photo != avatar_url:
+                            try:
+                                handle_delete_bucket(key=file_name_bucket)
+                            except Exception as e:
+                                logger.error(f"{e}")
+
+                except ValueError as e:
+                    logger.error(str(e))
+                    msg_snack = f"Erro: {str(e)}"
+                    message_type = MessageType.ERROR
+                    is_success = False
+                except RuntimeError as e:
+                    logger.error(str(e))
+                    msg_snack = f"Erro no upload: {str(e)}"
+                    message_type = MessageType.ERROR
+                    is_success = False
+
+                # Limpa o arquivo local após o upload
+                try:
+                    os.remove(local_file)
+                except:
+                    pass  # Ignora erros na limpeza do arquivo
+
+                message_snackbar(page=page, message=msg_snack,
+                                 message_type=message_type)
+
+                # Nova foto salva no database, remover a antiga do Bucket Storage se existir
+                if previous_user_photo and is_success:
+                    # String completa
+                    url = previous_user_photo
+                    # Dividindo a string pelo termo "public/"
+                    parts = url.split("public/")
+                    # Extraindo a parte desejada (key)
+                    key = parts[1]
+                    # Excluíndo do bucket
+                    if key:
+                        try:
+                            handle_delete_bucket(key)
+                        except Exception as e:
+                            logger.error(f"{e}")
 
                     # Atualiza a foto na página
                     user_photo = ft.Image(
-                        src=photo_url,
+                        src=avatar_url,
                         error_content=ft.Text(current_user['name'].iniciais),
                         repeat=ft.ImageRepeat.NO_REPEAT,
                         fit=ft.ImageFit.FILL,
@@ -177,7 +230,6 @@ def sidebar_header(page: ft.Page):
                         width=100,
                         height=100,
                     )
-
 
                     user_avatar.content = user_photo
                     user_avatar.update()
@@ -198,12 +250,6 @@ def sidebar_header(page: ft.Page):
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                 message_snackbar(
                     page=page, message=result["message"], message_type=color)
-
-                # Limpa o arquivo local após o upload
-                try:
-                    os.remove(local_file)
-                except:
-                    pass  # Ignora erros na limpeza do arquivo
 
                 page.close(dialog)
 
@@ -250,7 +296,7 @@ def sidebar_header(page: ft.Page):
                     allowed_extensions=["png", "jpg", "jpeg", "svg"]
                 )
             else:
-                if url_field.value:                                    # Atualiza a foto do usuário
+                if url_field.value and url_field.value.strip():
                     result = await handle_update_photo_user(user_id=current_user["id"], photo=url_field.value)
                     if not result["is_error"]:
                         # Nova foto salva no database, remover a antiga do s3 se existir
@@ -263,13 +309,16 @@ def sidebar_header(page: ft.Page):
                             key = parts[1]
                             # Excluíndo do bucket
                             if key:
-                                s3_manager = S3FileManager()
-                                s3_manager.delete(key)
+                                try:
+                                    await handle_delete_bucket(key)
+                                except Exception as e:
+                                    logger.error(f"{e}")
 
                         # Atualiza a foto na página
                         user_photo = ft.Image(
                             src=url_field.value,
-                            error_content=ft.Text(current_user['name'].iniciais),
+                            error_content=ft.Text(
+                                current_user['name'].iniciais),
                             repeat=ft.ImageRepeat.NO_REPEAT,
                             fit=ft.ImageFit.FILL,
                             border_radius=ft.border_radius.all(100),

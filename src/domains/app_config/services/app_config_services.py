@@ -1,6 +1,7 @@
 from typing import Optional
-from storage.data.contracts.app_config_repository import AppConfigRepository
-from src.domain.models.app_config import AppConfig
+
+from src.domains.app_config import AppConfig, AppConfigRepository
+
 
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a AppConfigService atua como intermediária,
@@ -9,7 +10,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-class AppConfigService:
+class AppConfigServices:
     """Seriço de gerenciamento de Configuração de Sistema.
 
     A classe AppConfigService é um serviço dedicado ao gerenciamento de app config,

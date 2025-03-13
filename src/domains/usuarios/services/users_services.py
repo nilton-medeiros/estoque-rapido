@@ -1,67 +1,66 @@
 from typing import Optional
-from src.domain.models.user import User
-from storage.data.contracts.user_repository import UserRepository
 
+from src.domains.usuarios import Usuario, UsuariosRepository
 
-class UserService:
+class UsuariosServices:
     '''
     Serviço de gerenciamento de usuários.
 
     Parâmetros:
-        repository: (UserRepository)
+        repository: (UsuariosRepository)
 
     Proriedades:
         self.repository: (repository) Repositório recebido pelo parâmetro
 
     Métodos:
-        create_user: Cria novo usuário no banco usando repositório
+        create_usuario: Cria novo usuário no banco usando repositório
             Parâmetros:
-                user: (User)
-            Retorna: (User) Novo usuário criado
+                usuario: (Usuario)
+            Retorna: (Usuario) Novo usuário criado
 
-        update_user: Atualiza usuário no banco usando repositório
+        update_usuario: Atualiza usuário no banco usando repositório
             Parâmetros:
-                    user: (User)
-                Retorna: (User) Usuário atualizado
+                    usuario: (Usuario)
+                Retorna: (Usuario) Usuário atualizado
     '''
 
-    def __init__(self, repository: UserRepository):
+    def __init__(self, repository: UsuariosRepository):
         self.repository = repository
 
-    async def create_user(self, user: User) -> User:
+    async def create_usuario(self, usuario: Usuario) -> Usuario:
         """
-        Envia dados do Usuário para o Repositório do database instânciado (repository) em user_controller.
+        Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
 
-        :param user: Instância do Usuário a salvar
+        :param usuario: Instância do Usuário a salvar
         :return: ID do documento do Usuário salvo
         """
         # Verifica se já existe um usuário com este email
-        existing_user = await self.repository.find_by_email(user.email)
+        existing_usuario = await self.repository.find_by_email(usuario.email)
 
-        if existing_user:
+        if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
-        # Envia para o repositório selecionado em user_controllrer salvar
-        return await self.repository.save(user)
+        # Envia para o repositório selecionado em usuarios_controllrer salvar
+        return await self.repository.save(usuario)
 
-    async def update_user(self, user: User) -> User:
-        if not user.id:
+    async def update_usuario(self, usuario: Usuario) -> Usuario:
+        if not usuario.id:
             raise ValueError("ID do usuário é necessário para atualização")
-        return await self.repository.save(user)
+        return await self.repository.save(usuario)
 
-    async def find_by_id(self, user_id: str) -> Optional[User]:
+    async def find_by_id(self, usuario_id: str) -> Optional[Usuario]:
         """
-        Encontra um usuário pelo user_id usando o repositório.
+        Encontra um usuário pelo usuario_id usando o repositório.
 
         Parâmetros:
-            user_id (str): ID do usuário a ser encontrado
+            usuario_id (str): ID do usuário a ser encontrado
 
         Retorna:
-            Optional[User]: Usuário encontrado ou None se não existir
+            Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.find_by_id(user_id)
+        return await self.repository.find_by_id(usuario_id)
 
-    async def find_by_email(self, email: str) -> Optional[User]:
+    async def find_by_email(self, email: str) -> Optional[Usuario]:
         """
         Encontra um usuário pelo email usando o repositório.
 
@@ -69,19 +68,19 @@ class UserService:
             email (str): Email do usuário a ser encontrado
 
         Retorna:
-            Optional[User]: Usuário encontrado ou None se não existir
+            Optional[Usuario]: Usuário encontrado ou None se não existir
         """
         return await self.repository.find_by_email(email)
 
-    async def update_photo(self, user_id: str, photo: str) -> Optional[User]:
+    async def update_photo(self, usuario_id: str, photo: str) -> Optional[Usuario]:
         """
         Atualiza a foto do usuário para o campo photo usando o repositório.
 
         Parâmetros:
-            user_id (str): ID do usuário a ser alterado
+            usuario_id (str): ID do usuário a ser alterado
             photo (str): Caminho e nome do arquivo (url) a ser atualizado
 
         Retorna:
-            Optional[User]: Usuário encontrado ou None se não existir
+            Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.update_photo(user_id, photo)
+        return await self.repository.update_photo(usuario_id, photo)

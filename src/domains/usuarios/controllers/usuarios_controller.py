@@ -1,18 +1,17 @@
 import logging
-from src.domain.models.user import User
-from src.services.entities.user_service import UserService
-from storage.data.firebase.firebase_user_repository import FirebaseUserRepository
+
+from src.domains.usuarios import Usuario, FirebaseUsuariosRepository, UsuariosServices
 
 logger = logging.getLogger(__name__)
 
 
 """
-Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando
+Essa estrutura garante um controle claro de responsabilidades, onde usuarios_controller atua organizando
 e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
-async def handle_save_user(user: User, create_new: bool, password: str = None) -> dict:
+async def handle_save_usuarios(usuario: Usuario, create_new: bool, password: str = None) -> dict:
     """
     Manipula a operação de salvar usuário.
 
@@ -21,7 +20,7 @@ async def handle_save_user(user: User, create_new: bool, password: str = None) -
     operações necessárias.
 
     Args:
-        user (User): A instância do usuário a ser salvo.
+        usuario (Usuario): A instância do usuário a ser salvo.
         create_new (bool): Um booleano indicando se o usuário deve ser criado (True) ou atualizado (False).
 
     Returns:
@@ -32,33 +31,33 @@ async def handle_save_user(user: User, create_new: bool, password: str = None) -
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> user = User(name="Luis Alberto", email="luis.a@mail.com")
-        >>> response = await handle_save_user(user, create_new=True)
+        >>> usuario = Usuario(name="Luis Alberto", email="luis.a@mail.com")
+        >>> response = await handle_save_usuarios(usuario, create_new=True)
         >>> print(response)
     """
     response = {
         "is_error": False,
         "message": "",
-        "user_id": None
+        "id": None
     }
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
-        repository = FirebaseUserRepository(password)
-        user_service = UserService(repository)
+        repository = FirebaseUsuariosRepository(password)
+        usuarios_services = UsuariosServices(repository)
 
         operation = "criado" if create_new else "alterado"
-        user_id = None
+        id = None
 
         if create_new:
             # Criar novo usuário
-            user_id = await user_service.create_user(user)
+            id = await usuarios_services.create_usuario(usuario)
         else:
             # Alterar usuário existente
-            user_id = await user_service.update_user(user)
+            id = await usuarios_services.update_usuario(usuario)
 
         response["message"] = f"Usuário {operation} com sucessso!"
-        response["user_id"] = user_id
+        response["id"] = id
 
     except ValueError as e:
         response["is_error"] = True
@@ -72,7 +71,7 @@ async def handle_save_user(user: User, create_new: bool, password: str = None) -
     return response
 
 
-async def handle_get_user(user_id: str = None, email: str = None) -> dict:
+async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
     """
     Manipula a operação de buscar usuário.
 
@@ -80,8 +79,8 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
     Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
 
     Args:
-        user_id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
-        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por user_id
+        id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
+        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por id
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
@@ -92,33 +91,33 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
 
     Exemplo:
         >>> email = "angelina.jolie@gmail.com"
-        >>> response = await handle_get_user(email)
+        >>> response = await handle_get_usuarios(email)
         >>> print(response)
     """
     response = {
         "is_error": False,
         "message": "",
-        "user": None
+        "usuario": None
     }
 
     try:
         # Usa o repositório do Firebase para buscar o usuário
-        repository = FirebaseUserRepository()
-        user_service = UserService(repository)
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
 
-        user = None
+        usuario = None
 
-        if user_id:
-            # Busca o usuário pelo user_id
-            user = await user_service.find_by_id(email)
+        if id:
+            # Busca o usuário pelo id
+            usuario = await usuarios_services.find_by_id(email)
         elif email:
             # Busca o usuário pelo email
-            user = await user_service.find_by_email(email)
-        else: raise ValueError("Um dos argumentos user_id ou email deve ser passado")
+            usuario = await usuarios_services.find_by_email(email)
+        else: raise ValueError("Um dos argumentos id ou email deve ser passado")
 
-        if user:
+        if usuario:
             response["message"] = "Usuário encontrado com sucesso!"
-            response["user"] = user
+            response["usuario"] = usuario
         else:
             response["is_error"] = True
             response["message"] = "Usuário não encontrado"
@@ -135,7 +134,7 @@ async def handle_get_user(user_id: str = None, email: str = None) -> dict:
     return response
 
 
-async def handle_update_photo_user(user_id: str, photo: str) -> dict:
+async def handle_update_photo_usuarios(id: str, photo: str) -> dict:
     """
     Update no campo photo do usuário.
 
@@ -143,7 +142,7 @@ async def handle_update_photo_user(user_id: str, photo: str) -> dict:
     específico para realizar as operações necessárias.
 
     Args:
-        user_id (str): ID do usuário.
+        id (str): ID do usuário.
         photo (str): String com o link ou path e nome da foto do usuário a ser atualizado.
 
     Returns:
@@ -154,26 +153,26 @@ async def handle_update_photo_user(user_id: str, photo: str) -> dict:
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> user_id = '12345678901234567890123456789012'
-        >>> response = await handle_update_field_user(user_id, photo_url)
+        >>> id = '12345678901234567890123456789012'
+        >>> response = await handle_update_field_usuarios(id, photo_url)
         >>> print(response)
     """
     response = {
         "is_error": False,
         "message": "",
-        "user": None
+        "usuario": None
     }
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
-        repository = FirebaseUserRepository()
-        user_service = UserService(repository)
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo photo no usuário
-        user = await user_service.update_photo(user_id, photo)
+        usuario = await usuarios_services.update_photo(id, photo)
 
         response["message"] = "Foto do Usuário atualizada com sucessso!"
-        response["user"] = user
+        response["usuario"] = usuario
 
     except ValueError as e:
         response["is_error"] = True

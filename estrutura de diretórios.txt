@@ -28,19 +28,51 @@ estoquerapido/
 │   │   ├── company_controller.py
 │   │   ├── dfe_controller.py
 │   │   └── user_controller.py
-│   ├── domain/
-│   │   └── models/
-│   │       ├── __init__.py
-│   │       ├── app_config.py
-│   │       ├── certificate_a1.py
-│   │       ├── certificate_status.py
-│   │       ├── cnpj.py
-│   │       ├── company_subclass.py
-│   │       ├── company.py
-│   │       ├── cpf.py
-│   │       ├── nome_pessoa.py
-│   │       ├── phone_number.py
-│   │       └── user.py
+│   ├── domains/
+│   │   ├── emitentes/
+│   │   │   ├── controllers/
+│   │   │   │   ├── emitentes_controller.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── models/
+│   │   │   │   ├── emitente.py
+│   │   │   │   ├── emitente_subclass.py
+│   │   │   │   ├── cnpj.py
+│   │   │   │   ├── cpf.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── emitentes_repository.py
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── firebase_emitentes_repository.py
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── services/
+│   │   │   │   ├── emitentes_service.py
+│   │   │   │   └── __init__.py
+│   │   │   └── __init__.py
+│   │   ├── usuarios/
+│   │   │   ├── controllers/
+│   │   │   │   ├── usuarios_controller.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── models/
+│   │   │   │   ├── usuario.py
+│   │   │   │   ├── nome_pessoa.py
+│   │   │   │   ├── phone_number.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── usuarios_repository.py
+│   │   │   │   │   └── __init__.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── firebase_usuarios_repository.py
+│   │   │   │   │   └── __init__.py
+│   │   │   │   └── __init__.py
+│   │   │   ├── services/
+│   │   │   │   ├── usuarios_service.py
+│   │   │   │   └── __init__.py
+│   │   │   └── __init__.py
+│   │   └── __init__.py
 │   ├── pages/
 │   │   ├── companyes/
 │   │   │   ├── __init__.py

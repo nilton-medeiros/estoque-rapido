@@ -2,7 +2,7 @@ import flet as ft
 
 def main(page: ft.Page):
     # Configurações iniciais da página
-    page.title = "Exemplo de Janela Flutuante"
+    page.title = "Formulário campos de empresa"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
@@ -12,7 +12,12 @@ def main(page: ft.Page):
         popup_content = ft.Container(
             content=ft.Column(
                 [
-                    ft.Text("Esta é uma janela flutuante!", size=20),
+                    ft.Text(
+                        value="Esta é uma janela flutuante!",
+                        color=ft.colors.BLACK,
+                        weight=ft.FontWeight.BOLD,
+                        size=20,
+                    ),
                     ft.ElevatedButton("Fechar", on_click=close_popup)
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,

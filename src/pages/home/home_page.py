@@ -94,7 +94,7 @@ def home_page(page: ft.Page):
     """
     O page.appbar não tem efeito aqui, pois a View já possui um AppBar!
     Solução: Envio a variável appbar como data para a View, para que possa ser acessada através de appbar=home.data
-    Nota: Na View rora /home, appbar=page.appbar não tem efeito, pois a AppBar já foi definida.
+    Nota: Na View rora /home, appbar=page.appbar não tem efeito, pois pega a primeira AppBar definida em landing_page.
     """
     appbar = ft.AppBar(
         leading=ft.IconButton(

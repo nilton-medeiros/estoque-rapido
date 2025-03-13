@@ -5,5 +5,8 @@ class BucketService:
     def __init__(self, adapter: BucketStorage):
         self.adapter = adapter
 
-    async def upload(self, local_path: str, key: str):
-        return await self.adapter.upload(local_path, key)
+    def upload(self, local_path: str, key: str):
+        return self.adapter.upload(local_path, key)
+
+    def delete(self, key: str):
+        return self.adapter.delete(key)

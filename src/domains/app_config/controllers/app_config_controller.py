@@ -1,8 +1,7 @@
 import logging
 from typing import Optional
-from src.domain.models.app_config import AppConfig
-from src.services.entities.app_config_service import AppConfigService
-from storage.data.firebase.firebase_app_config_repository import FirebaseAppConfigRepository
+
+from src.domains.app_config import AppConfig, FirebaseAppConfigRepository, AppConfigServices
 
 """
 Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando
@@ -45,17 +44,17 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
         repository = FirebaseAppConfigRepository()
-        settings_service = AppConfigService(repository)
+        settings_services = AppConfigServices(repository)
 
         operation = "criada" if create_new else "alterada"
         config_id = None
 
         if create_new:
             # Criar nova configuração
-            config_id = await settings_service.create_config(settings)
+            config_id = await settings_services.create_config(settings)
         else:
             # Alterar configuração existente
-            config_id = await settings_service.update_config(settings)
+            config_id = await settings_services.update_config(settings)
 
         response["message"] = f"Configuração {operation} com sucessso!"
         response["config_id"] = config_id
@@ -104,12 +103,12 @@ async def handle_get_config(config_id: str = None) -> dict:
     try:
         # Usa o repositório do Firebase para buscar a configuração
         repository = FirebaseAppConfigRepository()
-        settings_service = AppConfigService(repository)
+        settings_services = AppConfigServices(repository)
 
         app_config = None
 
         # Busca configuração do sistema pelo config_id
-        app_config = await settings_service.find_config_by_id(config_id)
+        app_config = await settings_services.find_config_by_id(config_id)
 
         if app_config:
             response["is_found"] = True
@@ -127,5 +126,5 @@ async def handle_get_config(config_id: str = None) -> dict:
         response["is_error"] = True
         response["message"] = str(e)
         logger.error(response["message"])
-        
+
     return response

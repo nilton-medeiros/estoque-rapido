@@ -1,8 +1,7 @@
 import logging
 
-from src.domain.models.app_config import AppConfig
-from src.utils.deep_translator import deepl_translator
-from storage.data.contracts.app_config_repository import AppConfigRepository
+from src.domains.app_config import AppConfig, AppConfigRepository
+from src.shared.utils.deep_translator import deepl_translator
 
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from firebase_admin import firestore
@@ -72,7 +71,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
                 config.id = 'settings'  # Considerar gerar um ID único ou usar outro campo
 
             doc_ref = self.collection.document(config.id)
-            # Usar set com merge para criar ou atualizar para evitar erros de campo ausente
+            # Usar set com "merge" para criar ou atualizar para evitar erros de campo ausente
             doc_ref.set(config_dict, merge=True)
 
             return doc_ref.id  # Retornar o ID real do documento

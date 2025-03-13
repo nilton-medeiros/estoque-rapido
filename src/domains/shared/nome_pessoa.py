@@ -63,7 +63,7 @@ class NomePessoa:
     @property
     def iniciais(self) -> str:
         """Retorna as iniciais do nome completo"""
-        palavras_ignoradas = {'da', 'de', 'do'}
+        palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
         palavras = self.nome_completo.split()
         iniciais = [palavra[0] for palavra in palavras if palavra not in palavras_ignoradas]
         return ''.join(iniciais)

@@ -50,7 +50,7 @@ def main_content():
             ),
             col={'xs': 12, 'md': 6, 'lg': 4},
             width=200,
-            height=250,
+            height=150,
         )
 
     # Obter a data corrente, ex: '04 de março'
