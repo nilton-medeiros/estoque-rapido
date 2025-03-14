@@ -6,8 +6,11 @@ from src.pages.partials.build_input_responsive import build_input_field
 
 from src.shared import MessageType, message_snackbar, validate_email
 
-from src.domains.usuarios import Usuario, handle_get_usuarios
-from src.domains.empresas import handle_get_empresas
+import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+
+from src.domains.empresas import Empresa
+from src.domains.usuarios import Usuario
 
 class LoginView:
     def __init__(self, page: ft.Page):
@@ -169,13 +172,13 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = await handle_get_usuarios(email=self.email_input.value)
+            result = await usuarios_controllers.handle_get_usuarios(email=self.email_input.value)
 
             if not result["is_error"]:
                 # Atualiza o estado do app com o novo usuário antes da navegação
                 user: Usuario = result["usuario"]
 
-                await self.page.app_state.set_user({
+                await self.page.app_state.set_usuario({
                     "id": user.id,
                     "name": user.name,
                     "email": user.email,
@@ -197,13 +200,13 @@ class LoginView:
                         empresa_id = user.empresas[0]  # Obtem a primeira empresa e salva na sessão do usuário
                         self.page.session.set("empresa_id", empresa_id)
 
-                    result = await handle_get_empresas(id=empresa_id)
+                    result = await empresas_controllers.handle_get_empresas(id=empresa_id)
 
                     if not result["is_error"]:
-                        cia: Company = result["company"]
+                        cia: Empresa = result["empresa"]
 
                         # Adiciona o empresa_id no state e publíca-a
-                        await self.page.app_state.set_company({
+                        await self.page.app_state.set_empresa({
                             "id": empresa_id,
                             "name": cia.name,
                             "corporate_name": cia.corporate_name,
@@ -220,7 +223,7 @@ class LoginView:
                         })
 
                 else:
-                    await self.page.app_state.set_company({
+                    await self.page.app_state.set_empresa({
                             "id": "",
                             "name": "NEUMHUMA EMPRESA SELECIONADA",
                             "corporate_name": "",

@@ -1,6 +1,6 @@
 import logging
 
-from src.domains.empresas import Empresa, FirebaseEmpresasRepository, EmpresasServices
+from src.domains.empresas import CNPJ, Empresa, FirebaseEmpresasRepository, EmpresasServices
 
 logger = logging.getLogger(__name__)
 

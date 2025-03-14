@@ -1,5 +1,5 @@
-from .controllers.empresas_controller import handle_save_empresas, handle_get_empresas
-from .models.empresa import Empresa, Address, FiscalData
+from .controllers.empresas_controllers import handle_save_empresas, handle_get_empresas
+from .models.empresa_model import Empresa, Address, FiscalData
 from .models.cnpj import CNPJ
 from .models.certificate_a1 import CertificateA1
 from .models.certificate_status import CertificateStatus

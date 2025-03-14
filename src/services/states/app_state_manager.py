@@ -16,60 +16,60 @@ class AppStateManager:
     def __init__(self, page: ft.Page):
         self.page = page
         self._state: Dict[str, Any] = {
-            'user': None,
-            'company': None
+            'usuario': None,
+            'empresa': None
         }
         self._validator = StateValidator()
 
     @property
-    def user(self):
-        return self._state.get('user')
+    def usuario(self):
+        return self._state.get('usuario')
 
     @property
-    def company(self):
-        return self._state.get('company')
+    def empresa(self):
+        return self._state.get('empresa')
 
-    async def set_user(self, user_data: Optional[dict]) -> bool:
+    async def set_usuario(self, usuario_data: Optional[dict]) -> bool:
         """
         Atualiza os dados do usuário no estado global.
         """
         try:
-            if user_data is None:
-                self._state['user'] = None
-                self.page.pubsub.send_all("user_logout")
+            if usuario_data is None:
+                self._state['usuario'] = None
+                self.page.pubsub.send_all("usuario_logout")
                 return True
 
-            is_valid, error = self._validator.validate_user_data(user_data)
+            is_valid, error = self._validator.validate_usuario_data(usuario_data)
             if not is_valid:
                 await self.handle_error(error)
                 return False
 
-            self._state['user'] = user_data
-            self.page.pubsub.send_all("user_updated")
+            self._state['usuario'] = usuario_data
+            self.page.pubsub.send_all("usuario_updated")
             return True
 
         except Exception as e:
             await self.handle_error(f"Erro ao atualizar usuário: {str(e)}")
             return False
 
-    async def set_company(self, company_data: Optional[dict]) -> bool:
+    async def set_empresa(self, empresa_data: Optional[dict]) -> bool:
         """
         Atualiza os dados da empresa no estado global.
         """
         try:
-            if company_data is None:
-                self._state['company'] = None
-                self.page.pubsub.send_all("company_updated")
+            if empresa_data is None:
+                self._state['empresa'] = None
+                self.page.pubsub.send_all("empresa_updated")
                 return True
 
             is_valid, error = self._validator.validate_company_data(
-                company_data)
+                empresa_data)
             if not is_valid:
                 await self.handle_error(error)
                 return False
 
-            self._state['company'] = company_data
-            self.page.pubsub.send_all("company_updated")
+            self._state['empresa'] = empresa_data
+            self.page.pubsub.send_all("empresa_updated")
             return True
 
         except Exception as e:
@@ -85,7 +85,7 @@ class AppStateManager:
 
     def clear_state(self):
         """Limpa todo o estado (útil para logout)"""
-        self._state['user'] = None
-        self._state['company'] = None
-        self.page.pubsub.send_all("user_updated")
-        self.page.pubsub.send_all("company_updated")
+        self._state['usuario'] = None
+        self._state['empresa'] = None
+        self.page.pubsub.send_all("usuario_updated")
+        self.page.pubsub.send_all("empresa_updated")

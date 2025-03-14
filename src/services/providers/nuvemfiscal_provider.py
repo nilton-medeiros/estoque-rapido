@@ -5,7 +5,7 @@ from typing import Dict, Optional
 import aiohttp
 from datetime import datetime, timedelta, timezone
 
-from src.domains.app_config import handle_get_config, handle_save_config
+import src.domains.app_config.controllers.app_config_controllers as controllers
 from src.domains.empresas import CertificateA1, Empresa, Environment
 from src.services.contracts.dfe_provider import DFeProvider
 
@@ -183,7 +183,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
 
     async def _token_get(self):
         # Acessa o database para consultar informações do token, o id do documento é 'settings'
-        response = handle_get_config("settings")
+        response = controllers.handle_get_config("settings")
 
         if response['is_found']:
             # Verifica se o token expirou
@@ -213,7 +213,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
                 self.settings.dfe_api_token_expires_in = date_expiration
 
                 # Atualiza a nova configuração no database coleção app_config id: settings
-                response = handle_save_config(
+                response = controllers.handle_save_config(
                     settings=self.settings, create_new=False)
                 if response['is_error']:
                     logger.error(

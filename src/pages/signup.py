@@ -222,7 +222,7 @@ class SignupView:
             if not result["is_error"]:
                 usuario.id = result["user_id"]
                 # Atualiza o estado do app com o novo usuário antes da navegação
-                await self.page.app_state.set_user({
+                await self.page.app_state.set_usuario({
                     "id": usuario.id,
                     "name": usuario.name,
                     "email": usuario.email,
@@ -234,7 +234,7 @@ class SignupView:
                 })
 
                 # No registro de um novo usuario, não há empresas definidas para este usuário
-                await self.page.app_state.set_company({
+                await self.page.app_state.set_empresa({
                         "id": "",
                         "name": "NEUMHUMA EMPRESA SELECIONADA",
                         "corporate_name": "",

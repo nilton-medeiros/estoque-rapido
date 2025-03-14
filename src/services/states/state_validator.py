@@ -1,29 +1,30 @@
 from typing import Tuple
-from src.domain.models.nome_pessoa import NomePessoa
-from src.domain.models.phone_number import PhoneNumber
+
+from src.domains.shared import NomePessoa, PhoneNumber
+
 
 class StateValidator:
     """
     Centraliza a validação de dados do estado da aplicação.
     """
     @staticmethod
-    def validate_user_data(user_data: dict) -> Tuple[bool, str]:
+    def validate_user_data(usuario_data: dict) -> Tuple[bool, str]:
         """
         Valida os dados do usuário.
         Retorna uma tupla (is_valid, error_message).
         """
-        if not isinstance(user_data, dict):
+        if not isinstance(usuario_data, dict):
             return False, "Dados do usuário devem ser um dicionário"
 
         required_fields = ['id', 'name', 'email', 'profile']
         for field in required_fields:
-            if field not in user_data:
+            if field not in usuario_data:
                 return False, f"Campo obrigatório ausente: {field}"
 
-        if 'name' in user_data and not isinstance(user_data['name'], NomePessoa):
+        if 'name' in usuario_data and not isinstance(usuario_data['name'], NomePessoa):
             return False, "Nome deve ser uma instância de NomePessoa"
 
-        if 'phone_number' in user_data and not isinstance(user_data['phone_number'], PhoneNumber):
+        if 'phone_number' in usuario_data and not isinstance(usuario_data['phone_number'], PhoneNumber):
             return False, "Telefone deve ser uma instância de PhoneNumber"
 
         return True, ""

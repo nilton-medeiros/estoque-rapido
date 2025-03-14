@@ -48,43 +48,41 @@ def main(page: ft.Page):
 
     # Registrar o evento para mudanças
     def handle_pubsub(message):
-        if message == "user_updated":
-            user = app_state.user
-            if user:
+        if message == "usuario_updated":
+            if app_state.usuario:
                 # Atualiza elementos da UI que dependem do usuário
-                update_user_dependent_ui()
+                update_usuario_dependent_ui()
             else:
                 # Limpa elementos da UI relacionados ao usuário
-                clear_user_ui()
+                clear_usuario_ui()
 
-        elif message.startswith("company_updated:"):
-            company = app_state.company
-            if company:
-                # print(f"Empresa atualizada: {company['name']}")
+        elif message.startswith("empresa_updated:"):
+            if app_state.empresa:
+                # print(f"Empresa atualizada: {empresa['name']}")
                 # Atualiza elementos da UI que dependem da empresa
-                update_company_dependent_ui()
+                update_empresa_dependent_ui()
             else:
                 # Limpa elementos da UI relacionados à empresa
-                clear_company_ui()
+                clear_empresa_ui()
 
-    def update_user_dependent_ui():
+    def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = page.app_state.user['name'].nome_completo
+            page.user_name_text.value = page.app_state.usuario['name'].nome_completo
             page.user_name_text.update()
 
-    def update_company_dependent_ui():
+    def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = app_state.company['name']
+            page.company_name_text_btn.text = app_state.empresa['name']
             page.company_name_text_btn.update()
 
-    def clear_user_ui():
+    def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
             page.user_name_text.value = ""
             page.user_name_text.update()
 
-    def clear_company_ui():
+    def clear_empresa_ui():
         if hasattr(page, 'company_name_text_btn'):
             page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
             page.company_name_text_btn.update()
@@ -144,9 +142,9 @@ def main(page: ft.Page):
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
-            case '/company/form':  # Registro
-                route_title = "home/empresa/form"
-                company = app_state.company
+            case '/empresas/form':  # Registro
+                route_title = "home/empresas/form"
+                company = app_state.empresa
                 id = company.get('id', None)
                 if id is not None:
                     route_title += f"/{id}"
@@ -154,7 +152,7 @@ def main(page: ft.Page):
                     route_title += "/new"
 
                 pg_view = ft.View(
-                    route='/company/form',
+                    route='/empresas/form',
                     appbar=ft.AppBar(
                         title=ft.Text(route_title, size=16),
                         leading=ft.IconButton(

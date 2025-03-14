@@ -4,7 +4,7 @@ import os
 
 import flet as ft
 
-from src.controllers.bucket_controller import handle_upload_bucket
+from src.controllers.bucket_controllers import handle_upload_bucket
 from src.controllers.dfe_controller import handle_upload_certificate_a1
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
 from src.shared import get_uuid, MessageType, message_snackbar

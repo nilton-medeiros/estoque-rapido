@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def company_form(page: ft.Page):
-    current_company = page.app_state.company
+    current_company = page.app_state.empresa
 
     # Cria o formulário
     form = CompanyForm(

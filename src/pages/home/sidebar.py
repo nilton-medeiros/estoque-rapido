@@ -3,8 +3,9 @@ import logging
 import os
 import flet as ft
 
+import src.controllers.bucket_controllers as bucket_controllers
+
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
-from src.controllers.bucket_controller import handle_delete_bucket, handle_upload_bucket
 from src.domains.usuarios import handle_update_photo_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar
 
@@ -17,7 +18,7 @@ def sidebar_header(page: ft.Page):
     page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM
     page.company_name_text_btn.visible = True
 
-    current_user = page.app_state.user
+    current_user = page.app_state.usuario
     profile = ft.Text(
         value=current_user['profile'], theme_style=ft.TextThemeStyle.BODY_SMALL)
     user_photo = None
@@ -35,7 +36,7 @@ def sidebar_header(page: ft.Page):
     else:
         user_photo = ft.Text(current_user['name'].iniciais)
 
-    current_company = page.app_state.company
+    current_company = page.app_state.empresa
 
     if current_company and current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
@@ -157,7 +158,7 @@ def sidebar_header(page: ft.Page):
                 is_success = True
 
                 try:
-                    avatar_url = handle_upload_bucket(
+                    avatar_url = bucket_controllers.handle_upload_bucket(
                         local_path=local_file, key=file_name_bucket)
 
                     # Verificar se o avatar_url é válido antes de continuar
@@ -180,7 +181,7 @@ def sidebar_header(page: ft.Page):
                         # Photo não pode ser salva no database, remove do Bucket Storage a nova se não for a mesma anterior
                         if not previous_user_photo or previous_user_photo != avatar_url:
                             try:
-                                handle_delete_bucket(key=file_name_bucket)
+                                bucket_controllers.handle_delete_bucket(key=file_name_bucket)
                             except Exception as e:
                                 logger.error(f"{e}")
 
@@ -215,7 +216,7 @@ def sidebar_header(page: ft.Page):
                     # Excluíndo do bucket
                     if key:
                         try:
-                            handle_delete_bucket(key)
+                            bucket_controllers.handle_delete_bucket(key)
                         except Exception as e:
                             logger.error(f"{e}")
 
@@ -234,7 +235,7 @@ def sidebar_header(page: ft.Page):
                     user_avatar.update()
                     user = result["user"]
 
-                    await page.app_state.set_user({
+                    await page.app_state.set_usuario({
                         "id": user.id,
                         "name": user.name,
                         "email": user.email,
@@ -309,7 +310,7 @@ def sidebar_header(page: ft.Page):
                             # Excluíndo do bucket
                             if key:
                                 try:
-                                    await handle_delete_bucket(key)
+                                    await bucket_controllers.handle_delete_bucket(key)
                                 except Exception as e:
                                     logger.error(f"{e}")
 
@@ -329,7 +330,7 @@ def sidebar_header(page: ft.Page):
                         user_avatar.update()
                         user = result["user"]
 
-                        await page.app_state.set_user({
+                        await page.app_state.set_usuario({
                             "id": user.id,
                             "name": user.name,
                             "email": user.email,
@@ -419,7 +420,7 @@ def sidebar_header(page: ft.Page):
     )
 
     def on_click_cpny_btn(e):
-        page.go('/company/form')
+        page.go('/empresas/form')
 
     page.company_name_text_btn.on_click = on_click_cpny_btn
 
@@ -441,7 +442,7 @@ def sidebar_header(page: ft.Page):
 
 
 def sidebar_content(page: ft.Page):
-    current_company = page.app_state.company
+    current_company = page.app_state.empresa
 
     store = ft.Column(
         controls=[
@@ -579,7 +580,7 @@ def sidebar_footer(page: ft.Page):
         e.page.update()
 
     def on_click_business_btn(e):
-        page.go('/company/form')
+        page.go('/empresas/form')
 
     return ft.Container(
         padding=ft.padding.symmetric(vertical=20),
