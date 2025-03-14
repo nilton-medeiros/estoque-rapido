@@ -6,14 +6,9 @@ import flet as ft
 
 from src.controllers.bucket_controller import handle_upload_bucket
 from src.controllers.dfe_controller import handle_upload_certificate_a1
-from src.domain.models.company import TypeOfDocument
-from src.domain.models.company_subclass import CompanySize, CodigoRegimeTributario, Environment
-from src.domain.models.cnpj import CNPJ
-from src.domain.models.cpf import CPF
-from src.domain.models.phone_number import PhoneNumber
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
-from src.shared.utils.gen_uuid import get_uuid
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared import get_uuid, MessageType, message_snackbar
+from src.domains.empresas import CNPJ, CodigoRegimeTributario, EmpresaSize, Environment
 
 logger = logging.getLogger(__name__)
 
@@ -32,24 +27,11 @@ class CompanyForm(ft.Container):
         self._progress_bar = ft.ProgressBar(visible=False)
         self._status_text = ft.Text()
 
-        # Bind the dropdown change event
-        self.document_type.on_change = self._handle_doc_type_change
-
         self.content = self._build_content()
 
     def _create_form_fields(self):
         """Cria todos os campos do formulário"""
 
-        # Tipo de Documento
-        self.document_type = ft.Dropdown(
-            label="Tipo de Documento",
-            width=200,
-            value="CNPJ",  # Default value
-            options=[
-                ft.dropdown.Option("CNPJ"),
-                ft.dropdown.Option("CPF"),
-            ],
-        )
         # Adiciona o campo CNPJ e o botão de consulta
         self.cnpj = ft.TextField(
             label="CNPJ",
@@ -167,7 +149,7 @@ class CompanyForm(ft.Container):
             width=400,
             options=[
                 ft.dropdown.Option(key=size.name, text=size.value)
-                for size in CompanySize
+                for size in EmpresaSize
             ],
         )
 
@@ -301,11 +283,7 @@ class CompanyForm(ft.Container):
             # control = e.control
             # Atualiza o ícone da câmera
             ci = self.camera_icon
-            ci.content.color = ft.Colors.BLUE_400 if e.data == 'true' else ft.Colors.PRIMARY
-            # Atualiza a borda do logo_frame
             lf = self.logo_frame
-            lf.border = ft.border.all(color=ft.Colors.BLUE_400, width=3) if e.data == 'true' else ft.border.all(color=ft.Colors.PRIMARY, width=1)
-            self.update()
 
         # Construção do campo Logo do emitente de NFCe
         self.camera_icon = ft.Container(
@@ -368,8 +346,6 @@ class CompanyForm(ft.Container):
             if e.progress == 1:
                 self._progress_bar.visible = False
                 self.certificate_a1_file_name.value = "Upload concluído!"
-            else:
-                self._progress_bar.visible = True
                 self._progress_bar.vallue = e.progress
 
             self.certificate_a1_file_name.update()
@@ -431,10 +407,10 @@ class CompanyForm(ft.Container):
                     file_content = file.read()
 
                 # Envia o certificado para a API do provedor (DFe Provider)
-                cpf_cnpj = self.cnpj.value if self.document_type.value == "CNPJ" else self.cpf.value
+                cnpj = self.cnpj.value
 
                 response = handle_upload_certificate_a1(
-                    cpf_cnpj=cpf_cnpj,
+                    cnpj=cnpj,
                     certificate_content=file_content,
                     a1_password=self.certificate_a1_password.value,
                     ambiente=Environment(self.nfce_environment.value)
@@ -444,8 +420,6 @@ class CompanyForm(ft.Container):
                     # Exibe mensagem de erro
                     error_message = response.get("message", "Erro desconhecido")
                     message_snackbar(page=self.page, message=f"Erro ao enviar certificado: {error_message}", message_type=MessageType.ERROR)
-                else:
-                    # Processa a resposta
                     data = response.get('certificate')
 
                     # Atualiza os campos da interface com as informações do certificado
@@ -503,8 +477,6 @@ class CompanyForm(ft.Container):
             if e.progress == 1:
                 self._progress_bar.visible = False
                 self._status_text.value = "Upload concluído!"
-            else:
-                self._progress_bar.visible = True
                 self._progress_bar.value = e.progress
 
             self._status_text.update()
@@ -551,15 +523,15 @@ class CompanyForm(ft.Container):
                 await asyncio.sleep(0.1)
 
             # Agora que o upload está concluído, podemos prosseguir com o upload para S3
-            # pegar cpf ou cnpj, devem estar preenchidos
+            # pegar cnpj, devem estar preenchidos
 
-            cpf_cnpj = self.cnpj.value if self.document_type.value == "CNPJ" else self.cpf.value
+            cnpj = self.cnpj.value
 
-            if not cpf_cnpj:
+            if not cnpj:
                 # Cancelar o upload
                 return
 
-            prefix = cpf_cnpj
+            prefix = cnpj
             file_uid = get_uuid()
 
             _, dot_extension = os.path.splitext(file_name)
@@ -645,14 +617,12 @@ class CompanyForm(ft.Container):
                     allow_multiple=False,
                     allowed_extensions=["png", "jpg", "jpeg", "svg"]
                 )
-            else:
-                if url_field.value:
-                    """
-                    O Logo só será salvo no database quando o usuário clicar no botão salvar
-                    do formulário para salvar todos os dados.
-                    """
-                    self.logo_url = url_field.value
-                    self.page.close(dialog)
+                """
+                O Logo só será salvo no database quando o usuário clicar no botão salvar
+                do formulário para salvar todos os dados.
+                """
+                self.logo_url = url_field.value
+                self.page.close(dialog)
 
         def close_dialog(e):
             self.page.close(dialog)
@@ -690,7 +660,7 @@ class CompanyForm(ft.Container):
 
                 ft.Divider(),
                 ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-                ft.Row([self.document_type, self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
+                ft.Row([self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
                 ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
@@ -729,30 +699,17 @@ class CompanyForm(ft.Container):
 
     def _handle_doc_type_change(self, e):
         """Atualiza os labels e visibilidade dos campos baseado no tipo de documento"""
-        is_cnpj = self.document_type.value == "CNPJ"
-
-        if not is_cnpj:
-            # Atualiza labels para pessoa física
-            self.name.label = "Nome/Apelido"
-            self.corporate_name.label = "Nome Completo"
-            # Oculta campos específicos de empresa
-            self.cnpj.visible = False
-            self.cpf.visible = True
-            self.ie.visible = False
-            self.im.visible = False
-            self.consult_cnpj_button.visible = False
-        else:  # CNPJ
-            # Atualiza labels para pessoa jurídica
-            self.name.label = "Nome Fantasia"
-            self.corporate_name.label = "Razão Social"
-            # Mostra campos específicos de empresa
-            self.cnpj.visible = True
-            self.cpf.visible = False
-            self.ie.visible = True
-            self.im.visible = True
-            self.consult_cnpj_button.visible = True
-            # Atualiza estado do botão baseado no CNPJ
-            self._handle_cnpj_change(None)
+        # Atualiza labels para pessoa jurídica
+        self.name.label = "Nome Fantasia"
+        self.corporate_name.label = "Razão Social"
+        # Mostra campos específicos de empresa
+        self.cnpj.visible = True
+        self.cpf.visible = False
+        self.ie.visible = True
+        self.im.visible = True
+        self.consult_cnpj_button.visible = True
+        # Atualiza estado do botão baseado no CNPJ
+        self._handle_cnpj_change(None)
 
         # Atualiza a UI
         self.update()
@@ -766,7 +723,7 @@ class CompanyForm(ft.Container):
             self.update()
         elif len(cnpj_clean) == 14:
             self.cnpj.value = cnpj_clean
-            self.consult_cnpj_button.disabled = not self.document_type.value == "CNPJ"
+            self.consult_cnpj_button.disabled = False
             self.update()
 
     def _handle_cpf_change(self, e):
@@ -792,8 +749,6 @@ class CompanyForm(ft.Container):
                     message="Erro ao consultar CNPJ. Verifique o número e tente novamente.",
                     message_type=MessageType.ERROR
                 )
-            else:
-                local_response = response.get('response')
                 data = response.get('data')
 
                 if local_response.status in (200, 304):
@@ -816,16 +771,14 @@ class CompanyForm(ft.Container):
 
                     match porte:
                         case 1:
-                            self.size.value = CompanySize.MICRO
+                            self.size.value = EmpresaSize.MICRO
                         case 3:
-                            self.size.value = CompanySize.SMALL
+                            self.size.value = EmpresaSize.SMALL
                         case 5:
-                            self.size.value = CompanySize.OTHER
+                            self.size.value = EmpresaSize.OTHER
 
                     # Mostra mensagem de sucesso
                     message_snackbar(page=self.page, message="Dados do CNPJ carregados com sucesso!", message_type=MessageType.SUCCESS)
-                else:
-                    # Mostra erro
                     message_snackbar(
                         page=self.page,
                         message="Erro ao consultar CNPJ. Verifique o número e tente novamente.",
@@ -851,8 +804,6 @@ class CompanyForm(ft.Container):
         """Chamado quando o controle é montado a pagina"""
         if self.company_data:
             self.populate_form()
-        else:
-            self.clear_form()
         # Configura o estado inicial dos campos baseado no tipo de documento padrão
         self._handle_doc_type_change(None)
         self.update()
@@ -862,9 +813,7 @@ class CompanyForm(ft.Container):
         """Preenche o formulário com os dados existentes"""
 
         # Define o tipo de documento baseado nos dados
-        self.document_type.value = "CPF" if self.company_data.get('cpf') else "CNPJ"
         self.cnpj.value = str(self.company_data.get('cnpj', ''))
-        self.cpf.value = str(self.company_data.get('cpf', ''))
         self.name.value = self.company_data.get('name', '')
         self.corporate_name.value = self.company_data.get('corporate_name', '')
         self.ie.value = self.company_data.get('ie', '')
@@ -917,23 +866,17 @@ class CompanyForm(ft.Container):
         try:
             # Base do dicionário
             form_data = {
-                "document_type": TypeOfDocument(self.document_type.value),
                 "name": self.name.value,
                 "corporate_name": self.corporate_name.value,
-                "phone": PhoneNumber(self.phone.value) if self.phone.value else None,
-                "store_name": self.store_name.value,
                 "email": self.email.value,
             }
 
             # Adiciona campos específicos baseado no tipo de documento
-            if self.document_type.value == "CNPJ":
-                form_data.update({
-                    "cnpj": CNPJ(self.cnpj.value),
-                    "ie": self.ie.value,
-                    "im": self.im.value,
-                })
-            else:  # CPF
-                form_data["cpf"] = CPF(self.cnpj.value)
+            form_data.update({
+                "cnpj": CNPJ(self.cnpj.value),
+                "ie": self.ie.value,
+                "im": self.im.value,
+            })
 
             form_data.update({
                 "logo_url": self.logo_url
@@ -944,12 +887,7 @@ class CompanyForm(ft.Container):
             if self.crt.value:
                 # Obtem o Enum selecionado pelo usuário
                 crt = CodigoRegimeTributario(self.crt.value)
-            else:
-                # Padrão
-                if self.document_type.value == "CNPJ":
-                    crt = CodigoRegimeTributario.REGIME_NORMAL
-                else:
-                    crt = CodigoRegimeTributario.SIMPLES_NACIONAL
+                crt = CodigoRegimeTributario.REGIME_NORMAL
 
             # Adiciona endereço e outros campos comuns
             form_data.update({
@@ -962,15 +900,12 @@ class CompanyForm(ft.Container):
                     "state": self.state.value,
                     "postal_code": self.postal_code.value
                 },
-                "size": CompanySize[self.size.value] if self.size.value else None,
-                "fiscal": {
-                    "crt": crt,
-                    "nfce_series": self.nfce_series.value,
-                    "nfce_number": self.nfce_number.value,
-                    "nfce_environment": Environment(self.nfce_environment.value),
-                    "nfce_sefaz_id_csc": self.nfce_sefaz_id_csc.value,
-                    "nfce_sefaz_csc": self.nfce_sefaz_csc.value,
-                }
+                "crt": crt,
+                "nfce_series": self.nfce_series.value,
+                "nfce_number": self.nfce_number.value,
+                "nfce_environment": Environment(self.nfce_environment.value),
+                "nfce_sefaz_id_csc": self.nfce_sefaz_id_csc.value,
+                "nfce_sefaz_csc": self.nfce_sefaz_csc.value,
             })
 
             # Adiciona dados do Certificado Digital A1
@@ -1002,16 +937,11 @@ class CompanyForm(ft.Container):
             ft.Row([self.logo_section], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
             ft.Divider(),
             ft.Text("Dados da Empresa", size=20, weight=ft.FontWeight.BOLD),
-            ft.Row([self.document_type], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True),
         ]
 
         # Adiciona campos específicos de CNPJ se necessário
-        if self.document_type.value == "CNPJ":
-            base_fields.append(ft.Row([self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
-            base_fields.append(ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
-        else:
-            base_fields.append(ft.Row([self.cpf], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
-
+        base_fields.append(ft.Row([self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
+        base_fields.append(ft.Row([self.ie, self.im], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
         base_fields.append(ft.Row([self.name, self.corporate_name], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
         base_fields.append(ft.Row([self.store_name, self.phone, self.email], alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=20, run_spacing=20, wrap=True))
 
@@ -1054,7 +984,5 @@ class CompanyForm(ft.Container):
                 if hasattr(field, 'error_text'):
                     field.error_text = None
 
-        # Reseta o tipo de documento para CNPJ (valor padrão)
-        self.document_type.value = "CNPJ"
         # Atualiza os labels e visibilidade
         self._handle_doc_type_change(None)

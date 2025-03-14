@@ -1,7 +1,7 @@
 from storage.data.contracts.bucket_storage import BucketStorage
 
 
-class BucketService:
+class BucketServices:
     def __init__(self, adapter: BucketStorage):
         self.adapter = adapter
 

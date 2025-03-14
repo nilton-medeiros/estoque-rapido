@@ -1,8 +1,7 @@
-from src.domain.models.company_subclass import Environment
 from src.services.contracts.dfe_provider import DFeProvider
 
 
-class DFeService:
+class DFeServices:
     def __init__(self, provider: DFeProvider, cpf_cnpj: str):
         self.provider = provider
         self.cpf_cnpj = cpf_cnpj

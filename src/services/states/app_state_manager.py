@@ -3,7 +3,7 @@ import flet as ft
 
 from typing import Optional, Dict, Any
 from .state_validator import StateValidator
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 

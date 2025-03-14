@@ -8,8 +8,7 @@ from firebase_admin import exceptions
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.usuarios import Usuario, UsuariosRepository
-from src.shared.utils.deep_translator import deepl_translator
-from src.shared.utils.field_validation_functions import get_first_and_last_name
+from src.shared import deepl_translator, get_first_and_last_name
 from storage.data.firebase.firebase_initialize import get_firebase_app
 
 logger = logging.getLogger(__name__)

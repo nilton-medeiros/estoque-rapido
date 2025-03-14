@@ -80,7 +80,6 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
     Args:
         id (str): O ID do empresa a ser buscado. Se for None, verifica se a buscar é por CNPJ
         cnpj (CNPJ): O CNPJ do empresa a ser buscada. Se for None, verifica se a busca é por id
-        cpf (CPF): O CPF do empresa a ser buscada. Se for None, verifica se a busca é por id
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do empresa.

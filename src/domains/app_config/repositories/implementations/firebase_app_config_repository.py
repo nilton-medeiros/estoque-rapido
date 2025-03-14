@@ -1,7 +1,7 @@
 import logging
 
 from src.domains.app_config import AppConfig, AppConfigRepository
-from src.shared.utils.deep_translator import deepl_translator
+from src.shared import deepl_translator
 
 from storage.data.firebase.firebase_initialize import get_firebase_app
 from firebase_admin import firestore

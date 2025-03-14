@@ -1,14 +1,13 @@
 import flet as ft
 from typing import Optional
 
-from src.controllers.company_controller import handle_get_company
-from src.domain.models.company import Company
-from src.domain.models.user import User
-from src.controllers.user_controller import handle_get_user
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
-from src.shared.utils.field_validation_functions import validate_email
+
+from src.shared import MessageType, message_snackbar, validate_email
+
+from src.domains.usuarios import Usuario, handle_get_usuarios
+from src.domains.empresas import handle_get_empresas
 
 class LoginView:
     def __init__(self, page: ft.Page):
@@ -170,11 +169,11 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = await handle_get_user(email=self.email_input.value)
+            result = await handle_get_usuarios(email=self.email_input.value)
 
             if not result["is_error"]:
                 # Atualiza o estado do app com o novo usuário antes da navegação
-                user: User = result["user"]
+                user: Usuario = result["usuario"]
 
                 await self.page.app_state.set_user({
                     "id": user.id,
@@ -182,30 +181,30 @@ class LoginView:
                     "email": user.email,
                     "phone_number": user.phone_number,
                     "profile": user.profile,
-                    "companies": user.companies,
+                    "empresas": user.empresas,
                     "photo": user.photo,
                     # Adicione outros dados relevantes do usuário
                 })
 
-                if user.companies:
-                    # ToDo: Usar sessions_data para obter o company_id usado no login anterior
-                    # ToDo: Se existir na sessions_data, verifica se exite em user.companies, se não existir atualiza a sessions_data.
+                if user.empresas:
+                    # ToDo: Usar sessions_data para obter o empresa_id usado no login anterior
+                    # ToDo: Se existir na sessions_data, verifica se exite em user.empresas, se não existir atualiza a sessions_data.
 
-                    company_id = self.page.session.get("company_id")
+                    empresa_id = self.page.session.get("empresa_id")
 
                     # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada ou a primeira
-                    if not company_id or company_id not in user.companies:
-                        company_id = user.companies[0]  # Provisório até criar a sessions_data
-                        self.page.session.set("company_id", company_id)
+                    if not empresa_id or empresa_id not in user.empresas:
+                        empresa_id = user.empresas[0]  # Obtem a primeira empresa e salva na sessão do usuário
+                        self.page.session.set("empresa_id", empresa_id)
 
-                    result = await handle_get_company(company_id=company_id)
+                    result = await handle_get_empresas(id=empresa_id)
 
                     if not result["is_error"]:
                         cia: Company = result["company"]
 
-                        # Adiciona o company_id no state e publíca-a
+                        # Adiciona o empresa_id no state e publíca-a
                         await self.page.app_state.set_company({
-                            "id": company_id,
+                            "id": empresa_id,
                             "name": cia.name,
                             "corporate_name": cia.corporate_name,
                             "cnpj": cia.cnpj,

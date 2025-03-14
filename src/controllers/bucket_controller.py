@@ -1,4 +1,4 @@
-from src.services.buckets.bucket_service import BucketService
+from src.services.buckets.bucket_services import BucketServices
 from storage.buckets.aws_s3_storage import AmazonS3Adapter
 import boto3
 
@@ -10,10 +10,10 @@ def handle_upload_bucket(local_path: str, key: str) -> str:
     que deverá seguir o contrato da classe abstrata BucketStorage.
     """
     adapter = AmazonS3Adapter()
-    bucket_service = BucketService(adapter)
+    bucket_services = BucketServices(adapter)
 
     try:
-        storage_url = bucket_service.upload(local_path, key)
+        storage_url = bucket_services.upload(local_path, key)
         return storage_url
     except FileNotFoundError:
         raise ValueError(f"O arquivo {local_path} não foi encontrado.")
@@ -24,10 +24,10 @@ def handle_upload_bucket(local_path: str, key: str) -> str:
 
 def handle_delete_bucket(key: str) -> bool:
     adapter = AmazonS3Adapter()
-    bucket_service = BucketService(adapter)
+    bucket_services = BucketServices(adapter)
 
     try:
-        is_deleted = bucket_service.delete(key)
+        is_deleted = bucket_services.delete(key)
         return is_deleted
     except Exception as e:
         raise RuntimeError(f"Ocorreu um erro: {e}")

@@ -5,10 +5,8 @@ from typing import Dict, Optional
 import aiohttp
 from datetime import datetime, timedelta, timezone
 
-from src.controllers.app_config_controller import handle_get_config, handle_save_config
-from src.domain.models.certificate_a1 import CertificateA1
-from src.domain.models.company import Company
-from src.domain.models.company_subclass import Environment
+from src.domains.app_config import handle_get_config, handle_save_config
+from src.domains.empresas import CertificateA1, Empresa, Environment
 from src.services.contracts.dfe_provider import DFeProvider
 
 logger = logging.getLogger(__name__)
@@ -167,15 +165,15 @@ class NuvemFiscalDFeProvider(DFeProvider):
         """Exclui um certificado digital pelo documento vinculado a empresa emitente."""
         raise NotImplementedError("Módulo aguardando implementação")
 
-    async def company_save(self, issuer: Company) -> str:
+    async def company_save(self, issuer: Empresa) -> str:
         """Cadastra uma nova empresa (emitente/prestador) no Provedor DFe."""
         raise NotImplementedError("Módulo aguardando implementação")
 
-    async def company_update(self, issuer: Company) -> str:
+    async def company_update(self, issuer: Empresa) -> str:
         """Altera o cadastro de uma empresa (emitente/prestador) no Provedor DFe."""
         raise NotImplementedError("Módulo aguardando implementação")
 
-    async def company_get(self, cpf_cnpj: str) -> Company:
+    async def company_get(self, cpf_cnpj: str) -> Empresa:
         """Consulta uma empresa (emitente/prestador) pelo seu documento."""
         raise NotImplementedError("Módulo aguardando implementação")
 

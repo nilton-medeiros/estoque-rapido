@@ -1,14 +1,12 @@
 import flet as ft
 from typing import Optional
 
-from src.domain.models.user import User
-from src.domain.models.nome_pessoa import NomePessoa
-from src.domain.models.phone_number import PhoneNumber
-from src.controllers.user_controller import handle_save_user
+from src.domains.usuarios import Usuario, handle_save_usuarios
+from src.domains.shared import PhoneNumber, NomePessoa
+from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
+
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
-from src.shared.utils.field_validation_functions import get_first_and_last_name, validate_email, validate_password_strength, validate_phone
 
 
 class SignupView:
@@ -208,34 +206,34 @@ class SignupView:
             first_name, last_name = get_first_and_last_name(
                 self.name_input.value)
 
-            user: User = User(
+            usuario = Usuario(
                 email=self.email_input.value,
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(self.phone_input.value),
                 profile='admin',
             )
 
-            result = await handle_save_user(
-                user=user,
+            result = await handle_save_usuarios(
+                usuario=usuario,
                 create_new=True,
                 password=self.password_input.value
             )
 
             if not result["is_error"]:
-                user.id = result["user_id"]
+                usuario.id = result["user_id"]
                 # Atualiza o estado do app com o novo usuário antes da navegação
                 await self.page.app_state.set_user({
-                    "id": user.id,
-                    "name": user.name,
-                    "email": user.email,
-                    "phone_number": user.phone_number,
-                    "profile": user.profile,
-                    "companies": user.companies,
-                    "photo": user.photo,
+                    "id": usuario.id,
+                    "name": usuario.name,
+                    "email": usuario.email,
+                    "phone_number": usuario.phone_number,
+                    "profile": usuario.profile,
+                    "companies": usuario.companies,
+                    "photo": usuario.photo,
                     # Adicione outros dados relevantes do usuário
                 })
 
-                # No registro de um novo user, não há empresas definidas para este usuário
+                # No registro de um novo usuario, não há empresas definidas para este usuário
                 await self.page.app_state.set_company({
                         "id": "",
                         "name": "NEUMHUMA EMPRESA SELECIONADA",

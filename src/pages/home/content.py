@@ -3,7 +3,7 @@ import datetime
 import locale
 import platform
 
-# Problemas de acentuação ao mostrar texto no navegdor quando sob S.O. Windows. Corrigido desta forma:
+# Problemas de acentuação ao mostrar texto no navegador web quando sob S.O. Windows. Corrigido desta forma:
 # Configurar o locate dinamicamente
 if platform.system() == "Windows":
     locale.setlocale(locale.LC_TIME, 'pt_BR')
@@ -15,6 +15,7 @@ else:
         locale.setlocale(locale.LC_TIME, '')
 
 from typing import Callable
+
 
 def main_content():
     def on_hover_card(e):
@@ -81,6 +82,72 @@ def main_content():
             ]
         )
 
+    side_left = ft.Container(
+        col={'md': 12, 'lg': 8},
+        padding=ft.padding.all(20),
+        content=ft.Column(
+            controls=[
+                ft.Text(value='Estoque Rápido',
+                        theme_style=ft.TextThemeStyle.HEADLINE_LARGE),
+                ft.Text(
+                    spans=[
+                        ft.TextSpan(
+                            text="Gestão de Estoque, Vendas, Financeiro, Fluxo de Caixa e NFC-e.",
+                            style=ft.TextStyle(
+                                color=ft.Colors.WHITE),
+                        ),
+                    ],
+                    theme_style=ft.TextThemeStyle.BODY_MEDIUM,
+                ),
+                ft.Row(
+                    col={'xs': 6, 'md': 3},
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Text(
+                            "Hoje",
+                            style=ft.TextStyle(
+                                color=ft.Colors.PRIMARY,
+                                weight=ft.FontWeight.W_900,
+                                size=20,
+                            )
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                ".",
+                                style=ft.TextStyle(
+                                    color=ft.Colors.PRIMARY,
+                                    weight=ft.FontWeight.W_900,
+                                    size=40,  # O tamanho maior do ponto
+                                )
+                            ),
+                            offset=ft.transform.Offset(0, -0.2),
+                        ),
+                        ft.Text(
+                            date_description,
+                            style=ft.TextStyle(
+                                color=ft.Colors.WHITE,
+                                size=18,
+                            )
+                        ),
+                    ],
+                ),
+            ],
+            spacing=20,
+            alignment=ft.MainAxisAlignment.START,
+        )
+    )
+
+    side_right = ft.Container(
+        margin=ft.margin.only(top=20),
+        col={'md': 12, 'lg': 4},
+        content=ft.Image(
+            src='images/face-2.png',
+            width=20,
+            scale=ft.Scale(scale=1, alignment=ft.alignment.top_center),
+        )
+    )
+
     banner = ft.Container(
         # shadow=ft.BoxShadow(
         #     color='#2d2d3a',
@@ -101,72 +168,7 @@ def main_content():
         content=ft.ResponsiveRow(
             columns=12,
             vertical_alignment=ft.CrossAxisAlignment.START,
-            controls=[
-                ft.Container(
-                    col={'md': 12, 'lg': 8},
-                    padding=ft.padding.all(20),
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(value='Estoque Rápido',
-                                    theme_style=ft.TextThemeStyle.HEADLINE_LARGE),
-                            ft.Text(
-                                spans=[
-                                    ft.TextSpan(
-                                        text="Gestão de Estoque, Vendas, Financeiro, Fluxo de Caixa e NFC-e.",
-                                        style=ft.TextStyle(
-                                            color=ft.Colors.WHITE),
-                                    ),
-                                ],
-                                theme_style=ft.TextThemeStyle.BODY_MEDIUM,
-                            ),
-                            ft.Row(
-                                col={'xs': 6, 'md': 3},
-                                alignment=ft.MainAxisAlignment.START,
-                                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                                controls=[
-                                    ft.Text(
-                                        "Hoje",
-                                        style=ft.TextStyle(
-                                            color=ft.Colors.PRIMARY,
-                                            weight=ft.FontWeight.W_900,
-                                            size=20,
-                                        )
-                                    ),
-                                    ft.Container(
-                                        content=ft.Text(
-                                            ".",
-                                            style=ft.TextStyle(
-                                                color=ft.Colors.PRIMARY,
-                                                weight=ft.FontWeight.W_900,
-                                                size=40,  # O tamanho maior do ponto
-                                            )
-                                        ),
-                                        offset=ft.transform.Offset(0, -0.2),
-                                    ),
-                                    ft.Text(
-                                        date_description,
-                                        style=ft.TextStyle(
-                                            color=ft.Colors.WHITE,
-                                            size=18,
-                                        )
-                                    ),
-                                ],
-                            ),
-                        ],
-                        spacing=20,
-                        alignment=ft.MainAxisAlignment.START,
-                    )
-                ),
-                ft.Container(
-                    margin=ft.margin.only(top=20),
-                    col={'md': 12, 'lg': 4},
-                    content=ft.Image(
-                        src='images/face-2.png',
-                        width=20,
-                        scale=ft.Scale(scale=1, alignment=ft.alignment.top_center),
-                    )
-                )
-            ]
+            controls=[side_left, side_right],
         )
     )
 
@@ -255,7 +257,8 @@ def main_content():
     def sections_title(title: str):
         return ft.Container(
             # padding=ft.padding.symmetric(vertical=20),
-            content=ft.Text(value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM),
+            content=ft.Text(
+                value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM),
         )
 
     return ft.Container(

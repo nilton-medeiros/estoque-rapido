@@ -6,7 +6,7 @@ from firebase_admin import exceptions
 
 from src.domains.empresas import CNPJ, Empresa, EmpresasRepository
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
-from src.shared.utils.deep_translator import deepl_translator
+from src.shared import deepl_translator
 from storage.data.firebase.firebase_initialize import get_firebase_app
 
 logger = logging.getLogger(__name__)

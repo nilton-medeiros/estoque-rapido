@@ -3,11 +3,10 @@ import logging
 import os
 import flet as ft
 
-from src.controllers.bucket_controller import handle_delete_bucket, handle_upload_bucket
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
-from src.controllers.user_controller import handle_update_photo_user
-from src.shared.utils.gen_uuid import get_uuid
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.controllers.bucket_controller import handle_delete_bucket, handle_upload_bucket
+from src.domains.usuarios import handle_update_photo_usuarios
+from src.shared import get_uuid, MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +171,7 @@ def sidebar_header(page: ft.Page):
                         return
 
                     # Agora que temos uma URL válida, atualizar o usuário
-                    result = await handle_update_photo_user(user_id=current_user.get("id"), photo=avatar_url)
+                    result = await handle_update_photo_usuarios(id=current_user.get("id"), photo=avatar_url)
 
                     if result["is_error"]:
                         message_type = MessageType.ERROR
@@ -297,7 +296,7 @@ def sidebar_header(page: ft.Page):
                 )
             else:
                 if url_field.value and url_field.value.strip():
-                    result = await handle_update_photo_user(user_id=current_user["id"], photo=url_field.value)
+                    result = await handle_update_photo_usuarios(id=current_user["id"], photo=url_field.value)
                     if not result["is_error"]:
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:

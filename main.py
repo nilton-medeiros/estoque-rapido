@@ -4,7 +4,7 @@ import os
 
 import logging
 
-from src.pages.companies.form_cia import company_form
+from src.pages.empresas.form_cia import company_form
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page

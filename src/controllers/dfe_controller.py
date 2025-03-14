@@ -1,6 +1,6 @@
 import logging
-from src.domain.models.company_subclass import Environment
-from src.services.apis.dfe_service import DFeService
+from src.domains.empresas import Environment
+from src.services.apis.dfe_services import DFeServices
 from src.services.providers.nuvemfiscal_provider import NuvemFiscalDFeProvider
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ async def handle_upload_certificate_a1(
     try:
         # Usa o provider Nuvem Fiscal, troque o provider abaixo se quiser usar outro provedor.
         provider = NuvemFiscalDFeProvider(ambiente)
-        dfe_service = DFeService(provider, cpf_cnpj)
+        dfe_service = DFeServices(provider, cpf_cnpj)
 
         result = await dfe_service.certificate_save(certificado=certificate_content, passowrd=a1_password)
 
