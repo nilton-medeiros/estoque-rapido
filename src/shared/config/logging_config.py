@@ -4,11 +4,11 @@ from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 
-# ATENÇÃO: Se este arquivo "logging_config.py" for alterado de diretório, mudar o nível de .parent abaixo
-ROOT_DIR = Path(__file__).parent.parent.parent.parent
+from src.shared.utils.find_project_root import find_project_root
 
 def get_log_dir():
-    return ROOT_DIR / 'logs'
+    project_root = find_project_root(__file__)
+    return project_root / 'logs'
 
 class LogConfig:
     def __init__(self, log_level=logging.DEBUG):
