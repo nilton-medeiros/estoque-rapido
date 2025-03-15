@@ -1,10 +1,11 @@
-# log_config.py
+# logging_config.py
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).parent.parent.parent
+# ATENÇÃO: Se este arquivo "logging_config.py" for alterado de diretório, mudar o nível de .parent abaixo
+ROOT_DIR = Path(__file__).parent.parent.parent.parent
 
 def get_log_dir():
     return ROOT_DIR / 'logs'
@@ -13,14 +14,16 @@ class LogConfig:
     def __init__(self, log_level=logging.DEBUG):
         log_dir = get_log_dir()
         print("Entrou em LogConfig")
+        print(f"log_dir: {log_dir}")
 
         try:
             os.makedirs(log_dir, exist_ok=True)
         except Exception as e:
             print(f"Error creating log directory: {e}")
-            return # Caso não consiga criar o diretório
+            return  # Caso não consiga criar o diretório
 
         log_file = os.path.join(log_dir, "app.log")
+        print(f"log_file: {log_file}")
 
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
@@ -29,23 +32,70 @@ class LogConfig:
 
         # Configura o logger raiz
         root_logger = logging.getLogger()
-        root_logger.setLevel(log_level)
+        root_logger.setLevel(logging.DEBUG) # Definir o nível do root logger para o mais baixo possível (DEBUG)
 
         try:
             file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
             print("Criou o file_handler")
         except Exception as e:
             print(f"Error creating RotatingFileHandler: {e}")
-            return # Caso não consiga criar o logger, não tenta mais nada
+            return  # Caso não consiga criar o logger, não tenta mais nada
 
         file_handler.setFormatter(formatter)
-        file_handler.setLevel(log_level)
+        file_handler.setLevel(log_level) # Define o nível do file_handler para o nível desejado
         root_logger.addHandler(file_handler)
 
+        # Configura o nível do logger para o console (apenas para prints)
+        console_logger = logging.getLogger("console")
+        console_logger.setLevel(logging.CRITICAL + 1) # Define um nível acima do CRITICAL para que nada seja logado
+
+        # Cria um handler para o console
         console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        console_handler.setLevel(log_level)
-        root_logger.addHandler(console_handler)
+        console_logger.addHandler(console_handler)
+
+        # Configuração para uvicorn e websockets
+        uvicorn_logger = logging.getLogger("uvicorn")
+        uvicorn_logger.propagate = False # Impede que as mensagens do uvicorn subam para o root_logger
+        uvicorn_logger.addHandler(file_handler) # Adiciona o file_handler para o uvicorn
+        uvicorn_logger.setLevel(logging.INFO) # Define o nível do uvicorn para INFO
+
+        # Configura o logger para uvicorn.access
+        uvicorn_access_logger = logging.getLogger("uvicorn.access")
+        uvicorn_access_logger.propagate = False
+        uvicorn_access_logger.addHandler(file_handler)
+        uvicorn_access_logger.setLevel(logging.INFO)
+
+        # Remove os handlers existentes do uvicorn.access
+        for handler in uvicorn_access_logger.handlers[:]:
+            uvicorn_access_logger.removeHandler(handler)
+
+        # Configura o logger para uvicorn.error
+        uvicorn_error_logger = logging.getLogger("uvicorn.error")
+        uvicorn_error_logger.propagate = False
+        uvicorn_error_logger.addHandler(file_handler)
+        uvicorn_error_logger.setLevel(logging.ERROR)
+
+        # Configura o logger para websockets
+        websockets_logger = logging.getLogger("websockets")
+        websockets_logger.propagate = False
+        websockets_logger.addHandler(file_handler)
+        websockets_logger.setLevel(logging.DEBUG)
 
 # Instancia a configuração do log uma única vez
 LogConfig()
+
+"""
+# Exemplo de uso (pode ser removido daqui e colocado em outro arquivo)
+import logging
+logger = logging.getLogger(__name__)
+console_logger = logging.getLogger("console")
+
+logger.debug("Esta mensagem é de debug e vai para o arquivo.")
+logger.info("Esta mensagem é de info e vai para o arquivo.")
+logger.warning("Esta mensagem é de warning e vai para o arquivo.")
+logger.error("Esta mensagem é de erro e vai para o arquivo.")
+logger.critical("Esta mensagem é crítica e vai para o arquivo.")
+
+console_logger.critical("Esta mensagem não vai para o arquivo, pois é do console_logger")
+print("Esta mensagem é um print e vai para o console.")
+"""

@@ -1,9 +1,12 @@
 import flet as ft
-from dotenv import load_dotenv
-import os
-
 import logging
+import time
+import threading
+from logging.handlers import RotatingFileHandler
+import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from src.pages.empresas.form_cia import company_form
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
@@ -19,6 +22,33 @@ flet_key = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
 os.environ["FLET_SECRET_KEY"] = flet_key
 
+# Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
+def reconfigure_logging():
+    time.sleep(1)  # Espere o Flet inicializar
+
+    # Configuração de arquivo
+    log_dir = Path(__file__).parent.parent.parent.parent / 'logs'
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "app.log")
+
+    # Crie o handler de arquivo
+    file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.INFO)
+
+    # Configure os loggers do uvicorn
+    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
+        logger = logging.getLogger(logger_name)
+        # Remova todos os handlers existentes (especialmente os do console)
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+        # Adicione apenas o handler de arquivo
+        logger.addHandler(file_handler)
+        logger.propagate = False
 
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
@@ -129,7 +159,7 @@ def main(page: ft.Page):
                 page.update()
                 page.go('/')
             case '/home':
-                if not app_state.user:
+                if not app_state.usuario:
                     page.go('/login')  # Redireciona se não estiver autenticado
                 else:
                     page.on_resized = None
@@ -210,8 +240,11 @@ def main(page: ft.Page):
     page.on_view_pop = view_pop
     page.go(page.route)
 
-
 if __name__ == '__main__':
+    # Inicie a reconfiguração de log em uma thread separada
+    threading.Thread(target=reconfigure_logging, daemon=True).start()
+
+    # Inicia o app Flet
     ft.app(
         target=main,
         assets_dir="assets",

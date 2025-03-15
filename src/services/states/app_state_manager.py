@@ -62,7 +62,7 @@ class AppStateManager:
                 self.page.pubsub.send_all("empresa_updated")
                 return True
 
-            is_valid, error = self._validator.validate_company_data(
+            is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
                 await self.handle_error(error)
@@ -76,12 +76,12 @@ class AppStateManager:
             await self.handle_error(f"Erro ao atualizar empresa: {str(e)}")
             return False
 
-    async def handle_error(self, error_message: str):
+    def handle_error(self, error_message: str):
         logger.error(f"Erro: {error_message}")
 
         """Centraliza o tratamento de erros"""
         self.page.pubsub.send_all("error_occurred")
-        await message_snackbar(self.page, error_message, MessageType.ERROR)
+        message_snackbar(self.page, error_message, MessageType.ERROR)
 
     def clear_state(self):
         """Limpa todo o estado (útil para logout)"""

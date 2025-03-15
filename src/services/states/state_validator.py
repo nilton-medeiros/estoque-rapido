@@ -8,7 +8,7 @@ class StateValidator:
     Centraliza a validação de dados do estado da aplicação.
     """
     @staticmethod
-    def validate_user_data(usuario_data: dict) -> Tuple[bool, str]:
+    def validate_usuario_data(usuario_data: dict) -> Tuple[bool, str]:
         """
         Valida os dados do usuário.
         Retorna uma tupla (is_valid, error_message).
@@ -30,7 +30,7 @@ class StateValidator:
         return True, ""
 
     @staticmethod
-    def validate_company_data(company_data: dict) -> Tuple[bool, str]:
+    def validate_empresa_data(company_data: dict) -> Tuple[bool, str]:
         """
         Valida os dados da empresa.
         """

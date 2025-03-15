@@ -1,6 +1,8 @@
 from typing import Optional
 
-from src.domains.app_config import AppConfig, AppConfigRepository
+from src.domains.app_config.models.app_config_model import AppConfig
+from src.domains.app_config.repositories.contracts.app_config_repository import AppConfigRepository
+
 
 
 """

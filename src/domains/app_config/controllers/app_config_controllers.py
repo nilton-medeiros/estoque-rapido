@@ -1,7 +1,9 @@
 import logging
 from typing import Optional
 
-from src.domains.app_config import AppConfig, FirebaseAppConfigRepository, AppConfigServices
+from src.domains.app_config.models.app_config_model import AppConfig
+from src.domains.app_config.repositories.implementations.firebase_app_config_repository import FirebaseAppConfigRepository
+from src.domains.app_config.services.app_config_services import AppConfigServices
 
 """
 Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando

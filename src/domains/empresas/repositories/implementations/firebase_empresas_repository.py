@@ -4,7 +4,9 @@ from typing import Optional
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.empresas import CNPJ, Empresa, EmpresasRepository
+from src.domains.empresas.models.cnpj import CNPJ  # Importação direta
+from src.domains.empresas.models.empresa_model import Empresa  # Importação direta
+from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.shared import deepl_translator
 from storage.data.firebase.firebase_initialize import get_firebase_app

@@ -1,6 +1,8 @@
 import logging
 
-from src.domains.usuarios import Usuario, FirebaseUsuariosRepository, UsuariosServices
+from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
+from src.domains.usuarios.services.users_services import UsuariosServices
 
 logger = logging.getLogger(__name__)
 

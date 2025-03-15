@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from src.domains.usuarios import Usuario
+from src.domains.usuarios.models.usuario_model import Usuario
+
 
 '''
 Sobre o porque da interface UsuariosRepository (Classe abstrata)

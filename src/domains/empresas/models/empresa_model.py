@@ -10,12 +10,13 @@ from typing import Optional, Dict
 """
 ToDo: Refatorar, aqui não deveria invocar diretamente a AsaasPaymentGateway
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
-from src.services.gateways.asaas_payment_gateway import PaymentGateway
-"""
-from src.domains.empresas import Environment, EmpresaSize, CodigoRegimeTributario, CNPJ, CertificateA1
-from src.domains.shared import PhoneNumber
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
-
+"""
+from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
+from src.domains.shared.phone_number import PhoneNumber
+from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario
+from src.domains.empresas.models.cnpj import CNPJ
+from src.domains.empresas.models.certificate_a1 import CertificateA1
 
 @dataclass
 class Address:

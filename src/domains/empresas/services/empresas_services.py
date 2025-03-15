@@ -1,5 +1,9 @@
 from typing import Optional
 
+from src.domains.empresas.models.cnpj import CNPJ
+from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
+
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,
 organizando e validando os dados antes de delegar a execução das operações ao repositório de dados.

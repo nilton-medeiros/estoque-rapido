@@ -1,7 +1,8 @@
 import flet as ft
 from typing import Optional
 
-from src.domains.usuarios import Usuario, handle_save_usuarios
+import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+
 from src.domains.shared import PhoneNumber, NomePessoa
 from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
 
@@ -213,7 +214,7 @@ class SignupView:
                 profile='admin',
             )
 
-            result = await handle_save_usuarios(
+            result = await usuarios_controllers.handle_save_usuarios(
                 usuario=usuario,
                 create_new=True,
                 password=self.password_input.value

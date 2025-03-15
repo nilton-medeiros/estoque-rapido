@@ -7,7 +7,8 @@ from firebase_admin import firestore
 from firebase_admin import exceptions
 
 from src.domains.shared import NomePessoa, PhoneNumber
-from src.domains.usuarios import Usuario, UsuariosRepository
+from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared import deepl_translator, get_first_and_last_name
 from storage.data.firebase.firebase_initialize import get_firebase_app
 

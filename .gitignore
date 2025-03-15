@@ -127,6 +127,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+ativar_venv.bat
+desativar_venv.bat
 
 # Keys
 .keys

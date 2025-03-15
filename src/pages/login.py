@@ -9,8 +9,8 @@ from src.shared import MessageType, message_snackbar, validate_email
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
-from src.domains.empresas import Empresa
-from src.domains.usuarios import Usuario
+from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.usuarios.models.usuario_model import Usuario
 
 class LoginView:
     def __init__(self, page: ft.Page):

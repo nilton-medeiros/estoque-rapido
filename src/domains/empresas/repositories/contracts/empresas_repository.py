@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from src.domains.empresas import CNPJ, Empresa
+from src.domains.empresas.models.cnpj import CNPJ  # Importação direta para não ocorrer ciclo
+from src.domains.empresas.models.empresa_model import Empresa  # Importação direta
 
 class EmpresasRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de empresas."""

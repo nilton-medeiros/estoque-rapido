@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.domains.app_config import AppConfig
+from src.domains.app_config.models.app_config_model import AppConfig
+
 
 class AppConfigRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de configurações de aplicativo."""
