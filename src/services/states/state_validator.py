@@ -16,7 +16,7 @@ class StateValidator:
         if not isinstance(usuario_data, dict):
             return False, "Dados do usuário devem ser um dicionário"
 
-        required_fields = ['id', 'name', 'email', 'profile']
+        required_fields = ['id', 'name', 'email', 'phone_number', 'profile']
         for field in required_fields:
             if field not in usuario_data:
                 return False, f"Campo obrigatório ausente: {field}"
@@ -37,7 +37,8 @@ class StateValidator:
         if not isinstance(company_data, dict):
             return False, "Dados da empresa devem ser um dicionário"
 
-        required_fields = ['name']  # Adicione outros campos obrigatórios
+        # Campos obrigatórios da entidade Empresa
+        required_fields = ['id', 'corporate_name', 'email', 'cnpj']
         for field in required_fields:
             if field not in company_data:
                 return False, f"Campo obrigatório ausente: {field}"

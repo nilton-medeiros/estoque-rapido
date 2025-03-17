@@ -35,8 +35,10 @@ class Usuario:
     phone_number: PhoneNumber
     profile: str
     id: Optional[str] = field(default=None)
+    empresa_id: Optional[str] = field(default=None)
     empresas: Optional[List[str]] = field(default_factory=list)
     photo: Optional[str] = field(default=None)
+    user_color: Optional[str] = field(default='blue')
 
     # Lista de perfis permitidos
     ALLOWED_PROFILES = {"admin", "cobrança",
@@ -51,6 +53,10 @@ class Usuario:
         # Validação do campo 'name'
         if not self.name.first_name:
             raise ValueError("O campo 'name' é obrigatório.")
+
+        # Validação do campo 'phone_number'
+        if not self.phone_number:
+            raise ValueError("O campo 'phone_number' é obrigatório.")
 
         # Validação do campo 'email'
         self.email = self.email.strip()
@@ -69,3 +75,20 @@ class Usuario:
 
         if self.photo == '':
             self.photo = None
+
+        if self.user_color == '':
+            self.user_color = 'blue'
+
+    def to_dict(self):
+        user_dict = {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "phone_number": self.phone_number,
+            "profile": self.profile,
+            "empresa_id": self.empresa_id,
+            "empresas": self.empresas,
+            "photo": self.photo,
+            "user_color": self.user_color,
+        }
+        return user_dict

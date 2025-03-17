@@ -76,3 +76,8 @@ class UsuariosRepository(ABC):
     async def update_photo(self, id: str, new_photo: str) -> Optional[Usuario]:
         """Atualiza a foto de um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    async def update_color(self, id: str, new_color: str) -> bool:
+        """Atualiza a cor preferida do um usuário."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")

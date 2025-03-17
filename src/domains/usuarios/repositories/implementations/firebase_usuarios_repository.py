@@ -302,7 +302,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 self.collection.document(usuario.id).set(usuario_dict, merge=True)
             else:
 
-                if self.password:
+                if usuario.password is not None:
                     # 1. Criar usuário no Firebase Authentication
                     usuario_db = auth.create_user(
                         email=usuario.email,
@@ -387,14 +387,14 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         Args:
             id (str): ID do usuário
-            new_profile (str): Novo perfil a ser atribuído
+            new_photo (str): Link para a nova foto a ser atribuída
 
         Returns:
             Optional[Usuario]: Usuário atualizado ou None se não existir
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados
-            ValueError: Se o novo perfil não for válido
+            ValueError: Se a nova foto não for válido
         """
 
         try:
@@ -433,6 +433,42 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             logger.error(f"Erro ao atualizar o perfil do usuário: {e}")
             raise e
 
+
+    async def update_color(self, id: str, new_color: str) -> bool:
+        """
+        Atualiza a cor preferencial de um usuário.
+
+        Args:
+            id (str): ID do usuário
+            new_color (str): Nova cor preferencial a ser atribuído
+
+        Returns:
+            Optional[Usuario]: Usuário atualizado ou None se não existir
+
+        Raises:
+            Exception: Em caso de erro na operação de banco de dados
+            ValueError: Se o nova cor não for válido
+        """
+
+        try:
+            # Verifica se a nova cor é válido
+            if not new_color:
+                raise ValueError("A nova cor não pode ser vazio")
+
+            doc_ref = self.collection.document(id)
+            doc = doc_ref.get()
+
+            if not doc.exists:
+                return None
+
+            # Atualiza a cor preferencial do usuário
+            doc_ref.update({"user_color": new_color})
+            return True
+        except Exception as e:
+            # Lida com possíveis exceções, se necessário
+            logger.error(f"Erro ao atualizar a cor do usuário: {e}")
+            raise e
+
     def _doc_to_usuario(self, doc_data: dict) -> Usuario:
         """
         Converter os dados de um documento do Firestore em uma instância de usuário.
@@ -459,6 +495,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             profile=doc_data['profile'],
             empresas=empresas,
             photo=usuario_photo,
+            user_color=doc_data.get('user_color', 'blue'),
         )
 
     def _usuario_to_dict(self, usuario: Usuario) -> dict:
@@ -479,6 +516,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             "profile": usuario.profile,
             "empresas": usuario.empresas,
             "photo": usuario.photo,
+            "user_color": usuario.user_color,
         }
 
         return usuario_dict

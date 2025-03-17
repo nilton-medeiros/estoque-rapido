@@ -16,8 +16,9 @@ class AppStateManager:
     def __init__(self, page: ft.Page):
         self.page = page
         self._state: Dict[str, Any] = {
-            'usuario': None,
-            'empresa': None
+            'usuario': {},
+            'empresa': {},
+            'empresa_form': {},
         }
         self._validator = StateValidator()
 
@@ -29,17 +30,22 @@ class AppStateManager:
     def empresa(self):
         return self._state.get('empresa')
 
+    @property
+    def empresa_form(self):
+        return self._state.get('empresa_form')
+
     async def set_usuario(self, usuario_data: Optional[dict]) -> bool:
         """
         Atualiza os dados do usuário no estado global.
         """
         try:
             if usuario_data is None:
-                self._state['usuario'] = None
+                self._state['usuario'] = {}
                 self.page.pubsub.send_all("usuario_logout")
                 return True
 
-            is_valid, error = self._validator.validate_usuario_data(usuario_data)
+            is_valid, error = self._validator.validate_usuario_data(
+                usuario_data)
             if not is_valid:
                 await self.handle_error(error)
                 return False
@@ -58,7 +64,7 @@ class AppStateManager:
         """
         try:
             if empresa_data is None:
-                self._state['empresa'] = None
+                self._state['empresa'] = {}
                 self.page.pubsub.send_all("empresa_updated")
                 return True
 
@@ -76,6 +82,30 @@ class AppStateManager:
             await self.handle_error(f"Erro ao atualizar empresa: {str(e)}")
             return False
 
+    async def set_empresa_form(self, empresa_data: Optional[dict]) -> bool:
+        """
+        Atualiza os dados da empresa para o formulário no estado global.
+        """
+        try:
+            if empresa_data is None:
+                self._state['empresa_form'] = {}
+                self.page.pubsub.send_all("empresa_form_updated")
+                return True
+
+            is_valid, error = self._validator.validate_empresa_data(
+                empresa_data)
+            if not is_valid:
+                await self.handle_error(error)
+                return False
+
+            self._state['empresa_form'] = empresa_data
+            self.page.pubsub.send_all("empresa_updated")
+            return True
+
+        except Exception as e:
+            await self.handle_error(f"Erro ao atualizar empresa para o formulário: {str(e)}")
+            return False
+
     def handle_error(self, error_message: str):
         logger.error(f"Erro: {error_message}")
 
@@ -85,7 +115,20 @@ class AppStateManager:
 
     def clear_state(self):
         """Limpa todo o estado (útil para logout)"""
-        self._state['usuario'] = None
-        self._state['empresa'] = None
+        self._state['usuario'] = {}
+        self._state['empresa'] = {}
+        self._state['empresa_form'] = {}
+        self.page.sessions_data.clear()  # Limpa a sessão do usuário na página principal
         self.page.pubsub.send_all("usuario_updated")
         self.page.pubsub.send_all("empresa_updated")
+        self.page.pubsub.send_all("empresa_form_updated")
+
+    def clear_empresa_data(self):
+        """Limpa os dados da empresa (útil para logout)"""
+        self._state['empresa'] = {}
+        self.page.pubsub.send_all("empresa_updated")
+
+    def clear_empresa_form_data(self):
+        """Limpa os dados da empresa para formulário (útil para logout)"""
+        self._state['empresa_form'] = {}
+        self.page.pubsub.send_all("empresa_form_updated")

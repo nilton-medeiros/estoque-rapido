@@ -75,7 +75,7 @@ class Empresa:
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
-    name: Optional[str]  # Nome fantasia
+    name: Optional[str] = None # Nome fantasia
     initials_corporate_name: Optional[str] = None
     cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
     store_name: Optional[str] = 'Matriz'

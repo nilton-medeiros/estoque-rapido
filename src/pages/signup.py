@@ -4,6 +4,7 @@ from typing import Optional
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
 from src.domains.shared import PhoneNumber, NomePessoa
+from src.domains.usuarios.models.usuario_model import Usuario
 from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
 
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
@@ -223,32 +224,11 @@ class SignupView:
             if not result["is_error"]:
                 usuario.id = result["user_id"]
                 # Atualiza o estado do app com o novo usuário antes da navegação
-                await self.page.app_state.set_usuario({
-                    "id": usuario.id,
-                    "name": usuario.name,
-                    "email": usuario.email,
-                    "phone_number": usuario.phone_number,
-                    "profile": usuario.profile,
-                    "companies": usuario.companies,
-                    "photo": usuario.photo,
-                    # Adicione outros dados relevantes do usuário
-                })
+                await self.page.app_state.set_usuario(usuario.to_dict())
 
                 # No registro de um novo usuario, não há empresas definidas para este usuário
-                await self.page.app_state.set_empresa({
-                        "id": "",
-                        "name": "NEUMHUMA EMPRESA SELECIONADA",
-                        "corporate_name": "",
-                        "cnpj": "",
-                        "ie": "",
-                        "store_name": "Matriz",
-                        "im": "",
-                        "address": None,
-                        "size": None,
-                        "fiscal": None,
-                        "logo_url": None,
-                        "payment_gateway": None,
-                })
+                await self.page.app_state.clear_empresa_data()
+
                 message_snackbar(page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
                 self.page.on_resized = None
                 self.page.go('/home')

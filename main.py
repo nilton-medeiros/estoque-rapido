@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from src.pages.empresas.form_cia import company_form
+from src.pages.empresas.empresas_form import empresas_form
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page
@@ -23,6 +23,8 @@ flet_key = os.getenv('FLET_SECRET_KEY')
 os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
+
+
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
@@ -32,7 +34,8 @@ def reconfigure_logging():
     log_file = os.path.join(log_dir, "app.log")
 
     # Crie o handler de arquivo
-    file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
+    file_handler = RotatingFileHandler(
+        log_file, maxBytes=5242880, backupCount=5)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
@@ -49,6 +52,7 @@ def reconfigure_logging():
         # Adicione apenas o handler de arquivo
         logger.addHandler(file_handler)
         logger.propagate = False
+
 
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
@@ -78,22 +82,21 @@ def main(page: ft.Page):
 
     # Registrar o evento para mudanças
     def handle_pubsub(message):
-        if message == "usuario_updated":
-            if app_state.usuario:
-                # Atualiza elementos da UI que dependem do usuário
-                update_usuario_dependent_ui()
-            else:
-                # Limpa elementos da UI relacionados ao usuário
-                clear_usuario_ui()
-
-        elif message.startswith("empresa_updated:"):
-            if app_state.empresa:
-                # print(f"Empresa atualizada: {empresa['name']}")
-                # Atualiza elementos da UI que dependem da empresa
-                update_empresa_dependent_ui()
-            else:
-                # Limpa elementos da UI relacionados à empresa
-                clear_empresa_ui()
+        match message:
+            case "usuario_updated":
+                if app_state.usuario.get('name'):
+                    # Atualiza elementos da UI que dependem do usuário
+                    update_usuario_dependent_ui()
+                else:
+                    # Limpa elementos da UI relacionados ao usuário
+                    clear_usuario_ui()
+            case "empresa_updated":
+                if app_state.empresa.get('corporate_name'):
+                    # Atualiza elementos da UI que dependem da empresa
+                    update_empresa_dependent_ui()
+                else:
+                    # Limpa elementos da UI relacionados à empresa
+                    clear_empresa_ui()
 
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
@@ -104,7 +107,8 @@ def main(page: ft.Page):
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = app_state.empresa['name']
+            page.company_name_text_btn.text = app_state.empresa.get(
+                'name', app_state.empresa.get('corporate_name'))
             page.company_name_text_btn.update()
 
     def clear_usuario_ui():
@@ -155,13 +159,11 @@ def main(page: ft.Page):
                 )
             case '/logout':
                 page.app_state.clear_state()
-                page.sessions_data.clear()
                 page.update()
                 page.go('/')
             case '/home':
-                if not app_state.usuario:
-                    page.go('/login')  # Redireciona se não estiver autenticado
-                else:
+                # Acesso a página /home somente usuários logados
+                if app_state.usuario.get('id'):
                     page.on_resized = None
                     home = home_page(page)
                     pg_view = ft.View(
@@ -172,30 +174,36 @@ def main(page: ft.Page):
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
-            case '/empresas/form':  # Registro
-                route_title = "home/empresas/form"
-                company = app_state.empresa
-                id = company.get('id', None)
-                if id is not None:
-                    route_title += f"/{id}"
                 else:
-                    route_title += "/new"
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/empresas/form':
+                # Verifica se usuário está logado
+                if app_state.usuario.get('id'):
+                    route_title = "home/empresas/form"
+                    empresa = app_state.empresa_form
+                    id = empresa.get('id', None)
+                    if id:
+                        route_title += f"/{id}"
+                    else:
+                        route_title += "/new"
 
-                pg_view = ft.View(
-                    route='/empresas/form',
-                    appbar=ft.AppBar(
-                        title=ft.Text(route_title, size=16),
-                        leading=ft.IconButton(
-                            icon=ft.Icons.ARROW_BACK,
-                            on_click=lambda _: page.go("/home"),
+                    pg_view = ft.View(
+                        route='/empresas/form',
+                        appbar=ft.AppBar(
+                            title=ft.Text(route_title, size=16),
+                            leading=ft.IconButton(
+                                icon=ft.Icons.ARROW_BACK,
+                                on_click=lambda _: page.go("/home"),
+                            ),
                         ),
-                    ),
-                    controls=[company_form(page)],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
+                        controls=[empresas_form(page)],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
@@ -239,6 +247,7 @@ def main(page: ft.Page):
     page.on_route_change = route_change
     page.on_view_pop = view_pop
     page.go(page.route)
+
 
 if __name__ == '__main__':
     # Inicie a reconfiguração de log em uma thread separada

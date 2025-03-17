@@ -21,8 +21,8 @@ def main(page: ft.Page):
             '''
             popup_width = popup_content.width
             popup_height = popup_content.height
-            popup_content.left = (page.window.width - popup_width) / 2
-            popup_content.top = (page.window.height - popup_height) / 2
+            popup_content.left = (page.width - popup_width) / 2
+            popup_content.top = (page.height - popup_height) / 2
             page.update()
 
     # Função para abrir a janela flutuante
@@ -46,7 +46,7 @@ def main(page: ft.Page):
             ),
             width=600,
             height=200,
-            bgcolor=ft.Colors.WHITE,
+            bgcolor=ft.Colors.TEAL_400,
             padding=20,
             border_radius=10,
             shadow=ft.BoxShadow(

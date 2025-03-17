@@ -86,3 +86,16 @@ class UsuariosServices:
             Optional[Usuario]: Usuário encontrado ou None se não existir
         """
         return await self.repository.update_photo(usuario_id, photo)
+
+    async def update_color(self, usuario_id: str, color: str) -> bool:
+        """
+        Atualiza a cor favorita do usuário para o campo  usando o repositório.
+
+        Parâmetros:
+            usuario_id (str): ID do usuário a ser alterado
+            color (str): Cor favorita do usuário a ser atualizado
+
+        Retorna:
+            bool: True se a atualização for bem-sucedida, False caso contrário
+        """
+        return await self.repository.update_color(usuario_id, color)

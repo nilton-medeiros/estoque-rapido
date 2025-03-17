@@ -12,6 +12,7 @@ import src.domains.usuarios.controllers.usuarios_controllers as usuarios_control
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.usuarios.models.usuario_model import Usuario
 
+
 class LoginView:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -23,7 +24,6 @@ class LoginView:
         self.page.on_resized = self.page_resize
 
         self.page.update()
-
 
     def build_login_button(self, sizes: dict) -> ft.OutlinedButton:
         return ft.OutlinedButton(
@@ -68,14 +68,15 @@ class LoginView:
         self.password_input = build_input_field(
             sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True)
         self.login_button = self.build_login_button(sizes)
-        self.error_text = ft.Text(color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
+        self.error_text = ft.Text(
+            color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
 
         # Debug: Dados Fakes como hardcord, remover isto em produção
         self.email_input.value = 'ajolie@gmail.com'
         self.password_input.value = 'Aj#45678'
 
-        self.page.user_name_text.visible=False  # Invisible, sem uso
-        self.page.company_name_text_btn.visible=False # Invisible, sem uso
+        self.page.user_name_text.visible = False  # Invisible, sem uso
+        self.page.company_name_text_btn.visible = False  # Invisible, sem uso
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -117,7 +118,8 @@ class LoginView:
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        content=ft.Text(value="Criar uma conta", color=ft.Colors.YELLOW_ACCENT_400),
+                        content=ft.Text(value="Criar uma conta",
+                                        color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/signup'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -125,7 +127,8 @@ class LoginView:
                         text="Voltar",
                         icon=ft.CupertinoIcons.BACK,
                         icon_color=ft.Colors.PRIMARY,
-                        style=ft.ButtonStyle(color=ft.Colors.YELLOW_ACCENT_400),
+                        style=ft.ButtonStyle(
+                            color=ft.Colors.YELLOW_ACCENT_400),
                         on_click=lambda _: self.page.go('/'),
                     )
                 ],
@@ -177,28 +180,25 @@ class LoginView:
             if not result["is_error"]:
                 # Atualiza o estado do app com o novo usuário antes da navegação
                 user: Usuario = result["usuario"]
+                empresa_id = user.empresa_id
 
-                await self.page.app_state.set_usuario({
-                    "id": user.id,
-                    "name": user.name,
-                    "email": user.email,
-                    "phone_number": user.phone_number,
-                    "profile": user.profile,
-                    "empresas": user.empresas,
-                    "photo": user.photo,
-                    # Adicione outros dados relevantes do usuário
-                })
+                if empresa_id is None and user.empresas:
+                    empresa_id = user.empresas[0]
 
-                if user.empresas:
-                    # ToDo: Usar sessions_data para obter o empresa_id usado no login anterior
-                    # ToDo: Se existir na sessions_data, verifica se exite em user.empresas, se não existir atualiza a sessions_data.
-
-                    empresa_id = self.page.session.get("empresa_id")
-
+                if empresa_id:
                     # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada ou a primeira
-                    if not empresa_id or empresa_id not in user.empresas:
-                        empresa_id = user.empresas[0]  # Obtem a primeira empresa e salva na sessão do usuário
-                        self.page.session.set("empresa_id", empresa_id)
+                    if empresa_id not in user.empresas:
+                        # Obtem a primeira empresa e salva na sessão do usuário
+                        empresa_id = user.empresas[0]
+                        user.empresa_id = empresa_id
+
+                        try:
+                            result = await usuarios_controllers.handle_save_usuarios(usuario=user, create_new=False)
+                        except Exception as e:
+                            pass
+
+                        await self.page.app_state.set_usuario(user.to_dict())
+
 
                     result = await empresas_controllers.handle_get_empresas(id=empresa_id)
 
@@ -223,20 +223,7 @@ class LoginView:
                         })
 
                 else:
-                    await self.page.app_state.set_empresa({
-                            "id": "",
-                            "name": "NEUMHUMA EMPRESA SELECIONADA",
-                            "corporate_name": "",
-                            "cnpj": "",
-                            "ie": "",
-                            "store_name": "Matriz",
-                            "im": "",
-                            "address": None,
-                            "size": None,
-                            "fiscal": None,
-                            "logo_url": None,
-                            "payment_gateway": None,
-                    })
+                    await self.page.app_state.clear_empresa_data()
 
                 self.page.on_resized = None
                 self.page.go('/home')

@@ -6,7 +6,7 @@ import flet as ft
 import src.controllers.bucket_controllers as bucket_controllers
 
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
-from src.domains.usuarios import handle_update_photo_usuarios
+from src.domains.usuarios import handle_update_photo_usuarios, handle_update_color_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def sidebar_header(page: ft.Page):
 
     current_company = page.app_state.empresa
 
-    if current_company and current_company.get('id'):
+    if current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
     else:
         page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"
@@ -181,7 +181,8 @@ def sidebar_header(page: ft.Page):
                         # Photo não pode ser salva no database, remove do Bucket Storage a nova se não for a mesma anterior
                         if not previous_user_photo or previous_user_photo != avatar_url:
                             try:
-                                bucket_controllers.handle_delete_bucket(key=file_name_bucket)
+                                bucket_controllers.handle_delete_bucket(
+                                    key=file_name_bucket)
                             except Exception as e:
                                 logger.error(f"{e}")
 
@@ -235,15 +236,7 @@ def sidebar_header(page: ft.Page):
                     user_avatar.update()
                     user = result["user"]
 
-                    await page.app_state.set_usuario({
-                        "id": user.id,
-                        "name": user.name,
-                        "email": user.email,
-                        "phone_number": user.phone_number,
-                        "profile": user.profile,
-                        "companies": user.companies,
-                        "photo": user.photo,
-                    })
+                    await page.app_state.set_usuario(user.to_dict())
 
                     page.pubsub.send_all("user_updated")
 
@@ -330,15 +323,7 @@ def sidebar_header(page: ft.Page):
                         user_avatar.update()
                         user = result["user"]
 
-                        await page.app_state.set_usuario({
-                            "id": user.id,
-                            "name": user.name,
-                            "email": user.email,
-                            "phone_number": user.phone_number,
-                            "profile": user.profile,
-                            "companies": user.companies,
-                            "photo": user.photo,
-                        })
+                        await page.app_state.set_usuario(user.to_dict())
 
                         page.pubsub.send_all("user_updated")
 
@@ -419,10 +404,11 @@ def sidebar_header(page: ft.Page):
         spacing=0,
     )
 
-    def on_click_cpny_btn(e):
+    def on_click_empresa_btn(e):
+
         page.go('/empresas/form')
 
-    page.company_name_text_btn.on_click = on_click_cpny_btn
+    page.company_name_text_btn.on_click = on_click_empresa_btn
 
     return ft.Container(
         content=ft.Column(
@@ -574,9 +560,26 @@ def sidebar_footer(page: ft.Page):
     def logoff_user(e):
         page.go('/logout')
 
-    def change_primary_color(e):
+    async def change_primary_color(e):
+        # Atualiza a cor primária da interface no thema do app
         e.page.theme.color_scheme.primary = e.control.data
-        e.page.session.set("user_color", e.control.data)
+        user_id = e.page.app_state.usuario['id']
+        msg_error = None
+
+        try:
+            result = await handle_update_color_usuarios(id=user_id, color=e.control.data)
+            if result["is_error"]:
+                msg_error = result["message"]
+        except ValueError as e:
+            logger.error(str(e))
+            msg_error = f"Erro: {str(e)}"
+        except RuntimeError as e:
+            logger.error(str(e))
+            msg_error = f"Erro no upload: {str(e)}"
+
+        if msg_error:
+            message_snackbar(page=page, message=msg_error,
+                         message_type=MessageType.ERROR)
         e.page.update()
 
     def on_click_business_btn(e):

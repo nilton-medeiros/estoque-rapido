@@ -13,7 +13,8 @@ e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
-async def handle_save_usuarios(usuario: Usuario, create_new: bool, password: str = None) -> dict:
+
+async def handle_save_usuarios(usuario: Usuario, password: str = None) -> dict:
     """
     Manipula a operação de salvar usuário.
 
@@ -23,7 +24,7 @@ async def handle_save_usuarios(usuario: Usuario, create_new: bool, password: str
 
     Args:
         usuario (Usuario): A instância do usuário a ser salvo.
-        create_new (bool): Um booleano indicando se o usuário deve ser criado (True) ou atualizado (False).
+        password (str|None): Senha do usuário.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
@@ -111,11 +112,12 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
 
         if id:
             # Busca o usuário pelo id
-            usuario = await usuarios_services.find_by_id(email)
+            usuario = await usuarios_services.find_by_id(id)
         elif email:
             # Busca o usuário pelo email
             usuario = await usuarios_services.find_by_email(email)
-        else: raise ValueError("Um dos argumentos id ou email deve ser passado")
+        else:
+            raise ValueError("Um dos argumentos id ou email deve ser passado")
 
         if usuario:
             response["message"] = "Usuário encontrado com sucesso!"
@@ -175,6 +177,60 @@ async def handle_update_photo_usuarios(id: str, photo: str) -> dict:
 
         response["message"] = "Foto do Usuário atualizada com sucessso!"
         response["usuario"] = usuario
+
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+
+async def handle_update_color_usuarios(id: str, color: str) -> bool:
+    """
+    Update no campo color do usuário.
+
+    Esta função manipula a operação de atualizar um único campo 'color' do usuário. Ela utiliza um repositório
+    específico para realizar as operações necessárias.
+
+    Args:
+        id (str): ID do usuário.
+        color (str): String com o nome da cor (const do flet como 'blue', 'orange') do usuário a ser atualizado.
+
+    Returns:
+        bool: True se color foi atualizado com sucesso, False caso contrário.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao atualizar o campo color do usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> id = '12345678901234567890123456789012'
+        >>> response = await handle_update_color_usuarios(id, 'blue')
+        >>> print(response)
+    """
+    response = {
+        "is_error": False,
+        "message": "",
+    }
+
+    try:
+        # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+
+        # Atualiza o campo photo no usuário
+        is_updated = await usuarios_services.update_color(id, color)
+        response["is_error"] = not is_updated
+
+        if is_updated:
+            response["message"] = "Cor preferncial do Usuário atualizada com sucessso!"
+        else:
+            response["message"] = "Falha ao atualizar a cor preferncial do Usuário!"
 
     except ValueError as e:
         response["is_error"] = True
