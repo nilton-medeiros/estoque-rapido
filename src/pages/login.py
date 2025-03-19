@@ -1,6 +1,8 @@
 import flet as ft
 from typing import Optional
 
+from src.domains.shared.nome_pessoa import NomePessoa
+from src.domains.shared.password import Password
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 
@@ -11,6 +13,7 @@ import src.domains.usuarios.controllers.usuarios_controllers as usuarios_control
 
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.usuarios.models.usuario_model import Usuario
+from src.shared.utils.field_validation_functions import get_first_and_last_name
 
 
 class LoginView:
@@ -140,14 +143,15 @@ class LoginView:
         email = self.email_input.value
         email = email.strip().lower()
 
-        password = self.password_input.value
-
         if not email:
             return "Por favor, insira seu email"
         if not validate_email(email):
             return "Email inválido"
 
         self.email_input.value = email
+
+        # ToDo: Passar esta responsabilidade para a classe Password
+        password = self.password_input.value
 
         if len(password) < 8:
             return "A senha deve ter:\n• pelo menos 8 caracteres"
@@ -175,62 +179,51 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = await usuarios_controllers.handle_get_usuarios(email=self.email_input.value)
+            result = await usuarios_controllers.handle_login_usuarios(
+                email=self.email_input.value, password=self.password_input.value)
 
-            if not result["is_error"]:
-                # Atualiza o estado do app com o novo usuário antes da navegação
-                user: Usuario = result["usuario"]
-                empresa_id = user.empresa_id
-
-                if empresa_id is None and user.empresas:
-                    empresa_id = user.empresas[0]
-
-                if empresa_id:
-                    # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada ou a primeira
-                    if empresa_id not in user.empresas:
-                        # Obtem a primeira empresa e salva na sessão do usuário
-                        empresa_id = user.empresas[0]
-                        user.empresa_id = empresa_id
-
-                        try:
-                            result = await usuarios_controllers.handle_save_usuarios(usuario=user, create_new=False)
-                        except Exception as e:
-                            pass
-
-                        await self.page.app_state.set_usuario(user.to_dict())
-
-
-                    result = await empresas_controllers.handle_get_empresas(id=empresa_id)
-
-                    if not result["is_error"]:
-                        cia: Empresa = result["empresa"]
-
-                        # Adiciona o empresa_id no state e publíca-a
-                        await self.page.app_state.set_empresa({
-                            "id": empresa_id,
-                            "name": cia.name,
-                            "corporate_name": cia.corporate_name,
-                            "cnpj": cia.cnpj,
-                            "ie": cia.ie,
-                            "store_name": cia.store_name,
-                            "im": cia.im,
-                            "contact": cia.contact,
-                            "address": cia.address,
-                            "size": cia.size,
-                            "fiscal": cia.fiscal,
-                            "logo_url": cia.logo_url,
-                            "payment_gateway": cia.payment_gateway,
-                        })
-
-                else:
-                    await self.page.app_state.clear_empresa_data()
-
-                self.page.on_resized = None
-                self.page.go('/home')
-
-            else:
+            if result["is_error"]:
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
+                return
+
+            # Atualiza o estado do app com o novo usuário antes da navegação
+            user = result["authenticated_user"]
+
+            if user.empresa_id is None:
+                await self.page.app_state.clear_empresa_data()
+                return
+
+            # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
+            result = await empresas_controllers.handle_get_empresas(id=user.empresa_id)
+
+            if result["is_error"]:
+                message_snackbar(
+                    page=self.page, message=result["message"], message_type=MessageType.ERROR)
+                return
+
+            cia: Empresa = result["empresa"]
+
+            # Adiciona o empresa_id no state e publíca-a
+            await self.page.app_state.set_empresa({
+                "id": cia.empresa_id,
+                "name": cia.name,
+                "corporate_name": cia.corporate_name,
+                "cnpj": cia.cnpj,
+                "ie": cia.ie,
+                "store_name": cia.store_name,
+                "im": cia.im,
+                "contact": cia.contact,
+                "address": cia.address,
+                "size": cia.size,
+                "fiscal": cia.fiscal,
+                "logo_url": cia.logo_url,
+                "payment_gateway": cia.payment_gateway,
+            })
+
+            self.page.on_resized = None
+            self.page.go('/home')
+
         finally:
             # Reabilita o botão independente do resultado
             self.login_button.disabled = False
@@ -299,6 +292,7 @@ def login(page: ft.Page):
     return ft.Stack(
         alignment=ft.alignment.center,
         controls=[
+            # Imagem de fundo do login
             ft.Image(
                 # Na web, flet 0.25.2 não carrega imagem via https, somente no destkop, imagens .svg não redimenciona, tive que usar .jpg
                 src="images/estoquerapido_img_123e4567e89b12d3a456426614174000.jpg",
@@ -306,6 +300,7 @@ def login(page: ft.Page):
                 width=page.width,
                 height=page.height
             ),
+            # Formulário de login
             ft.Container(
                 alignment=ft.alignment.center,
                 content=login_view.build(),

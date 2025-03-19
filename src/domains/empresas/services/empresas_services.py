@@ -32,7 +32,7 @@ class EmpresasServices:
     def __init__(self, repository: EmpresasRepository):
         self.repository = repository
 
-    async def create_empresa(self, empresa: Empresa):
+    async def create(self, empresa: Empresa):
         """Envia os dados da nova empresa para o repositório criar.
 
         Este método é responsável por enviar os dados da nova empresa para o repositório,
@@ -61,7 +61,7 @@ class EmpresasServices:
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return await self.repository.save(empresa)
 
-    async def update_empresa(self, empresa: Empresa) -> Empresa:
+    async def update(self, empresa: Empresa) -> Empresa:
         """Atualiza os dados de uma empresa existente.
 
         Este método atualiza os dados de uma empresa existente. Ele envia as informações
@@ -87,7 +87,7 @@ class EmpresasServices:
             raise ValueError("ID da empresa é necessário para atualização")
         return await self.repository.save(empresa)
 
-    async def find_empresa_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
+    async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
         """Busca uma empresa no banco de dados utilizando o CNPJ.
 
         Este método busca uma empresa no banco de dados utilizando o CNPJ fornecido.
@@ -100,3 +100,17 @@ class EmpresasServices:
             Optional[Empresa]: Empresa encontrada ou None se não existir
         """
         return await self.repository.find_by_cnpj(cnpj)
+
+    async def find_by_id(self, empresa_id: str) -> Optional[Empresa]:
+        """Busca uma empresa no banco de dados utilizando o ID.
+
+        Este método busca uma empresa no banco de dados utilizando o ID fornecido.
+        Ele solicita ao repositório que encontre a empresa correspondente na entidade empresas.
+
+        Args:
+            empresa_id (str): ID da empresa a ser encontrada
+
+        Returns:
+            Optional[Empresa]: Empresa encontrada ou None se não existir
+        """
+        return await self.repository.find_by_id(empresa_id)

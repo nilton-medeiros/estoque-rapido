@@ -23,9 +23,9 @@ def sidebar_header(page: ft.Page):
         value=current_user['profile'], theme_style=ft.TextThemeStyle.BODY_SMALL)
     user_photo = None
 
-    if current_user['photo']:
+    if current_user['photo_url']:
         user_photo = ft.Image(
-            src=current_user['photo'],
+            src=current_user['photo_url'],
             error_content=ft.Text(current_user['name'].iniciais),
             repeat=ft.ImageRepeat.NO_REPEAT,
             fit=ft.ImageFit.COVER,
@@ -50,7 +50,7 @@ def sidebar_header(page: ft.Page):
         user_avatar.bgcolor = ft.Colors.TRANSPARENT
         user_avatar.update()
 
-        previous_user_photo = current_user['photo']
+        previous_user_photo = current_user['photo_url']
 
         async def handle_file_picker_result(e: ft.FilePickerResultEvent):
             if not e.files:
@@ -172,7 +172,7 @@ def sidebar_header(page: ft.Page):
                         return
 
                     # Agora que temos uma URL válida, atualizar o usuário
-                    result = await handle_update_photo_usuarios(id=current_user.get("id"), photo=avatar_url)
+                    result = await handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
 
                     if result["is_error"]:
                         message_type = MessageType.ERROR
@@ -290,7 +290,7 @@ def sidebar_header(page: ft.Page):
                 )
             else:
                 if url_field.value and url_field.value.strip():
-                    result = await handle_update_photo_usuarios(id=current_user["id"], photo=url_field.value)
+                    result = await handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
                     if not result["is_error"]:
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:

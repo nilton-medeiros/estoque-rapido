@@ -3,7 +3,7 @@ from typing import Optional
 
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
-from src.domains.shared import PhoneNumber, NomePessoa
+from src.domains.shared import NomePessoa, Password, PhoneNumber
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
 
@@ -210,19 +210,16 @@ class SignupView:
 
             usuario = Usuario(
                 email=self.email_input.value,
+                password = Password(self.password_input.value),
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(self.phone_input.value),
                 profile='admin',
             )
 
-            result = await usuarios_controllers.handle_save_usuarios(
-                usuario=usuario,
-                create_new=True,
-                password=self.password_input.value
-            )
+            result = await usuarios_controllers.handle_save_usuarios(usuario)
 
             if not result["is_error"]:
-                usuario.id = result["user_id"]
+                usuario.id = result["id"]
                 # Atualiza o estado do app com o novo usuário antes da navegação
                 await self.page.app_state.set_usuario(usuario.to_dict())
 

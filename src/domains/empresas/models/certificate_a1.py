@@ -1,93 +1,26 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
+
+from src.domains.shared.password import Password
 
 
 @dataclass
 class CertificateA1:
     """Certificado digital (PFX ou P12)."""
+    password: Password
     serial_number: Optional[str] = None  # Número de série do certificado
     issuer_name: Optional[str] = None  # Emissor do certificado
-    not_valid_before: Optional[datetime] = None  # Data e hora de início da validade do certificado
-    not_valid_after: Optional[datetime] = None  # Data e hora do fim da validade do certificado
+    # Data e hora de início da validade do certificado
+    not_valid_before: Optional[datetime] = None
+    # Data e hora do fim da validade do certificado
+    not_valid_after: Optional[datetime] = None
 
     # O thumbprint (ou impressão digital) de um certificado digital A1 é uma representação única e compacta do certificado
     # thumbprint: Optional[str] = None  NÃO USADO
     subject_name: Optional[str] = None  # Nome do assunto
     file_name: Optional[str] = None  # Nome do arquivo
-    cpf_cnpj: Optional[str] = None  # Documento da pessoa ou empresa dona do certificado A1
+    # Documento da pessoa ou empresa dona do certificado A1
+    cpf_cnpj: Optional[str] = None
     nome_razao_social: Optional[str] = None
-    _encrypted_password: str = None  # Senha do certificado digital criptografada
     storage_path: str = None
-
-    def _encrypt(self, password: str) -> str:
-        """
-        Criptografa a senha do certificado digital.
-
-        Args:
-            password (str): Senha do certificado digital.
-        """
-        # Usar a chave para criptografar a senha do certificado digital
-        cipher_text = self._cipher_suite.encrypt(password.encode())
-        return cipher_text
-
-    def _decrypt(self) -> str:
-        """
-        Descriptografa a senha do certificado digital.
-
-        Returns:
-            str: Senha do certificado digital descriptografada.
-        """
-        # Usar a chave para descriptografar a senha
-        cipher_text = self._encrypted_password
-        plain_text = self._cipher_suite.decrypt(cipher_text).decode()
-        return plain_text
-
-    @property
-    def password(self) -> Optional[str]:
-        """
-        Getter para a senha do certificado.
-
-        Returns:
-            Optional[str]: Senha descriptografada ou None se não houver senha.
-        """
-        if self._encrypted_password is None:
-            return None
-        return self._decrypt()
-
-    @property
-    def password_encrypted(self) -> Optional[str]:
-        """
-        Getter para a senha encriptografada do certificado.
-
-        Returns:
-            Optional[str]: Senha encriptografada ou None se não houver senha.
-        """
-        return self._encrypted_password
-
-    @password.setter
-    def password(self, password: Optional[str]) -> None:
-        """
-        Setter para a senha do certificado.
-
-        Args:
-            password (Optional[str]): Senha a ser criptografada e armazenada.
-        """
-        if password is None:
-            self._encrypted_password = None
-        else:
-            self._encrypted_password = self._encrypt(password)
-
-    @password_encrypted.setter
-    def password_encrypted(self, password: Optional[str]) -> None:
-        """
-        Setter para a senha do certificado encriptada.
-
-        Args:
-            password (Optional[str]): Senha emcriptografada oriunda do database.
-        """
-        # ToDo: Criar consistência se password foi realmente encriptografado pelo app
-        if password is None:
-            self._encrypted_password = None
-        else:
-            self._encrypted_password = password

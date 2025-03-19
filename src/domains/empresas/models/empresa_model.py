@@ -1,10 +1,4 @@
 from dataclasses import dataclass, field
-from enum import Enum
-
-from cryptography.fernet import Fernet
-from dotenv import load_dotenv
-import os
-
 from typing import Optional, Dict
 
 """
@@ -94,10 +88,6 @@ class Empresa:
     # Gateway de pagamento | Troque aqui o gateway de pagamento conforme contratado: Default Asaas
     payment_gateway: Optional[AsaasPaymentGateway] = None
 
-    # Criptografia para senhas
-    _key: str = field(init=False)
-    _cipher_suite: Fernet = field(init=False)
-
     def __post_init__(self):
         """
         Método chamado automaticamente após a inicialização da instância da classe.
@@ -107,11 +97,6 @@ class Empresa:
         self.name = self.name.upper()
         self.corporate_name = self.corporate_name.upper()
         self.initials_corporate_name = self.initials()
-
-        # Carrega a chave de criptografia para senhas usadas no app
-        load_dotenv()
-        self._key = os.getenv("FERNET_KEY")
-        self._cipher_suite = Fernet(self._key)
 
     def is_nfce_enabled(self) -> bool:
         """
@@ -181,7 +166,7 @@ class Empresa:
                 'file_name': cert.file_name,
                 'cpf_cnpj': cert.cpf_cnpj,
                 'nome_razao_social': cert.nome_razao_social,
-                'password_encrypted': cert.password_encrypted,
+                'password': cert.password,
                 'storage_path': cert.storage_path,
             }
 

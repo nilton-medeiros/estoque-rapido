@@ -45,8 +45,12 @@ class UsuariosServices:
         # Envia para o repositório selecionado em usuarios_controllrer salvar
         return await self.repository.save(usuario)
 
+    async def authentication(self, email: str, password: str):
+        user = await self.repository.authentication(email, password)
+        return user
+
     async def update_usuario(self, usuario: Usuario) -> Usuario:
-        if not usuario.id:
+        if usuario.id is None:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(usuario)
 
@@ -74,18 +78,18 @@ class UsuariosServices:
         """
         return await self.repository.find_by_email(email)
 
-    async def update_photo(self, usuario_id: str, photo: str) -> Optional[Usuario]:
+    async def update_photo(self, usuario_id: str, photo_url: str) -> Optional[Usuario]:
         """
-        Atualiza a foto do usuário para o campo photo usando o repositório.
+        Atualiza a foto do usuário para o campo photo_url usando o repositório.
 
         Parâmetros:
             usuario_id (str): ID do usuário a ser alterado
-            photo (str): Caminho e nome do arquivo (url) a ser atualizado
+            photo_url (str): Caminho e nome do arquivo (url) a ser atualizado
 
         Retorna:
             Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.update_photo(usuario_id, photo)
+        return await self.repository.update_photo(usuario_id, photo_url)
 
     async def update_color(self, usuario_id: str, color: str) -> bool:
         """
@@ -99,3 +103,8 @@ class UsuariosServices:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
         return await self.repository.update_color(usuario_id, color)
+
+
+    async def delete(self, usuario_id: str) -> bool:
+        """Deleta um usuário pelo usuario_id usando o repositório."""
+        return await self.repository.delete(usuario_id)

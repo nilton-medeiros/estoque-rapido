@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-
+from firebase_admin.auth import UserRecord 
 from src.domains.usuarios.models.usuario_model import Usuario
 
 
@@ -18,6 +18,11 @@ Por isso não precisamos implementar os métodos nele.
 
 class UsuariosRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de usuários."""
+
+    @abstractmethod
+    async def authentication(self, email: str, password: str) -> UserRecord:
+        """Retorna o usuário logado."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
     async def count(self) -> int:

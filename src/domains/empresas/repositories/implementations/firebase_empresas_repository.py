@@ -61,11 +61,13 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             return True
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao excluir empresa com id '{empresa_id}': {translated_error}")
+            logger.error(
+                f"Erro ao excluir empresa com id '{empresa_id}': {translated_error}")
             raise Exception(
                 f"Erro ao excluir empresa com id '{empresa_id}': {translated_error}")
         except Exception as e:
-            logger.error(f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
+            logger.error(
+                f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
 
@@ -84,7 +86,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
             return len(query.get()) > 0
         except Exception as e:
-            logger.error(f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
+            logger.error(
+                f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
             return False
 
     async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
@@ -114,11 +117,13 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             return None
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
+            logger.error(
+                f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
             raise Exception(
                 f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
         except Exception as e:
-            logger.error(f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
+            logger.error(
+                f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
             raise Exception(
                 f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
 
@@ -138,10 +143,11 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 empresa_data = doc.to_dict()
                 empresa_data['id'] = doc.id
                 return self._doc_to_empresa(empresa_data)
-        except Exception:
-            pass
-
-        return None
+        except Exception as e:
+            # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
+            logger.error(
+                f"Erro ao consultar empresa pelo id '{empresa_id}': {e}")
+            raise  # Re-lançar a exceção para que seja tratada em camadas superiores
 
     async def save(self, empresa: Empresa) -> str:
         """
@@ -209,20 +215,26 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             }
 
         if empresa.size:
-            empresa_dict['size'] = empresa.size.name  # Armazena o name do enum size
+            # Armazena o name do enum size
+            empresa_dict['size'] = empresa.size.name
 
         if fiscal := empresa.get_nfce_data():
             empresa_dict['fiscal'] = {
-                'crt_name': fiscal.get('crt_name'),  # Armazena o name do enum CodigoRegimeTributario
-                'environment_name': fiscal.get('environment_name'),  # Armazena o name do enum Environment
+                # Armazena o name do enum CodigoRegimeTributario
+                'crt_name': fiscal.get('crt_name'),
+                # Armazena o name do enum Environment
+                'environment_name': fiscal.get('environment_name'),
                 'nfce_series': fiscal.get('nfce_series'),
                 'nfce_number': fiscal.get('nfce_number'),
                 'nfce_sefaz_id_csc': fiscal.get('nfce_sefaz_id_csc'),
                 'nfce_sefaz_csc': fiscal.get('nfce_sefaz_csc'),
             }
 
-        if certificate := empresa.get_certificate_data():
+        if empresa.certificate_a1:
+            certificate = empresa.certificate_a1
             empresa_dict['certificate_a1'] = {
+                # Salva a senha: bytes criptografada e não em str
+                'password': certificate.password.value,
                 'serial_number': certificate.serial_number,
                 'not_valid_before': certificate.not_valid_before,
                 'not_valid_after': certificate.not_valid_after,
@@ -230,7 +242,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 'file_name': certificate.file_name,
                 'cpf_cnpj': certificate.cpf_cnpj,
                 'nome_razao_social': certificate.nome_razao_social,
-                'password_encrypted': certificate.password_encrypted,
                 'storage_path': certificate.storage_path,
             }
 
@@ -301,18 +312,23 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
         certificate_a1 = None
 
+        from src.domains.shared.password import Password
+
         if certificate := doc_data.get("certificate_a1"):
+            encrypted_password = certificate.get("password")
+            # Criar instância a partir do valor criptografado
+            password = Password.from_encrypted(encrypted_password)
             certificate_a1 = CertificateA1(
-                serial_number = certificate.serial_number,
-                not_valid_before = certificate.not_valid_before,
-                not_valid_after = certificate.not_valid_after,
-                subject_name = certificate.subject_name,
-                file_name = certificate.file_name,
-                cpf_cnpj = certificate.cpf_cnpj,
-                nome_razao_social = certificate.nome_razao_social,
-                storage_path = certificate.storage_path,
+                password=password,
+                serial_number=certificate.serial_number,
+                not_valid_before=certificate.not_valid_before,
+                not_valid_after=certificate.not_valid_after,
+                subject_name=certificate.subject_name,
+                file_name=certificate.file_name,
+                cpf_cnpj=certificate.cpf_cnpj,
+                nome_razao_social=certificate.nome_razao_social,
+                storage_path=certificate.storage_path,
             )
-            certificate_a1.password_encrypted = certificate.password_encrypted
 
         payment_gateway = None
         if pg := doc_data.get("payment_gateway"):
@@ -323,7 +339,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 status=pg.get('status'),
                 dateCreated=pg.get('dateCreated'),
             )
-
 
         cnpj = CNPJ(doc_data.get('cnpj'))
 

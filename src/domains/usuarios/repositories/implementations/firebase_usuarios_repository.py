@@ -5,6 +5,7 @@ from typing import List, Optional
 from firebase_admin import auth
 from firebase_admin import firestore
 from firebase_admin import exceptions
+from firebase_admin.auth import UserRecord
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.usuarios.models.usuario_model import Usuario
@@ -25,7 +26,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
     Utiliza Google Authorization para autenticação de usuarios.
     """
 
-    def __init__(self, password: str = None):
+    def __init__(self):
         """
         Inicializa o cliente do Firebase Firestore e conecta-se à coleção 'usuarios'.
 
@@ -35,10 +36,35 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         self.db = firestore.client()
         self.collection = self.db.collection('usuarios')
-        self.password = None
 
-        if password is not None and password != "":
-            self.password = password
+    async def authentication(self, email, password) -> UserRecord:
+        """
+        Autentica um usuário com o email e senha fornecidos.
+
+        Args:
+            email (str): O email do usuário.
+            password (str): A senha do usuário.
+
+        Returns:
+            UserRecord: O usuário autenticado.
+
+        Raises:
+            Exception: Se ocorrer um erro na autenticação.
+        """
+        try:
+            user = auth.sign_in_with_email_and_password(email, password)
+            print(f"Usuário autenticado: {user}")
+            return user
+        except auth.InvalidEmailError:
+            raise Exception("Email inválido")
+        except auth.UserNotFoundError:
+            raise Exception("Usuário não encontrado")
+        except auth.WrongPasswordError:
+            raise Exception("Senha incorreta")
+        except Exception as e:
+            logging.error(f"Erro ao autenticar usuário: {e}")
+            raise Exception(f"Erro ao autenticar usuário: {e}")
+
 
     async def count(self, empresa_id: str) -> int:
         """
@@ -134,8 +160,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
             docs = query.stream()
+            usuarios: List[Usuario] = []
 
-            usuarios = []
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
@@ -230,13 +256,14 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 'display_name', '>=', name, '<=', name + '\uf8ff')
 
             docs = query.stream()
+            usuarios: List[Usuario] = []
 
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
-                return self._doc_to_usuario(usuario_data)
+                usuarios.append(self._doc_to_usuario(usuario_data))
 
-            return None
+            return usuarios
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
             logger.error(f"Erro ao buscar usuário pelo nome '{name}': {translated_error}")
@@ -264,13 +291,14 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(
                 field_path='profile', op_string='==', value=profile)
             docs = query.stream()
+            usuarios: List[Usuario] = []
 
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data["id"] = doc.id
-                return self._doc_to_usuario(usuario_data)
+                usuarios.append(self._doc_to_usuario(usuario_data))
 
-            return None
+            return usuarios
         except exceptions.FirebaseError as e:
             translated_error = deepl_translator(str(e))
             logger.error(f"Erro ao buscar usuário pelo perfil '{profile}': {translated_error}")
@@ -300,24 +328,26 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if usuario.id:
                 # Update na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
                 self.collection.document(usuario.id).set(usuario_dict, merge=True)
+                return usuario.id
+
+            password = usuario.password.decrypted
+
+            if password is not None:
+                # 1. Criar usuário no Firebase Authentication
+                usuario_db = auth.create_user(
+                    email=usuario.email,
+                    password=password,
+                    display_name=usuario.name.nome_completo,
+                    phone_number=usuario.phone_number.get_e164()
+                )
+
+                # 2. Obtem o uid do usuário Credenciado e Autenticado e insere o uid em usuario.id e cria usuário no Firestore
+                usuario.id = usuario_db.uid
+                # Cria um novo documento com o mesmo uid da Authentication
+                doc_ref = self.collection.document(usuario.id)
+                doc_ref.set(usuario_dict)  # Adiciona os demais campos
             else:
-
-                if usuario.password is not None:
-                    # 1. Criar usuário no Firebase Authentication
-                    usuario_db = auth.create_user(
-                        email=usuario.email,
-                        password=self.password,
-                        display_name=usuario.name.nome_completo,
-                        phone_number=usuario.phone_number.get_e164()
-                    )
-
-                    # 2. Obtem o uid do usuário Credenciado e Autenticado e insere o uid em usuario.id e cria usuário no Firestore
-                    usuario.id = usuario_db.uid
-                    # Cria um novo documento com o mesmo uid da Authentication
-                    doc_ref = self.collection.document(usuario.id)
-                    doc_ref.set(usuario_dict)  # Adiciona os demais campos
-                else:
-                    raise Exception("Password é necessário para criar usuário")
+                raise Exception("Password é necessário para criar usuário")
 
             return usuario.id
         except exceptions.FirebaseError as e:
@@ -360,21 +390,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             data = doc_ref.get().to_dict()
 
-            first_name, last_name = get_first_and_last_name(data['display_name'])
-            empresas: List[str] = data.get('empresas', [])
-            usuario_photo: str = data.get('photo', None)
+            return self._doc_to_usuario(data)
 
-            updated_usuario = Usuario(
-                id=doc.id,
-                email=data['email'],
-                name=NomePessoa(first_name, last_name),
-                phone_number=PhoneNumber(data['phone_number']),
-                profile=data['profile'],
-                empresas=empresas,
-                photo=usuario_photo,
-            )
-
-            return updated_usuario
         except Exception as e:
             # Lida com possíveis exceções, se necessário
             logger.error(f"Erro ao atualizar o perfil do usuário: {e}")
@@ -409,13 +426,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 return None
 
             # Atualiza a foto do usuário
-            doc_ref.update({"photo": new_photo})
+            doc_ref.update({"photo_url": new_photo})
 
             data = doc_ref.get().to_dict()
 
             first_name, last_name = get_first_and_last_name(data['display_name'])
             empresas: List[str] = data.get('empresas', [])
-            usuario_photo: str = data.get('photo', None)
+            usuario_photo: str = data.get('photo_url', None)
 
             updated_usuario = Usuario(
                 id=doc.id,
@@ -424,7 +441,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 phone_number=PhoneNumber(data['phone_number']),
                 profile=data['profile'],
                 empresas=empresas,
-                photo=usuario_photo,
+                photo_url=usuario_photo,
             )
 
             return updated_usuario
@@ -485,7 +502,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         first_name, last_name = get_first_and_last_name(
             doc_data['display_name'])
         empresas: List[str] = doc_data.get('empresas', [])
-        usuario_photo: str = doc_data.get('photo', None)
+        photo_url: str = doc_data.get('photo_url', None)
+
+        from src.domains.shared.password import Password
 
         return Usuario(
             id=doc_data['id'],
@@ -493,8 +512,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             name=NomePessoa(first_name, last_name),
             phone_number=PhoneNumber(doc_data['phone_number']),
             profile=doc_data['profile'],
+            empresa_id=doc_data.get('empresa_id', None),
             empresas=empresas,
-            photo=usuario_photo,
+            photo_url=photo_url,
             user_color=doc_data.get('user_color', 'blue'),
         )
 
@@ -514,9 +534,10 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             "display_name": usuario.name.nome_completo,
             "phone_number": usuario.phone_number.get_e164(),
             "profile": usuario.profile,
-            "empresas": usuario.empresas,
-            "photo": usuario.photo,
-            "user_color": usuario.user_color,
+            "empresa_id": usuario.empresa_id,   # Ultima Empresa logada pelo usuário
+            "empresas": usuario.empresas,       # Lista de IDs de empresas que o usuário gerencia
+            "photo_url": usuario.photo_url,
+            "user_color": usuario.user_color,   # Ultima cor preferencial do usuário (interface)
         }
 
         return usuario_dict

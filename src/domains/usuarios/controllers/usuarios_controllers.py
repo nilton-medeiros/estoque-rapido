@@ -1,5 +1,8 @@
 import logging
 
+from firebase_admin.auth import UserRecord
+
+from src.domains.shared.password import Password
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.domains.usuarios.services.users_services import UsuariosServices
@@ -14,7 +17,64 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-async def handle_save_usuarios(usuario: Usuario, password: str = None) -> dict:
+async def handle_login_usuarios(email: str, password: str) -> dict:
+    response = {
+        "is_error": False,
+        "authenticated_user": None,
+        "message": "",
+    }
+
+    try:
+        # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+        authenticated_user: UserRecord = await usuarios_services.authentication(email, password)
+
+        if authenticated_user:
+            response["message"] = "Usuário autenticado com sucesso!"
+
+            try:
+                # Se usuário foi autenticado no Google Athentication, busca demais informações no Firestore
+                user: Usuario = await usuarios_services.find_by_id(authenticated_user.id)
+
+                if user:
+                    if user.photo_url is None and authenticated_user.photo_url:
+                        user.photo_url = authenticated_user.photo_url
+
+                    user.password = Password(password)
+                    user.disabled = authenticated_user.disabled
+                    user.email_verified = authenticated_user.email_verified
+
+                    response["authenticated_user"] = user
+                else:
+                    """
+                    Esta é uma possibilidade remota, por alguma falha, o usuário está credenciado no Google Authentication,
+                    mas não está no Firebase. Deleta do Google Authentication para uma novo credenciamento do usuário.
+                    """
+                    # ToDo: Tratar erros se houver ao deletar usuário
+                    await usuarios_services.delete(authenticated_user.id)
+                    response["is_error"] = True
+                    response["message"] = "Usuário não encontrado"
+
+            except Exception as e:
+                response["is_error"] = True
+                response["message"] = str(e)
+
+        else:
+            response["is_error"] = True
+            response["message"] = "Credenciais inválidas"
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+
+    return response
+
+
+async def handle_save_usuarios(usuario: Usuario) -> dict:
     """
     Manipula a operação de salvar usuário.
 
@@ -24,7 +84,6 @@ async def handle_save_usuarios(usuario: Usuario, password: str = None) -> dict:
 
     Args:
         usuario (Usuario): A instância do usuário a ser salvo.
-        password (str|None): Senha do usuário.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
@@ -35,7 +94,7 @@ async def handle_save_usuarios(usuario: Usuario, password: str = None) -> dict:
 
     Exemplo:
         >>> usuario = Usuario(name="Luis Alberto", email="luis.a@mail.com")
-        >>> response = await handle_save_usuarios(usuario, create_new=True)
+        >>> response = await handle_save_usuarios(usuario)
         >>> print(response)
     """
     response = {
@@ -46,13 +105,13 @@ async def handle_save_usuarios(usuario: Usuario, password: str = None) -> dict:
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
-        repository = FirebaseUsuariosRepository(password)
+        repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        operation = "criado" if create_new else "alterado"
+        operation = "criado" if usuario.id else "alterado"
         id = None
 
-        if create_new:
+        if usuario.id is None:
             # Criar novo usuário
             id = await usuarios_services.create_usuario(usuario)
         else:
@@ -138,22 +197,22 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
     return response
 
 
-async def handle_update_photo_usuarios(id: str, photo: str) -> dict:
+async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     """
-    Update no campo photo do usuário.
+    Update no campo photo_url do usuário.
 
-    Esta função manipula a operação de atualizar um único campo 'photo' do usuário. Ela utiliza um repositório
+    Esta função manipula a operação de atualizar um único campo 'photo_url' do usuário. Ela utiliza um repositório
     específico para realizar as operações necessárias.
 
     Args:
         id (str): ID do usuário.
-        photo (str): String com o link ou path e nome da foto do usuário a ser atualizado.
+        photo_url (str): String com o link ou path e nome da foto do usuário a ser atualizado.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
 
     Raises:
-        ValueError: Se houver um erro de validação ao atualizar o campo photo do usuário.
+        ValueError: Se houver um erro de validação ao atualizar o campo photo_url do usuário.
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
@@ -172,8 +231,8 @@ async def handle_update_photo_usuarios(id: str, photo: str) -> dict:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        # Atualiza o campo photo no usuário
-        usuario = await usuarios_services.update_photo(id, photo)
+        # Atualiza o campo photo_url no usuário
+        usuario = await usuarios_services.update_photo(id, photo_url)
 
         response["message"] = "Foto do Usuário atualizada com sucessso!"
         response["usuario"] = usuario
@@ -194,7 +253,7 @@ async def handle_update_color_usuarios(id: str, color: str) -> bool:
     """
     Update no campo color do usuário.
 
-    Esta função manipula a operação de atualizar um único campo 'color' do usuário. Ela utiliza um repositório
+    Esta função manipula a operação de atualizar um único campo 'user_color' do usuário. Ela utiliza um repositório
     específico para realizar as operações necessárias.
 
     Args:
@@ -202,10 +261,10 @@ async def handle_update_color_usuarios(id: str, color: str) -> bool:
         color (str): String com o nome da cor (const do flet como 'blue', 'orange') do usuário a ser atualizado.
 
     Returns:
-        bool: True se color foi atualizado com sucesso, False caso contrário.
+        bool: True se user_color foi atualizado com sucesso, False caso contrário.
 
     Raises:
-        ValueError: Se houver um erro de validação ao atualizar o campo color do usuário.
+        ValueError: Se houver um erro de validação ao atualizar o campo user_color do usuário.
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
@@ -223,7 +282,7 @@ async def handle_update_color_usuarios(id: str, color: str) -> bool:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        # Atualiza o campo photo no usuário
+        # Atualiza o campo color no usuário
         is_updated = await usuarios_services.update_color(id, color)
         response["is_error"] = not is_updated
 
