@@ -1,5 +1,4 @@
 import re
-from typing import Tuple
 
 
 def validate_password_strength(password: str) -> str:
@@ -77,20 +76,6 @@ def validate_phone(phone: str) -> str:
     if len(numbers) == 11 and numbers[2] not in '9678':
         return "Celular inválido (deve começar com 9)"
 
-    dispositivo = 'Celular' if len(numbers) == 11 and numbers[2] in '9678' else 'Telefone'
+    dispositivo = 'Celular' if len(
+        numbers) == 11 and numbers[2] in '9678' else 'Telefone'
     return f"OK: {dispositivo} válido"
-
-
-def get_first_and_last_name(full_name: str) -> Tuple[str, str | None]:
-    """
-    Extrai o primeiro e o último nome de uma string de nome completo.
-
-    Parametrôs:
-        full_name (str): Nome e/ou sobrenome do usuário.
-    Retorna uma tupla (first_name, last_name).
-    """
-    list_names = full_name.split()
-    first_name = list_names[0].strip().capitalize()
-    last_name = list_names[-1].strip().capitalize() if len(list_names) > 1 else None
-
-    return first_name, last_name

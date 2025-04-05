@@ -84,19 +84,22 @@ def main(page: ft.Page):
     def handle_pubsub(message):
         match message:
             case "usuario_updated":
-                if app_state.usuario.get('name'):
+                if page.app_state.usuario.get('name'):
                     # Atualiza elementos da UI que dependem do usuário
                     update_usuario_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
             case "empresa_updated":
-                if app_state.empresa.get('corporate_name'):
+                if page.app_state.empresa.get('corporate_name'):
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados à empresa
                     clear_empresa_ui()
+            case "empresa_form_updated":
+                # ToDo: Implementando módulo empresas_form() em empresas_form.py
+                pass
 
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
@@ -107,8 +110,8 @@ def main(page: ft.Page):
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = app_state.empresa.get(
-                'name', app_state.empresa.get('corporate_name'))
+            page.company_name_text_btn.text = page.app_state.empresa.get(
+                'name', page.app_state.empresa.get('corporate_name'))
             page.company_name_text_btn.update()
 
     def clear_usuario_ui():
@@ -163,7 +166,7 @@ def main(page: ft.Page):
                 page.go('/')
             case '/home':
                 # Acesso a página /home somente usuários logados
-                if app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     home = home_page(page)
                     pg_view = ft.View(
@@ -178,9 +181,9 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/empresas/form':
                 # Verifica se usuário está logado
-                if app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'):
                     route_title = "home/empresas/form"
-                    empresa = app_state.empresa_form
+                    empresa = page.app_state.empresa_form
                     id = empresa.get('id', None)
                     if id:
                         route_title += f"/{id}"

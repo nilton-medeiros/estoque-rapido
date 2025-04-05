@@ -18,7 +18,7 @@ def handle_upload_bucket(local_path: str, key: str) -> str:
     except FileNotFoundError:
         raise ValueError(f"O arquivo {local_path} não foi encontrado.")
     except boto3.exceptions.S3UploadFailedError as e:
-        raise RuntimeError(f"Falha ao fazer upload para o S3: {str(e)}")
+        raise RuntimeError(f"Falha ao fazer upload para o Bucket de armazenamento: {str(e)}")
     except Exception as e:
         raise RuntimeError(f"Erro inesperado ao fazer upload: {str(e)}")
 

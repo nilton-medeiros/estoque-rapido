@@ -1,6 +1,8 @@
 import logging
 
-from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
+from firebase_admin.auth import UserRecord
+
+from src.domains.shared.password import Password
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.domains.usuarios.services.users_services import UsuariosServices
@@ -26,26 +28,48 @@ async def handle_login_usuarios(email: str, password: str) -> dict:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
-        user = await usuarios_services.authentication(email=email, password=password)
+        authenticated_user: UserRecord = await usuarios_services.authentication(email, password)
 
-        response["authenticated_user"] = user
-        response["message"] = "Usuário autenticado com sucesso!"
+        if authenticated_user:
+            response["message"] = "Usuário autenticado com sucesso!"
 
-    except UserNotFoundException as e:
+            try:
+                # Se usuário foi autenticado no Google Athentication, busca demais informações no Firestore
+                user: Usuario = await usuarios_services.find_by_id(authenticated_user.id)
+
+                if user:
+                    if user.photo_url is None and authenticated_user.photo_url:
+                        user.photo_url = authenticated_user.photo_url
+
+                    user.password = Password(password)
+                    user.disabled = authenticated_user.disabled
+                    user.email_verified = authenticated_user.email_verified
+
+                    response["authenticated_user"] = user
+                else:
+                    """
+                    Esta é uma possibilidade remota, por alguma falha, o usuário está credenciado no Google Authentication,
+                    mas não está no Firebase. Deleta do Google Authentication para uma novo credenciamento do usuário.
+                    """
+                    # ToDo: Tratar erros se houver ao deletar usuário
+                    await usuarios_services.delete(authenticated_user.id)
+                    response["is_error"] = True
+                    response["message"] = "Usuário não encontrado"
+
+            except Exception as e:
+                response["is_error"] = True
+                response["message"] = str(e)
+
+        else:
+            response["is_error"] = True
+            response["message"] = "Credenciais inválidas"
+    except ValueError as e:
         response["is_error"] = True
-        response["message"] = str(e)
-
-    except InvalidCredentialsException as e:
-        response["is_error"] = True
-        response["message"] = "Credenciais inválidas"
-
-    except AuthenticationException as e:
-        response["is_error"] = True
-        response["message"] = f"Erro de autenticação: {str(e)}"
-
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
-        response["message"] = f"Erro interno do servidor: {str(e)}"
+        response["message"] = str(e)
 
     return response
 
@@ -100,9 +124,11 @@ async def handle_save_usuarios(usuario: Usuario) -> dict:
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
 
@@ -136,13 +162,6 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
         "usuario": None
     }
 
-    # Verifica se o id ou email foram passados
-    if not id and not email:
-        response["is_error"] = True
-        response["message"] = "Um dos argumentos id ou email deve ser passado"
-        logger.warning(response["message"])
-        return response
-
     try:
         # Usa o repositório do Firebase para buscar o usuário
         repository = FirebaseUsuariosRepository()
@@ -151,16 +170,20 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
         usuario = None
 
         if id:
+            # Busca o usuário pelo id
             usuario = await usuarios_services.find_by_id(id)
-        else:
+        elif email:
+            # Busca o usuário pelo email
             usuario = await usuarios_services.find_by_email(email)
+        else:
+            raise ValueError("Um dos argumentos id ou email deve ser passado")
 
         if usuario:
             response["message"] = "Usuário encontrado com sucesso!"
             response["usuario"] = usuario
         else:
             response["is_error"] = True
-            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
+            response["message"] = "Usuário não encontrado"
 
     except ValueError as e:
         response["is_error"] = True
@@ -221,6 +244,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
 
@@ -274,5 +298,6 @@ async def handle_update_color_usuarios(id: str, color: str) -> bool:
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+        logger.error(response["message"])
 
     return response

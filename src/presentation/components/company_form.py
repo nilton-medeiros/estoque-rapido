@@ -400,7 +400,7 @@ class CompanyForm(ft.Container):
                     return
 
                 # Caminho do arquivo no servidor após o upload
-                server_file_path = os.path.join(self.page.views_storage_path, "uploads", file_name)
+                server_file_path = os.path.join("uploads", file_name)
 
                 # Lê o conteúdo binário do arquivo
                 with open(server_file_path, "rb") as file:

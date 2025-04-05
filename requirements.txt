@@ -4,7 +4,7 @@ flet-desktop==0.27.2
 flet-web==0.27.2
 google-auth==2.38.0
 google-auth-httplib2==0.2.0
-firebase-admin==6.6.0
+firebase-admin==6.7.0
 uvicorn==0.34.0
 websockets==15.0
 boto3==1.37.2

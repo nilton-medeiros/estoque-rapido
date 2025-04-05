@@ -32,6 +32,9 @@ class FiscalData:
     nfce_number: Optional[int] = None
     nfce_sefaz_id_csc: Optional[int] = None  # ID do Número de identificação do CSC - Código de Segurança do Contribuínte.
     nfce_sefaz_csc: Optional[str] = None   # Código de Segurança do Contribuínte.
+    nfce_api_enabled: bool = False
+
+
 
 
 @dataclass
@@ -98,28 +101,6 @@ class Empresa:
         self.corporate_name = self.corporate_name.upper()
         self.initials_corporate_name = self.initials()
 
-    def is_nfce_enabled(self) -> bool:
-        """
-        Verifica se a emissão de NFC-e está configurada.
-
-        Returns:
-            bool: True se a emissão de NFC-e estiver configurada, False caso contrário.
-        """
-        f = self.fiscal
-        if not f:
-            return False
-
-        required_attributes = [
-            f.crt,
-            f.environment,
-            f.nfce_series,
-            f.nfce_number,
-            f.nfce_sefaz_id_csc,
-            f.nfce_sefaz_csc,
-        ]
-
-        return all(required_attributes)
-
     def get_complete_address(self) -> str:
         """
         Retorna o endereço completo formatado.
@@ -139,6 +120,29 @@ class Empresa:
         ]
         return ", ".join(filter(bool, components))
 
+    def is_nfce_enabled(self) -> bool:
+        """
+        Verifica se a emissão de NFC-e está configurada.
+
+        Returns:
+            bool: True se a emissão de NFC-e estiver configurada, False caso contrário.
+        """
+        f = self.fiscal
+        if not f:
+            return False
+
+        required_attributes = [
+            f.crt,
+            f.environment,
+            f.nfce_series,
+            f.nfce_number,
+            f.nfce_sefaz_id_csc,
+            f.nfce_sefaz_csc,
+            f.nfce_api_enabled,
+        ]
+
+        return all(required_attributes)
+
     def get_nfce_data(self) -> Optional[Dict]:
         """
         Retorna um dicionário com os dados necessários para emissão da NFC-e.
@@ -153,7 +157,8 @@ class Empresa:
                 "nfce_series": f.nfce_series,
                 "nfce_number": f.nfce_number,
                 "nfce_sefaz_id_csc": f.nfce_sefaz_id_csc,
-                "nfce_sefaz_csc": f.nfce_sefaz_csc
+                "nfce_sefaz_csc": f.nfce_sefaz_csc,
+                "nfce_api_enabled": f.nfce_api_enabled,
             }
 
     def get_certificate_data(self) -> Optional[Dict]:

@@ -1,3 +1,5 @@
+import logging
+
 import flet as ft
 from typing import Optional
 
@@ -12,8 +14,8 @@ import src.domains.empresas.controllers.empresas_controllers as empresas_control
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
 from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.usuarios.models.usuario_model import Usuario
-from src.shared.utils.field_validation_functions import get_first_and_last_name
+
+logger = logging.getLogger(__name__)
 
 
 class LoginView:
@@ -183,6 +185,7 @@ class LoginView:
                 email=self.email_input.value, password=self.password_input.value)
 
             if result["is_error"]:
+                logger.error(result["message"])
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return
@@ -198,6 +201,7 @@ class LoginView:
             result = await empresas_controllers.handle_get_empresas(id=user.empresa_id)
 
             if result["is_error"]:
+                logger.error(result["message"])
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return

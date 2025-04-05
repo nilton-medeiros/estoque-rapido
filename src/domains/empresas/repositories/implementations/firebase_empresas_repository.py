@@ -228,6 +228,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 'nfce_number': fiscal.get('nfce_number'),
                 'nfce_sefaz_id_csc': fiscal.get('nfce_sefaz_id_csc'),
                 'nfce_sefaz_csc': fiscal.get('nfce_sefaz_csc'),
+                'nfce_api_enabled': fiscal.get('nfce_api_enabled'),
             }
 
         if empresa.certificate_a1:
@@ -308,6 +309,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 nfce_number=fiscal.get('nfce_number', None),
                 nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc', None),
                 nfce_sefaz_csc=fiscal.get('nfce_sefaz_csc', None),
+                nfce_api_enabled=fiscal.get('nfce_api_enabled', False),
             )
 
         certificate_a1 = None

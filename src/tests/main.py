@@ -1,3 +1,4 @@
+import os
 import flet as ft
 
 def main(page: ft.Page):
@@ -49,8 +50,10 @@ def main(page: ft.Page):
     # Botão para abrir a janela flutuante
     open_button = ft.ElevatedButton("Abrir Janela Flutuante", on_click=open_popup)
 
+    # Obtem o path 
+    temp_dir = os.path.join(os.getcwd(), "uploads")  # Diretório temporário no servidor
     # Adiciona o botão à página principal
-    page.add(ft.Text("Página Principal!!!"), open_button)
+    page.add(ft.Text("Página Principal!!!"), ft.Text(temp_dir), open_button)
 
 # Executa o aplicativo
 ft.app(target=main)

@@ -2,6 +2,7 @@ from typing import Optional
 
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
+from src.shared.utils.gen_uuid import get_uuid
 
 
 class UsuariosServices:
@@ -29,6 +30,11 @@ class UsuariosServices:
     def __init__(self, repository: UsuariosRepository):
         self.repository = repository
 
+    async def authentication(self, email: str, password: str):
+        # Simplesmente delega para o repositório e deixa as exceções se propagarem
+        # Adicione lógica de negócios aqui, se necessário
+        return await self.repository.authentication(email, password)
+
     async def create_usuario(self, usuario: Usuario) -> Usuario:
         """
         Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
@@ -37,17 +43,21 @@ class UsuariosServices:
         :return: ID do documento do Usuário salvo
         """
         # Verifica se já existe um usuário com este email
+        if not usuario.email:
+            raise ValueError("Email é necessário para criar usuário")
+        if not usuario.password:
+            raise ValueError("Password é necessário para criar usuário")
+
         existing_usuario = await self.repository.find_by_email(usuario.email)
 
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
+        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'usr_'
+        usuario.id = 'usr_' + get_uuid()
+
         # Envia para o repositório selecionado em usuarios_controllrer salvar
         return await self.repository.save(usuario)
-
-    async def authentication(self, email: str, password: str):
-        user = await self.repository.authentication(email, password)
-        return user
 
     async def update_usuario(self, usuario: Usuario) -> Usuario:
         if usuario.id is None:
@@ -103,7 +113,6 @@ class UsuariosServices:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
         return await self.repository.update_color(usuario_id, color)
-
 
     async def delete(self, usuario_id: str) -> bool:
         """Deleta um usuário pelo usuario_id usando o repositório."""

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+O Firebase Authentication mudou a segurança e a forma de fazer login,
+Agora o login tem que ser feito em JavaScript, pois o método 'sign_in_with_email_and_password'
+não existe mais na versão atual do SDK Admin do Firebase para Pyhton.
+* Módulo não usado, optei por fazer login direto no firebase sem usar o Google-Authentication *
+-->
+<html>
+  <head>
+    <title>Login</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  </head>
+  <body>
+    <div>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="login">Login</button>
+    </div>
+
+    <script>
+      // Suas credenciais do Firebase
+      const firebaseConfig = {
+          apiKey: "{{ firebase_api_key }}",
+          authDomain: "{{ firebase_auth_domain }}",
+          projectId: "{{ firebase_project_id }}",
+          storageBucket: "{{ firebase_storage_bucket}}",
+          messagingSenderId: "{{ firebase_messaging_sender_id }}",
+          appId: "{{ firebase_app_id }}",
+      };
+
+      // Inicialize o Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+
+      // Função de login
+      document.getElementById('login').addEventListener('click', () => {
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+
+          auth.signInWithEmailAndPassword(email, password)
+              .then((userCredential) => {
+                  // Login bem-sucedido
+                  const user = userCredential.user;
+                  console.log('Login bem-sucedido:', user);
+                  // Envie o token de ID para o Flet
+                  window.location.hash = JSON.stringify({ token: await user.getIdToken() });
+              })
+              .catch((error) => {
+                  // Erro no login
+                  console.error('Erro no login:', error);
+              });
+      });
+    </script>
+  </body>
+</html>

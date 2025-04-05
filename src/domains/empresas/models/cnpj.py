@@ -8,7 +8,7 @@ class CNPJ:
 
         # Exemplo de uso
         if __name__ == "__main__":
-        
+
             try:
                 cnpj = CNPJ("12345678000195")
                 print(cnpj)  # Imprime CNPJ formatado
@@ -68,8 +68,6 @@ class CNPJ:
 
     def __str__(self) -> str:
         """
-        Retorna o CNPJ formatado.
-
         Returns:
             str: CNPJ formatado.
         """

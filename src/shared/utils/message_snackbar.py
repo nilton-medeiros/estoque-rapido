@@ -9,7 +9,7 @@ class MessageType(Enum):
     WARNING = ("warning", ft.Colors.ORANGE, ft.Colors.ORANGE_200)
 
 
-def message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO):
+def message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO, duration: int = 5000):
     """
     Exibe uma notificação de mensagem no topo da tela.
 
@@ -33,7 +33,7 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
         show_close_icon=True,
         # close_icon_color=icon_color,
         padding=ft.padding.all(10),
-        duration=5000,
+        duration=duration,
         behavior=ft.SnackBarBehavior.FLOATING,
         margin=ft.margin.all(10),
     )

@@ -99,7 +99,7 @@ class AppStateManager:
                 return False
 
             self._state['empresa_form'] = empresa_data
-            self.page.pubsub.send_all("empresa_updated")
+            self.page.pubsub.send_all("empresa_form_updated")
             return True
 
         except Exception as e:
