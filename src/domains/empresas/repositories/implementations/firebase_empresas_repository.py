@@ -34,61 +34,74 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         self.db = firestore.client()
         self.collection = self.db.collection('empresas')
 
-    async def count(self) -> int:
+    async def save(self, empresa: Empresa) -> str:
         """
-        Contar o número total de empresas no banco de dados Firestore.
+        Salvar uma empresa no banco de dados Firestore.
 
-        Retorna:
-            int: Número total de empresas.
-        """
-        return len(self.collection.get())
-
-    async def delete(self, empresa_id: str) -> bool:
-        """
-        Excluir uma empresa pelo seu identificador único.
+        O ID (empresa_id) é o próprio CNPJ, o Firestore Insere se não existir ou atualiza se existir.
+        Garante a unicidade do CNPJ no banco de dados.
 
         Args:
-            empresa_id (str): O identificador único da empresa.
+            empresa (Empresa): A instância da empresa a ser salva.
 
         Retorna:
-            bool: True se a exclusão for bem-sucedida, False caso contrário.
-
-        Levanta:
-            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
+            str: O ID do documento da empresa salva.
         """
         try:
-            self.collection.document(empresa_id).delete()
-            return True
+            empresa_dict = self._empresa_to_dict(empresa)
+            # Insere ou atualiza o documento na coleção 'empresas'
+            self.collection.document(empresa.id).set(empresa_dict, merge=True)
+            return empresa.id  # Garante que o ID retornado seja o ID real do documento
         except exceptions.FirebaseError as e:
+            if e.code == 'invalid-argument':
+                logger.error("Argumento inválido fornecido.")
+            elif e.code == 'not-found':
+                logger.error("Documento ou recurso não encontrado.")
+            elif e.code == 'permission-denied':
+                logger.error("Permissão negada para realizar a operação.")
+            elif e.code == 'resource-exhausted':
+                logger.error("Cota do Firebase excedida.")
+            else:
+                logger.error(f"Erro desconhecido do Firebase: {e.code}")
             translated_error = deepl_translator(str(e))
-            logger.error(
-                f"Erro ao excluir empresa com id '{empresa_id}': {translated_error}")
-            raise Exception(
-                f"Erro ao excluir empresa com id '{empresa_id}': {translated_error}")
+            raise Exception(f"Erro ao salvar empresa: {translated_error}")
         except Exception as e:
-            logger.error(
-                f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
-            raise Exception(
-                f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
+            # Captura erros inesperados
+            logger.error(f"Erro inesperado ao salvar empresa: {str(e)}")
+            translated_error = deepl_translator(str(e))
+            raise Exception(f"Erro inesperado ao salvar empresa: {translated_error}")
 
-    async def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
+    async def find_by_id(self, id: str) -> Optional[Empresa]:
         """
-        Verificar se uma empresa existe com o CNPJ fornecido.
+        Encontrar uma empresa pelo seu identificador único.
 
         Args:
-            cnpj (CNPJ): O CNPJ da empresa a ser verificado.
+            id (str): O identificador único da empresa.
 
         Retorna:
-            bool: True se a empresa existir, False caso contrário.
+            Optional[Empresa]: Uma instância da empresa se encontrada, None caso contrário.
         """
         try:
-            query = self.collection.where(
-                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
-            return len(query.get()) > 0
+            doc = self.collection.document(id).get()
+            if doc.exists:
+                empresa_data = doc.to_dict()
+                empresa_data['id'] = doc.id
+                return self._doc_to_empresa(empresa_data)
+            return None  # Retorna None se o documento não existir
+        except exceptions.FirebaseError as e:
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar empresa com id '{id}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar empresa com id '{id}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar empresa com id '{id}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(
-                f"Erro ao verificar a existência da empresa pelo CNPJ: {e}")
-            return False
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar empresa com id '{id}': {e}")
+            raise
 
     async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
         """
@@ -116,68 +129,85 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
             return None
         except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(
-                f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
-            raise Exception(
-                f"Erro ao buscar empresa pelo CNPJ '{cnpj}': {translated_error}")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar empresa com CNPJ '{str(cnpj)}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(
-                f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
-            raise Exception(
-                f"Erro inesperado ao buscar empresa pelo CNPJ '{cnpj}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+            raise
 
-    async def find_by_id(self, empresa_id: str) -> Optional[Empresa]:
+    async def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
         """
-        Encontrar uma empresa pelo seu identificador único.
+        Verificar se uma empresa existe com o CNPJ fornecido.
+
+        Args:
+            cnpj (CNPJ): O CNPJ da empresa a ser verificado.
+
+        Retorna:
+            bool: True se a empresa existir, False caso contrário.
+        """
+        try:
+            query = self.collection.where(
+                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+            return len(query.get()) > 0
+        except exceptions.FirebaseError as e:
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar empresa com CNPJ '{str(cnpj)}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
+        except Exception as e:
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
+            raise
+
+    async def delete(self, empresa_id: str) -> bool:
+        """
+        Excluir uma empresa pelo seu identificador único.
 
         Args:
             empresa_id (str): O identificador único da empresa.
 
         Retorna:
-            Optional[Empresa]: Uma instância da empresa se encontrada, None caso contrário.
+            bool: True se a exclusão for bem-sucedida, False caso contrário.
+
+        Levanta:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
         """
         try:
-            doc = self.collection.document(empresa_id).get()
-            if doc.exists:
-                empresa_data = doc.to_dict()
-                empresa_data['id'] = doc.id
-                return self._doc_to_empresa(empresa_data)
+            await self.collection.document(empresa_id).delete()
+            return True
+        except exceptions.FirebaseError as e:
+            if e.code == 'not-found':
+                logger.info(f"Empresa com id '{empresa_id}' não encontrada para exclusão.")
+                return True  # Retorna True pois o estado desejado (não existir) já foi atingido
+            elif e.code == 'permission-denied':
+                logger.error(f"Permissão negada ao excluir empresa com id '{empresa_id}': {e}")
+                translated_error = deepl_translator(str(e))
+                raise Exception(f"Erro de permissão ao excluir empresa: {translated_error}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao excluir empresa com id '{empresa_id}': {e}")
+                translated_error = deepl_translator(str(e))
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao excluir empresa com id '{empresa_id}': Código: {e.code}, Detalhes: {e}")
+                translated_error = deepl_translator(str(e))
+                raise Exception(f"Erro ao excluir empresa: {translated_error}")
         except Exception as e:
-            # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
-            logger.error(
-                f"Erro ao consultar empresa pelo id '{empresa_id}': {e}")
-            raise  # Re-lançar a exceção para que seja tratada em camadas superiores
-
-    async def save(self, empresa: Empresa) -> str:
-        """
-        Salvar uma empresa no banco de dados Firestore.
-
-        Se a empresa já existir pelo seu CNPJ, atualiza o documento existente em vez
-        de criar um novo.
-
-        Args:
-            empresa (Empresa): A instância da empresa a ser salva.
-
-        Retorna:
-            str: O ID do documento da empresa salva.
-        """
-        try:
-            empresa_dict = self._empresa_to_dict(empresa)
-
-            existing = self.find_by_cnpj(empresa.cnpj)
-            if existing:
-                doc_ref = self.collection.document(existing.id)
-                doc_ref.set(empresa_dict, merge=True)
-                return existing.id
-
-            doc_ref = self.collection.add(empresa_dict)[1]
-            return doc_ref.id  # Garante que o ID retornado seja o ID real do documento
-
-        except Exception as e:
-            # Tratar erros de forma adequada, como logar a exceção e retornar uma mensagem de erro informativa
-            logger.error(f"Erro ao salvar empresa: {e}")
-            raise  # Re-lançar a exceção para que seja tratada em camadas superiores
+            logger.error(f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
+            translated_error = deepl_translator(str(e))
+            raise Exception(f"Erro inesperado ao excluir empresa: {translated_error}")
 
     async def _empresa_to_dict(self, empresa: Empresa) -> dict:
         """
@@ -192,69 +222,33 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         # Não adicione id no empresa_dict, pois o Firebase providenciar um uid se não existir
 
         empresa_dict = {
-            'name': empresa.name,
             'corporate_name': empresa.corporate_name,
+            'email': empresa.email,
+            'name': empresa.name,
+            'cnpj': str(empresa.cnpj),
             'store_name': empresa.store_name,
+            'ie': empresa.ie,
+            'im': empresa.im,
             'phone': empresa.phone.get_e164(),
         }
 
-        empresa_dict['cnpj'] = str(empresa.cnpj)
-        empresa_dict['ie'] = empresa.ie
-        empresa_dict['im'] = empresa.im
-
         if empresa.address:
-            empresa_dict['address'] = {
-                'street': empresa.address.street,
-                'number': empresa.address.number,
-                'complement': empresa.address.complement,
-                'neighborhood': empresa.address.neighborhood,
-                'city': empresa.address.city,
-                'state': empresa.address.state,
-                'postal_code': empresa.address.postal_code,
-                'logo_url': empresa.logo_url,
-            }
+            empresa_dict['address'] = empresa.address.__dict__
 
         if empresa.size:
             # Armazena o name do enum size
             empresa_dict['size'] = empresa.size.name
 
         if fiscal := empresa.get_nfce_data():
-            empresa_dict['fiscal'] = {
-                # Armazena o name do enum CodigoRegimeTributario
-                'crt_name': fiscal.get('crt_name'),
-                # Armazena o name do enum Environment
-                'environment_name': fiscal.get('environment_name'),
-                'nfce_series': fiscal.get('nfce_series'),
-                'nfce_number': fiscal.get('nfce_number'),
-                'nfce_sefaz_id_csc': fiscal.get('nfce_sefaz_id_csc'),
-                'nfce_sefaz_csc': fiscal.get('nfce_sefaz_csc'),
-                'nfce_api_enabled': fiscal.get('nfce_api_enabled'),
-            }
+            empresa_dict['fiscal'] = fiscal
 
-        if empresa.certificate_a1:
-            certificate = empresa.certificate_a1
-            empresa_dict['certificate_a1'] = {
-                # Salva a senha: bytes criptografada e não em str
-                'password': certificate.password.value,
-                'serial_number': certificate.serial_number,
-                'not_valid_before': certificate.not_valid_before,
-                'not_valid_after': certificate.not_valid_after,
-                'subject_name': certificate.subject_name,
-                'file_name': certificate.file_name,
-                'cpf_cnpj': certificate.cpf_cnpj,
-                'nome_razao_social': certificate.nome_razao_social,
-                'storage_path': certificate.storage_path,
-            }
+        if certificate := empresa.get_certificate_data():
+            empresa_dict['certificate_a1'] = certificate
 
         # ToDo: Verificar estes campos quando for implementado o gateway de pagamento
         if empresa.payment_gateway:
-            empresa_dict['payment_gateway'] = {
-                'customer_id': empresa.payment_gateway.customer_id,
-                'nextDueDate': empresa.payment_gateway.nextDueDate,
-                'billingType': empresa.payment_gateway.billingType,
-                'status': empresa.payment_gateway.status,
-                'dateCreated': empresa.payment_gateway.dateCreated,
-            }
+            # pyment_gateway é um objeto @dataclass, pode ser convertido diretamente para dict
+            empresa_dict['payment_gateway'] = empresa.payment_gateway.__dict__
 
         return empresa_dict
 
@@ -273,14 +267,15 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
         address = None
         if doc_data.get('address'):
+            address_data = doc_data['address']
             address = Address(
-                street=doc_data['address']['street'],
-                number=doc_data['address']['number'],
-                complement=doc_data['address'].get('complement'),
-                neighborhood=doc_data['address'].get('neighborhood'),
-                city=doc_data['address']['city'],
-                state=doc_data['address']['state'],
-                postal_code=doc_data['address']['postal_code']
+                street=address_data.get('street'),
+                number=address_data.get('number'),
+                complement=address_data.get('complement'),
+                neighborhood=address_data.get('neighborhood'),
+                city=address_data.get('city'),
+                state=address_data.get('state'),
+                postal_code=address_data.get('postal_code'),
             )
 
         size_info = None
@@ -300,16 +295,16 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
             # Obtem o 'name' do ambiente fiscal vindo do banco
             if fiscal.get('environment_name'):
-                amb_enum = Environment[fiscal.get('environment_name')]
+                amb_enum = Environment[fiscal['environment_name']]
 
             fiscal_info = FiscalData(
                 crt=crt_enum,
                 environment=amb_enum,
-                nfce_series=fiscal.get('nfce_series', None),
-                nfce_number=fiscal.get('nfce_number', None),
-                nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc', None),
-                nfce_sefaz_csc=fiscal.get('nfce_sefaz_csc', None),
-                nfce_api_enabled=fiscal.get('nfce_api_enabled', False),
+                nfce_series=fiscal.get('nfce_series'),
+                nfce_number=fiscal.get('nfce_number'),
+                nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc'),
+                nfce_sefaz_csc=fiscal.get('nfce_sefaz_csc'),
+                nfce_api_enabled=fiscal.get('nfce_api_enabled'),
             )
 
         certificate_a1 = None
@@ -322,14 +317,14 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             password = Password.from_encrypted(encrypted_password)
             certificate_a1 = CertificateA1(
                 password=password,
-                serial_number=certificate.serial_number,
-                not_valid_before=certificate.not_valid_before,
-                not_valid_after=certificate.not_valid_after,
-                subject_name=certificate.subject_name,
-                file_name=certificate.file_name,
-                cpf_cnpj=certificate.cpf_cnpj,
-                nome_razao_social=certificate.nome_razao_social,
-                storage_path=certificate.storage_path,
+                serial_number=certificate.get('serial_number'),
+                not_valid_before=certificate.get('not_valid_before'),
+                not_valid_after=certificate.get('not_valid_after'),
+                subject_name=certificate.get('subject_name'),
+                file_name=certificate.get('file_name'),
+                cpf_cnpj=certificate.get('cpf_cnpj'),
+                nome_razao_social=certificate.get('nome_razao_social'),
+                storage_path=certificate.get('storage_path'),
             )
 
         payment_gateway = None

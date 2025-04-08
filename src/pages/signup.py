@@ -218,19 +218,22 @@ class SignupView:
 
             result = await usuarios_controllers.handle_save_usuarios(usuario)
 
-            if not result["is_error"]:
-                usuario.id = result["id"]
-                # Atualiza o estado do app com o novo usuário antes da navegação
-                await self.page.app_state.set_usuario(usuario.to_dict())
-
-                # No registro de um novo usuario, não há empresas definidas para este usuário
-                await self.page.app_state.clear_empresa_data()
-
-                message_snackbar(page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
-                self.page.on_resized = None
-                self.page.go('/home')
-            else:
+            if result["is_error"]:
                 message_snackbar(page=self.page, message=result["message"], message_type=MessageType.ERROR)
+                return
+
+            usuario.id = result["id"]
+            # Atualiza o estado do app com o novo usuário antes da navegação
+            await self.page.app_state.set_usuario(usuario.to_dict())
+            self.page.pubsub.send_all("usuario_updated")
+
+            # No registro de um novo usuario, não há empresas definidas para este usuário
+            self.page.app_state.clear_empresa_data()
+
+            message_snackbar(page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
+            # Redireciona para a página home do usuário após o registro
+            self.page.on_resized = None
+            self.page.go('/home')
         finally:
             # Reabilita o botão independente do resultado
             self.signup_button.disabled = False

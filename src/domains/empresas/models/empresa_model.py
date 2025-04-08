@@ -12,6 +12,7 @@ from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSiz
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 
+
 @dataclass
 class Address:
     street: str
@@ -26,15 +27,17 @@ class Address:
 @dataclass
 class FiscalData:
     """Dados fiscais e de configuração do sistema."""
-    crt: Optional[CodigoRegimeTributario] = field(default=CodigoRegimeTributario.REGIME_NORMAL)
-    environment: Optional[Environment] = field(default=Environment.HOMOLOGACAO)  # Valores aceitos: HOMOLOGACAO, PRODUCAO
+    crt: Optional[CodigoRegimeTributario] = field(
+        default=CodigoRegimeTributario.REGIME_NORMAL)
+    # Valores aceitos: HOMOLOGACAO, PRODUCAO
+    environment: Optional[Environment] = field(default=Environment.HOMOLOGACAO)
     nfce_series: Optional[int] = None
     nfce_number: Optional[int] = None
-    nfce_sefaz_id_csc: Optional[int] = None  # ID do Número de identificação do CSC - Código de Segurança do Contribuínte.
-    nfce_sefaz_csc: Optional[str] = None   # Código de Segurança do Contribuínte.
+    # ID do Número de identificação do CSC - Código de Segurança do Contribuínte.
+    nfce_sefaz_id_csc: Optional[int] = None
+    # Código de Segurança do Contribuínte.
+    nfce_sefaz_csc: Optional[str] = None
     nfce_api_enabled: bool = False
-
-
 
 
 @dataclass
@@ -72,8 +75,7 @@ class Empresa:
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
-    name: Optional[str] = None # Nome fantasia
-    initials_corporate_name: Optional[str] = None
+    name: Optional[str] = None  # Nome fantasia
     cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
     store_name: Optional[str] = 'Matriz'
     id: Optional[str] = field(default=None)
@@ -99,7 +101,6 @@ class Empresa:
         """
         self.name = self.name.upper()
         self.corporate_name = self.corporate_name.upper()
-        self.initials_corporate_name = self.initials()
 
     def get_complete_address(self) -> str:
         """
@@ -171,7 +172,7 @@ class Empresa:
                 'file_name': cert.file_name,
                 'cpf_cnpj': cert.cpf_cnpj,
                 'nome_razao_social': cert.nome_razao_social,
-                'password': cert.password,
+                'password': cert.password.value,
                 'storage_path': cert.storage_path,
             }
 
@@ -179,5 +180,31 @@ class Empresa:
         """Retorna as iniciais do nome completo"""
         palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
         palavras = self.corporate_name.split()
-        iniciais = [palavra[0] for palavra in palavras if palavra not in palavras_ignoradas]
+        iniciais = [palavra[0]
+                    for palavra in palavras if palavra not in palavras_ignoradas]
         return ''.join(iniciais)
+
+    def to_dict(self) -> dict:
+        """
+        Converte a instância da classe Empresa em um dicionário.
+
+        Returns:
+            dict: Dicionário representando os dados da empresa.
+        """
+        return {
+            "corporate_name": self.corporate_name,
+            "email": self.email,
+            "name": self.name,
+            "cnpj": self.cnpj,
+            "store_name": self.store_name,
+            "id": self.id,
+            "ie": self.ie,
+            "im": self.im,
+            "phone": self.phone,
+            "address": self.address.__dict__ if self.address else None,
+            "size": self.size if self.size else None,
+            "fiscal": self.fiscal if self.fiscal else None,
+            "certificate_a1": self.get_certificate_data(),
+            "logo_url": self.logo_url,
+            "payment_gateway": self.payment_gateway.__dict__ if self.payment_gateway else None,
+        }

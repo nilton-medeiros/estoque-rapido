@@ -185,7 +185,6 @@ class LoginView:
                 email=self.email_input.value, password=self.password_input.value)
 
             if result["is_error"]:
-                logger.error(result["message"])
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return
@@ -193,15 +192,22 @@ class LoginView:
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["authenticated_user"]
 
+            await self.page.app_state.set_usuario(user.to_dict())
+
+            print(f"Usuário autenticado: {user.name.nome_completo} ({user.email})")
+
             if user.empresa_id is None:
-                await self.page.app_state.clear_empresa_data()
+                print("Usuário não tem empresa registrada.")
+                self.page.app_state.clear_empresa_data()
+                self.page.on_resized = None
+                print('Redirecionando para /home')
+                self.page.go('/home')
                 return
 
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
             result = await empresas_controllers.handle_get_empresas(id=user.empresa_id)
 
             if result["is_error"]:
-                logger.error(result["message"])
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return
@@ -209,23 +215,12 @@ class LoginView:
             cia: Empresa = result["empresa"]
 
             # Adiciona o empresa_id no state e publíca-a
-            await self.page.app_state.set_empresa({
-                "id": cia.empresa_id,
-                "name": cia.name,
-                "corporate_name": cia.corporate_name,
-                "cnpj": cia.cnpj,
-                "ie": cia.ie,
-                "store_name": cia.store_name,
-                "im": cia.im,
-                "contact": cia.contact,
-                "address": cia.address,
-                "size": cia.size,
-                "fiscal": cia.fiscal,
-                "logo_url": cia.logo_url,
-                "payment_gateway": cia.payment_gateway,
-            })
+            await self.page.app_state.set_empresa(cia.to_dict())
+
+            print(f"Empresa atual registrada: {cia.corporate_name}")
 
             self.page.on_resized = None
+            print('Redirecionando para /home')
             self.page.go('/home')
 
         finally:

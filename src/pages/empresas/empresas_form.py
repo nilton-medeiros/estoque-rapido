@@ -626,7 +626,7 @@ class EmpresaView:
             user = result["authenticated_user"]
 
             if user.empresa_id is None:
-                await self.page.app_state.clear_empresa_data()
+                self.page.app_state.clear_empresa_data()
                 return
 
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
@@ -640,21 +640,8 @@ class EmpresaView:
             cia: Empresa = result["empresa"]
 
             # Adiciona o empresa_id no state e publíca-a
-            await self.page.app_state.set_empresa({
-                "id": cia.empresa_id,
-                "name": cia.name,
-                "corporate_name": cia.corporate_name,
-                "cnpj": cia.cnpj,
-                "ie": cia.ie,
-                "store_name": cia.store_name,
-                "im": cia.im,
-                "contact": cia.contact,
-                "address": cia.address,
-                "size": cia.size,
-                "fiscal": cia.fiscal,
-                "logo_url": cia.logo_url,
-                "payment_gateway": cia.payment_gateway,
-            })
+            await self.page.app_state.set_empresa(cia.to_dict())
+            self.page.pubsub.send_all("empresa_updated")
 
             self.page.on_resized = None
             self.page.go('/home')

@@ -10,6 +10,7 @@ def home_page(page: ft.Page):
     page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
+    print(f"Home Page: {page.app_state.usuario.get('name').nome_completo}")
     sidebar = sidebar_container(page)
     content = main_content()
 
@@ -100,4 +101,5 @@ def home_page(page: ft.Page):
         data=appbar,
     )
 
+    print("Retornando parent_container, o conteúdo da página home")
     return parent_container

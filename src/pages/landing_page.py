@@ -94,7 +94,7 @@ def landing_page(page: ft.Page):
         return ft.Card(
             col={'xs': 12, 'md': 6, 'lg': 4},
             width=350,
-            height=300,
+            height=250,
             content=ft.Container(
                 expand=True,
                 padding=20,
@@ -105,15 +105,17 @@ def landing_page(page: ft.Page):
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.Row(
-                            controls=icons,
+                            controls=[
+                                *icons,   # Descompacta a lista de icons
+                                ft.Text(
+                                    title,
+                                    color=ft.Colors.BLACK54,
+                                    size=16,
+                                    weight=ft.FontWeight.BOLD,
+                                    text_align=ft.TextAlign.CENTER,
+                                ),
+                            ],
                             alignment=ft.MainAxisAlignment.CENTER,
-                        ),
-                        ft.Text(
-                            title,
-                            color=ft.Colors.BLACK54,
-                            size=16,
-                            weight=ft.FontWeight.BOLD,
-                            text_align=ft.TextAlign.CENTER,
                         ),
                         ft.Text(
                             description,

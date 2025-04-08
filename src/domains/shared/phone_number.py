@@ -33,6 +33,13 @@ class PhoneNumber:
 
         self.e164 = self.format_to_e164()
 
+    def __str__(self) -> str:
+        """
+        Returns:
+            str: Retorna o número sem o código do país no formato (XX) XXXXX-XXXX.
+        """
+        return self.get_national()
+
     def format_to_e164(self) -> str:
         """
         Formata o número para o padrão E.164.

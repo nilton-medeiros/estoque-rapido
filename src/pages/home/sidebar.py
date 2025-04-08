@@ -125,11 +125,7 @@ def sidebar_header(page: ft.Page):
                 if cnpj:
                     prefix = cnpj.raw_cnpj
                 else:
-                    cpf = current_company.get("cpf")
-                    if cpf:
-                        prefix = cpf.raw_cpf
-                    else:
-                        prefix = current_user.get("id")
+                    prefix = current_user.get("id")
 
                 file_uid = get_uuid()
 
@@ -238,8 +234,6 @@ def sidebar_header(page: ft.Page):
 
                     await page.app_state.set_usuario(user.to_dict())
 
-                    page.pubsub.send_all("user_updated")
-
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                 message_snackbar(
                     page=page, message=result["message"], message_type=color)
@@ -325,7 +319,7 @@ def sidebar_header(page: ft.Page):
 
                         await page.app_state.set_usuario(user.to_dict())
 
-                        page.pubsub.send_all("user_updated")
+                        page.pubsub.send_all("usuario_updated")
 
                     color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                     message_snackbar(
@@ -438,7 +432,7 @@ def sidebar_content(page: ft.Page):
                 controls=[
                     ft.Text(value='Loja:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
-                    ft.Text(value=current_company['store_name'],
+                    ft.Text(value=current_company.get('store_name', 'LOJA NÃO DEFINIDA'),
                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
@@ -448,7 +442,7 @@ def sidebar_content(page: ft.Page):
                 controls=[
                     ft.Text(value='CNPJ:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
-                    ft.Text(value=current_company['cnpj'],
+                    ft.Text(value=current_company.get('cnpj', ''),
                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
@@ -459,7 +453,7 @@ def sidebar_content(page: ft.Page):
                     ft.Text(value='I.E.:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
                     ft.Text(
-                        value=current_company['ie'], theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                        value=current_company.get('ie',''), theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
         ]
@@ -794,5 +788,5 @@ def sidebar_container(page: ft.Page):
             ]
         )
     )
-
+    print("Retornando sidebar")
     return sidebar

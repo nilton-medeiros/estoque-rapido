@@ -8,13 +8,13 @@ class EmpresasRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de empresas."""
 
     @abstractmethod
-    def count(self) -> int:
-        """Contar o número total de empresas no repositório."""
+    def save(self, empresa: Empresa) -> str:
+        """Salvar uma empresa e retornar seu ID."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def delete(self, empresa_id: str) -> bool:
-        """Excluir uma empresa por seu ID."""
+    def find_by_id(self, empresa_id: str) -> Optional[Empresa]:
+        """Encontrar uma empresa por seu ID que é o próprio CNPJ."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
@@ -23,18 +23,8 @@ class EmpresasRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
-        """Encontrar uma empresa por seu CNPJ."""
-        raise NotImplementedError("Este método deve ser implementado pela subclasse")
-
-    @abstractmethod
-    def find_by_id(self, empresa_id: str) -> Optional[Empresa]:
-        """Encontrar uma empresa por seu ID."""
-        raise NotImplementedError("Este método deve ser implementado pela subclasse")
-
-    @abstractmethod
-    def save(self, empresa: Empresa) -> str:
-        """Salvar uma empresa e retornar seu ID."""
+    def delete(self, empresa_id: str) -> bool:
+        """Excluir uma empresa por seu ID."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod

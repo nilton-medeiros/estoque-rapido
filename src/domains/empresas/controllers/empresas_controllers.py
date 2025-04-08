@@ -122,6 +122,8 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
             response["message"] = "Empresa encontrada com sucesso!"
             response["empresa"] = empresa
         else:
+            # Improvável, pois se não encontrar a empresa, é retornado uma exceção
+            # Mas, caso aconteça, é tratado aqui
             response["is_error"] = True
             response["message"] = "Empresa não encontrada"
 
@@ -132,6 +134,5 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-        logger.error(response["message"])
 
     return response

@@ -162,10 +162,10 @@ def main(page: ft.Page):
                 )
             case '/logout':
                 page.app_state.clear_state()
-                page.update()
-                page.go('/')
+                page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
+                print(f'Acessando a página /home. Usuário id: {page.app_state.usuario.get('id')}')
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     home = home_page(page)
@@ -178,6 +178,7 @@ def main(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
                 else:
+                    print('Usuário não autenticado. Redirecionando para /login')
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/empresas/form':
                 # Verifica se usuário está logado
@@ -239,8 +240,10 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
 
-        page.views.append(pg_view)
-        page.update()
+        # Adiciona a view à página, no caso das rota /logout, pg_view é None e /home, pg_view pode ser None ou não
+        if pg_view:
+            page.views.append(pg_view)
+            page.update()
 
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()

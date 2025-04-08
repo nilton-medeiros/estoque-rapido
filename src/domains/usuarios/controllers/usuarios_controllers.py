@@ -37,11 +37,11 @@ async def handle_login_usuarios(email: str, password: str) -> dict:
 
     except InvalidCredentialsException as e:
         response["is_error"] = True
-        response["message"] = "Credenciais inválidas"
+        response["message"] = "Credenciais inválidas"  # str(e) # Não deve ser exposto para o usuário, mensagem genérica
 
     except AuthenticationException as e:
         response["is_error"] = True
-        response["message"] = f"Erro de autenticação: {str(e)}"
+        response["message"] = str(e)
 
     except Exception as e:
         response["is_error"] = True

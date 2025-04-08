@@ -188,13 +188,13 @@ def main_content():
     )
 
     def on_click_registrar(e):
-        print(e.control)
+        print(f"on_click_registrar {e.control}")
 
     def on_click_status(e):
-        print(e.control)
+        print(f"on_click_status {e.control}")
 
     def on_click_nfce(e):
-        print(e.control)
+        print(f"on_click_nfce {e.control}")
 
     salles = ft.Container(
         content=ft.ResponsiveRow(
@@ -261,6 +261,7 @@ def main_content():
                 value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM),
         )
 
+    print("Retornando main_content, o conteúdo da página home")
     return ft.Container(
         content=ft.Column(
             controls=[

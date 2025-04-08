@@ -86,8 +86,8 @@ class Usuario:
         if self.user_color == '':
             self.user_color = 'blue'
 
-    def to_dict(self):
-        user_dict = {
+    def to_dict(self) -> dict:
+        return {
             "id": self.id,
             "password": self.password,
             "name": self.name,
@@ -98,5 +98,8 @@ class Usuario:
             "empresas": self.empresas,
             "photo_url": self.photo_url,
             "user_color": self.user_color,
+            "is_admin": self.is_admin(),
         }
-        return user_dict
+
+    def is_admin(self):
+        return self.profile == 'admin'

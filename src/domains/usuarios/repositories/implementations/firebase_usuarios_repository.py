@@ -80,9 +80,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 translated_error = deepl_translator(str(e))
                 raise AuthenticationException(f"Erro ao autenticar usuário: {translated_error}")
         except Exception as e:
-            logger.error(f"Erro inesperado ao autenticar usuário: {str(e)}")
-            translated_error = deepl_translator(str(e))
-            raise AuthenticationException(f"Erro inesperado ao autenticar usuário: {translated_error}")
+            logger.error(f"Erro de autenticação: {str(e)}")
+            # translated_error = deepl_translator(str(e))
+            raise AuthenticationException(f"Erro de autenticação: {str(e)}")
 
     async def save(self, usuario: Usuario) -> str:
         """
@@ -158,38 +158,40 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             logger.error(f"Erro inesperado ao contar usuários: {e}")
             raise e
 
-    async def delete(self, usuario_id: str) -> None:
+    async def find_by_id(self, id: str) -> Optional[Usuario]:
         """
-        Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
+        Busca um usuário pelo ID.
 
         Args:
-            usuario_id (str): O identificador único do usuário.
+            id (str): ID do usuário.
+
+        Returns:
+            Optional[Usuario]: Usuário encontrado ou None se não existir.
 
         Raises:
-            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
+            Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # Deleta do Firestore
-            self.collection.document(usuario_id).delete()
-            logger.info(f"Usuário com ID '{usuario_id}' excluído com sucesso.")
+            doc = self.collection.document(id).get()
+            if doc.exists:
+                usuario_data = doc.to_dict()
+                usuario_data['id'] = doc.id
+                return self._doc_to_usuario(usuario_data)
+            return None  # Retorna None se o documento não existir
         except exceptions.FirebaseError as e:
-            if e.code == 'not-found':
-                logger.error(f"Documento com ID '{usuario_id}' não encontrado.")
-            elif e.code == 'permission-denied':
-                logger.error(f"Permissão negada para excluir o documento com ID '{usuario_id}'.")
-            elif e.code == 'resource-exhausted':
-                logger.error("Cota do Firebase excedida ao tentar excluir o documento.")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuário com id '{id}': {e}")
             elif e.code == 'unavailable':
-                logger.error("Serviço do Firestore indisponível no momento.")
-            elif e.code == 'deadline-exceeded':
-                logger.error("Tempo limite para a operação de exclusão excedido.")
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuário com id '{id}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
             else:
-                logger.error(f"Erro desconhecido do Firebase ao excluir o documento: {e.code}")
-            translated_error = deepl_translator(str(e))
-            raise Exception(f"Erro ao deletar usuário com ID '{usuario_id}': {translated_error}")
+                logger.error(f"Erro do Firebase ao consultar usuário com id '{id}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao deletar usuário com ID '{usuario_id}': {str(e)}")
-            raise Exception(f"Erro inesperado ao deletar usuário com ID '{usuario_id}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuário com id '{id}': {e}")
+            raise
 
     async def exists_by_email(self, email: str) -> bool:
         """
@@ -213,23 +215,19 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 return True
             return False
         except exceptions.FirebaseError as e:
-            if e.code == 'invalid-argument':
-                logger.error("Argumento inválido fornecido para a consulta.")
-            elif e.code == 'permission-denied':
-                logger.error("Permissão negada para acessar a coleção.")
-            elif e.code == 'resource-exhausted':
-                logger.error("Cota do Firebase excedida.")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuário pelo email '{email}': {e}")
             elif e.code == 'unavailable':
-                logger.error("Serviço do Firestore indisponível no momento.")
-            elif e.code == 'deadline-exceeded':
-                logger.error("Tempo limite para a operação excedido.")
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuário pelo email '{email}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
             else:
-                logger.error(f"Erro desconhecido do Firebase: {e.code}")
-            translated_error = deepl_translator(str(e))
-            raise Exception(f"Erro ao verificar existência de usuário com email '{email}': {translated_error}")
+                logger.error(f"Erro do Firebase ao consultar usuário pelo email '{email}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao verificar existência de usuário com email '{email}': {str(e)}")
-            raise Exception(f"Erro inesperado ao verificar existência de usuário com email '{email}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
+            raise
 
     async def find_all(self, empresa_id, limit: int = 100, offset: int = 0) -> List[Usuario]:
         """
@@ -261,12 +259,19 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             return usuarios
         except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar usuários: {translated_error}")
-            raise Exception(f"Erro ao buscar usuários: {translated_error}")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuários da empresa id '{empresa_id}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuários da empresa id '{empresa_id}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar usuários da empresa id '{empresa_id}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao buscar usuários: {str(e)}")
-            raise Exception(f"Erro inesperado ao buscar usuários: {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuários da empresa id '{empresa_id}': {e}")
+            raise
 
     async def find_by_email(self, email: str) -> Optional[Usuario]:
         """
@@ -294,40 +299,19 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             return None
         except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
-            raise Exception(f"Erro ao buscar usuário pelo email '{email}': {translated_error}")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuário pelo email '{email}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuário pelo email '{email}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar usuário pelo email '{email}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
-            raise Exception(f"Erro inesperado ao buscar usuário pelo email '{email}': {str(e)}")
-
-    async def find_by_id(self, id: str) -> Optional[Usuario]:
-        """
-        Busca um usuário pelo ID.
-
-        Args:
-            id (str): ID do usuário.
-
-        Returns:
-            Optional[Usuario]: Usuário encontrado ou None se não existir.
-
-        Raises:
-            Exception: Em caso de erro na operação de banco de dados.
-        """
-        try:
-            doc = self.collection.document(id).get()
-            if doc.exists:
-                usuario_data = doc.to_dict()
-                usuario_data['id'] = doc.id
-                return self._doc_to_usuario(usuario_data)
-            return None
-        except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar usuário com ID '{id}': {translated_error}")
-            raise Exception(f"Erro ao buscar usuário com ID '{id}': {translated_error}")
-        except Exception as e:
-            logger.error(f"Erro inesperado ao buscar usuário com ID '{id}': {str(e)}")
-            raise Exception(f"Erro inesperado ao buscar usuário com ID '{id}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
+            raise
 
     async def find_by_name(self, empresa_id, name: str) -> List[Usuario]:
         """
@@ -356,14 +340,21 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 usuario_data['id'] = doc.id
                 usuarios.append(self._doc_to_usuario(usuario_data))
 
-            return usuarios
+            return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
         except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar usuário pelo nome '{name}': {translated_error}")
-            raise Exception(f"Erro ao buscar usuário pelo nome '{name}': {translated_error}")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuário pelo nome '{name}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuário pelo nome '{name}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar usuário pelo nome '{name}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao buscar usuário pelo nome '{name}': {str(e)}")
-            raise Exception(f"Erro inesperado ao buscar usuário pelo nome '{name}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuário pelo nome '{name}': {e}")
+            raise
 
     async def find_by_profile(self, empresa_id: str, profile: str) -> List[Usuario]:
         """
@@ -392,14 +383,54 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 usuario_data["id"] = doc.id
                 usuarios.append(self._doc_to_usuario(usuario_data))
 
-            return usuarios
+            return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
         except exceptions.FirebaseError as e:
-            translated_error = deepl_translator(str(e))
-            logger.error(f"Erro ao buscar usuário pelo perfil '{profile}': {translated_error}")
-            raise Exception(f"Erro ao buscar usuário pelo perfil '{profile}': {translated_error}")
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar usuário pelo pefil do usuário '{profile}': {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar usuário pelo pefil do usuário '{profile}': {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar usuário pelo pefil do usuário '{profile}': Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
-            logger.error(f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
-            raise Exception(f"Erro inesperado ao buscar usuário pelo perfil '{profile}': {str(e)}")
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar usuário pelo pefil do usuário '{profile}': {e}")
+            raise
+
+    async def delete(self, usuario_id: str) -> None:
+        """
+        Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
+
+        Args:
+            usuario_id (str): O identificador único do usuário.
+
+        Raises:
+            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
+        """
+        try:
+            # Deleta do Firestore
+            self.collection.document(usuario_id).delete()
+            logger.info(f"Usuário com id '{usuario_id}' excluído com sucesso.")
+        except exceptions.FirebaseError as e:
+            if e.code == 'not-found':
+                logger.error(f"Documento com id '{usuario_id}' não encontrado.")
+            elif e.code == 'permission-denied':
+                logger.error(f"Permissão negada para excluir o documento com id '{usuario_id}'.")
+            elif e.code == 'resource-exhausted':
+                logger.error("Cota do Firebase excedida ao tentar excluir o documento.")
+            elif e.code == 'unavailable':
+                logger.error("Serviço do Firestore indisponível no momento.")
+            elif e.code == 'deadline-exceeded':
+                logger.error("Tempo limite para a operação de exclusão excedido.")
+            else:
+                logger.error(f"Erro desconhecido do Firebase ao excluir o documento: {e.code}")
+            translated_error = deepl_translator(str(e))
+            raise Exception(f"Erro ao deletar usuário com id '{usuario_id}': {translated_error}")
+        except Exception as e:
+            logger.error(f"Erro inesperado ao deletar usuário com id '{usuario_id}': {str(e)}")
+            raise Exception(f"Erro inesperado ao deletar usuário com id '{usuario_id}': {str(e)}")
 
     async def update_profile(self, id: str, new_profile: str) -> Optional[Usuario]:
         """
@@ -598,6 +629,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             "photo_url": usuario.photo_url,
             # Ultima cor preferencial do usuário (interface)
             "user_color": usuario.user_color,
+            "is_admin": usuario.is_admin(),
         }
 
         return usuario_dict
