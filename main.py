@@ -105,24 +105,26 @@ def main(page: ft.Page):
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
             page.user_name_text.value = page.app_state.usuario['name'].nome_completo
-            page.user_name_text.update()
+            # O update deve ser no controlador que chama o evento após chamar este evento
+            # page.user_name_text.update()
 
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
             page.company_name_text_btn.text = page.app_state.empresa.get(
                 'name', page.app_state.empresa.get('corporate_name'))
-            page.company_name_text_btn.update()
+            # O update deve ser no controlador que chama o evento após chamar este evento
+            # page.company_name_text_btn.update()
 
     def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
             page.user_name_text.value = ""
-            page.user_name_text.update()
+            # page.user_name_text.update()
 
     def clear_empresa_ui():
         if hasattr(page, 'company_name_text_btn'):
             page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
-            page.company_name_text_btn.update()
+            # page.company_name_text_btn.update()
 
     # Registra o handler do PubSub
     page.pubsub.subscribe(handle_pubsub)

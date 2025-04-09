@@ -48,7 +48,7 @@ class UsuariosServices:
         if not usuario.password:
             raise ValueError("Password é necessário para criar usuário")
 
-        existing_usuario = await self.repository.find_by_email(usuario.email)
+        existing_usuario = await self.repository.exists_by_email(usuario.email)
 
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")

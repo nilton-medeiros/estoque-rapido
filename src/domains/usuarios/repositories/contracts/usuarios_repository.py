@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from firebase_admin.auth import UserRecord 
+from firebase_admin.auth import UserRecord
 from src.domains.usuarios.models.usuario_model import Usuario
 
 
@@ -25,13 +25,18 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
+    async def save(self, usuario: Usuario) -> Usuario:
+        """Salva ou atualiza um usuário no banco de dados."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
     async def count(self) -> int:
         """Retorna o número total de usuários da empresa logada."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def delete(self, id: str) -> bool:
-        """Remove um usuário do banco de dados."""
+    async def find_by_id(self, id: str) -> Optional[Usuario]:
+        """Busca um usuário pelo ID."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
@@ -50,11 +55,6 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_id(self, id: str) -> Optional[Usuario]:
-        """Busca um usuário pelo ID."""
-        raise NotImplementedError("Este método deve ser implementado pela subclasse")
-
-    @abstractmethod
     async def find_by_name(self, name: str) -> List[Usuario]:
         """
         Busca usuários da empresa logada que contenham o nome especificado
@@ -68,8 +68,8 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def save(self, usuario: Usuario) -> Usuario:
-        """Salva ou atualiza um usuário no banco de dados."""
+    async def delete(self, id: str) -> bool:
+        """Remove um usuário do banco de dados."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod

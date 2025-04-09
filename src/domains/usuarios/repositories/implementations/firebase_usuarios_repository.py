@@ -330,7 +330,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         try:
             query = self.collection.where(
                 field_path='empresas', op_string='array_contains', value=empresa_id
-            ).where('display_name', '>=', name).where('display_name', '<=', name + '\uf8ff')
+            ).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -587,7 +587,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         # Recontruir campos opcionais
         first_name, last_name = get_first_and_last_name(
-            doc_data['display_name'])
+            doc_data['name'])
         empresas: List[str] = doc_data.get('empresas', [])
         photo_url: str = doc_data.get('photo_url', None)
 
@@ -595,9 +595,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         return Usuario(
             id=doc_data['id'],
+            name=NomePessoa(first_name, last_name),
             email=doc_data['email'],
             password=Password.from_encrypted(doc_data['password']),
-            name=NomePessoa(first_name, last_name),
             phone_number=PhoneNumber(doc_data['phone_number']),
             profile=doc_data['profile'],
             empresa_id=doc_data.get('empresa_id', None),
@@ -617,19 +617,16 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             dict: A representação do usuário em formato de dicionário.
         """
         # Não adicione id no usuario_dict, pois é passado o id no documento de referencia
-        usuario_dict = {
-            "email": usuario.email,
+        usuario_dict = usuario.to_dict()
+
+        # Sobrescreve os campos que precisam de ajustes
+        usuario_dict.update({
             "password": usuario.password.value,  # Senha encriptada
-            "display_name": usuario.name.nome_completo,
-            "phone_number": usuario.phone_number.get_e164(),
-            "profile": usuario.profile,
-            "empresa_id": usuario.empresa_id,   # Ultima Empresa logada pelo usuário
-            # Lista de IDs de empresas que o usuário gerencia
-            "empresas": usuario.empresas,
-            "photo_url": usuario.photo_url,
-            # Ultima cor preferencial do usuário (interface)
-            "user_color": usuario.user_color,
-            "is_admin": usuario.is_admin(),
-        }
+            "name": usuario.name.nome_completo,  # Nome completo
+            "phone_number": usuario.phone_number.get_e164(),  # Número de telefone no formato E.164
+        })
+
+        # Remove campos desnecessários para o Firestore
+        usuario_dict.pop('id', None)  # Remove o campo 'id', pois é incluído diretamente no documento ao criar ou alterar
 
         return usuario_dict

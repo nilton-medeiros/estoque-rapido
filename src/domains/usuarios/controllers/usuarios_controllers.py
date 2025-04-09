@@ -84,7 +84,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        operation = "criado" if usuario.id else "alterado"
+        operation = "alterado" if usuario.id else "criado"
         id = None
 
         if usuario.id is None:

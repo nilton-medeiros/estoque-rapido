@@ -89,9 +89,9 @@ class Usuario:
     def to_dict(self) -> dict:
         return {
             "id": self.id,
-            "password": self.password,
             "name": self.name,
             "email": self.email,
+            "password": self.password,
             "phone_number": self.phone_number,
             "profile": self.profile,
             "empresa_id": self.empresa_id,
