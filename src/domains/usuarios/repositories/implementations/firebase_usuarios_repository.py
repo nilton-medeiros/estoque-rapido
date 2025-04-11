@@ -458,9 +458,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 return None
 
             doc_ref.update({"profile": new_profile})
-            data = doc_ref.get().to_dict()
-
-            return self._doc_to_usuario(data)
+            usuario_data = doc_ref.get().to_dict()
+            usuario_data['id'] = doc.id
+            return self._doc_to_usuario(usuario_data)
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(f"Documento com ID '{id}' não encontrado.")
@@ -506,9 +506,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 return None
 
             doc_ref.update({"photo_url": new_photo})
-            data = doc_ref.get().to_dict()
-
-            return self._doc_to_usuario(data)
+            usuario_data = doc_ref.get().to_dict()
+            usuario_data['id'] = doc.id
+            return self._doc_to_usuario(usuario_data)
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(f"Documento com ID '{id}' não encontrado.")
@@ -522,10 +522,12 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 logger.error("Tempo limite para a operação de atualização excedido.")
             else:
                 logger.error(f"Erro desconhecido do Firebase ao atualizar a foto: {e.code}")
+            print(f"DEBUG (e): {str(e)}")
             translated_error = deepl_translator(str(e))
             raise Exception(f"Erro ao atualizar a foto do usuário com ID '{id}': {translated_error}")
         except Exception as e:
-            logger.error(f"Erro inesperado ao atualizar a foto do usuário com ID '{id}': {str(e)}")
+            print(f"DEBUG (e): {str(e)}")
+            logger.error(f"Erro inesperado ao atualizar a foto do usuario com ID '{id}': {str(e)}")
             raise Exception(f"Erro inesperado ao atualizar a foto do usuário com ID '{id}': {str(e)}")
 
     async def update_color(self, id: str, new_color: str) -> bool:

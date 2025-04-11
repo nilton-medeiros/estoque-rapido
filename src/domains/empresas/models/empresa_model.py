@@ -53,7 +53,7 @@ class Empresa:
         email: str: E-mail da empresa.
         cnpj (CNPJ): CNPJ da empresa.
         id (Optional[str]): ID opcional da empresa.
-        name (Optional[str]): Nome fantasia da empresa.
+        trade_name (Optional[str]): Nome fantasia da empresa.
         store_name (Optional[str]): Nome da loja.
         ie (str): Inscrição Estadual da empresa.
         im (Optional[str]): Inscrição Municipal da empresa.
@@ -69,15 +69,15 @@ class Empresa:
         Exemplo de como instanciar e usar a classe:
         >>> from src.domain.models.cnpj import CNPJ
         >>> cnpj = CNPJ("00.000.000/0000-00")
-        >>> empresa = Empresa(name="Minha Empresa", corporate_name="Minha Empresa Ltda", cnpj=cnpj,
+        >>> empresa = Empresa(trade_name="Minha Empresa", corporate_name="Minha Empresa Ltda", cnpj=cnpj,
         ...                   ie="123456789")
         >>> print(empresa)
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
-    name: Optional[str] = None  # Nome fantasia
-    cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
+    trade_name: Optional[str] = None  # Nome fantasia
     store_name: Optional[str] = 'Matriz'
+    cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
     id: Optional[str] = field(default=None)
     ie: Optional[str] = None  # Inscrição Estadual
     im: Optional[str] = None  # Inscrição Municipal
@@ -99,8 +99,8 @@ class Empresa:
 
         Realiza validações adicionais e formatações necessárias.
         """
-        self.name = self.name.upper()
         self.corporate_name = self.corporate_name.upper()
+        self.trade_name = self.name.upper()
 
     def get_complete_address(self) -> str:
         """
@@ -110,7 +110,7 @@ class Empresa:
             str: Endereço completo formatado ou mensagem indicando que o endereço não está configurado.
         """
         if not self.address:
-            return "Endereço não configurado"
+            return "Endereço não informado"
 
         components = [
             f"{self.address.street}, {self.address.number}",
@@ -192,18 +192,18 @@ class Empresa:
             dict: Dicionário representando os dados da empresa.
         """
         return {
-            "corporate_name": self.corporate_name,
-            "email": self.email,
-            "name": self.name,
-            "cnpj": self.cnpj,
-            "store_name": self.store_name,
             "id": self.id,
+            "corporate_name": self.corporate_name,
+            "trade_name": self.trade_name,
+            "store_name": self.store_name,
+            "cnpj": self.cnpj,
+            "email": self.email,
             "ie": self.ie,
             "im": self.im,
             "phone": self.phone,
             "address": self.address.__dict__ if self.address else None,
             "size": self.size if self.size else None,
-            "fiscal": self.fiscal if self.fiscal else None,
+            "fiscal": self.get_nfce_data(),
             "certificate_a1": self.get_certificate_data(),
             "logo_url": self.logo_url,
             "payment_gateway": self.payment_gateway.__dict__ if self.payment_gateway else None,

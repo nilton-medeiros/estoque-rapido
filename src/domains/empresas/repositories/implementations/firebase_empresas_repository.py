@@ -118,7 +118,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         """
         try:
             query = self.collection.where(
-                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+                field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)
             docs = query.get()
 
             if docs:
@@ -155,7 +155,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         """
         try:
             query = self.collection.where(
-                field_path='cnpj', op_string='==', value=str(cnpj)).limit(1)
+                field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)
             return len(query.get()) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -209,48 +209,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             translated_error = deepl_translator(str(e))
             raise Exception(f"Erro inesperado ao excluir empresa: {translated_error}")
 
-    async def _empresa_to_dict(self, empresa: Empresa) -> dict:
-        """
-        Converter uma instância de empresa em um dicionário para armazenamento no Firestore.
-
-        Args:
-            empresa (Empresa): A instância da empresa a ser convertida.
-
-        Retorna:
-            dict: A representação da empresa em formato de dicionário.
-        """
-        # Não adicione id no empresa_dict, pois o Firebase providenciar um uid se não existir
-
-        empresa_dict = {
-            'corporate_name': empresa.corporate_name,
-            'email': empresa.email,
-            'name': empresa.name,
-            'cnpj': str(empresa.cnpj),
-            'store_name': empresa.store_name,
-            'ie': empresa.ie,
-            'im': empresa.im,
-            'phone': empresa.phone.get_e164(),
-        }
-
-        if empresa.address:
-            empresa_dict['address'] = empresa.address.__dict__
-
-        if empresa.size:
-            # Armazena o name do enum size
-            empresa_dict['size'] = empresa.size.name
-
-        if fiscal := empresa.get_nfce_data():
-            empresa_dict['fiscal'] = fiscal
-
-        if certificate := empresa.get_certificate_data():
-            empresa_dict['certificate_a1'] = certificate
-
-        # ToDo: Verificar estes campos quando for implementado o gateway de pagamento
-        if empresa.payment_gateway:
-            # pyment_gateway é um objeto @dataclass, pode ser convertido diretamente para dict
-            empresa_dict['payment_gateway'] = empresa.payment_gateway.__dict__
-
-        return empresa_dict
 
     async def _doc_to_empresa(self, doc_data: dict) -> Empresa:
         """
@@ -291,7 +249,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
             # Obtem o 'name' do enum CRT vindo do banco
             if fiscal.get('crt_name'):
-                crt_enum = CodigoRegimeTributario[fiscal.get('crt_name')]
+                crt_enum = CodigoRegimeTributario[fiscal['crt_name']]
 
             # Obtem o 'name' do ambiente fiscal vindo do banco
             if fiscal.get('environment_name'):
@@ -327,6 +285,10 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 storage_path=certificate.get('storage_path'),
             )
 
+        """
+        ToDo: Substituir o AsaasPaymentGateway por um repositório específico para o gateway de pagamento
+        O repositório é o responsável por qual é gateway atual que deve ser usado.
+        """
         payment_gateway = None
         if pg := doc_data.get("payment_gateway"):
             payment_gateway = AsaasPaymentGateway(
@@ -337,18 +299,24 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 dateCreated=pg.get('dateCreated'),
             )
 
-        cnpj = CNPJ(doc_data.get('cnpj'))
+        cnpj = None
+        if doc_data.get('cnpj'):
+            cnpj = CNPJ(doc_data['cnpj'])
+
+        phone = None
+        if doc_data.get('phone'):
+            phone = PhoneNumber(doc_data['phone'])
 
         return Empresa(
             id=doc_data.get('id'),
             corporate_name=doc_data.get('corporate_name'),
-            name=doc_data.get('name'),
-            email=doc_data.get('email'),
-            cnpj=cnpj,
+            trade_name=doc_data.get('name'),
             store_name=doc_data.get('store_name', "Matriz"),
+            cnpj=cnpj,
+            email=doc_data.get('email'),
             ie=doc_data['ie'],
             im=doc_data.get('im'),
-            phone=PhoneNumber(doc_data['phone']),
+            phone=phone,
             address=address,
             size=size_info,
             fiscal=fiscal_info,
@@ -356,3 +324,37 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logo_url=doc_data.get('logo_url'),
             payment_gateway=payment_gateway,
         )
+
+    async def _empresa_to_dict(self, empresa: Empresa) -> dict:
+        """
+        Converter uma instância de empresa em um dicionário para armazenamento no Firestore.
+
+        Args:
+            empresa (Empresa): A instância da empresa a ser convertida.
+
+        Retorna:
+            dict: A representação da empresa em formato de dicionário.
+        """
+
+        empresa_dict = empresa.to_dict()
+
+        if empresa.cnpj:
+            # Armazena o CNPJ como string
+            empresa_dict.update({
+                'cnpj': empresa.cnpj.raw_cnpj,
+            })
+        if empresa.phone:
+            # Armazena o telefone como string
+            empresa_dict.update({
+                'phone': empresa.phone.get_e164(),
+            })
+        if empresa.size:
+            # Armazena o name do enum size
+            empresa_dict.update({
+                'size': empresa.size.name,
+            })
+
+        # Remove os campos desnecessários para o Firestore; O id é passado diretamente no documento de referencia
+        empresa_dict.pop('id', None)
+
+        return empresa_dict

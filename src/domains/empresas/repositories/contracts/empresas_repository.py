@@ -18,6 +18,11 @@ class EmpresasRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
+    def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
+        """Encontrar uma empresa por seu ID que é o próprio CNPJ."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
     def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
         """Verificar se uma empresa existe com o CNPJ fornecido."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")

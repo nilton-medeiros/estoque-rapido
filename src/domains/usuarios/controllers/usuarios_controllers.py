@@ -84,15 +84,16 @@ async def handle_save_usuarios(usuario: Usuario) -> dict:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        operation = "alterado" if usuario.id else "criado"
+        operation = "atualizado"
         id = None
 
-        if usuario.id is None:
-            # Criar novo usuário
-            id = await usuarios_services.create_usuario(usuario)
-        else:
+        if usuario.id:
             # Alterar usuário existente
-            id = await usuarios_services.update_usuario(usuario)
+            id = await usuarios_services.update(usuario)
+        else:
+            # Criar novo usuário
+            operation = "criado"
+            id = await usuarios_services.create(usuario)
 
         response["message"] = f"Usuário {operation} com sucessso!"
         response["id"] = id

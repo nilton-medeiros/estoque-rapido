@@ -14,7 +14,7 @@ e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
-async def handle_save_empresas(empresa: Empresa, create_new: bool) -> dict:
+async def handle_save_empresas(empresa: Empresa) -> dict:
     """
     Manipula a operação de salvar empresa.
 
@@ -24,7 +24,6 @@ async def handle_save_empresas(empresa: Empresa, create_new: bool) -> dict:
 
     Args:
         empresa (Empresa): A instância do empresa a ser salva.
-        create_new (bool): Um booleano indicando se a empresa deve ser criada (True) ou atualizada (False).
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do empresa.
@@ -49,15 +48,16 @@ async def handle_save_empresas(empresa: Empresa, create_new: bool) -> dict:
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        operation = "criada" if create_new else "alterada"
+        operation = "atualizada"
         id = None
 
-        if create_new:
-            # Criar novo empresa
-            id = await empresas_services.create_empresa(empresa)
-        else:
+        if empresa.id:
             # Alterar empresa existente
-            id = await empresas_services.update_empresa(empresa)
+            id = await empresas_services.update(empresa)
+        else:
+            # Criar novo empresa
+            operation = "criada"
+            id = await empresas_services.create(empresa)
 
         response["message"] = f"Empresa {operation} com sucesso!"
         response["id"] = id

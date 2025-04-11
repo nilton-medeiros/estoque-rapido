@@ -16,12 +16,12 @@ class UsuariosServices:
         self.repository: (repository) Repositório recebido pelo parâmetro
 
     Métodos:
-        create_usuario: Cria novo usuário no banco usando repositório
+        create: Cria novo usuário no banco usando repositório
             Parâmetros:
                 usuario: (Usuario)
             Retorna: (Usuario) Novo usuário criado
 
-        update_usuario: Atualiza usuário no banco usando repositório
+        update: Atualiza usuário no banco usando repositório
             Parâmetros:
                     usuario: (Usuario)
                 Retorna: (Usuario) Usuário atualizado
@@ -35,7 +35,7 @@ class UsuariosServices:
         # Adicione lógica de negócios aqui, se necessário
         return await self.repository.authentication(email, password)
 
-    async def create_usuario(self, usuario: Usuario) -> Usuario:
+    async def create(self, usuario: Usuario) -> Usuario:
         """
         Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
 
@@ -53,13 +53,13 @@ class UsuariosServices:
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
-        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'usr_'
-        usuario.id = 'usr_' + get_uuid()
+        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'usu_'
+        usuario.id = 'usu_' + get_uuid()
 
         # Envia para o repositório selecionado em usuarios_controllrer salvar
         return await self.repository.save(usuario)
 
-    async def update_usuario(self, usuario: Usuario) -> Usuario:
+    async def update(self, usuario: Usuario) -> Usuario:
         if usuario.id is None:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(usuario)

@@ -152,6 +152,7 @@ def sidebar_header(page: ft.Page):
                 msg_snack = "Avatar carregado com sucesso!"
                 message_type = MessageType.INFO
                 is_success = True
+                user_updated = None
 
                 try:
                     avatar_url = bucket_controllers.handle_upload_bucket(
@@ -181,6 +182,8 @@ def sidebar_header(page: ft.Page):
                                     key=file_name_bucket)
                             except Exception as e:
                                 logger.error(f"{e}")
+                    else:
+                        user_updated = result["usuario"]
 
                 except ValueError as e:
                     logger.error(str(e))
@@ -203,20 +206,7 @@ def sidebar_header(page: ft.Page):
                                  message_type=message_type)
 
                 # Nova foto salva no database, remover a antiga do Bucket Storage se existir
-                if previous_user_photo and is_success:
-                    # String completa
-                    url = previous_user_photo
-                    # Dividindo a string pelo termo "public/"
-                    parts = url.split("public/")
-                    # Extraindo a parte desejada (key)
-                    key = parts[1]
-                    # Excluíndo do bucket
-                    if key:
-                        try:
-                            bucket_controllers.handle_delete_bucket(key)
-                        except Exception as e:
-                            logger.error(f"{e}")
-
+                if is_success:
                     # Atualiza a foto na página
                     user_photo = ft.Image(
                         src=avatar_url,
@@ -230,9 +220,23 @@ def sidebar_header(page: ft.Page):
 
                     user_avatar.content = user_photo
                     user_avatar.update()
-                    user = result["user"]
 
-                    await page.app_state.set_usuario(user.to_dict())
+                    await page.app_state.set_usuario(user_updated.to_dict())
+
+                    # Remover a foto anterior do bucket se não for a mesma
+                    if previous_user_photo and previous_user_photo != avatar_url:
+                        # String completa
+                        url = previous_user_photo
+                        # Dividindo a string pelo termo "public/"
+                        parts = url.split("public/")
+                        # Extraindo a parte desejada (key)
+                        key = parts[1]
+                        # Excluíndo do bucket
+                        if key:
+                            try:
+                                bucket_controllers.handle_delete_bucket(key)
+                            except Exception as e:
+                                logger.error(f"{e}")
 
                 color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                 message_snackbar(
@@ -315,9 +319,9 @@ def sidebar_header(page: ft.Page):
 
                         user_avatar.content = user_photo
                         user_avatar.update()
-                        user = result["user"]
+                        usuario = result["usuario"]
 
-                        await page.app_state.set_usuario(user.to_dict())
+                        await page.app_state.set_usuario(usuario.to_dict())
 
                         page.pubsub.send_all("usuario_updated")
 

@@ -38,13 +38,25 @@ class EmpresaView:
             on_click=self._consult_cnpj
         )
 
-                # Campos de nome com labels iniciais (CNPJ por padrão)
-        self.name = ft.TextField(
+        # Razão Social
+        self.corporate_name = ft.TextField(
+            label="Razão Social",
+            width=400,
+        )
+        # Nome Fantasia
+        self.trade_name = ft.TextField(
             label="Nome Fantasia",
             width=400,
         )
-        self.corporate_name = ft.TextField(
-            label="Razão Social",
+        # Nome da loja
+        self.store_name = ft.TextField(
+            label="Nome da Loja",
+            hint_text="Loja Moema, Loja Iguatemi-0325",
+            hint_style=ft.TextStyle(
+                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
+            ),
+             hint_fade_duration=5,
             width=400,
         )
 
@@ -55,16 +67,6 @@ class EmpresaView:
         self.im = ft.TextField(
             label="Inscrição Municipal",
             width=200,
-        )
-        self.store_name = ft.TextField(
-            label="Nome da Loja",
-            hint_text="Loja Moema, Loja Iguatemi-0325",
-            hint_style=ft.TextStyle(
-                color=ft.Colors.WHITE30,          # Cor do placeholder mais visível
-                weight=ft.FontWeight.W_100        # Placeholder um pouco mais fino
-            ),
-             hint_fade_duration=5,
-            width=400,
         )
 
         # Informações de Contato

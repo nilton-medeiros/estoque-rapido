@@ -1,7 +1,10 @@
+import logging
+
 from src.services.buckets.bucket_services import BucketServices
 from storage.buckets.aws_s3_storage import AmazonS3Adapter
 import boto3
 
+logger = logging.getLogger(__name__)
 
 def handle_upload_bucket(local_path: str, key: str) -> str:
     """
@@ -14,6 +17,7 @@ def handle_upload_bucket(local_path: str, key: str) -> str:
 
     try:
         storage_url = bucket_services.upload(local_path, key)
+        logger.info(f"Arquivo enviado com sucesso para o bucket: {storage_url}")
         return storage_url
     except FileNotFoundError:
         raise ValueError(f"O arquivo {local_path} não foi encontrado.")
@@ -28,6 +32,7 @@ def handle_delete_bucket(key: str) -> bool:
 
     try:
         is_deleted = bucket_services.delete(key)
+        logger.info(f"Arquivo {'deletado' if is_deleted else 'não pode ser deletado'} do bucket: {key}")
         return is_deleted
     except Exception as e:
         raise RuntimeError(f"Ocorreu um erro: {e}")

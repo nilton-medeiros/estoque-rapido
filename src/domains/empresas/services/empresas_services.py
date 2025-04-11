@@ -3,6 +3,7 @@ from typing import Optional
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
+from src.shared.utils.gen_uuid import get_uuid
 
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,
@@ -53,10 +54,14 @@ class EmpresasServices:
             >>> empresa_id = await empresas_services.create_empresa(empresa)
         """
 
-        existing_empresa = await self.repository.find_by_cnpj(empresa.cnpj)
+        # Se CNPJ foi informado, verifica se exite para evitar duplicidade com o mesmo CNPJ
+        if empresa.cnpj:
+            existing_empresa = await self.repository.find_by_cnpj(empresa.cnpj)
+            if existing_empresa:
+                raise ValueError("Já existe uma empresa com este CNPJ")
 
-        if existing_empresa:
-            raise ValueError("Já existe uma empresa com este CNPJ")
+        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'emp_'
+        empresa.id = 'emp_' + get_uuid()
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return await self.repository.save(empresa)
