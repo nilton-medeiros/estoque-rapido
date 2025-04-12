@@ -546,7 +546,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             ValueError: Se a nova cor não for válida
         """
         try:
-            if not new_color:
+            if not new_color or not new_color.get('primary'):
                 raise ValueError("A nova cor não pode ser vazia")
 
             doc_ref = self.collection.document(id)
@@ -605,7 +605,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             empresa_id=doc_data.get('empresa_id', None),
             empresas=empresas,
             photo_url=photo_url,
-            user_color=doc_data.get('user_color', 'blue'),
+            user_color=doc_data.get('user_color', {'primary': 'blue', 'primary_container': 'blue_200'}),
         )
 
     def _usuario_to_dict(self, usuario: Usuario) -> dict:

@@ -71,9 +71,9 @@ class SignupView:
         self.phone_input = build_input_field(
             sizes=sizes, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
         self.password_input = build_input_field(
-            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True)
+            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.password_again_input = build_input_field(
-            sizes=sizes, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True)
+            sizes=sizes, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.signup_button = self.build_signup_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400,
@@ -224,8 +224,7 @@ class SignupView:
 
             usuario.id = result["id"]
             # Atualiza o estado do app com o novo usuário antes da navegação
-            await self.page.app_state.set_usuario(usuario.to_dict())
-            self.page.pubsub.send_all("usuario_updated")
+            self.page.app_state.set_usuario(usuario.to_dict())
 
             # No registro de um novo usuario, não há empresas definidas para este usuário
             self.page.app_state.clear_empresa_data()

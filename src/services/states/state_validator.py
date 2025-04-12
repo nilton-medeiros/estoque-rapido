@@ -38,7 +38,7 @@ class StateValidator:
             return False, "Dados da empresa devem ser um dicionário"
 
         # Campos obrigatórios da entidade Empresa
-        required_fields = ['id', 'corporate_name', 'email', 'cnpj']
+        required_fields = ['id', 'corporate_name', 'email']
         for field in required_fields:
             if field not in company_data:
                 return False, f"Campo obrigatório ausente: {field}"

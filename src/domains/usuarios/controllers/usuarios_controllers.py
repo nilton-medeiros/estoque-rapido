@@ -226,7 +226,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     return response
 
 
-async def handle_update_color_usuarios(id: str, color: str) -> bool:
+async def handle_update_color_usuarios(id: str, color: str) -> dict:
     """
     Update no campo color do usuário.
 

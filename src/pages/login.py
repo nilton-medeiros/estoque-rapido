@@ -71,7 +71,7 @@ class LoginView:
         self.email_input = build_input_field(
             sizes=sizes, label="Email", icon=ft.Icons.EMAIL)
         self.password_input = build_input_field(
-            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True)
+            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.login_button = self.build_login_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
@@ -192,9 +192,10 @@ class LoginView:
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["authenticated_user"]
 
-            await self.page.app_state.set_usuario(user.to_dict())
+            self.page.app_state.set_usuario(user.to_dict())
 
-            print(f"Usuário autenticado: {user.name.nome_completo} ({user.email})")
+            print(
+                f"Usuário autenticado: {user.name.nome_completo} ({user.email})")
 
             if user.empresa_id is None:
                 print("Usuário não tem empresa registrada.")
@@ -215,7 +216,7 @@ class LoginView:
             cia: Empresa = result["empresa"]
 
             # Adiciona o empresa_id no state e publíca-a
-            await self.page.app_state.set_empresa(cia.to_dict())
+            self.page.app_state.set_empresa(cia.to_dict())
 
             print(f"Empresa atual registrada: {cia.corporate_name}")
 

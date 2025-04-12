@@ -34,7 +34,7 @@ class AppStateManager:
     def empresa_form(self):
         return self._state.get('empresa_form')
 
-    async def set_usuario(self, usuario_data: Optional[dict]) -> bool:
+    def set_usuario(self, usuario_data: Optional[dict]) -> bool:
         """
         Atualiza os dados do usuário no estado global.
         """
@@ -47,7 +47,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_usuario_data(
                 usuario_data)
             if not is_valid:
-                await self.handle_error(error)
+                self.handle_error(error)
                 return False
 
             self._state['usuario'] = usuario_data
@@ -55,10 +55,10 @@ class AppStateManager:
             return True
 
         except Exception as e:
-            await self.handle_error(f"Erro ao atualizar usuário: {str(e)}")
+            self.handle_error(f"Erro ao atualizar usuário: {str(e)}")
             return False
 
-    async def set_empresa(self, empresa_data: Optional[dict]) -> bool:
+    def set_empresa(self, empresa_data: Optional[dict]) -> bool:
         """
         Atualiza os dados da empresa no estado global.
         """
@@ -71,7 +71,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                await self.handle_error(error)
+                self.handle_error(error)
                 return False
 
             self._state['empresa'] = empresa_data
@@ -79,10 +79,10 @@ class AppStateManager:
             return True
 
         except Exception as e:
-            await self.handle_error(f"Erro ao atualizar empresa: {str(e)}")
+            self.handle_error(f"Erro ao atualizar empresa: {str(e)}")
             return False
 
-    async def set_empresa_form(self, empresa_data: Optional[dict]) -> bool:
+    def set_empresa_form(self, empresa_data: Optional[dict]) -> bool:
         """
         Atualiza os dados da empresa para o formulário no estado global.
         """
@@ -95,7 +95,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                await self.handle_error(error)
+                self.handle_error(error)
                 return False
 
             self._state['empresa_form'] = empresa_data
@@ -103,7 +103,7 @@ class AppStateManager:
             return True
 
         except Exception as e:
-            await self.handle_error(f"Erro ao atualizar empresa para o formulário: {str(e)}")
+            self.handle_error(f"Erro ao atualizar empresa para o formulário: {str(e)}")
             return False
 
     def handle_error(self, error_message: str):

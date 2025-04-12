@@ -1,35 +1,41 @@
 import flet as ft
 
 
-def build_input_field(sizes: dict, label: str, icon: str, hint_text: str = None, password: bool = False) -> ft.TextField:
+def build_input_field(sizes: dict, icon: str = None, **kwargs) -> ft.TextField:
+    prefix = None
+    if icon:
+        # O container garante um padding entre o ícone e o input
+        # O padding é aplicado apenas no lado direito
+        prefix = ft.Container(
+            content=ft.Icon(
+                name=icon, color=ft.Colors.PRIMARY, size=sizes["icon_size"]),
+            padding=ft.padding.only(right=10),
+        )
+
+    # Debug
+
     return ft.TextField(
-        label=label,
-        hint_text=hint_text,
+        **kwargs,
         width=sizes["input_width"],
         text_size=sizes["font_size"],
-        password=password,
-        can_reveal_password=password,
-        border_color=ft.Colors.YELLOW_ACCENT_400,
-        focused_border_color=ft.Colors.YELLOW_ACCENT,
-        prefix=ft.Icon(
-            name=icon,
-            color=ft.Colors.YELLOW_ACCENT_400,
-            size=sizes["icon_size"]
-        ),
+        border_color=ft.Colors.PRIMARY,
+        focused_border_color=ft.Colors.PRIMARY_CONTAINER,
+        prefix=prefix,
         text_align=ft.TextAlign.LEFT,
         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
         label_style=ft.TextStyle(
-            color=ft.Colors.YELLOW_ACCENT_400,          # Cor do label igual à borda
+            color=ft.Colors.PRIMARY,          # Cor do label igual à borda
             weight=ft.FontWeight.W_500                  # Label um pouco mais grosso
         ),
         hint_style=ft.TextStyle(
             color=ft.Colors.YELLOW_ACCENT_200,          # Cor do placeholder mais visível
             weight=ft.FontWeight.W_300                  # Placeholder um pouco mais fino
         ),
-        cursor_color=ft.Colors.YELLOW_ACCENT_400,
+        # Duração do fade do placeholder
+        cursor_color=ft.Colors.PRIMARY,
         focused_color=ft.Colors.YELLOW_ACCENT,
         text_style=ft.TextStyle(                        # Estilo do texto digitado
             color=ft.Colors.WHITE,
             weight=ft.FontWeight.W_400
-        )
+        ),
     )

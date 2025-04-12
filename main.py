@@ -23,8 +23,6 @@ flet_key = os.getenv('FLET_SECRET_KEY')
 os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
-
-
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
@@ -98,8 +96,8 @@ def main(page: ft.Page):
                     # Limpa elementos da UI relacionados à empresa
                     clear_empresa_ui()
             case "empresa_form_updated":
-                # ToDo: Implementando módulo empresas_form() em empresas_form.py
-                pass
+                # Atualiza elementos da UI que dependem do formulário de empresa
+                update_empresa_form_dependent_ui()
 
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
@@ -112,9 +110,13 @@ def main(page: ft.Page):
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
             page.company_name_text_btn.text = page.app_state.empresa.get(
-                'name', page.app_state.empresa.get('corporate_name'))
+                'trade_name', page.app_state.empresa.get('corporate_name'))
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.company_name_text_btn.update()
+
+    def update_empresa_form_dependent_ui():
+        # ToDo: Atualiza o nome da empresa no formulário e outros campos
+        pass
 
     def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
@@ -170,11 +172,11 @@ def main(page: ft.Page):
                 print(f'Acessando a página /home. Usuário id: {page.app_state.usuario.get('id')}')
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    home = home_page(page)
+                    home_container = home_page(page)
                     pg_view = ft.View(
                         route='/home',
-                        controls=[home],
-                        appbar=home.data,
+                        appbar=home_container.data,
+                        controls=[home_container],
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -185,24 +187,12 @@ def main(page: ft.Page):
             case '/empresas/form':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
-                    route_title = "home/empresas/form"
-                    empresa = page.app_state.empresa_form
-                    id = empresa.get('id', None)
-                    if id:
-                        route_title += f"/{id}"
-                    else:
-                        route_title += "/new"
-
+                    page.on_resized = None
+                    empresa_form = empresas_form(page)
                     pg_view = ft.View(
                         route='/empresas/form',
-                        appbar=ft.AppBar(
-                            title=ft.Text(route_title, size=16),
-                            leading=ft.IconButton(
-                                icon=ft.Icons.ARROW_BACK,
-                                on_click=lambda _: page.go("/home"),
-                            ),
-                        ),
-                        controls=[empresas_form(page)],
+                        appbar=empresa_form.data,
+                        controls=[empresa_form],
                         scroll=ft.ScrollMode.AUTO,
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,

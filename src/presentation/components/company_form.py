@@ -12,6 +12,10 @@ from src.domains.empresas import CNPJ, CodigoRegimeTributario, EmpresaSize, Envi
 
 logger = logging.getLogger(__name__)
 
+"""
+Este módulo não é usado, ele foi refeito no arquivo src/pages/empresas/empresas_form.py.
+ToDo: Apagar este arquivo company_form.py em produção
+"""
 
 class CompanyForm(ft.Container):
     def __init__(self, page: ft.Page, company_data: dict = None):

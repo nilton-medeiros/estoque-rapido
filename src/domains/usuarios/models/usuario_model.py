@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
@@ -23,7 +23,7 @@ class Usuario:
         empresa_id (Optional[str]): ID da última empresa logada.
         empresas (Optional[List[str]]): Lista de IDs de empresas associadas ao usuário.
         photo_url (Optional[str]): URL da foto de perfil do usuário.
-        user_color (Optional[str]): Cor preferencial do usuário.
+        user_color (Optional[dict]): Cor preferencial do usuário.
 
 
     Example:
@@ -45,7 +45,7 @@ class Usuario:
     empresa_id: Optional[str] = field(default=None)
     empresas: Optional[List[str]] = field(default_factory=list)
     photo_url: Optional[str] = field(default=None)
-    user_color: Optional[str] = field(default='blue')
+    user_color: Optional[Dict] = field(default_factory=dict)
 
     # Lista de perfis permitidos
     ALLOWED_PROFILES = {"admin", "cobrança",
@@ -83,8 +83,9 @@ class Usuario:
         if self.photo_url == '':
             self.photo_url = None
 
-        if self.user_color == '':
-            self.user_color = 'blue'
+        if not self.user_color or not self.user_color.get('primary'):
+            self.user_color = {'primary': 'blue',
+                               'primary_container': 'blue_200'}
 
     def to_dict(self) -> dict:
         return {

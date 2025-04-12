@@ -37,7 +37,6 @@ def sidebar_header(page: ft.Page):
         user_photo = ft.Text(current_user['name'].iniciais)
 
     current_company = page.app_state.empresa
-
     if current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
     else:
@@ -119,10 +118,9 @@ def sidebar_header(page: ft.Page):
                     await asyncio.sleep(0.1)
 
                 # Agora que o upload está concluído, podemos prosseguir com o upload para S3
-                cnpj = current_company.get("cnpj")
                 prefix = None
 
-                if cnpj:
+                if cnpj := current_company.get('cnpj'):
                     prefix = cnpj.raw_cnpj
                 else:
                     prefix = current_user.get("id")
@@ -221,7 +219,7 @@ def sidebar_header(page: ft.Page):
                     user_avatar.content = user_photo
                     user_avatar.update()
 
-                    await page.app_state.set_usuario(user_updated.to_dict())
+                    page.app_state.set_usuario(user_updated.to_dict())
 
                     # Remover a foto anterior do bucket se não for a mesma
                     if previous_user_photo and previous_user_photo != avatar_url:
@@ -321,7 +319,7 @@ def sidebar_header(page: ft.Page):
                         user_avatar.update()
                         usuario = result["usuario"]
 
-                        await page.app_state.set_usuario(usuario.to_dict())
+                        page.app_state.set_usuario(usuario.to_dict())
 
                         page.pubsub.send_all("usuario_updated")
 
@@ -403,7 +401,12 @@ def sidebar_header(page: ft.Page):
     )
 
     def on_click_empresa_btn(e):
-
+        if current_company.get('id'):
+            # Se já existe uma empresa, seta a empresa atual para o form
+            page.app_state.set_empresa_form(current_company)
+        else:
+            # Se não existe empresa, limpa o form
+            page.app_state.clear_empresa_form_data()
         page.go('/empresas/form')
 
     page.company_name_text_btn.on_click = on_click_empresa_btn
@@ -560,14 +563,21 @@ def sidebar_footer(page: ft.Page):
 
     async def change_primary_color(e):
         # Atualiza a cor primária da interface no thema do app
-        e.page.theme.color_scheme.primary = e.control.data
-        user_id = e.page.app_state.usuario['id']
+        e.page.theme.color_scheme.primary = e.control.data.get('primary')
+        e.page.theme.color_scheme.primary_container = e.control.data.get('primary_container')
+
+        user = page.app_state.usuario
         msg_error = None
 
         try:
-            result = await handle_update_color_usuarios(id=user_id, color=e.control.data)
+            result = await handle_update_color_usuarios(id=user.get('id'), color=e.control.data)
             if result["is_error"]:
                 msg_error = result["message"]
+                return
+
+            user.update({'user_color': e.control.data})
+            page.app_state.set_usuario(user)
+
         except ValueError as e:
             logger.error(str(e))
             msg_error = f"Erro: {str(e)}"
@@ -581,7 +591,7 @@ def sidebar_footer(page: ft.Page):
         e.page.update()
 
     def on_click_business_btn(e):
-        page.go('/empresas/form')
+        page.go('/empresas/table')
 
     return ft.Container(
         padding=ft.padding.symmetric(vertical=20),
@@ -628,7 +638,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Deep Purple')
                                 ]
                             ),
-                            data='deeppurple',
+                            data={'primary': 'deeppurple', 'primary_container': 'deeppurple_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -642,7 +652,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Purple')
                                 ]
                             ),
-                            data='purple',
+                            data={'primary': 'purple', 'primary_container': 'purple_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -656,7 +666,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Indigo')
                                 ]
                             ),
-                            data='indigo',
+                            data={'primary': 'indigo', 'primary_container': 'indigo_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -670,7 +680,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Blue (default)')
                                 ]
                             ),
-                            data='blue',
+                            data={'primary': 'blue', 'primary_container': 'blue_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -684,7 +694,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Teal')
                                 ]
                             ),
-                            data='teal',
+                            data={'primary': 'teal', 'primary_container': 'teal_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -698,7 +708,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Green')
                                 ]
                             ),
-                            data='green',
+                            data={'primary': 'green', 'primary_container': 'green_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -712,7 +722,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Yellow')
                                 ]
                             ),
-                            data='yellow',
+                            data={'primary': 'yellow', 'primary_container': 'yellow_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -726,7 +736,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Orange')
                                 ]
                             ),
-                            data='orange',
+                            data={'primary': 'orange', 'primary_container': 'orange_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -740,7 +750,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Deep orange')
                                 ]
                             ),
-                            data='deeporange',
+                            data={'primary': 'deeporange', 'primary_container': 'deeporange_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -754,7 +764,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Pink')
                                 ]
                             ),
-                            data='pink',
+                            data={'primary': 'pink', 'primary_container': 'pink_200'},
                             on_click=change_primary_color,
                         ),
                         ft.PopupMenuItem(
@@ -768,7 +778,7 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Red')
                                 ]
                             ),
-                            data='red',
+                            data={'primary': 'red', 'primary_container': 'red_200'},
                             on_click=change_primary_color,
                         ),
                     ],
