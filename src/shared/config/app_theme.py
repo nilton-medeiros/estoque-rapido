@@ -7,8 +7,8 @@ class AppTheme:
             background='#111418',
             on_background='#2d2d3a',
             on_inverse_surface='#2d2d3a',
-            primary=ft.Colors.BLUE,
-            primary_container=ft.Colors.BLUE_200,
+            primary=ft.Colors.GREEN,
+            primary_container=ft.Colors.GREEN_200,
         ),
         text_theme=ft.TextTheme(
             body_large=ft.TextStyle(

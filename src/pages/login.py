@@ -69,9 +69,9 @@ class LoginView:
         sizes = get_responsive_sizes(self.page.width)
 
         self.email_input = build_input_field(
-            sizes=sizes, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page.width, label="Email", icon=ft.Icons.EMAIL)
         self.password_input = build_input_field(
-            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.login_button = self.build_login_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)

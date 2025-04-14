@@ -1,7 +1,10 @@
 import flet as ft
 
+from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 
-def build_input_field(sizes: dict, icon: str = None, **kwargs) -> ft.TextField:
+
+def build_input_field(page_width: int, col: dict = None, icon: str = None, **kwargs) -> ft.TextField:
+    sizes = get_responsive_sizes(page_width)
     prefix = None
     if icon:
         # O container garante um padding entre o ícone e o input
@@ -15,6 +18,7 @@ def build_input_field(sizes: dict, icon: str = None, **kwargs) -> ft.TextField:
     # Debug
 
     return ft.TextField(
+        col=col,
         **kwargs,
         width=sizes["input_width"],
         text_size=sizes["font_size"],
@@ -28,12 +32,12 @@ def build_input_field(sizes: dict, icon: str = None, **kwargs) -> ft.TextField:
             weight=ft.FontWeight.W_500                  # Label um pouco mais grosso
         ),
         hint_style=ft.TextStyle(
-            color=ft.Colors.YELLOW_ACCENT_200,          # Cor do placeholder mais visível
+            color=ft.Colors.GREY_500,          # Cor do placeholder mais visível
             weight=ft.FontWeight.W_300                  # Placeholder um pouco mais fino
         ),
         # Duração do fade do placeholder
         cursor_color=ft.Colors.PRIMARY,
-        focused_color=ft.Colors.YELLOW_ACCENT,
+        focused_color=ft.Colors.GREY_500,
         text_style=ft.TextStyle(                        # Estilo do texto digitado
             color=ft.Colors.WHITE,
             weight=ft.FontWeight.W_400

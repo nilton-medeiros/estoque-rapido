@@ -3,6 +3,7 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
+
 async def consult_cnpj_api(cnpj):
 
     # Remove caracteres especiais do CNPJ
@@ -37,6 +38,37 @@ async def consult_cnpj_api(cnpj):
     except Exception as error:
         logger.error(f"Erro ao consultar CNPJ: {str(error)}")
         # Mostra erro genérico
+        print(f"Erro CNPJ: {str(error)}")
+        if "400" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: CNPJ inválido."
+            }
+        elif "403" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: Acesso negado."
+            }
+        elif "404" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: CNPJ não encontrado."
+            }
+        elif "500" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: Erro interno do servidor."
+            }
+        elif "503" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: Serviço temporariamente indisponível."
+            }
+        elif "timeout" in str(error):
+            return {
+                'is_error': True,
+                'message': "Erro ao consultar CNPJ: Tempo de resposta excedido."
+            }
         return {
             'is_error': True,
             'message': f"Erro ao consultar CNPJ: {str(error)}"

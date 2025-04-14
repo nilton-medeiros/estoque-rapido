@@ -86,6 +86,16 @@ def home_page(page: ft.Page):
             layout.spacing = 10
             page.bgcolor = ft.Colors.BLACK
 
+            side_right = content.content.controls[0].content.controls[1]
+
+            print(f"page.width: {page.width}")
+
+            if page.width < 1024:
+                # Oculta imagem de fundo
+                side_right.visible = False
+            else:
+                side_right.visible = True
+
         page.update()  # **Atualiza a página após modificar AppBar**
 
     page.on_resized = on_page_resized

@@ -107,7 +107,7 @@ def main_content():
                         ft.Text(
                             "Hoje",
                             style=ft.TextStyle(
-                                color=ft.Colors.PRIMARY,
+                                color=ft.Colors.WHITE,
                                 weight=ft.FontWeight.W_900,
                                 size=20,
                             )
@@ -116,7 +116,7 @@ def main_content():
                             content=ft.Text(
                                 ".",
                                 style=ft.TextStyle(
-                                    color=ft.Colors.PRIMARY,
+                                    color=ft.Colors.WHITE,
                                     weight=ft.FontWeight.W_900,
                                     size=40,  # O tamanho maior do ponto
                                 )
@@ -126,7 +126,7 @@ def main_content():
                         ft.Text(
                             date_description,
                             style=ft.TextStyle(
-                                color=ft.Colors.WHITE,
+                                color=ft.Colors.PRIMARY,
                                 size=18,
                             )
                         ),
@@ -140,7 +140,7 @@ def main_content():
 
     side_right = ft.Container(
         margin=ft.margin.only(top=20),
-        col={'md': 12, 'lg': 4},
+        col={'xl': 2, 'md': 2, 'lg': 4},
         content=ft.Image(
             src='images/face-2.png',
             width=20,

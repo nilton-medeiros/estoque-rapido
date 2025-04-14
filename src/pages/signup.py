@@ -65,15 +65,15 @@ class SignupView:
         sizes = get_responsive_sizes(self.page.width)
 
         self.name_input = build_input_field(
-            sizes=sizes, label="Nome e Sobrenome", icon=ft.Icons.PERSON)
+            page_width=self.page.width, label="Nome e Sobrenome", icon=ft.Icons.PERSON)
         self.email_input = build_input_field(
-            sizes=sizes, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page.width, label="Email", icon=ft.Icons.EMAIL)
         self.phone_input = build_input_field(
-            sizes=sizes, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
+            page_width=self.page.width, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
         self.password_input = build_input_field(
-            sizes=sizes, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.password_again_input = build_input_field(
-            sizes=sizes, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.signup_button = self.build_signup_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400,

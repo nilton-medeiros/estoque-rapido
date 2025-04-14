@@ -10,8 +10,6 @@ import src.shared.utils.tools as tools
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import EmpresaSize
 from src.pages.partials.build_input_responsive import build_input_field
-from src.pages.partials.get_responsive_sizes import get_responsive_sizes
-from src.shared.config.app_theme import AppTheme
 from src.shared.utils.field_validation_functions import validate_email
 from src.services.upload.upload_files import UploadFile
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
@@ -27,49 +25,55 @@ class EmpresaView:
     def __init__(self, page: ft.Page):
         self.page = page
         self.data = page.app_state.empresa_form
-        self._create_form_fields()
-        self.form = self.build_form()
-        self.page.on_resized = self._page_resize
-
         # Vars propiedades
         self.is_logo_url_web = False
         self.logo_url: str = None
         self.previous_logo_url: str = None
         self.local_upload_file: str = None
         self.initials_corporate_name = "Logo"
+        self.font_size = 18
+        self.icon_size = 24
+        self.padding = 50
+
+        # Responsividade
+        self._create_form_fields()
+        self.form = self.build_form()
+        self.page.on_resized = self._page_resize
+
 
     def _create_form_fields(self):
         """Cria todos os campos do formulário"""
-        sizes = get_responsive_sizes(self.page.width)
 
+        # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
+        # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
         self.cnpj = ft.TextField(
+            col={'xs': 10, 'md': 10, 'lg': 3},
             label="CNPJ",
             prefix=ft.Container(
                 content=ft.Icon(
-                name=ft.Icons.WARNING,
-                color=ft.Colors.PRIMARY,
-                size=sizes["icon_size"]
+                    name=ft.Icons.WARNING,
+                    color=ft.Colors.YELLOW_ACCENT_200,
+                    size=self.icon_size,
+                ),
+                padding=ft.padding.only(right=10),
             ),
-            padding=ft.padding.only(right=10),
-            ),
-            width=sizes["input_width"],
-            text_size=sizes["font_size"],
+            text_size=self.font_size,
             border_color=ft.Colors.PRIMARY,
-            focused_border_color=ft.Colors.RED,
+            focused_border_color=ft.Colors.PRIMARY_CONTAINER,
             text_align=ft.TextAlign.LEFT,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
-                color=ft.Colors.PRIMARY,          # Cor do label igual à borda
-                weight=ft.FontWeight.W_500                  # Label um pouco mais grosso
+                color=ft.Colors.PRIMARY,  # Cor do label igual à borda
+                weight=ft.FontWeight.W_500  # Label um pouco mais grosso
             ),
             hint_style=ft.TextStyle(
-                color=ft.Colors.YELLOW_ACCENT_200,          # Cor do placeholder mais visível
-                weight=ft.FontWeight.W_300                  # Placeholder um pouco mais fino
+                color=ft.Colors.GREY_500,  # Cor do placeholder mais visível
+                weight=ft.FontWeight.W_300  # Placeholder um pouco mais fino
             ),
             # Duração do fade do placeholder
             cursor_color=ft.Colors.PRIMARY,
-            focused_color=ft.Colors.YELLOW_ACCENT,
+            focused_color=ft.Colors.GREY_500,
             text_style=ft.TextStyle(                        # Estilo do texto digitado
                 color=ft.Colors.WHITE,
                 weight=ft.FontWeight.W_400
@@ -78,53 +82,64 @@ class EmpresaView:
         )
 
         self.consult_cnpj_button = ft.IconButton(
+            col={'xs': 2, 'md': 2, 'lg': 1},
             icon=ft.Icons.SEARCH,
+            icon_size=self.icon_size,
+            selected_icon_color=ft.Colors.PRIMARY_CONTAINER,
             tooltip="Consultar CNPJ",
+            hover_color=ft.Colors.PRIMARY_CONTAINER,
             disabled=True,
             on_click=self._consult_cnpj
         )
 
         # Razão Social
         self.corporate_name = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 12, 'lg': 8},
             label="Razão Social",
             icon=ft.Icons.CORPORATE_FARE,
         )
         # Nome Fantasia
         self.trade_name = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome Fantasia",
             icon=ft.Icons.STORE,
         )
         # Nome da loja
         self.store_name = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome da Loja",
             icon=ft.Icons.STORE_MALL_DIRECTORY,
-            hint_text="Loja Moema",
+            hint_text="Ex.: Loja Moema",
             hint_fade_duration=5,
         )
 
         self.ie = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Estadual",
             icon=ft.Icons.REAL_ESTATE_AGENT,
         )
         self.im = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Municipal",
             icon=ft.Icons.REAL_ESTATE_AGENT,
         )
 
         # Informações de Contato
         self.email = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 8, 'lg': 6},
             label="Email",
             icon=ft.Icons.EMAIL,
             keyboard_type=ft.KeyboardType.EMAIL,
         )
         self.phone = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 4, 'lg': 6},
             label="Telefone",
             icon=ft.Icons.PHONE,
             keyboard_type=ft.KeyboardType.PHONE,
@@ -134,36 +149,42 @@ class EmpresaView:
 
         # Endereço
         self.street = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 12, 'lg': 6},
             label="Rua",
             icon=ft.Icons.LOCATION_ON,
         )
         self.number = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 2},
             label="Número",
             icon=ft.Icons.NUMBERS,
         )
         self.complement = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 4},
             label="Complemento",
             icon=ft.Icons.ADD_LOCATION,
             hint_text="Apto 101",
             hint_fade_duration=5,
         )
         self.neighborhood = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 5},
             label="Bairro",
             icon=ft.Icons.LOCATION_CITY,
         )
         self.city = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 6, 'lg': 4},
             label="Cidade",
             icon=ft.Icons.LOCATION_CITY,
             hint_text="São Paulo",
             hint_fade_duration=5,
         )
         self.state = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 2, 'lg': 3},
             label="Estado",
             icon=ft.Icons.LOCATION_CITY,
             hint_text="SP",
@@ -172,7 +193,8 @@ class EmpresaView:
             max_length=2,
         )
         self.postal_code = build_input_field(
-            sizes=sizes,
+            page_width=self.page.width,
+            col={'xs': 12, 'md': 10, 'lg': 12},
             label="CEP",
             icon=ft.Icons.LOCATION_CITY,
             hint_text="00000-000",
@@ -181,6 +203,7 @@ class EmpresaView:
 
         # Porte da Empresa. Campo oculto ao usuário neste momento, auto preenchido pela consulta ao CNPJ
         self.size_cia = ft.Dropdown(
+            col={'xs': 12, 'md': 8, 'lg': 5},
             label="Porte da Empresa",
             width=400,
             options=[
@@ -191,10 +214,6 @@ class EmpresaView:
 
         def on_hover_logo(e):
             color = ft.Colors.PRIMARY_CONTAINER if e.data == "true" else ft.Colors.PRIMARY
-
-            logger.debug(f"on_hover_logo: {e.data} - Cor: {color}")
-
-            print(f"Sofreu on_hover. Cor: {color}")
             icon_container = self.camera_icon.content
             logo_container = self.logo_frame
             icon_container.color = color
@@ -202,12 +221,25 @@ class EmpresaView:
             icon_container.update()
             logo_container.update()
 
+        self.logo_frame = ft.Container(
+            content=ft.Text("Logo", italic=True),
+            bgcolor=ft.Colors.TRANSPARENT,
+            padding=10,
+            alignment=ft.alignment.center,
+            width=350,
+            height=250,
+            border=ft.border.all(color=ft.Colors.GREY_400, width=1),
+            border_radius=ft.border_radius.all(10),
+            on_click=self._show_logo_dialog,  # Também
+            on_hover=on_hover_logo,
+            disabled=self.consult_cnpj_button.disabled,
+        )
         # Campo Logo do emitente de NFCe
         self.camera_icon = ft.Container(
             content=ft.Icon(
                 name=ft.Icons.ADD_A_PHOTO_OUTLINED,
                 size=20,
-                color=ft.Colors.GREY_400,
+                color=ft.Colors.GREY_400,  # Cor padrão quando disabled
             ),
             margin=ft.margin.only(top=-5),
             ink=True,
@@ -215,19 +247,6 @@ class EmpresaView:
             on_click=self._show_logo_dialog,
             border_radius=ft.border_radius.all(10),
             padding=8,
-            disabled=self.consult_cnpj_button.disabled,
-        )
-        self.logo_frame = ft.Container(
-            content=ft.Text("Logo", italic=True),
-            bgcolor=ft.Colors.TRANSPARENT,
-            padding=10,
-            alignment=ft.alignment.center,
-            width=300,
-            height=200,
-            border=ft.border.all(color=ft.Colors.GREY_400, width=1),
-            border_radius=ft.border_radius.all(10),
-            on_click=self._show_logo_dialog,  # Também
-            on_hover=on_hover_logo,
             disabled=self.consult_cnpj_button.disabled,
         )
 
@@ -301,7 +320,7 @@ class EmpresaView:
         icon_container = self.camera_icon
 
         if len(cnpj_clean) < 14:
-            self.cnpj.prefix.name=ft.Icons.WARNING
+            self.cnpj.prefix.content.name=ft.Icons.WARNING
             cnpj_button.disabled = True
             logo_container.disabled = True
             icon_container.disabled = True
@@ -310,7 +329,7 @@ class EmpresaView:
         elif len(cnpj_clean) == 14:
             # CNPJ válido, ativa o botão de consulta ao dados da empresa pelo CNPJ
             self.cnpj.value = cnpj_clean
-            self.cnpj.prefix.name=ft.Icons.CHECK_CIRCLE
+            self.cnpj.prefix.content.name=ft.Icons.CHECK_CIRCLE
             cnpj_button.disabled = False
             logo_container.disabled = False
             icon_container.disabled = False
@@ -372,6 +391,12 @@ class EmpresaView:
                 # Mostra mensagem de sucesso
                 message_snackbar(
                     page=self.page, message="Dados do CNPJ carregados com sucesso!", message_type=MessageType.SUCCESS)
+            elif response.status == 400:
+                message_snackbar(
+                    page=self.page,
+                    message=f"Erro ao consultar CNPJ: CNPJ inválido",
+                    message_type=MessageType.WARNING
+                )
             else:
                 # Mostra erro
                 message_snackbar(
@@ -384,11 +409,10 @@ class EmpresaView:
 
         except Exception as error:
             # Mostra erro genérico
-            msg = f"Erro ao consultar CNPJ: {str(error)}"
-            logger.error(msg)
+            logger.error(str(error))
             message_snackbar(
                 page=self.page,
-                message=msg,
+                message=str(error),
                 message_type=MessageType.ERROR
             )
 
@@ -401,38 +425,37 @@ class EmpresaView:
 
     def build_form(self) -> ft.Container:
         """Constrói o formulário de cadastro de empresa"""
-        sizes = get_responsive_sizes(self.page.width)
+        def responsive_row(controls):
+            return ft.ResponsiveRow(
+                columns=12,
+                expand=True,
+                # alignment=ft.MainAxisAlignment.START,
+                spacing=20,
+                run_spacing=20,
+                controls=controls,
+            )
 
         build_content = ft.Column(
             controls=[
-                ft.Row(controls=[self.cnpj, self.consult_cnpj_button], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=0),
-                ft.Row(controls=[self.corporate_name, self.trade_name], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=0),
-                self.store_name,
-                self.ie,
-                self.im,
-                self.email,
-                self.phone,
-                self.size_cia,
+                ft.Text("Dados da Empresa", size=16),
+                responsive_row(controls=[self.cnpj, self.consult_cnpj_button, self.corporate_name]),
+                responsive_row(controls=[self.trade_name, self.store_name, self.ie, self.im]),
+                responsive_row(controls=[self.email, self.phone]),
                 ft.Divider(height=5),
                 ft.Text("Endereço", size=16),
-                self.street,
-                self.number,
-                self.complement,
-                self.neighborhood,
-                self.city,
-                self.state,
-                self.postal_code,
+                responsive_row(controls=[self.street, self.number, self.complement]),
+                responsive_row(controls=[self.neighborhood, self.city, self.state, self.postal_code]),
                 ft.Divider(height=5),
                 ft.Text("Logo da Empresa", size=16),
-                self.logo_section
+                ft.Row(col=12, alignment=ft.MainAxisAlignment.CENTER, controls=[self.logo_section]),
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=10
         )
 
         return ft.Container(
             content=build_content,
-            padding=sizes["form_padding"],
+            padding=self.padding,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             border_radius=ft.border_radius.all(10),
         )
@@ -517,44 +540,39 @@ class EmpresaView:
         return None
 
     def _page_resize(self, e):
-        sizes = get_responsive_sizes(self.page.width)
+        if self.page.width < 600:
+            self.font_size = 14
+            self.icon_size = 16
+            self.padding = 20
+        elif self.page.width < 1024:
+            self.font_size = 16
+            self.icon_size = 20
+            self.padding = 40
+        else:
+            self.font_size = 18
+            self.icon_size = 24
+            self.padding = 50
 
         # Atualiza os tamanhos dos campos do formulário
-        self.cnpj.width = sizes["input_width"]
-        self.cnpj.text_size = sizes["font_size"]
-        self.corporate_name.width = sizes["input_width"]
-        self.corporate_name.text_size = sizes["font_size"]
-        self.trade_name.width = sizes["input_width"]
-        self.trade_name.text_size = sizes["font_size"]
-        self.store_name.width = sizes["input_width"]
-        self.store_name.text_size = sizes["font_size"]
-        self.ie.width = sizes["input_width"]
-        self.ie.text_size = sizes["font_size"]
-        self.im.width = sizes["input_width"]
-        self.im.text_size = sizes["font_size"]
-        self.email.width = sizes["input_width"]
-        self.email.text_size = sizes["font_size"]
-        self.phone.width = sizes["input_width"]
-        self.phone.text_size = sizes["font_size"]
-        self.street.width = sizes["input_width"]
-        self.street.text_size = sizes["font_size"]
-        self.number.width = sizes["input_width"]
-        self.number.text_size = sizes["font_size"]
-        self.complement.width = sizes["input_width"]
-        self.complement.text_size = sizes["font_size"]
-        self.neighborhood.width = sizes["input_width"]
-        self.neighborhood.text_size = sizes["font_size"]
-        self.city.width = sizes["input_width"]
-        self.city.text_size = sizes["font_size"]
-        self.state.width = sizes["input_width"]
-        self.state.text_size = sizes["font_size"]
-        self.postal_code.width = sizes["input_width"]
-        self.postal_code.text_size = sizes["font_size"]
-        self.size_cia.width = sizes["input_width"]
-        self.size_cia.text_size = sizes["font_size"]
+        self.cnpj.text_size = self.font_size
+        self.corporate_name.text_size = self.font_size
+        self.trade_name.text_size = self.font_size
+        self.store_name.text_size = self.font_size
+        self.ie.text_size = self.font_size
+        self.im.text_size = self.font_size
+        self.email.text_size = self.font_size
+        self.phone.text_size = self.font_size
+        self.street.text_size = self.font_size
+        self.number.text_size = self.font_size
+        self.complement.text_size = self.font_size
+        self.neighborhood.text_size = self.font_size
+        self.city.text_size = self.font_size
+        self.state.text_size = self.font_size
+        self.postal_code.text_size = self.font_size
+        self.size_cia.text_size = self.font_size
 
         # Atualiza o padding do container
-        self.form.padding = sizes["form_padding"]
+        self.form.padding = self.padding
         self.form.update()
 
     def get_form_object(self) -> Empresa:
@@ -755,9 +773,6 @@ class EmpresaView:
 # Rota: /home/empresas/form
 def empresas_form(page: ft.Page):
     """Página de cadastro de empresas"""
-    # page.theme = AppTheme.theme
-    # page.theme_mode = ft.ThemeMode.DARK
-
     if user_color := page.app_state.usuario.get('user_color'):
         page.theme.color_scheme.primary = user_color.get('primary')
         page.theme.color_scheme.primary_container = user_color.get('primary_container')
@@ -776,6 +791,7 @@ def empresas_form(page: ft.Page):
             on_click=lambda _: page.go("/home"),
         ),
         title=ft.Text(route_title, size=16),
+        # bgcolor=ft.Colors.BLUE_700,   # Definir a cor do AppBar
     )
 
     empresa_view = EmpresaView(page)
@@ -828,8 +844,8 @@ def empresas_form(page: ft.Page):
         page.go('/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"
-    save_btn = ft.ElevatedButton("Salvar", on_click=save_form_empresa)
-    exit_btn = ft.ElevatedButton("Cancelar", on_click=exit_form_empresa)
+    save_btn = ft.ElevatedButton(text="Salvar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=save_form_empresa)
+    exit_btn = ft.ElevatedButton(text="Cancelar",col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_empresa)
 
     return ft.Column(
         data=appbar,
@@ -837,11 +853,12 @@ def empresas_form(page: ft.Page):
             form_container,
             ft.Divider(height=5),
             ft.ResponsiveRow(
-                controls=[save_btn, exit_btn],
+                columns=12,
                 expand=True,
-                alignment=ft.MainAxisAlignment.END,
                 spacing=20,
                 run_spacing=20,
+                controls=[save_btn, exit_btn],
+                alignment=ft.MainAxisAlignment.END,
             ),
         ],
     )
