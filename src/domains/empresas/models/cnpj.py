@@ -40,31 +40,41 @@ class CNPJ:
         return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
 
     def is_valid(self) -> bool:
-        """
-        Valida o CNPJ usando as regras oficiais brasileiras.
+        # Remove caracteres não numéricos
+        cnpj = self.raw_cnpj
 
-        Returns:
-            bool: True se o CNPJ for válido, False caso contrário.
-        """
-        digits = self.raw_cnpj
-
-        if len(set(digits)) == 1:
+        # Verifica se tem 14 dígitos
+        if len(cnpj) != 14:
             return False
 
-        # Primeiro dígito verificador
-        total = sum((10 - i) * int(digits[i]) for i in range(12))
-        first_check = 11 - (total % 11)
-        first_check = 0 if first_check >= 10 else first_check
+        # Verifica se todos os dígitos são iguais
+        if cnpj == cnpj[0] * 14:
+            return False
 
-        # Segundo dígito verificador
-        total = sum((11 - i) * int(digits[i]) for i in range(13))
-        second_check = 11 - (total % 11)
-        second_check = 0 if second_check >= 10 else second_check
+        # Cálculo do primeiro dígito verificador
+        soma = 0
+        peso = 5
+        for i in range(12):
+            soma += int(cnpj[i]) * peso
+            peso = 9 if peso == 2 else peso - 1
 
-        return (
-            int(digits[12]) == first_check and
-            int(digits[13]) == second_check
-        )
+        digito1 = 11 - (soma % 11)
+        if digito1 > 9:
+            digito1 = 0
+
+        # Cálculo do segundo dígito verificador
+        soma = 0
+        peso = 6
+        for i in range(13):
+            soma += int(cnpj[i]) * peso
+            peso = 9 if peso == 2 else peso - 1
+
+        digito2 = 11 - (soma % 11)
+        if digito2 > 9:
+            digito2 = 0
+
+        # Verifica se os dígitos verificadores estão corretos
+        return cnpj[-2:] == f"{digito1}{digito2}"
 
     def __str__(self) -> str:
         """

@@ -83,6 +83,11 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def update_color(self, id: str, new_color: str) -> bool:
+    async def update_colors(self, id: str, new_colors: str) -> bool:
         """Atualiza a cor preferida do um usuário."""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    async def update_empresas(self, usuario_id, empresa_id, empresas) -> bool:
+        """Atualiza empresas do um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")

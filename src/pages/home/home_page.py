@@ -10,9 +10,9 @@ def home_page(page: ft.Page):
     page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
-    if user_color := page.app_state.usuario.get('user_color'):
-        page.theme.color_scheme.primary = user_color.get('primary')
-        page.theme.color_scheme.primary_container = user_color.get('primary_container')
+    if user_colors := page.app_state.usuario.get('user_colors'):
+        page.theme.color_scheme.primary = user_colors.get('primary')
+        page.theme.color_scheme.primary_container = user_colors.get('primary_container')
 
     print(f"Home Page -> Usuário: {page.app_state.usuario.get('name').nome_completo}")
     sidebar = sidebar_container(page)

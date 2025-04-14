@@ -49,6 +49,9 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         """
         try:
             empresa_dict = self._empresa_to_dict(empresa)
+            print("DEBUG: ============================================")
+            print("DEBUG: empresa_dict", empresa_dict)
+            print("DEBUG: ============================================")
             # Insere ou atualiza o documento na coleção 'empresas'
             self.collection.document(empresa.id).set(empresa_dict, merge=True)
             return empresa.id  # Garante que o ID retornado seja o ID real do documento
@@ -210,7 +213,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             raise Exception(f"Erro inesperado ao excluir empresa: {translated_error}")
 
 
-    async def _doc_to_empresa(self, doc_data: dict) -> Empresa:
+    def _doc_to_empresa(self, doc_data: dict) -> Empresa:
         """
         Converter os dados de um documento do Firestore em uma instância de empresa.
 
@@ -314,7 +317,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             store_name=doc_data.get('store_name', "Matriz"),
             cnpj=cnpj,
             email=doc_data.get('email'),
-            ie=doc_data['ie'],
+            ie=doc_data.get('ie'),
             im=doc_data.get('im'),
             phone=phone,
             address=address,
@@ -325,7 +328,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             payment_gateway=payment_gateway,
         )
 
-    async def _empresa_to_dict(self, empresa: Empresa) -> dict:
+    def _empresa_to_dict(self, empresa: Empresa) -> dict:
         """
         Converter uma instância de empresa em um dicionário para armazenamento no Firestore.
 
@@ -356,5 +359,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
         # Remove os campos desnecessários para o Firestore; O id é passado diretamente no documento de referencia
         empresa_dict.pop('id', None)
+        empresa_dict_filtered = {k: v for k, v in empresa_dict.items() if v is not None}
 
-        return empresa_dict
+        return empresa_dict_filtered

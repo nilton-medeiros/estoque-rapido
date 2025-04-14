@@ -83,7 +83,7 @@ class UploadFile:
                 height=200,
             ),
             actions=[
-                ft.TextButton("Cancelar", on_click=self.close_dialog),
+                ft.TextButton("Cancelar", on_click=self.cancel_dialog),
                 ft.TextButton("Selecionar", on_click=self.update_file_source),
             ]
         )
@@ -111,8 +111,11 @@ class UploadFile:
             )
             # Self.url_file definido na def _upload_files
 
-    def close_dialog(self, e):
+    def cancel_dialog(self, e):
         self.message_error = "Obtenção do Logo cancelado pelo usuário"
+        self.close_dialog()
+
+    def close_dialog(self):
         self.page.close(self.dialog)
         self.page.update()
 
@@ -121,6 +124,7 @@ class UploadFile:
             return   # Nenhum arquivo selecionado
         # Inicia o upload do arquivo
         await self._upload_files(e.files)
+        self.close_dialog()
 
     async def _upload_files(self, files: list) -> None:
         try:

@@ -5,6 +5,7 @@ from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+from src.domains.usuarios.controllers import usuarios_controllers
 import src.shared.utils.tools as tools
 
 from src.domains.empresas.models.empresa_model import Empresa
@@ -39,7 +40,6 @@ class EmpresaView:
         self._create_form_fields()
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
-
 
     def _create_form_fields(self):
         """Cria todos os campos do formulário"""
@@ -320,20 +320,22 @@ class EmpresaView:
         icon_container = self.camera_icon
 
         if len(cnpj_clean) < 14:
-            self.cnpj.prefix.content.name=ft.Icons.WARNING
+            self.cnpj.prefix.content.name = ft.Icons.WARNING
             cnpj_button.disabled = True
             logo_container.disabled = True
             icon_container.disabled = True
-            logo_container.border = ft.border.all(color=ft.Colors.GREY_400, width=1)
+            logo_container.border = ft.border.all(
+                color=ft.Colors.GREY_400, width=1)
             icon_container.content.color = ft.Colors.GREY_400
         elif len(cnpj_clean) == 14:
             # CNPJ válido, ativa o botão de consulta ao dados da empresa pelo CNPJ
             self.cnpj.value = cnpj_clean
-            self.cnpj.prefix.content.name=ft.Icons.CHECK_CIRCLE
+            self.cnpj.prefix.content.name = ft.Icons.CHECK_CIRCLE
             cnpj_button.disabled = False
             logo_container.disabled = False
             icon_container.disabled = False
-            logo_container.border = ft.border.all(color=ft.Colors.PRIMARY, width=1)
+            logo_container.border = ft.border.all(
+                color=ft.Colors.PRIMARY, width=1)
             icon_container.content.color = ft.Colors.PRIMARY
 
         self.cnpj.update()
@@ -422,7 +424,6 @@ class EmpresaView:
             self.consult_cnpj_button.disabled = not bool(self.cnpj.value)
             self.consult_cnpj_button.update()
 
-
     def build_form(self) -> ft.Container:
         """Constrói o formulário de cadastro de empresa"""
         def responsive_row(controls):
@@ -438,16 +439,21 @@ class EmpresaView:
         build_content = ft.Column(
             controls=[
                 ft.Text("Dados da Empresa", size=16),
-                responsive_row(controls=[self.cnpj, self.consult_cnpj_button, self.corporate_name]),
-                responsive_row(controls=[self.trade_name, self.store_name, self.ie, self.im]),
+                responsive_row(
+                    controls=[self.cnpj, self.consult_cnpj_button, self.corporate_name]),
+                responsive_row(
+                    controls=[self.trade_name, self.store_name, self.ie, self.im]),
                 responsive_row(controls=[self.email, self.phone]),
                 ft.Divider(height=5),
                 ft.Text("Endereço", size=16),
-                responsive_row(controls=[self.street, self.number, self.complement]),
-                responsive_row(controls=[self.neighborhood, self.city, self.state, self.postal_code]),
+                responsive_row(
+                    controls=[self.street, self.number, self.complement]),
+                responsive_row(
+                    controls=[self.neighborhood, self.city, self.state, self.postal_code]),
                 ft.Divider(height=5),
                 ft.Text("Logo da Empresa", size=16),
-                ft.Row(col=12, alignment=ft.MainAxisAlignment.CENTER, controls=[self.logo_section]),
+                ft.Row(col=12, alignment=ft.MainAxisAlignment.CENTER,
+                       controls=[self.logo_section]),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=10
@@ -514,7 +520,7 @@ class EmpresaView:
                 height=200,
             )
             self.logo_frame.content = logo_img
-            self.logo_section.update()
+            self.logo_frame.update()
         else:
             self.logo_url = None
             self.previous_logo_url = None
@@ -601,10 +607,12 @@ class EmpresaView:
 
         size_info = None
         if self.size_cia.value:
-            size_info = EmpresaSize[self.size_cia.value]
+            print(f"Debug:  {self.size_cia.value}")
+            size_info = self.size_cia.value
 
         cnpj = None
         if self.cnpj.value:
+            print(f"Debug:  {self.cnpj.value}")
             cnpj = CNPJ(self.cnpj.value)
 
         phone = None
@@ -693,7 +701,9 @@ class EmpresaView:
     def send_to_bucket(self):
         # Faz o upload do arquivo de logo para o bucket
         if not self.local_upload_file or not self.cnpj.value:
-            # Não há CNPJ válido para enviar o arquivo
+            print('Debug:  Erro no upload do logo para o Bucket')
+            print(f"cnpj: {self.cnpj.value}")
+            print(f"local_upload_file: {self.local_upload_file}")
             # Não há arquivo local para enviar
             return False
 
@@ -711,6 +721,7 @@ class EmpresaView:
         try:
             self.logo_url = bucket_controllers.handle_upload_bucket(
                 local_path=self.local_upload_file, key=file_name_bucket)
+
             if self.logo_url:
                 # Atualiza logo na tela
                 logo_img = ft.Image(
@@ -723,7 +734,7 @@ class EmpresaView:
                     height=200,
                 )
                 self.logo_frame.content = logo_img
-                self.logo_section.update()
+                self.logo_frame.update()
                 message_snackbar(
                     page=self.page, message="Logo carregado com sucesso!", duration=3000)
                 return True
@@ -773,9 +784,10 @@ class EmpresaView:
 # Rota: /home/empresas/form
 def empresas_form(page: ft.Page):
     """Página de cadastro de empresas"""
-    if user_color := page.app_state.usuario.get('user_color'):
-        page.theme.color_scheme.primary = user_color.get('primary')
-        page.theme.color_scheme.primary_container = user_color.get('primary_container')
+    if user_colors := page.app_state.usuario.get('user_colors'):
+        page.theme.color_scheme.primary = user_colors.get('primary')
+        page.theme.color_scheme.primary_container = user_colors.get(
+            'primary_container')
 
     route_title = "home/empresas/form"
     empresa = page.app_state.empresa_form
@@ -810,13 +822,15 @@ def empresas_form(page: ft.Page):
         if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
             # Envia o arquivo de logo para o bucket
             if not empresa_view.send_to_bucket():
-                # Se o upload para o bucket falhou, apaga do servidor local e não salva a empresa
-                try:
-                    os.remove(empresa_view.local_upload_file)
-                except:
-                    pass  # Ignora erros na limpeza do arquivo
-                empresa_view.local_upload_file = None
-                return
+                message_snackbar(
+                    page=page, message="Erro ao enviar o logo para o bucket", message_type=MessageType.WARNING)
+
+            # Apaga arquivo do servidor local
+            try:
+                os.remove(empresa_view.local_upload_file)
+            except:
+                pass  # Ignora erros na limpeza do arquivo
+            empresa_view.local_upload_file = None
 
         # Cria o objeto Empresa com os dados do formulário para enviar para o backend
         empresa: Empresa = empresa_view.get_form_object()
@@ -826,7 +840,8 @@ def empresas_form(page: ft.Page):
         result = await empresas_controllers.handle_save_empresas(empresa)
 
         if result["is_error"]:
-            message_snackbar(page=page, message=result["message"], message_type=MessageType.ERROR)
+            message_snackbar(
+                page=page, message=result["message"], message_type=MessageType.ERROR)
             return
 
         empresa.id = result["id"]
@@ -834,18 +849,47 @@ def empresas_form(page: ft.Page):
         page.app_state.set_empresa_form(empresa.to_dict())
         page.pubsub.send_all("empresa_form_updated")
 
+        # Associa a empresa a lista de empresas do usuário
+        user = page.app_state.usuario
+        user['empresas'].append(empresa.id)
+
+        if not user.get('empresa_id'):
+            # Se o usuário não tem empresa associada e selecionada, associa a nova empresa
+            user['empresa_id'] = empresa.id
+
+        # Atualiza usuário no banco de dados
+        result = await usuarios_controllers.handle_update_empresas_usuarios(
+            user_id=user['id'],
+            empresa_ativa_id=user['empresa_id'],
+            empresas=user['empresas']
+        )
+
+        if result["is_error"]:
+            message_snackbar(
+                page=page, message=result["message"], message_type=MessageType.ERROR)
+            return
+
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.go('/home')
 
     def exit_form_empresa(e):
+        if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
+            try:
+                os.remove(empresa_view.local_upload_file)
+            except:
+                pass  # Ignora erros na limpeza do arquivo
+            empresa_view.local_upload_file = None
+
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.go('/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"
-    save_btn = ft.ElevatedButton(text="Salvar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=save_form_empresa)
-    exit_btn = ft.ElevatedButton(text="Cancelar",col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_empresa)
+    save_btn = ft.ElevatedButton(
+        text="Salvar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=save_form_empresa)
+    exit_btn = ft.ElevatedButton(
+        text="Cancelar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_empresa)
 
     return ft.Column(
         data=appbar,

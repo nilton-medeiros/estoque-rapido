@@ -99,8 +99,21 @@ class Empresa:
 
         Realiza validações adicionais e formatações necessárias.
         """
-        self.corporate_name = self.corporate_name.upper()
-        self.trade_name = self.name.upper()
+        # Campos obrigatórios
+        self.corporate_name = self.corporate_name.upper().strip() if self.corporate_name else None
+        if not self.corporate_name:
+            raise ValueError("O campo 'corporate_name' é obrigatório.")
+
+        self.email = self.email.lower().strip() if self.email else None
+        if not self.email or "@" not in self.email:
+            raise ValueError("O campo 'email' é obrigatório e deve conter um endereço de e-mail válido.")
+
+        # Remove os espaços em branco ou garante que seja None caso vazio ''
+        self.trade_name = self.trade_name.upper().strip() if self.trade_name else None
+        self.store_name = self.store_name.strip() if self.store_name else None
+        self.ie = self.ie.strip() if self.ie else None
+        self.im = self.im.strip() if self.im else None
+        self.logo_url = self.logo_url.strip() if self.logo_url else None
 
     def get_complete_address(self) -> str:
         """

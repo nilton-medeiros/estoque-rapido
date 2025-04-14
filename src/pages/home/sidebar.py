@@ -6,7 +6,7 @@ import flet as ft
 import src.controllers.bucket_controllers as bucket_controllers
 
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
-from src.domains.usuarios import handle_update_photo_usuarios, handle_update_color_usuarios
+from src.domains.usuarios import handle_update_photo_usuarios, handle_update_colors_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
@@ -570,12 +570,12 @@ def sidebar_footer(page: ft.Page):
         msg_error = None
 
         try:
-            result = await handle_update_color_usuarios(id=user.get('id'), color=e.control.data)
+            result = await handle_update_colors_usuarios(id=user.get('id'), color=e.control.data)
             if result["is_error"]:
                 msg_error = result["message"]
                 return
 
-            user.update({'user_color': e.control.data})
+            user.update({'user_colors': e.control.data})
             page.app_state.set_usuario(user)
 
         except ValueError as e:

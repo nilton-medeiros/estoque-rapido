@@ -23,7 +23,7 @@ class Usuario:
         empresa_id (Optional[str]): ID da última empresa logada.
         empresas (Optional[List[str]]): Lista de IDs de empresas associadas ao usuário.
         photo_url (Optional[str]): URL da foto de perfil do usuário.
-        user_color (Optional[dict]): Cor preferencial do usuário.
+        user_colors (Optional[dict]): Cor preferencial do usuário.
 
 
     Example:
@@ -45,7 +45,7 @@ class Usuario:
     empresa_id: Optional[str] = field(default=None)
     empresas: Optional[List[str]] = field(default_factory=list)
     photo_url: Optional[str] = field(default=None)
-    user_color: Optional[Dict] = field(default_factory=dict)
+    user_colors: Optional[Dict] = field(default_factory=dict)
 
     # Lista de perfis permitidos
     ALLOWED_PROFILES = {"admin", "cobrança",
@@ -61,15 +61,14 @@ class Usuario:
         if not self.name.first_name:
             raise ValueError("O campo 'name' é obrigatório.")
 
+        # Validação do campo 'email'
+        self.email = self.email.lower().strip() if self.email else None
+        if not self.email or "@" not in self.email:
+            raise ValueError("O campo 'email' é obrigatório e deve conter um endereço de e-mail válido.")
+
         # Validação do campo 'phone_number'
         if not self.phone_number:
             raise ValueError("O campo 'phone_number' é obrigatório.")
-
-        # Validação do campo 'email'
-        self.email = self.email.strip()
-
-        if not self.email or "@" not in self.email:
-            raise ValueError("O campo 'email' deve ser válido.")
 
         # Validação do campo 'profile'
         if self.profile not in self.ALLOWED_PROFILES:
@@ -80,11 +79,10 @@ class Usuario:
         if self.empresas is None:
             self.empresas = []
 
-        if self.photo_url == '':
-            self.photo_url = None
+        self.photo_url = self.photo_url.strip() if self.photo_url else None
 
-        if not self.user_color or not self.user_color.get('primary'):
-            self.user_color = {'primary': 'blue',
+        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['primary', 'primary_container']):
+            self.user_colors = {'primary': 'blue',
                                'primary_container': 'blue_200'}
 
     def to_dict(self) -> dict:
@@ -98,7 +96,7 @@ class Usuario:
             "empresa_id": self.empresa_id,
             "empresas": self.empresas,
             "photo_url": self.photo_url,
-            "user_color": self.user_color,
+            "user_colors": self.user_colors,
             "is_admin": self.is_admin(),
         }
 

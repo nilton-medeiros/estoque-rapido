@@ -101,7 +101,7 @@ class UsuariosServices:
         """
         return await self.repository.update_photo(usuario_id, photo_url)
 
-    async def update_color(self, usuario_id: str, color: str) -> bool:
+    async def update_colors(self, usuario_id: str, color: str) -> bool:
         """
         Atualiza a cor favorita do usuário para o campo  usando o repositório.
 
@@ -112,7 +112,21 @@ class UsuariosServices:
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return await self.repository.update_color(usuario_id, color)
+        return await self.repository.update_colors(usuario_id, color)
+
+    async def update_empresas(self, usuario_id, empresa_id, empresas) -> bool:
+        """
+        Atualiza a empresa selecionada e a lista de empresas do usuário para o campo  usando o repositório.
+
+        Parâmetros:
+            usuario_id (str): ID do usuário a ser alterado
+            empresa_id (str): Empresa selecionada (ativa) do usuário a ser atualizado
+            empresas (list): Lista de Empresas  do usuário a ser atualizado
+
+        Retorna:
+            bool: True se a atualização for bem-sucedida, False caso contrário
+        """
+        return await self.repository.update_empresas(usuario_id, empresa_id, empresas)
 
     async def delete(self, usuario_id: str) -> bool:
         """Deleta um usuário pelo usuario_id usando o repositório."""
