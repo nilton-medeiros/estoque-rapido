@@ -53,6 +53,7 @@ class EmpresaView:
         # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
+        print(f"Debug  -> _create_form_fields.app_colors: {app_colors}")
 
         self.cnpj = ft.TextField(
             col={'xs': 10, 'md': 10, 'lg': 3},
@@ -60,7 +61,7 @@ class EmpresaView:
             prefix=ft.Container(
                 content=ft.Icon(
                     name=ft.Icons.WARNING,
-                    color=ft.Colors.YELLOW_ACCENT_200,
+                    color=app_colors['accent'],
                     size=self.icon_size,
                 ),
                 padding=ft.padding.only(right=10),

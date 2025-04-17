@@ -156,13 +156,6 @@ def main(page: ft.Page):
         page.views.clear()
         pg_view = None
 
-        app_colors.update({
-            'base_color': 'yellow',
-            'primary': '#FFEB3B',
-            'container': '3FFF59D',
-            'accent': '#FFD740'
-        })
-
         match e.route:
             case '/':    # Raiz: Landing Page
                 pg_view = ft.View(

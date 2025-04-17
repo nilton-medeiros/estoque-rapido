@@ -61,7 +61,7 @@ class AppStateManager:
                 if colors.get('base_color') and colors.get('primary') and colors.get('container') and colors.get('accent'):
                     app_colors.update(colors)
 
-            print(f"Debug  -> app_colors: {app_colors}")
+            print(f"Debug  -> app_state_mananger.py.app_colors: {app_colors}")
 
             self.page.pubsub.send_all("usuario_updated")
             return True

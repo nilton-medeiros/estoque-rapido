@@ -134,7 +134,7 @@ class LoginView:
                     ft.TextButton(
                         text="Voltar",
                         icon=ft.CupertinoIcons.BACK,
-                        icon_color=ft.Colors.PRIMARY,
+                        icon_color=app_colors['primary'],
                         style=ft.ButtonStyle(
                             color=app_colors["accent"]),
                         on_click=lambda _: self.page.go('/'),
@@ -256,7 +256,7 @@ class LoginView:
         self.login_button.style = ft.ButtonStyle(
             color=ft.Colors.WHITE,
             side=ft.BorderSide(
-                color=ft.Colors.PRIMARY,
+                color=app_colors['primary'],
                 width=sizes["border_width"]
             ),
             padding=ft.padding.symmetric(

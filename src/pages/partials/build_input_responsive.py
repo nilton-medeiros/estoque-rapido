@@ -16,7 +16,8 @@ def build_input_field(page_width: int, col: dict = None, icon: str = None, **kwa
         )
 
     # Debug
-
+    print(f"Debug  -> build_input_field.app_colors: {app_colors}")
+    
     return ft.TextField(
         col=col,
         **kwargs,
