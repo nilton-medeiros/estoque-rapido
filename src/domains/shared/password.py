@@ -10,7 +10,8 @@ class Password:
         if not key:
             raise ValueError("FERNET_KEY não encontrada no ambiente.")
         try:
-            self._cipher_suite = Fernet(key.encode() if isinstance(key, str) else key)
+            self._cipher_suite = Fernet(
+                key.encode() if isinstance(key, str) else key)
         except Exception as e:
             raise ValueError(f"Chave Fernet inválida: {e}")
 
@@ -52,6 +53,28 @@ class Password:
         except Exception as e:
             raise ValueError(f"Erro ao descriptografar a senha: {e}")
 
+    @classmethod
+    def from_dict(cls, data) -> 'Password':
+        """
+        Cria uma instância de Password a partir de um valor (dicionário ou bytes).
+        """
+        # Se for bytes (vindo diretamente do Firestore)
+        if isinstance(data, bytes):
+            return cls.from_encrypted(data)
+
+        # Se for dicionário com chave 'value'
+        elif isinstance(data, dict) and 'value' in data:
+            value = data['value']
+            if isinstance(value, bytes):
+                return cls.from_encrypted(value)
+            elif isinstance(value, str):
+                return cls(value)
+
+        # Se for string (senha em texto plano)
+        elif isinstance(data, str):
+            return cls(data)
+
+        raise ValueError("Formato inválido para criar Password.")
 
     @staticmethod
     def from_encrypted(encrypted_value: bytes) -> 'Password':
@@ -64,14 +87,17 @@ class Password:
         Returns:
             Password: Instância da classe com o valor criptografado.
         """
-        instance = Password.__new__(Password)  # Cria uma instância sem chamar __init__
+        instance = Password.__new__(
+            Password)  # Cria uma instância sem chamar __init__
         load_dotenv()
         key = os.getenv("FERNET_KEY")
         if not key:
             raise ValueError("FERNET_KEY não encontrada no ambiente.")
-        instance._cipher_suite = Fernet(key.encode() if isinstance(key, str) else key)
+        instance._cipher_suite = Fernet(
+            key.encode() if isinstance(key, str) else key)
         instance.value = encrypted_value
         return instance
+
 
 """
 # Exemplo de uso

@@ -40,6 +40,42 @@ class PhoneNumber:
         """
         return self.get_national()
 
+    @classmethod
+    def from_dict(cls, data: dict) -> 'PhoneNumber':
+        """
+        Cria uma instância de PhoneNumber a partir de um dicionário.
+
+        Args:
+            data (dict): Dicionário contendo 'e164', 'raw_number' ou apenas uma string.
+                Exemplo: {'e164': '+5511999999999'} ou {'raw_number': '5511999999999'}
+
+        Returns:
+            PhoneNumber: Nova instância de PhoneNumber.
+
+        Raises:
+            ValueError: Se o dicionário não contiver informações válidas de telefone.
+        """
+        if not data:
+            raise ValueError("Dados inválidos para criar PhoneNumber.")
+
+        # Verifica se é um dicionário com campos específicos
+        # Se for apenas uma string
+        if isinstance(data, str):
+            return cls(data)
+
+        elif isinstance(data, dict):
+            # Tenta obter o número em diferentes formatos
+            number = data.get('e164') or data.get('raw_number')
+
+            if not number:
+                raise ValueError(
+                    "Número de telefone não encontrado nos dados.")
+
+            return cls(number)
+
+        else:
+            raise ValueError("Formato inválido para criar PhoneNumber.")
+
     def format_to_e164(self) -> str:
         """
         Formata o número para o padrão E.164.

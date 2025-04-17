@@ -345,14 +345,14 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     return response
 
 
-async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, empresas: list) -> dict:
+async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, empresas: set) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
 
     Args:
         user_id (str): ID do usuário.
         empresa_id (str): ID da empresa ativa.
-        empresas (list): Lista de empresas associada ao usuário.
+        empresas (set): Conjunto de empresas associada ao usuário.
 
     Returns:
         bool: True se foi atualizado com sucesso, False caso contrário.
@@ -364,7 +364,7 @@ async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, e
     Exemplo:
         >>> user_id = '12345678901234567890123456789012'
         >>> empresa_id = '12345678901234567890123456789012'
-        >>> empresas = ['12345678901234567890123456789012', '12345678901234567890123456789012']
+        >>> empresas = {'12345678901234567890123456789012', '12345678901234567890123456789012'}
         >>> response = await handle_update_empresas_usuarios(user_id, empresa_id, empresas)
         >>> print(response)
     """
@@ -389,10 +389,10 @@ async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, e
         is_updated = await usuarios_services.update_empresas(user_id, empresa_ativa_id, empresas)
 
         if is_updated:
-            response["message"] = "Cor preferncial do Usuário atualizada com sucessso!"
+            response["message"] = "Empresa(s) do Usuário atualizada com sucessso!"
         else:
             response["is_error"] = True
-            response["message"] = f"Falha ao atualizar empresa do Usuário: Usuário não encontrado com ID {user_id}"
+            response["message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {user_id}"
             logger.error(response["message"])
     except ValueError as e:
         response["is_error"] = True

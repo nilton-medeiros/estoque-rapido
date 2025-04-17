@@ -1,17 +1,20 @@
 import logging
 import os
+import asyncio
+from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
-from src.domains.usuarios.controllers import usuarios_controllers
 import src.shared.utils.tools as tools
 
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import EmpresaSize
+from src.domains.usuarios.controllers import usuarios_controllers
 from src.pages.partials.build_input_responsive import build_input_field
 from src.shared.utils.field_validation_functions import validate_email
+from src.shared.utils.find_project_root import find_project_root
 from src.services.upload.upload_files import UploadFile
 from src.services.apis.consult_cnpj_api import consult_cnpj_api
 from src.shared.utils.gen_uuid import get_uuid
@@ -27,8 +30,8 @@ class EmpresaView:
         self.page = page
         self.data = page.app_state.empresa_form
         # Vars propiedades
-        self.is_logo_url_web = False
         self.logo_url: str = None
+        self.is_logo_url_web = False
         self.previous_logo_url: str = None
         self.local_upload_file: str = None
         self.initials_corporate_name = "Logo"
@@ -47,6 +50,8 @@ class EmpresaView:
         # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
+        from src.shared.config import user_colors
+
         self.cnpj = ft.TextField(
             col={'xs': 10, 'md': 10, 'lg': 3},
             label="CNPJ",
@@ -59,8 +64,8 @@ class EmpresaView:
                 padding=ft.padding.only(right=10),
             ),
             text_size=self.font_size,
-            border_color=ft.Colors.PRIMARY,
-            focused_border_color=ft.Colors.PRIMARY_CONTAINER,
+            border_color=user_colors["primary"],
+            focused_border_color=user_colors["primary_container"],
             text_align=ft.TextAlign.LEFT,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
@@ -256,7 +261,7 @@ class EmpresaView:
             spacing=0,
         )
 
-    def _show_logo_dialog(self, e) -> None:
+    async def _show_logo_dialog(self, e) -> None:
         cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
         if len(cnpj_clean) < 14:
             message_snackbar(
@@ -273,11 +278,7 @@ class EmpresaView:
             allowed_extensions=["png", "jpg", "jpeg", "svg"],
         )
 
-        msg_error = upload_file.get_url_error()
-        if msg_error:
-            message_snackbar(page=self.page, message=msg_error,
-                             message_type=MessageType.ERROR)
-            return
+        local_upload_file = await upload_file.open_dialog()
 
         # O arquivo ou URL do logo foi obtido. Não há erros.
         self.is_logo_url_web = upload_file.is_url_web
@@ -310,9 +311,30 @@ class EmpresaView:
         O arquivo Logo está salvo no diretório local do servidor em "uploads/"
         do projeto e está em self.local_upload_file.
         """
-        self.local_upload_file = upload_file.url_file
+        if local_upload_file:
+            self.local_upload_file = local_upload_file
+            project_root = find_project_root(__file__)
+            # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
+            img_file = project_root / self.local_upload_file
+            print(f"Debug:  -> img_file: {img_file}")
+            logo_img = ft.Image(
+                src=img_file,
+                error_content=ft.Text(self.initials_corporate_name),
+                repeat=ft.ImageRepeat.NO_REPEAT,
+                fit=ft.ImageFit.COVER,
+                border_radius=ft.border_radius.all(100),
+                width=300,
+                height=200,
+            )
+            self.logo_frame.content = logo_img
+            self.logo_frame.update()
 
-    def _handle_cnpj_change(self, e):
+            print(f"Debug: -> Atualizado ft.Image: {img_file}")
+
+        print(f"Debug:  -> self.local_upload_file: {self.local_upload_file}")
+
+
+    def _handle_cnpj_change(self, e = None):
         """Atualiza o estado do botão de consulta baseado no valor do CNPJ"""
         cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
         cnpj_button = self.consult_cnpj_button
@@ -338,9 +360,6 @@ class EmpresaView:
                 color=ft.Colors.PRIMARY, width=1)
             icon_container.content.color = ft.Colors.PRIMARY
 
-        self.cnpj.update()
-        cnpj_button.update()
-        self.logo_section.update()
 
     async def _consult_cnpj(self, e):
         """Consulta o CNPJ na API da Receita"""
@@ -467,20 +486,21 @@ class EmpresaView:
         )
 
     def did_mount(self):
-        """Método chamado pelo flet quando a view é montada"""
         if self.data and self.data.get('id'):
             # Preenche os campos com os dados da empresa
             self.populate_form_fields()
         self.page.update()
 
+        print(f"Debug -> self.data:  {self.data}")
+
     def populate_form_fields(self):
         """Preenche os campos do formulário com os dados da empresa"""
         if cnpj := self.data.get('cnpj'):
             self.cnpj.value = cnpj.raw_cnpj
-            self.consult_cnpj_button.disabled = False
         else:
             self.cnpj.value = ''
-            self.consult_cnpj_button.disabled = True
+
+        self._handle_cnpj_change()
 
         self.corporate_name.value = self.data.get('corporate_name', '')
         self.trade_name.value = self.data.get('trade_name', '')
@@ -494,13 +514,19 @@ class EmpresaView:
         else:
             self.phone.value = ''
 
-        self.street.value = self.data.get('street', '')
-        self.number.value = self.data.get('number', '')
-        self.complement.value = self.data.get('complement', '')
-        self.neighborhood.value = self.data.get('neighborhood', '')
-        self.city.value = self.data.get('city', '')
-        self.state.value = self.data.get('state', '')
-        self.postal_code.value = self.data.get('postal_code', '')
+        # Dicionário de endereço
+        address = self.data.get('address')
+        if address:
+            self.street.value = address.get('street', '')
+            self.number.value = address.get('number', '')
+            self.complement.value = address.get('complement', '')
+            self.neighborhood.value = address.get('neighborhood', '')
+            self.city.value = address.get('city', '')
+            self.state.value = address.get('state', '')
+            self.postal_code.value = address.get('postal_code', '')
+
+        print(f"Debug: -> address: {address}")
+        print(f"Debug: -> self.street.value: {self.street.value}")
 
         if size_enum := self.data.get('size'):
             self.size_cia.value = size_enum.name
@@ -508,8 +534,10 @@ class EmpresaView:
             self.size_cia.value = ''
 
         if self.data.get('logo_url'):
-            # Var, não é um field do formulário
+            # Vars, não é um field do formulário
             self.logo_url = self.data.get('logo_url')
+            self.previous_logo_url = self.data.get('logo_url')
+
             logo_img = ft.Image(
                 src=self.logo_url,
                 error_content=ft.Text("Logo"),
@@ -520,7 +548,6 @@ class EmpresaView:
                 height=200,
             )
             self.logo_frame.content = logo_img
-            self.logo_frame.update()
         else:
             self.logo_url = None
             self.previous_logo_url = None
@@ -680,6 +707,7 @@ class EmpresaView:
                     dateCreated=pg.get('dateCreated'),
                 )
 
+        print(logo)
         return Empresa(
             id=id,
             corporate_name=self.corporate_name.value,
@@ -807,6 +835,7 @@ def empresas_form(page: ft.Page):
     )
 
     empresa_view = EmpresaView(page)
+    empresa_view.did_mount()
     form_container = empresa_view.build()
 
     async def save_form_empresa(e):
@@ -837,6 +866,9 @@ def empresas_form(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
+        print(f"Debug: -> empresa: {empresa}")
+        print(f"Debug: -> empresa: {str(empresa)}")
+        print("Debug: -> Chamando o controller de handle_save_empresas")
         result = await empresas_controllers.handle_save_empresas(empresa)
 
         if result["is_error"]:
@@ -851,12 +883,13 @@ def empresas_form(page: ft.Page):
 
         # Associa a empresa a lista de empresas do usuário
         user = page.app_state.usuario
-        user['empresas'].append(empresa.id)
+        user['empresas'].add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
 
         if not user.get('empresa_id'):
             # Se o usuário não tem empresa associada e selecionada, associa a nova empresa
             user['empresa_id'] = empresa.id
 
+        print("Debug: -> Chamando o controller de update_empresas_usuarios")
         # Atualiza usuário no banco de dados
         result = await usuarios_controllers.handle_update_empresas_usuarios(
             user_id=user['id'],

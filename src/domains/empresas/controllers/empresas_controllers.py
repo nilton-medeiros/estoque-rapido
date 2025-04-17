@@ -33,7 +33,7 @@ async def handle_save_empresas(empresa: Empresa) -> dict:
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> empresa = Empresa(name="Minha Empresa", cnpj=CNPJ("00.000.000/0000-00"))
+        >>> empresa = Empresa(corporate_name="Minha Empresa", cnpj=CNPJ("00.000.000/0000-00"))
         >>> response = await handle_save_empresas(empresa, create_new=True)
         >>> print(response)
     """

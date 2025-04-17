@@ -106,9 +106,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         """
 
         try:
-            usuario_dict = self._usuario_to_dict(usuario)
             # Insere ou Atualiza na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
-            self.collection.document(usuario.id).set(usuario_dict, merge=True)
+            self.collection.document(usuario.id).set(usuario.to_dict_db(), merge=True)
             return usuario.id
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -184,7 +183,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if doc.exists:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
-                return self._doc_to_usuario(usuario_data)
+                return Usuario.from_dict(usuario_data)
             return None  # Retorna None se o documento não existir
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -273,7 +272,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
-                usuarios.append(self._doc_to_usuario(usuario_data))
+                usuarios.append(Usuario.from_dict(usuario_data))
 
             return usuarios
         except exceptions.FirebaseError as e:
@@ -318,7 +317,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
-                return self._doc_to_usuario(usuario_data)
+                return Usuario.from_dict(usuario_data)
 
             return None
         except exceptions.FirebaseError as e:
@@ -366,7 +365,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
-                usuarios.append(self._doc_to_usuario(usuario_data))
+                usuarios.append(Usuario.from_dict(usuario_data))
 
             return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
         except exceptions.FirebaseError as e:
@@ -414,7 +413,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             for doc in docs:
                 usuario_data = doc.to_dict()
                 usuario_data["id"] = doc.id
-                usuarios.append(self._doc_to_usuario(usuario_data))
+                usuarios.append(Usuario.from_dict(usuario_data))
 
             return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
         except exceptions.FirebaseError as e:
@@ -506,7 +505,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             doc_ref.update({"profile": new_profile})
             usuario_data = doc_ref.get().to_dict()
             usuario_data['id'] = doc.id
-            return self._doc_to_usuario(usuario_data)
+            return Usuario.from_dict(usuario_data)
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(f"Documento com ID '{id}' não encontrado.")
@@ -561,7 +560,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             doc_ref.update({"photo_url": new_photo})
             usuario_data = doc_ref.get().to_dict()
             usuario_data['id'] = doc.id
-            return self._doc_to_usuario(usuario_data)
+            return Usuario.from_dict(usuario_data)
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(f"Documento com ID '{id}' não encontrado.")
@@ -643,14 +642,14 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
 
-    async def update_empresas(self, usuario_id, empresa_id, empresas) -> bool:
+    async def update_empresas(self, usuario_id: str, empresa_id: str, empresas: set) -> bool:
         """
         Atualiza campos empresa_id e empresas do usuário.
 
         Args:
             user_id (str): ID do usuário.
             empresa_id (str): ID da empresa ativa.
-            empresas (list): Lista de empresas associada ao usuário.
+            empresas (set): Conjunto de empresas associada ao usuário.
 
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário
@@ -670,7 +669,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if not doc.exists:
                 return False
 
-            doc_ref.update({"empresa_id": empresa_id, "empresas": empresas})
+            doc_ref.update({"empresa_id": empresa_id, "empresas": list(empresas)})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -697,65 +696,3 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             msg = f"Erro inesperado ao atualizar a empresa do usuário com ID '{usuario_id}': {str(e)}"
             logger.error(msg)
             raise Exception(msg)
-
-    def _doc_to_usuario(self, doc_data: dict) -> Usuario:
-        """
-        Converter os dados de um documento do Firestore em uma instância de usuário.
-
-        Args:
-            doc_data (dict): Os dados do documento Firestore representando um usuário.
-
-        Retorna:
-            Usuario: A instância correspondente do usuário.
-        """
-
-        # Recontruir campos opcionais
-        first_name, last_name = get_first_and_last_name(
-            doc_data['name'])
-        empresas: List[str] = doc_data.get('empresas', [])
-        photo_url: str = doc_data.get('photo_url', None)
-
-        from src.domains.shared.password import Password
-
-        return Usuario(
-            id=doc_data['id'],
-            name=NomePessoa(first_name, last_name),
-            email=doc_data['email'],
-            password=Password.from_encrypted(doc_data['password']),
-            phone_number=PhoneNumber(doc_data['phone_number']),
-            profile=doc_data['profile'],
-            empresa_id=doc_data.get('empresa_id', None),
-            empresas=empresas,
-            photo_url=photo_url,
-            user_colors=doc_data.get(
-                'user_colors', {'primary': 'blue', 'primary_container': 'blue_200'}),
-        )
-
-    def _usuario_to_dict(self, usuario: Usuario) -> dict:
-        """
-        Converter uma instância de usuário em um dicionário para armazenamento no Firestore.
-
-        Args:
-            usuario (Usuario): A instância de usuário a ser convertida.
-
-        Retorna:
-            dict: A representação do usuário em formato de dicionário.
-        """
-        # Não adicione id no usuario_dict, pois é passado o id no documento de referencia
-        usuario_dict = usuario.to_dict()
-
-        # Sobrescreve os campos que precisam de ajustes
-        usuario_dict.update({
-            "password": usuario.password.value,  # Senha encriptada
-            "name": usuario.name.nome_completo,  # Nome completo
-            # Número de telefone no formato E.164
-            "phone_number": usuario.phone_number.get_e164(),
-        })
-
-        # Remove campos desnecessários para o Firestore
-        # Remove o campo 'id', pois é incluído diretamente no documento ao criar ou alterar
-        usuario_dict.pop('id', None)
-        usuario_dict_filtered = {k: v for k,
-                                 v in usuario_dict.items() if v is not None}
-
-        return usuario_dict_filtered

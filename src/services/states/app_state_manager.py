@@ -51,6 +51,12 @@ class AppStateManager:
                 return False
 
             self._state['usuario'] = usuario_data
+
+            from src.shared.config import user_colors
+            # Atualiza as cores do usuário
+            if 'user_colors' in usuario_data:
+                user_colors.update(usuario_data['user_colors'])
+
             self.page.pubsub.send_all("usuario_updated")
             return True
 

@@ -10,11 +10,14 @@ def home_page(page: ft.Page):
     page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
+    print(f"Página Home -> user_colors: {page.app_state.usuario.get('user_colors')}")
     if user_colors := page.app_state.usuario.get('user_colors'):
         page.theme.color_scheme.primary = user_colors.get('primary')
         page.theme.color_scheme.primary_container = user_colors.get('primary_container')
 
     print(f"Home Page -> Usuário: {page.app_state.usuario.get('name').nome_completo}")
+    print(f"Home Page -> Color Scheme (primary): {page.theme.color_scheme.primary}")
+    print(f"Home Page -> Color Scheme (primary_container): {page.theme.color_scheme.primary_container}")
     sidebar = sidebar_container(page)
     content = main_content()
 
@@ -115,5 +118,5 @@ def home_page(page: ft.Page):
         data=appbar,
     )
 
-    print("Retornando parent_container, o conteúdo da página home")
+    print("Retornando parent_container para a View (conteúdo da página home)")
     return parent_container

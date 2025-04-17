@@ -2,12 +2,12 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from pathlib import Path
 
 from src.shared.utils.find_project_root import find_project_root
 
 def get_log_dir():
     project_root = find_project_root(__file__)
+    # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
     return project_root / 'logs'
 
 class LogConfig:

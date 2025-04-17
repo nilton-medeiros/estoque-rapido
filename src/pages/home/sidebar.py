@@ -37,10 +37,19 @@ def sidebar_header(page: ft.Page):
         user_photo = ft.Text(current_user['name'].iniciais)
 
     current_company = page.app_state.empresa
+    cia_name = None
     if current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
+        cia_name = current_company.get(
+                'trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
+        page.company_name_text_btn.text = cia_name
     else:
         page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"
+        page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
+
+    # page.company_name_text_btn.update()
+    print(f"Debub -> cia_name: {cia_name}")
+    print(f"Debug -> page.company_name_text_btn.text: {page.company_name_text_btn.text}")
 
     status_text = ft.Text()
     progress_bar = ft.ProgressBar(visible=False)
@@ -563,18 +572,21 @@ def sidebar_footer(page: ft.Page):
 
     async def change_primary_color(e):
         # Atualiza a cor primária da interface no thema do app
-        e.page.theme.color_scheme.primary = e.control.data.get('primary')
-        e.page.theme.color_scheme.primary_container = e.control.data.get('primary_container')
+        page.theme.color_scheme.primary = e.control.data.get('primary')
+        page.theme.color_scheme.primary_container = e.control.data.get('primary_container')
 
+        print(f"Debug: {page.theme.color_scheme.primary}")
+        print(f"Debug: {page.theme.color_scheme.primary_container}")
         user = page.app_state.usuario
         msg_error = None
 
         try:
-            result = await handle_update_colors_usuarios(id=user.get('id'), color=e.control.data)
+            result = await handle_update_colors_usuarios(id=user.get('id'), colors=e.control.data)
             if result["is_error"]:
                 msg_error = result["message"]
                 return
 
+            print(f"Debug: {e.control.data}")
             user.update({'user_colors': e.control.data})
             page.app_state.set_usuario(user)
 

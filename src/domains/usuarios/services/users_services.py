@@ -114,7 +114,7 @@ class UsuariosServices:
         """
         return await self.repository.update_colors(usuario_id, color)
 
-    async def update_empresas(self, usuario_id, empresa_id, empresas) -> bool:
+    async def update_empresas(self, usuario_id: str, empresa_id: str, empresas: set) -> bool:
         """
         Atualiza a empresa selecionada e a lista de empresas do usuário para o campo  usando o repositório.
 

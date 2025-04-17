@@ -205,7 +205,7 @@ class LoginView:
                 self.page.go('/home')
                 return
 
-            print(f"Usuário tem empresa registrada: {user.empresa_id} ({user.iniciais})")
+            print(f"Usuário tem empresa registrada: {user.empresa_id} ({user.name.iniciais})")
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
             result = await empresas_controllers.handle_get_empresas(id=user.empresa_id)
 

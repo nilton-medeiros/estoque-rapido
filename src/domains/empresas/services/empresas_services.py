@@ -89,6 +89,7 @@ class EmpresasServices:
         """
 
         if not empresa.id:
+            print("Debug:  -> update: ID da empresa não informado")
             raise ValueError("ID da empresa é necessário para atualização")
         return await self.repository.save(empresa)
 

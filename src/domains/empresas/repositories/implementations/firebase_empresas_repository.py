@@ -1,4 +1,5 @@
 import logging
+from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
 from firebase_admin import firestore
@@ -47,6 +48,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         Retorna:
             str: O ID do documento da empresa salva.
         """
+        print("DEBUG:  -> repository.save: Sanvando empresa")
         try:
             empresa_dict = self._empresa_to_dict(empresa)
             print("DEBUG: ============================================")
@@ -313,7 +315,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         return Empresa(
             id=doc_data.get('id'),
             corporate_name=doc_data.get('corporate_name'),
-            trade_name=doc_data.get('name'),
+            trade_name=doc_data.get('trade_name'),
             store_name=doc_data.get('store_name', "Matriz"),
             cnpj=cnpj,
             email=doc_data.get('email'),
@@ -353,12 +355,13 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             })
         if empresa.size:
             # Armazena o name do enum size
+            print(f"Debug:  -> empresa.size: {empresa.size}")
             empresa_dict.update({
-                'size': empresa.size.name,
+                'size': empresa.size,
             })
 
         # Remove os campos desnecessários para o Firestore; O id é passado diretamente no documento de referencia
         empresa_dict.pop('id', None)
         empresa_dict_filtered = {k: v for k, v in empresa_dict.items() if v is not None}
-
+        print(f"Debug:  -> empresa_dict_filtered: {empresa_dict_filtered}")
         return empresa_dict_filtered

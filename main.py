@@ -23,6 +23,8 @@ flet_key = os.getenv('FLET_SECRET_KEY')
 os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
+
+
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
@@ -62,7 +64,7 @@ def main(page: ft.Page):
             alignment=ft.alignment.center,
             mouse_cursor="pointer",
             text_style=ft.TextStyle(
-                color=ft.Colors.GREY,
+                color=ft.Colors.WHITE,
                 size=14,
                 weight=ft.FontWeight.NORMAL,
             )
@@ -109,14 +111,20 @@ def main(page: ft.Page):
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
+            print(
+                f"Atualizando nome da empresa: {page.app_state.empresa.get('trade_name', page.app_state.empresa.get('corporate_name'))}")
             page.company_name_text_btn.text = page.app_state.empresa.get(
-                'trade_name', page.app_state.empresa.get('corporate_name'))
+                'trade_name', 'corporate_name')
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.company_name_text_btn.update()
 
     def update_empresa_form_dependent_ui():
-        # ToDo: Atualiza o nome da empresa no formulário e outros campos
-        pass
+        if not page.app_state.empresa.get('id') or page.app_state.empresa.get('id') == page.app_state.empresa_form.get('id'):
+            if hasattr(page, 'company_name_text_btn'):
+                print(
+                    f"Atualizando nome da empresa: {page.app_state.empresa_form.get('trade_name', page.app_state.empresa_form.get('corporate_name'))}")
+                page.company_name_text_btn.text = page.app_state.empresa_form.get(
+                    'trade_name', 'corporate_name')
 
     def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
@@ -169,7 +177,8 @@ def main(page: ft.Page):
                 page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
-                print(f'Acessando a página /home. Usuário id: {page.app_state.usuario.get('id')}')
+                print(
+                    f'Acessando a página /home. Usuário id: {page.app_state.usuario.get('id')}')
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     home_container = home_page(page)

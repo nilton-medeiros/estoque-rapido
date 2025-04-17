@@ -40,6 +40,29 @@ class NomePessoa:
         else:
             self.first_name = last_name.strip().capitalize()
 
+    @classmethod
+    def from_dict(cls, data: dict) -> 'NomePessoa':
+        """
+        Cria uma instância de NomePessoa a partir de um dicionário.
+
+        Args:
+            data (dict): Dicionário contendo 'first_name' e opcionalmente 'last_name'.
+                Exemplo: {'first_name': 'João', 'last_name': 'Silva'}
+
+        Returns:
+            NomePessoa: Nova instância de NomePessoa.
+
+        Raises:
+            ValueError: Se o dicionário não contiver 'first_name' nem 'last_name'.
+        """
+        if not data:
+            raise ValueError("Dados inválidos para criar NomePessoa.")
+
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+
+        return cls(first_name, last_name)
+
     @property
     def nome_completo(self) -> str:
         """
@@ -65,7 +88,8 @@ class NomePessoa:
         """Retorna as iniciais do nome completo"""
         palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
         palavras = self.nome_completo.split()
-        iniciais = [palavra[0] for palavra in palavras if palavra not in palavras_ignoradas]
+        iniciais = [palavra[0]
+                    for palavra in palavras if palavra not in palavras_ignoradas]
         return ''.join(iniciais)
 
 
