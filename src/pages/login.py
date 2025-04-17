@@ -9,6 +9,7 @@ from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 
 from src.shared import MessageType, message_snackbar, validate_email
+from src.shared.config import app_colors
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
@@ -54,7 +55,7 @@ class LoginView:
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
-                    color=ft.Colors.YELLOW_ACCENT_400,
+                    color=app_colors["accent"],
                     width=sizes["border_width"]
                 ),
                 padding=ft.padding.symmetric(
@@ -83,13 +84,15 @@ class LoginView:
         self.page.user_name_text.visible = False  # Invisible, sem uso
         self.page.company_name_text_btn.visible = False  # Invisible, sem uso
 
+        print(f"Debug  -> login (app_colors): {app_colors}")
+
         return ft.Container(
             alignment=ft.alignment.center,
             bgcolor=ft.Colors.BLACK,
             opacity=0.75,
             padding=ft.padding.all(sizes["form_padding"]),
             border_radius=10,  # Suaviza as bordas
-            border=ft.border.all(color=ft.Colors.YELLOW_ACCENT_400, width=1),
+            border=ft.border.all(color=app_colors['accent'], width=1),
             shadow=ft.BoxShadow(
                 offset=ft.Offset(2, 2),  # Deslocamento horizontal e vertical
                 blur_radius=16,  # Raio de desfoque
@@ -124,7 +127,7 @@ class LoginView:
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
                         content=ft.Text(value="Criar uma conta",
-                                        color=ft.Colors.YELLOW_ACCENT_400),
+                                        color=app_colors["accent"]),
                         on_click=lambda _: self.page.go('/signup'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -133,7 +136,7 @@ class LoginView:
                         icon=ft.CupertinoIcons.BACK,
                         icon_color=ft.Colors.PRIMARY,
                         style=ft.ButtonStyle(
-                            color=ft.Colors.YELLOW_ACCENT_400),
+                            color=app_colors["accent"]),
                         on_click=lambda _: self.page.go('/'),
                     )
                 ],

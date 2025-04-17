@@ -262,12 +262,11 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
         return response
 
     # Verifica se colors é um dicionário e contém os campos corretos
-    if not isinstance(colors, dict) or not all(key in colors for key in ['primary', 'primary_container']):
+    if not isinstance(colors, dict) or not all(key in colors for key in ['base_color', 'primary', 'container', 'accent']):
         response["is_error"] = True
-        response["message"] = "O argumento color deve ser um dicionário com os campos 'primary' e 'primary_container'"
+        response["message"] = "O argumento color deve ser um dicionário com os campos 'base_color', 'primary', 'container' e 'accent'"
         logger.warning(response["message"])
         return response
-
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.

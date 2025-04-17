@@ -13,6 +13,7 @@ from src.pages.signup import signup
 from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
+from src.shared.config import app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -154,6 +155,13 @@ def main(page: ft.Page):
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
         pg_view = None
+
+        app_colors.update({
+            'base_color': 'yellow',
+            'primary': '#FFEB3B',
+            'container': '3FFF59D',
+            'accent': '#FFD740'
+        })
 
         match e.route:
             case '/':    # Raiz: Landing Page

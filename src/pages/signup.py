@@ -6,6 +6,9 @@ import src.domains.usuarios.controllers.usuarios_controllers as usuarios_control
 from src.domains.shared import NomePessoa, Password, PhoneNumber
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
+from src.shared.config import app_colors
+
+import flet as ft
 
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
@@ -49,7 +52,7 @@ class SignupView:
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
-                    color=ft.Colors.YELLOW_ACCENT_400,
+                    color=app_colors['accent'],
                     width=sizes["border_width"]
                 ),
                 padding=ft.padding.symmetric(
@@ -97,7 +100,7 @@ class SignupView:
             opacity=0.75,
             padding=ft.padding.all(sizes["form_padding"]),
             border_radius=10,  # Suaviza as bordas
-            border=ft.border.all(color=ft.Colors.YELLOW_ACCENT_400, width=1),
+            border=ft.border.all(color=app_colors['accent'], width=1),
             shadow=ft.BoxShadow(
                 offset=ft.Offset(2, 2),  # Deslocamento horizontal e vertical
                 blur_radius=16,  # Raio de desfoque
@@ -136,15 +139,15 @@ class SignupView:
                     self.signup_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
-                        content=ft.Text(value="Já tenho uma conta", color=ft.Colors.YELLOW_ACCENT_400),
+                        content=ft.Text(value="Já tenho uma conta", color=app_colors['accent']),
                         on_click=lambda _: self.page.go('/login'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
                         text="Voltar",
                         icon=ft.CupertinoIcons.BACK,
-                        icon_color=ft.Colors.YELLOW_ACCENT_400,
-                        style=ft.ButtonStyle(color=ft.Colors.YELLOW_ACCENT_400),
+                        icon_color=app_colors['accent'],
+                        style=ft.ButtonStyle(color=app_colors['accent']),
                         on_click=lambda _: self.page.go('/'),
                     ),
                 ],

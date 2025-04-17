@@ -11,9 +11,9 @@ def home_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
 
     print(f"Página Home -> user_colors: {page.app_state.usuario.get('user_colors')}")
-    if user_colors := page.app_state.usuario.get('user_colors'):
-        page.theme.color_scheme.primary = user_colors.get('primary')
-        page.theme.color_scheme.primary_container = user_colors.get('primary_container')
+    if colors := page.app_state.usuario.get('user_colors'):
+        page.theme.color_scheme.primary = colors.get('primary')
+        page.theme.color_scheme.primary_container = colors.get('container')
 
     print(f"Home Page -> Usuário: {page.app_state.usuario.get('name').nome_completo}")
     print(f"Home Page -> Color Scheme (primary): {page.theme.color_scheme.primary}")

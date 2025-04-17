@@ -589,13 +589,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a foto do usuário com ID '{id}': {str(e)}")
 
-    async def update_colors(self, id: str, new_colors: str) -> bool:
+    async def update_colors(self, id: str, new_colors: dict) -> bool:
         """
         Atualiza cor preferencial de um usuário.
 
         Args:
             id (str): ID do usuário
-            new_colors (str): Nova cor preferencial a ser atribuída
+            new_colors (dict): Nova cor preferencial a ser atribuída
 
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário

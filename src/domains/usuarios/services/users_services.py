@@ -101,18 +101,18 @@ class UsuariosServices:
         """
         return await self.repository.update_photo(usuario_id, photo_url)
 
-    async def update_colors(self, usuario_id: str, color: str) -> bool:
+    async def update_colors(self, usuario_id: str, colors: str) -> bool:
         """
         Atualiza a cor favorita do usuário para o campo  usando o repositório.
 
         Parâmetros:
             usuario_id (str): ID do usuário a ser alterado
-            color (str): Cor favorita do usuário a ser atualizado
+            colors (str): Cor favorita do usuário a ser atualizado
 
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return await self.repository.update_colors(usuario_id, color)
+        return await self.repository.update_colors(usuario_id, colors)
 
     async def update_empresas(self, usuario_id: str, empresa_id: str, empresas: set) -> bool:
         """

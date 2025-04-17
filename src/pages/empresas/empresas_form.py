@@ -13,12 +13,15 @@ from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import EmpresaSize
 from src.domains.usuarios.controllers import usuarios_controllers
 from src.pages.partials.build_input_responsive import build_input_field
+from src.shared.config import app_colors
 from src.shared.utils.field_validation_functions import validate_email
 from src.shared.utils.find_project_root import find_project_root
-from src.services.upload.upload_files import UploadFile
-from src.services.apis.consult_cnpj_api import consult_cnpj_api
 from src.shared.utils.gen_uuid import get_uuid
 from src.shared.utils.message_snackbar import MessageType, message_snackbar
+
+from src.services.upload.upload_files import UploadFile
+from src.services.apis.consult_cnpj_api import consult_cnpj_api
+
 
 import flet as ft
 
@@ -50,7 +53,6 @@ class EmpresaView:
         # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
-        from src.shared.config import user_colors
 
         self.cnpj = ft.TextField(
             col={'xs': 10, 'md': 10, 'lg': 3},
@@ -64,12 +66,12 @@ class EmpresaView:
                 padding=ft.padding.only(right=10),
             ),
             text_size=self.font_size,
-            border_color=user_colors["primary"],
-            focused_border_color=user_colors["primary_container"],
+            border_color=app_colors["primary"],
+            focused_border_color=app_colors["container"],
             text_align=ft.TextAlign.LEFT,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
-                color=ft.Colors.PRIMARY,  # Cor do label igual à borda
+                color=app_colors["primary"],  # Cor do label igual à borda
                 weight=ft.FontWeight.W_500  # Label um pouco mais grosso
             ),
             hint_style=ft.TextStyle(
@@ -77,7 +79,7 @@ class EmpresaView:
                 weight=ft.FontWeight.W_300  # Placeholder um pouco mais fino
             ),
             # Duração do fade do placeholder
-            cursor_color=ft.Colors.PRIMARY,
+            cursor_color=app_colors["primary"],
             focused_color=ft.Colors.GREY_500,
             text_style=ft.TextStyle(                        # Estilo do texto digitado
                 color=ft.Colors.WHITE,
@@ -90,9 +92,9 @@ class EmpresaView:
             col={'xs': 2, 'md': 2, 'lg': 1},
             icon=ft.Icons.SEARCH,
             icon_size=self.icon_size,
-            selected_icon_color=ft.Colors.PRIMARY_CONTAINER,
+            selected_icon_color=app_colors["container"],
             tooltip="Consultar CNPJ",
-            hover_color=ft.Colors.PRIMARY_CONTAINER,
+            hover_color=app_colors["container"],
             disabled=True,
             on_click=self._consult_cnpj
         )
@@ -218,7 +220,7 @@ class EmpresaView:
         )
 
         def on_hover_logo(e):
-            color = ft.Colors.PRIMARY_CONTAINER if e.data == "true" else ft.Colors.PRIMARY
+            color = app_colors["container"] if e.data == "true" else app_colors["primary"]
             icon_container = self.camera_icon.content
             logo_container = self.logo_frame
             icon_container.color = color
@@ -269,7 +271,7 @@ class EmpresaView:
             return
 
         self.logo_frame.border = ft.border.all(
-            color=ft.Colors.PRIMARY, width=1)
+            color=app_colors["primary"], width=1)
         self.logo_frame.update()
 
         upload_file = UploadFile(
@@ -357,8 +359,8 @@ class EmpresaView:
             logo_container.disabled = False
             icon_container.disabled = False
             logo_container.border = ft.border.all(
-                color=ft.Colors.PRIMARY, width=1)
-            icon_container.content.color = ft.Colors.PRIMARY
+                color=app_colors["primary"], width=1)
+            icon_container.content.color = app_colors["primary"]
 
 
     async def _consult_cnpj(self, e):
@@ -812,9 +814,9 @@ class EmpresaView:
 # Rota: /home/empresas/form
 def empresas_form(page: ft.Page):
     """Página de cadastro de empresas"""
-    if user_colors := page.app_state.usuario.get('user_colors'):
-        page.theme.color_scheme.primary = user_colors.get('primary')
-        page.theme.color_scheme.primary_container = user_colors.get(
+    if colors := page.app_state.usuario.get('user_colors'):
+        page.theme.color_scheme.primary = colors.get('primary')
+        page.theme.color_scheme.primary_container = colors.get(
             'primary_container')
 
     route_title = "home/empresas/form"

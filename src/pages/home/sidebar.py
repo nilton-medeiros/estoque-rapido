@@ -8,6 +8,8 @@ import src.controllers.bucket_controllers as bucket_controllers
 from src.presentation.components.functionality_graphics import FiscalProgressBar, Functionalities
 from src.domains.usuarios import handle_update_photo_usuarios, handle_update_colors_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar
+from src.shared.config.get_app_colors import get_app_colors
+from src.shared.config import app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -570,25 +572,23 @@ def sidebar_footer(page: ft.Page):
     def logoff_user(e):
         page.go('/logout')
 
-    async def change_primary_color(e):
+    async def change_user_colors(e):
         # Atualiza a cor primária da interface no thema do app
-        page.theme.color_scheme.primary = e.control.data.get('primary')
-        page.theme.color_scheme.primary_container = e.control.data.get('primary_container')
-
-        print(f"Debug: {page.theme.color_scheme.primary}")
-        print(f"Debug: {page.theme.color_scheme.primary_container}")
+        page.theme.color_scheme.primary = e.control.data
         user = page.app_state.usuario
         msg_error = None
-
+        colors = get_app_colors(e.control.data)
         try:
-            result = await handle_update_colors_usuarios(id=user.get('id'), colors=e.control.data)
+            result = await handle_update_colors_usuarios(id=user.get('id'), colors=colors)
             if result["is_error"]:
                 msg_error = result["message"]
                 return
 
-            print(f"Debug: {e.control.data}")
-            user.update({'user_colors': e.control.data})
+            print(f"Debug  -> e.control.data: {e.control.data}")
+            print(f"Debug  -> colors: {colors}")
+            user.update({'user_colors': colors})
             page.app_state.set_usuario(user)
+            app_colors.update(colors)
 
         except ValueError as e:
             logger.error(str(e))
@@ -650,8 +650,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Deep Purple')
                                 ]
                             ),
-                            data={'primary': 'deeppurple', 'primary_container': 'deeppurple_200'},
-                            on_click=change_primary_color,
+                            data='deeppurple',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -664,8 +664,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Purple')
                                 ]
                             ),
-                            data={'primary': 'purple', 'primary_container': 'purple_200'},
-                            on_click=change_primary_color,
+                            data='purple',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -678,8 +678,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Indigo')
                                 ]
                             ),
-                            data={'primary': 'indigo', 'primary_container': 'indigo_200'},
-                            on_click=change_primary_color,
+                            data='indigo',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -692,8 +692,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Blue (default)')
                                 ]
                             ),
-                            data={'primary': 'blue', 'primary_container': 'blue_200'},
-                            on_click=change_primary_color,
+                            data='blue',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -706,8 +706,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Teal')
                                 ]
                             ),
-                            data={'primary': 'teal', 'primary_container': 'teal_200'},
-                            on_click=change_primary_color,
+                            data='teal',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -720,8 +720,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Green')
                                 ]
                             ),
-                            data={'primary': 'green', 'primary_container': 'green_200'},
-                            on_click=change_primary_color,
+                            data='green',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -734,8 +734,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Yellow')
                                 ]
                             ),
-                            data={'primary': 'yellow', 'primary_container': 'yellow_200'},
-                            on_click=change_primary_color,
+                            data='yellow',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -748,8 +748,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Orange')
                                 ]
                             ),
-                            data={'primary': 'orange', 'primary_container': 'orange_200'},
-                            on_click=change_primary_color,
+                            data='orange',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -762,8 +762,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Deep orange')
                                 ]
                             ),
-                            data={'primary': 'deeporange', 'primary_container': 'deeporange_200'},
-                            on_click=change_primary_color,
+                            data='deeporange',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -776,8 +776,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Pink')
                                 ]
                             ),
-                            data={'primary': 'pink', 'primary_container': 'pink_200'},
-                            on_click=change_primary_color,
+                            data='pink',
+                            on_click=change_user_colors,
                         ),
                         ft.PopupMenuItem(
                             content=ft.Row(
@@ -790,8 +790,8 @@ def sidebar_footer(page: ft.Page):
                                     ft.Text(value='Red')
                                 ]
                             ),
-                            data={'primary': 'red', 'primary_container': 'red_200'},
-                            on_click=change_primary_color,
+                            data='red',
+                            on_click=change_user_colors,
                         ),
                     ],
                 ),
