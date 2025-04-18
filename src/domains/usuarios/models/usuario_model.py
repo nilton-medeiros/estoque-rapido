@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.password import Password
+from src.shared.config import get_app_colors
 
 
 @dataclass
@@ -83,8 +84,8 @@ class Usuario:
 
         self.photo_url = self.photo_url.strip() if self.photo_url else None
 
-        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['primary', 'container', 'accent']):
-            self.user_colors = {'primary': 'blue', 'container': 'blue_200', 'accent': 'blue_accent_400'}
+        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color', 'primary', 'container', 'accent']):
+            self.user_colors = get_app_colors('blue')
 
     def adicionar_empresa(self, empresa_id: str) -> None:
         """

@@ -8,12 +8,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from src.pages.empresas.empresas_form import empresas_form
+from src.pages.empresas.empresas_grid_view import empresas_grid
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager  # Alterado para AppStateManager
-from src.shared.config import app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -203,6 +203,22 @@ def main(page: ft.Page):
                         route='/empresas/form',
                         appbar=empresa_form.data,
                         controls=[empresa_form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/empresas/grid':
+                # Verifica se usuário está logado
+                if page.app_state.usuario.get('id'):
+                    page.on_resized = None
+                    empresa_grid = empresas_grid(page)
+                    pg_view = ft.View(
+                        route='/empresas/grid',
+                        appbar=empresa_grid.data,
+                        controls=[empresa_grid],
                         scroll=ft.ScrollMode.AUTO,
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,

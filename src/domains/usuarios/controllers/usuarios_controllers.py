@@ -246,7 +246,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
 
     Exemplo:
         >>> id = '12345678901234567890123456789012'
-        >>> response = await handle_update_colors_usuarios(id, {'primary': 'blue', 'primary_container': 'blue_50'})
+        >>> response = await handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
         >>> print(response)
     """
     response = {

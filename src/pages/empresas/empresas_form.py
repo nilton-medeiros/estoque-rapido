@@ -818,7 +818,7 @@ def empresas_form(page: ft.Page):
     if colors := page.app_state.usuario.get('user_colors'):
         page.theme.color_scheme.primary = colors.get('primary')
         page.theme.color_scheme.primary_container = colors.get(
-            'primary_container')
+            'container')
 
     route_title = "home/empresas/form"
     empresa = page.app_state.empresa_form
