@@ -199,13 +199,13 @@ def main(page: ft.Page):
                 else:
                     print('Usuário não autenticado. Redirecionando para /login')
                     page.go('/login')  # Redireciona se não estiver autenticado
-            case '/empresas/form':
+            case '/home/empresas/form':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     form = empresas_form(page)
                     pg_view = ft.View(
-                        route='/empresas/form',
+                        route='/home/empresas/form',
                         appbar=form.data,
                         controls=[form],
                         scroll=ft.ScrollMode.AUTO,
@@ -215,20 +215,11 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
-            case '/empresas/grid':
+            case '/home/empresas/grid':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    form_grid = empresas_grid(page)
-                    pg_view = ft.View(
-                        route='/empresas/grid',
-                        appbar=form_grid.data,
-                        controls=[form_grid],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
+                    pg_view = empresas_grid(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/signup':  # Registro

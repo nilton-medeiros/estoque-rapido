@@ -833,6 +833,13 @@ def empresas_form(page: ft.Page):
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
+    def onclick_previous_route(e):
+        previous_route = '/home'
+        print(f"Debug  -> empresas_form page.data: {page.data}")
+        if page.data:
+            previous_route = page.data
+        page.go(previous_route)
+
     appbar = ft.AppBar(
         leading=ft.Container(
             alignment=ft.alignment.center_left,
@@ -846,7 +853,8 @@ def empresas_form(page: ft.Page):
                 alignment=ft.alignment.center,
                 on_hover=handle_icon_hover,
                 content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home"),
+                # on_click=lambda _: page.go("/home"),
+                on_click=onclick_previous_route,
                 tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
             ),
@@ -926,7 +934,12 @@ def empresas_form(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.go('/home')
+        previous_route = '/home'
+        print(f"Debug  -> empresas_form page.data: {page.data}")
+        if page.data:
+            previous_route = page.data
+        page.go(previous_route)
+
 
     def exit_form_empresa(e):
         if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
@@ -938,7 +951,12 @@ def empresas_form(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.go('/home')
+        previous_route = '/home'
+        print(f"Debug  -> empresas_form page.data: {page.data}")
+        if page.data:
+            previous_route = page.data
+        page.go(previous_route)
+
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(

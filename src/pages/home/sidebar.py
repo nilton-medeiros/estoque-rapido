@@ -419,7 +419,8 @@ def sidebar_header(page: ft.Page):
         else:
             # Se não existe empresa, limpa o form
             page.app_state.clear_empresa_form_data()
-        page.go('/empresas/form')
+        page.data = '/home'
+        page.go('/home/empresas/form')
 
     page.company_name_text_btn.on_click = on_click_empresa_btn
 
@@ -616,8 +617,8 @@ def sidebar_footer(page: ft.Page):
         page.update()  # Garante que a UI reflita a nova cor primária
 
     def on_click_business_btn(e):
-        print("Redirecionando para a página /empresas/grid")
-        page.go('/empresas/grid')
+        page.data = "/home"
+        page.go('/home/empresas/grid')
 
     # --- Nova Função de Hover ---
     def handle_icon_hover(e):
