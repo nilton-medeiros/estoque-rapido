@@ -177,6 +177,39 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
+    async def find_all(self, ids_empresas: list[str]) -> list[Empresa]:
+        """
+        Faz uma busca de todas as empreas que estão na lista de ids_empresas.
+
+        Args:
+            ids_empresas (list[str]): Lista das empresas do usuário logado
+
+        Return:
+            list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar
+        Raise:
+            Exception: Se ocorrer erro no Firebase ou outro erro inesperado durante a busca.
+        """
+        try:
+            query = self.collection.where(field_path='id', op_string='in', value=ids_empresas)
+            docs = query.stream()
+            # Itere sobre os documentos encontratos
+            empresas = [self._doc_to_empresa(doc.to_dict()) for doc in docs]
+            return empresas
+        except exceptions.FirebaseError as e:
+            if e.code == 'permission-denied':
+                logger.warning(f"Permissão negada ao consultar lista de empresas do usuário logado: {e}")
+            elif e.code == 'unavailable':
+                logger.error(f"Serviço do Firestore indisponível ao consultar lista de empresas do usuário logado: {e}")
+                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                raise Exception(f"Serviço do Firestore temporariamente indisponível.")
+            else:
+                logger.error(f"Erro do Firebase ao consultar lista de empresas do usuário logado: Código: {e.code}, Detalhes: {e}")
+            raise  # Re-lançar a exceção para tratamento em camadas superiores
+        except Exception as e:
+            # Captura outros erros inesperados (problemas de rede, etc.)
+            logger.error(f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
+            raise
+
     async def delete(self, empresa_id: str) -> bool:
         """
         Excluir uma empresa pelo seu identificador único.

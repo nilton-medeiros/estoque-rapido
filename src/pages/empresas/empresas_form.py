@@ -815,10 +815,10 @@ class EmpresaView:
 # Rota: /home/empresas/form
 def empresas_form(page: ft.Page):
     """Página de cadastro de empresas"""
-    if colors := page.app_state.usuario.get('user_colors'):
-        page.theme.color_scheme.primary = colors.get('primary')
-        page.theme.color_scheme.primary_container = colors.get(
-            'container')
+    # if colors := page.app_state.usuario.get('user_colors'):
+    #     page.theme.color_scheme.primary = colors.get('primary')
+    #     page.theme.color_scheme.primary_container = colors.get(
+    #         'container')
 
     route_title = "home/empresas/form"
     empresa = page.app_state.empresa_form
@@ -828,13 +828,32 @@ def empresas_form(page: ft.Page):
     else:
         route_title += "/new"
 
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.update()
+
     appbar = ft.AppBar(
-        leading=ft.IconButton(
-            icon=ft.Icons.ARROW_BACK,
-            on_click=lambda _: page.go("/home"),
+        leading=ft.Container(
+            alignment=ft.alignment.center_left,
+            padding=ft.padding.only(left=10),
+            content=ft.Container(
+                width=40,
+                height=40,
+                border_radius=ft.border_radius.all(20),
+                ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                bgcolor=ft.Colors.TRANSPARENT,
+                alignment=ft.alignment.center,
+                on_hover=handle_icon_hover,
+                content=ft.Icon(ft.Icons.ARROW_BACK),
+                on_click=lambda _: page.go("/home"),
+                tooltip="Voltar",
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
+            ),
         ),
-        title=ft.Text(route_title, size=16),
-        # bgcolor=ft.Colors.BLUE_700,   # Definir a cor do AppBar
+        title=ft.Text(route_title),
+        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER), # Exemplo com opacidade
+        adaptive=True,
     )
 
     empresa_view = EmpresaView(page)
@@ -928,7 +947,6 @@ def empresas_form(page: ft.Page):
         text="Cancelar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_empresa)
 
     return ft.Column(
-        data=appbar,
         controls=[
             form_container,
             ft.Divider(height=5),
@@ -941,4 +959,5 @@ def empresas_form(page: ft.Page):
                 alignment=ft.MainAxisAlignment.END,
             ),
         ],
+        data=appbar,
     )

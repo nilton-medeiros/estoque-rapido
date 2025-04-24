@@ -2,22 +2,24 @@ import flet as ft
 
 from src.pages.home.sidebar import sidebar_container
 from src.pages.home.content import main_content
-from src.shared.config.app_theme import AppTheme
+from src.shared.config import app_colors
 
+# from src.shared.config.app_theme import AppTheme
 
 def home_page(page: ft.Page):
     """Página Home do usuário logado"""
-    page.theme = AppTheme.theme
+    # page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
-    print(f"Página Home -> user_colors: {page.app_state.usuario.get('user_colors')}")
     if colors := page.app_state.usuario.get('user_colors'):
-        page.theme.color_scheme.primary = colors.get('primary')
-        page.theme.color_scheme.primary_container = colors.get('container')
+       app_colors.update(colors) # Atualiza as cores globais do app
+       page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color'))
 
-    print(f"Home Page -> Usuário: {page.app_state.usuario.get('name').nome_completo}")
-    print(f"Home Page -> Color Scheme (primary): {page.theme.color_scheme.primary}")
-    print(f"Home Page -> Color Scheme (primary_container): {page.theme.color_scheme.primary_container}")
+    print(f"Página Home -> user_colors: {page.app_state.usuario.get('user_colors')}")
+    # if colors := page.app_state.usuario.get('user_colors'):
+        # page.theme.color_scheme.primary = colors.get('primary')
+        # page.theme.color_scheme.primary_container = colors.get('container')
+
     sidebar = sidebar_container(page)
     content = main_content()
 
@@ -54,21 +56,47 @@ def home_page(page: ft.Page):
     Solução: Envio a variável appbar como data para a View, para que possa ser acessada através de appbar=home.data
     Nota: Na View rora /home, appbar=page.appbar não tem efeito, pois pega a primeira AppBar definida em landing_page.
     """
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.update()
+
     appbar = ft.AppBar(
-        leading=ft.IconButton(
-            icon=ft.Icons.MENU,
-            on_click=toggle_sidebar,
+        leading=ft.Container(
+            alignment=ft.alignment.center_left,
+            padding=ft.padding.only(left=10),
+            content=ft.Container(
+                width=40,
+                height=40,
+                border_radius=ft.border_radius.all(20),
+                ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                bgcolor=ft.Colors.TRANSPARENT,
+                alignment=ft.alignment.center,
+                on_hover=handle_icon_hover,
+                content=ft.Icon(ft.Icons.MENU),
+                on_click=toggle_sidebar,
+                tooltip="Menu",
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
+            ),
         ),
+        # bgcolor=ft.Colors.PRIMARY_CONTAINER,
+        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER), # Exemplo com opacidade
+        adaptive=True,
         actions=[
             ft.Container(
-                content=ft.IconButton(
-                    icon=ft.Icons.POWER_SETTINGS_NEW,
-                    icon_color="white",
-                    on_click=logoff_user,
-                ),
-
+                width=40,
+                height=40,
+                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
+                ink=True,
+                bgcolor=ft.Colors.TRANSPARENT,
+                alignment=ft.alignment.center,
+                on_hover=handle_icon_hover,
+                content=ft.Icon(ft.Icons.POWER_SETTINGS_NEW, color="white", size=22),
+                tooltip="Sair",
+                on_click=logoff_user,
                 margin=ft.margin.only(right=10),
-            )
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
+            ),
         ],
     )
 

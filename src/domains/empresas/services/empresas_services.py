@@ -120,3 +120,7 @@ class EmpresasServices:
             Optional[Empresa]: Empresa encontrada ou None se não existir
         """
         return await self.repository.find_by_id(empresa_id)
+
+    async def find_all(self, ids_empresas: list[str]) -> list[Empresa]:
+        """Busca todas as empresas do usuário logado."""
+        return await self.repository.find_all(ids_empresas)

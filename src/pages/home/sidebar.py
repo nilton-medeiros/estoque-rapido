@@ -43,7 +43,7 @@ def sidebar_header(page: ft.Page):
     if current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"
         cia_name = current_company.get(
-                'trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
+            'trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
         page.company_name_text_btn.text = cia_name
     else:
         page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"
@@ -51,7 +51,8 @@ def sidebar_header(page: ft.Page):
 
     # page.company_name_text_btn.update()
     print(f"Debub -> cia_name: {cia_name}")
-    print(f"Debug -> page.company_name_text_btn.text: {page.company_name_text_btn.text}")
+    print(
+        f"Debug -> page.company_name_text_btn.text: {page.company_name_text_btn.text}")
 
     status_text = ft.Text()
     progress_bar = ft.ProgressBar(visible=False)
@@ -471,7 +472,7 @@ def sidebar_content(page: ft.Page):
                     ft.Text(value='I.E.:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
                     ft.Text(
-                        value=current_company.get('ie',''), theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                        value=current_company.get('ie', ''), theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
         ]
@@ -574,7 +575,9 @@ def sidebar_footer(page: ft.Page):
 
     async def change_user_colors(e):
         # Atualiza a cor primária da interface no thema do app
-        page.theme.color_scheme.primary = e.control.data
+        # page.theme.color_scheme.primary = e.control.data
+        page.theme = page.dark_theme = ft.Theme(
+            color_scheme_seed=e.control.data)
         user = page.app_state.usuario
         msg_error = None
         colors = get_app_colors(e.control.data)
@@ -582,221 +585,286 @@ def sidebar_footer(page: ft.Page):
             result = await handle_update_colors_usuarios(id=user.get('id'), colors=colors)
             if result["is_error"]:
                 msg_error = result["message"]
-                return
+                # Reverter a mudança de tema se a atualização falhar? Opcional.
+                # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
+                # page.update()
+                message_snackbar(page=page, message=msg_error,
+                                 message_type=MessageType.ERROR)
+                return  # Não continua se houve erro
 
             print(f"Debug  -> e.control.data: {e.control.data}")
             print(f"Debug  -> colors: {colors}")
-            user.update({'user_colors': colors})
-            page.app_state.set_usuario(user)
-            app_colors.update(colors)
+            # Atualiza o estado local ANTES de atualizar a UI globalmente
+            user_dict = page.app_state.usuario  # Pega o dicionário atual
+            # Atualiza as cores no dicionário
+            user_dict['user_colors'] = colors
+            page.app_state.set_usuario(user_dict)  # Atualiza o estado
+            app_colors.update(colors)  # Atualiza as cores globais do app
 
         except ValueError as e:
             logger.error(str(e))
             msg_error = f"Erro: {str(e)}"
         except RuntimeError as e:
             logger.error(str(e))
+            # Provavelmente um erro de digitação, deveria ser "Erro na atualização"
             msg_error = f"Erro no upload: {str(e)}"
 
         if msg_error:
             message_snackbar(page=page, message=msg_error,
-                         message_type=MessageType.ERROR)
-        e.page.update()
+                             message_type=MessageType.ERROR)
+        # Atualiza a página para refletir a mudança de tema
+        page.update()  # Garante que a UI reflita a nova cor primária
 
     def on_click_business_btn(e):
-        page.go('/empresas/table')
+        print("Redirecionando para a página /empresas/grid")
+        page.go('/empresas/grid')
+
+    # --- Nova Função de Hover ---
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        # Ensure e.control is the container
+        if isinstance(e.control, ft.Container):
+            e.control.bgcolor = ft.Colors.with_opacity(
+                0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+            e.control.update()
+            # This should now print
+            print(
+                f"Debug -> handle_icon_hover: bgcolor: {e.control.bgcolor}, e.data: {e.data}")
+        else:
+            print(
+                f"Debug -> handle_icon_hover called by unexpected control: {type(e.control)}")
+    # --- Fim da Nova Função ---
+
+    # --- Definições comuns para os Containers de Ícone ---
+    icon_container_props = {
+        "width": 40,
+        "height": 40,
+        # Metade da largura/altura para ser círculo
+        "border_radius": ft.border_radius.all(20),
+        "ink": True,
+        "bgcolor": ft.Colors.TRANSPARENT,
+        "alignment": ft.alignment.center,
+        "on_hover": handle_icon_hover,
+    }
+    # --- Fim das Definições Comuns ---
 
     return ft.Container(
-        padding=ft.padding.symmetric(vertical=20),
+        # Ajuste o padding se necessário
+        padding=ft.padding.symmetric(vertical=10, horizontal=10),
         content=ft.Row(
             controls=[
-                ft.IconButton(
-                    icon=ft.Icons.POWER_SETTINGS_NEW,
-                    icon_color="white",
-                    height=18,
+                # --- Ícone Sair ---
+                ft.Container(
+                    **icon_container_props,
+                    content=ft.Icon(ft.Icons.POWER_SETTINGS_NEW,
+                                    color="white", size=22),
+                    tooltip="Sair",
                     on_click=logoff_user,
                 ),
-                ft.IconButton(
-                    icon=ft.Icons.BUSINESS,
-                    icon_color="white",
-                    height=18,
+                # --- Ícone Empresas ---
+                ft.Container(
+                    **icon_container_props,
+                    content=ft.Icon(ft.Icons.BUSINESS, color="white", size=22),
+                    tooltip="Empresas",
                     on_click=on_click_business_btn,
                 ),
-                ft.IconButton(
-                    icon=ft.Icons.GROUPS,
-                    icon_color="white",
-                    height=18,
-                    # on_click=,
-                ),
+                # --- Ícone Usuários ---
                 ft.Container(
-                    expand=True,
+                    **icon_container_props,
+                    content=ft.Icon(ft.Icons.GROUPS, color="white", size=22),
+                    tooltip="Usuários",
+                    # on_click=, # Adicione o handler de clique aqui quando tiver
                 ),
-                ft.PopupMenuButton(
-                    tooltip="Cor principal",
-                    expand=True,
-                    content=ft.Icon(
-                        name=ft.Icons.COLOR_LENS_OUTLINED,
-                        color=ft.Colors.PRIMARY,
-                        size=22,
+                # --- Fim dos Ícones ---
+                ft.Container(
+                    expand=True,  # Mantém o espaço para empurrar o botão de cor
+                ),
+                # --- INÍCIO DA MODIFICAÇÃO ---
+                # Envolve o PopupMenuButton em um Container e aplica o hover ao wrapper
+                ft.Container(
+                    width=40,
+                    height=40,
+                    border_radius=ft.border_radius.all(20),
+                    ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                    bgcolor=ft.Colors.TRANSPARENT,  # Background inicial para o wrapper
+                    alignment=ft.alignment.center,
+                    on_hover=handle_icon_hover,  # <--- EVENTO HOVER MOVIDO PARA CÁ
+                    tooltip="Cor principal",  # Tooltip pode ficar no wrapper
+                    content=ft.PopupMenuButton(
+                        # O botão em si pode não precisar de estilização de conteúdo específica agora,
+                        # já que o wrapper lida com o fundo do hover.
+                        # Apenas forneça o ícone
+                        content=ft.Icon(
+                            name=ft.Icons.COLOR_LENS_OUTLINED,
+                            color=ft.Colors.PRIMARY,  # Mantenha a cor do ícone dinâmica se necessário
+                            size=22  # Igual aos outros tamanhos de ícone
+                        ),
+                        # Remova o tooltip daqui se estiver no container externo
+                        items=[
+                            # lista de ft.PopupMenuItem
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.DEEP_PURPLE
+                                        ),
+                                        ft.Text(value='Deep Purple')
+                                    ]
+                                ),
+                                data='deeppurple',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.PURPLE
+                                        ),
+                                        ft.Text(value='Purple')
+                                    ]
+                                ),
+                                data='purple',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.INDIGO
+                                        ),
+                                        ft.Text(value='Indigo')
+                                    ]
+                                ),
+                                data='indigo',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.BLUE
+                                        ),
+                                        ft.Text(value='Blue (default)')
+                                    ]
+                                ),
+                                data='blue',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.TEAL
+                                        ),
+                                        ft.Text(value='Teal')
+                                    ]
+                                ),
+                                data='teal',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.GREEN
+                                        ),
+                                        ft.Text(value='Green')
+                                    ]
+                                ),
+                                data='green',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.YELLOW
+                                        ),
+                                        ft.Text(value='Yellow')
+                                    ]
+                                ),
+                                data='yellow',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.ORANGE
+                                        ),
+                                        ft.Text(value='Orange')
+                                    ]
+                                ),
+                                data='orange',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.DEEP_ORANGE
+                                        ),
+                                        ft.Text(value='Deep orange')
+                                    ]
+                                ),
+                                data='deeporange',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.PINK
+                                        ),
+                                        ft.Text(value='Pink')
+                                    ]
+                                ),
+                                data='pink',
+                                on_click=change_user_colors,
+                            ),
+                            ft.PopupMenuItem(
+                                content=ft.Row(
+                                    controls=[
+                                        ft.Container(
+                                            height=10,
+                                            width=10,
+                                            bgcolor=ft.Colors.RED
+                                        ),
+                                        ft.Text(value='Red')
+                                    ]
+                                ),
+                                data='red',
+                                on_click=change_user_colors,
+                            ),
+                        ],
                     ),
-                    items=[
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.DEEP_PURPLE
-                                    ),
-                                    ft.Text(value='Deep Purple')
-                                ]
-                            ),
-                            data='deeppurple',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.PURPLE
-                                    ),
-                                    ft.Text(value='Purple')
-                                ]
-                            ),
-                            data='purple',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.INDIGO
-                                    ),
-                                    ft.Text(value='Indigo')
-                                ]
-                            ),
-                            data='indigo',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.BLUE
-                                    ),
-                                    ft.Text(value='Blue (default)')
-                                ]
-                            ),
-                            data='blue',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.TEAL
-                                    ),
-                                    ft.Text(value='Teal')
-                                ]
-                            ),
-                            data='teal',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.GREEN
-                                    ),
-                                    ft.Text(value='Green')
-                                ]
-                            ),
-                            data='green',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.YELLOW
-                                    ),
-                                    ft.Text(value='Yellow')
-                                ]
-                            ),
-                            data='yellow',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.ORANGE
-                                    ),
-                                    ft.Text(value='Orange')
-                                ]
-                            ),
-                            data='orange',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.DEEP_ORANGE
-                                    ),
-                                    ft.Text(value='Deep orange')
-                                ]
-                            ),
-                            data='deeporange',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.PINK
-                                    ),
-                                    ft.Text(value='Pink')
-                                ]
-                            ),
-                            data='pink',
-                            on_click=change_user_colors,
-                        ),
-                        ft.PopupMenuItem(
-                            content=ft.Row(
-                                controls=[
-                                    ft.Container(
-                                        height=10,
-                                        width=10,
-                                        bgcolor=ft.Colors.RED
-                                    ),
-                                    ft.Text(value='Red')
-                                ]
-                            ),
-                            data='red',
-                            on_click=change_user_colors,
-                        ),
-                    ],
                 ),
-            ]
-        )
+                # --- FIM DA MODIFICAÇÃO ---
+            ],
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Garante espaçamento
+            spacing=5,  # Adiciona um pequeno espaço entre os botões
+        ),
     )
 
 
@@ -807,10 +875,12 @@ def sidebar_container(page: ft.Page):
         bgcolor="#111418",
         border_radius=10,
         content=ft.Column(
+            # Garante que o footer não seja espremido se o conteúdo crescer
             controls=[
                 sidebar_header(page),
-                sidebar_content(page),
-                sidebar_footer(page),
+                # Conteúdo principal expansível
+                ft.Container(content=sidebar_content(page), expand=True),
+                sidebar_footer(page),  # Footer com altura fixa
             ]
         )
     )

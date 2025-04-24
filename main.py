@@ -151,6 +151,11 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
 
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.update()
+
     # Rotas
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
@@ -198,11 +203,11 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    empresa_form = empresas_form(page)
+                    form = empresas_form(page)
                     pg_view = ft.View(
                         route='/empresas/form',
-                        appbar=empresa_form.data,
-                        controls=[empresa_form],
+                        appbar=form.data,
+                        controls=[form],
                         scroll=ft.ScrollMode.AUTO,
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
@@ -214,11 +219,11 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    empresa_grid = empresas_grid(page)
+                    form_grid = empresas_grid(page)
                     pg_view = ft.View(
                         route='/empresas/grid',
-                        appbar=empresa_grid.data,
-                        controls=[empresa_grid],
+                        appbar=form_grid.data,
+                        controls=[form_grid],
                         scroll=ft.ScrollMode.AUTO,
                         bgcolor=ft.Colors.BLACK,
                         vertical_alignment=ft.MainAxisAlignment.CENTER,
@@ -240,18 +245,24 @@ def main(page: ft.Page):
                     route="/404",
                     controls=[
                         ft.AppBar(
-                            leading=ft.Icon(
-                                name=ft.Icons.INVENTORY_OUTLINED, color=ft.Colors.WHITE),
-                            leading_width=40,
+                            leading=ft.Container(
+                                width=40,
+                                height=40,
+                                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
+                                ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                                bgcolor=ft.Colors.TRANSPARENT,
+                                alignment=ft.alignment.center,
+                                on_hover=handle_icon_hover,
+                                content=ft.Icon(name=ft.Icons.INVENTORY_OUTLINED, color=ft.Colors.WHITE),
+                            ),
                             title=ft.Text(
                                 "ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças", color=ft.Colors.WHITE),
                             bgcolor=ft.Colors.BLUE_700,
                         ),
                         ft.Text("404 - Página não encontrada", size=30),
-                        ft.ElevatedButton(
-                            text="Voltar à pagina principal",
+                        ft.OutlinedButton(
+                            text="Ir para a página inicial",
                             on_click=lambda _: page.go("/"),
-                            adaptive=True,
                         )
                     ],
                     vertical_alignment=ft.MainAxisAlignment.CENTER,

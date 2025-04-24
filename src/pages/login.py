@@ -210,7 +210,7 @@ class LoginView:
 
             print(f"Usuário tem empresa registrada: {user.empresa_id} ({user.name.iniciais})")
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
-            result = await empresas_controllers.handle_get_empresas(id=user.empresa_id)
+            result = await empresas_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["is_error"]:
                 message_snackbar(

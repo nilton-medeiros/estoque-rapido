@@ -14,6 +14,7 @@ e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
 
+
 async def handle_save_empresas(empresa: Empresa) -> dict:
     """
     Manipula a operação de salvar empresa.
@@ -74,7 +75,67 @@ async def handle_save_empresas(empresa: Empresa) -> dict:
     return response
 
 
-async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
+async def handle_get_empresas_by_id(id: str) -> dict:
+    """
+    Manipula a operação de buscar empresa.
+
+    Esta função manipula a operação de buscar uma empresa no banco de dados utilizando o ID fornecido.
+    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do empresa, se encontrada.
+
+    Args:
+        id (str): O ID do empresa a ser buscado.
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do empresa.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar a empresa.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> response = await handle_get_empresas_by_id('abc123')
+        >>> print(response)
+    """
+    response = {
+        "is_error": False,
+        "message": "",
+        "empresa": None
+    }
+
+    try:
+        # Usa o repositório do Firebase para buscar a empresa
+        repository = FirebaseEmpresasRepository()
+        empresas_services = EmpresasServices(repository)
+
+        empresa = None
+
+        if id:
+            # Busca a empresa pelo ID
+            empresa = await empresas_services.find_by_id(id)
+        else:
+            raise ValueError("O id deve ser passado")
+
+        if empresa:
+            response["message"] = "Empresa encontrada com sucesso!"
+            response["empresa"] = empresa
+        else:
+            # Improvável, pois se não encontrar a empresa, é retornado uma exceção
+            # Mas, caso aconteça, é tratado aqui
+            response["is_error"] = True
+            response["message"] = "Empresa não encontrada"
+
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+
+    return response
+
+
+async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     """
     Manipula a operação de buscar empresa.
 
@@ -94,7 +155,7 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
 
     Exemplo:
         >>> cnpj = CNPJ("00.000.000/0000-00")
-        >>> response = await handle_get_empresas(cnpj)
+        >>> response = await handle_get_empresas_by_cnpj(cnpj)
         >>> print(response)
     """
     response = {
@@ -110,13 +171,11 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
 
         empresa = None
 
-        if id:
-            # Busca a empresa pelo ID
-            empresa = await empresas_services.find_by_id(id)
-        elif cnpj:
+        if cnpj:
             # Busca a empresa pelo CNPJ
             empresa = await empresas_services.find_by_cnpj(cnpj)
-        else: raise ValueError("Um dos argumentos id ou CNPJ deve ser passado")
+        else:
+            raise ValueError("O CNPJ deve ser passado")
 
         if empresa:
             response["message"] = "Empresa encontrada com sucesso!"
@@ -134,5 +193,61 @@ async def handle_get_empresas(id: str = None, cnpj: CNPJ = None) -> dict:
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
+
+    return response
+
+
+async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
+    """
+    Busca todas as empresas do usuário logado.
+
+    Esta função retorna todas as empresas do usuário logado, se não houver empresas, retorna uma lista vazia.
+    Ela utiliza um repositório específico para realizar a busca e retorna a lista de empresas, se encontrada.
+
+    Args:
+        ids_empresas (set[str]|list[str]): Uma lista ou conjunto de ID's das empresas do usuário logado.
+
+    Returns:
+        list: Uma lista de empresas do usuário logado.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar empresas.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> response = await handle_get_empresas(['abc123', 'def456'])
+        >>> print(response)
+    """
+
+    response = {
+        "is_error": False,
+        "message": "",
+        "empresas": []
+    }
+
+    try:
+        # Usa o repositório do Firebase para buscar as empresas
+        repository = FirebaseEmpresasRepository()
+        empresas_services = EmpresasServices(repository)
+
+        if not ids_empresas or len(ids_empresas) == 0:
+            raise ValueError("A lista de empresas não pode ser vazia")
+
+        list_empresas = await empresas_services.find_all(ids_empresas=list(ids_empresas))
+
+        if list_empresas:
+            response["message"] = "Empresas encontradas com sucesso!"
+            response["empresas"] = list_empresas
+        else:
+            response["is_error"] = True
+            response["message"] = "Nenhuma empresas encontrada!"
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
 
     return response
