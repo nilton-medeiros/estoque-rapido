@@ -2,6 +2,9 @@ import logging
 from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
+
+from google.cloud.firestore import Query
+from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
@@ -122,8 +125,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where(
-                field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)
+            query = self.collection.where(filter=FieldFilter("cnpj", "==", cnpj.raw_cnpj)).limit(1)
+            # query = self.collection.where(field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)  # Método antigo
             docs = query.get()
 
             if docs:
@@ -159,8 +162,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where(
-                field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)
+            query = self.collection.where(filter=FieldFilter("cnpj", "==", cnpj.raw_cnpj)).limit(1)
+            # query = self.collection.where(field_path='cnpj', op_string='==', value=cnpj.raw_cnpj).limit(1)  # Método antigo
             return len(query.get()) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -177,12 +180,12 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    async def find_all(self, ids_empresas: list[str]) -> list[Empresa]:
+    async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
         """
-        Faz uma busca de todas as empreas que estão na lista de ids_empresas.
+        Faz uma busca de todas as empresas que estão na lista de ids_empresas.
 
         Args:
-            ids_empresas (list[str]): Lista das empresas do usuário logado
+            ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado
 
         Return:
             list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar
@@ -190,23 +193,37 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Exception: Se ocorrer erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where(field_path='id', op_string='in', value=ids_empresas)
-            docs = query.stream()
-            # Itere sobre os documentos encontratos
-            empresas = [self._doc_to_empresa(doc.to_dict()) for doc in docs]
+            ids_empresas_list = list(ids_empresas)
+
+            # Buscar documentos diretamente pelos IDs
+            empresas = []
+            for empresa_id in ids_empresas_list:
+                doc_ref = self.collection.document(empresa_id)
+                doc = doc_ref.get()
+                if doc.exists:
+                    doc_dict = doc.to_dict()
+                    # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
+                    doc_dict['id'] = doc.id  # Isso ajuda se o seu método _doc_to_empresa precisa do ID
+                    empresas.append(self._doc_to_empresa(doc_dict))
+                else:
+                    logger.warning(f"Documento com ID {empresa_id} não encontrado")
+
             return empresas
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
+                print(f"ERROR: Permissão negada ao consultar lista de empresas do usuário logado: {e}")
                 logger.warning(f"Permissão negada ao consultar lista de empresas do usuário logado: {e}")
             elif e.code == 'unavailable':
+                print(f"ERROR: Serviço do Firestore indisponível ao consultar lista de empresas do usuário logado: {e}")
                 logger.error(f"Serviço do Firestore indisponível ao consultar lista de empresas do usuário logado: {e}")
-                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
                 raise Exception(f"Serviço do Firestore temporariamente indisponível.")
             else:
+                print(f"ERROR: Erro do Firebase ao consultar lista de empresas do usuário logado: Código: {e.code}, Detalhes: {e}")
                 logger.error(f"Erro do Firebase ao consultar lista de empresas do usuário logado: Código: {e.code}, Detalhes: {e}")
             raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
             # Captura outros erros inesperados (problemas de rede, etc.)
+            print(f"ERROR: Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             logger.error(f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
 
@@ -224,7 +241,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
         """
         try:
-            await self.collection.document(empresa_id).delete()
+            self.collection.document(empresa_id).delete()
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':

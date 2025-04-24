@@ -107,7 +107,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         try:
             # Insere ou Atualiza na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
-            self.collection.document(usuario.id).set(usuario.to_dict_db(), merge=True)
+            self.collection.document(usuario.id).set(
+                usuario.to_dict_db(), merge=True)
             return usuario.id
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -140,6 +141,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             int: O número de usuários encontrados.
         """
         try:
+            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)) # Testar este Novo método
             query = self.collection.where(
                 field_path='empresas', op_string='array_contains', value=empresa_id)
             docs = query.get()
@@ -219,6 +221,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
+            # query = self.collection.where(filter=FieldFilter("email", "==", email)) # Testar este Novo método
             query = self.collection.where(
                 field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
@@ -262,9 +265,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
+            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).offset(offset).limit(limit) # Testar este Novo método
             query = self.collection.where(
-                field_path='empresas', op_string='array_contains', value=empresa_id
-            ).offset(offset).limit(limit)
+                field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -309,9 +312,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
+            # query = self.collection.where(filter=FieldFilter("email", "==", email)).limit(1) # Testar este Novo método
             query = self.collection.where(
-                field_path='email', op_string='==', value=email
-            ).limit(1)
+                field_path='email', op_string='==', value=email).limit(1)
             docs = query.stream()
 
             for doc in docs:
@@ -355,9 +358,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(
-                field_path='empresas', op_string='array_contains', value=empresa_id
-            ).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
+            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(filter=FieldFilter("name", ">=", name)).where(filter=FieldFilter("name", "<=", name + '\uf8ff'))
+            query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(
+                'name', '>=', name).where('name', '<=', name + '\uf8ff')
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -403,6 +406,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
+            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(filter=FieldFilter("profile", "==", profile))
             query = self.collection.where(
                 field_path='empresas', op_string='array_contains', value=empresa_id
             ).where(field_path='profile', op_string='==', value=profile)
@@ -669,7 +673,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if not doc.exists:
                 return False
 
-            doc_ref.update({"empresa_id": empresa_id, "empresas": list(empresas)})
+            doc_ref.update({"empresa_id": empresa_id,
+                           "empresas": list(empresas)})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':

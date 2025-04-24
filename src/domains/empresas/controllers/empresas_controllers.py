@@ -222,7 +222,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
     response = {
         "is_error": False,
         "message": "",
-        "empresas": []
+        "data_list": []
     }
 
     try:
@@ -232,12 +232,12 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
-
-        list_empresas = await empresas_services.find_all(ids_empresas=list(ids_empresas))
+        print(f"Debug handle_get_empresas  ->  ids_empresas: {ids_empresas}")
+        list_empresas = await empresas_services.find_all(ids_empresas=ids_empresas)
 
         if list_empresas:
             response["message"] = "Empresas encontradas com sucesso!"
-            response["empresas"] = list_empresas
+            response["data_list"] = list_empresas
         else:
             response["is_error"] = True
             response["message"] = "Nenhuma empresas encontrada!"

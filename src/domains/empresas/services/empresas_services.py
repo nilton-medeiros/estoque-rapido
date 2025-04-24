@@ -121,6 +121,6 @@ class EmpresasServices:
         """
         return await self.repository.find_by_id(empresa_id)
 
-    async def find_all(self, ids_empresas: list[str]) -> list[Empresa]:
+    async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
         """Busca todas as empresas do usuário logado."""
         return await self.repository.find_all(ids_empresas)

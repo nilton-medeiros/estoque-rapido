@@ -49,7 +49,7 @@ class LoginView:
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 spacing=sizes["spacing"],
-                tight=True
+                tight=True,
             ),
             width=sizes["button_width"],
             style=ft.ButtonStyle(

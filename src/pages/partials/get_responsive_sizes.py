@@ -3,7 +3,7 @@ def get_responsive_sizes(page_width: int) -> dict:
         return {
             "font_size": 14,
             "icon_size": 16,
-            "button_width": 200,
+            "button_width": 280,
             "input_width": 280,
             "form_padding": 20,
             "spacing": 4,
@@ -13,7 +13,7 @@ def get_responsive_sizes(page_width: int) -> dict:
         return {
             "font_size": 16,
             "icon_size": 20,
-            "button_width": 250,
+            "button_width": 350,
             "input_width": 350,
             "form_padding": 40,
             "spacing": 6,
@@ -23,7 +23,7 @@ def get_responsive_sizes(page_width: int) -> dict:
         return {
             "font_size": 18,
             "icon_size": 24,
-            "button_width": 300,
+            "button_width": 400,
             "input_width": 400,
             "form_padding": 50,
             "spacing": 8,

@@ -33,6 +33,11 @@ class EmpresasRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
+    async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
+        """Lista as empresas do usuário logado"""
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
     def _empresa_to_dict(self, empresa: Empresa) -> dict:
         """Converter uma instância de empresa em um dicionário para armazenamento no Firestore."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
