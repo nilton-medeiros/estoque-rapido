@@ -261,7 +261,6 @@ def main_content():
                 value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM),
         )
 
-    print("Retornando main_content, o conteúdo da página home")
     return ft.Container(
         content=ft.Column(
             controls=[

@@ -54,14 +54,10 @@ class AppStateManager:
 
             from src.shared.config import app_colors
 
-            print(f"Debug  -> usuario_data['user_colors']: {usuario_data['user_colors']}")
-
             # Atualiza as cores do usuário
             if colors := usuario_data.get('user_colors', {}):
                 if colors.get('base_color') and colors.get('primary') and colors.get('container') and colors.get('accent'):
                     app_colors.update(colors)
-
-            print(f"Debug  -> app_state_mananger.py.app_colors: {app_colors}")
 
             self.page.pubsub.send_all("usuario_updated")
             return True

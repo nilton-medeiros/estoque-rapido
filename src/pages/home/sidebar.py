@@ -50,9 +50,6 @@ def sidebar_header(page: ft.Page):
         page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
 
     # page.company_name_text_btn.update()
-    print(f"Debub -> cia_name: {cia_name}")
-    print(
-        f"Debug -> page.company_name_text_btn.text: {page.company_name_text_btn.text}")
 
     status_text = ft.Text()
     progress_bar = ft.ProgressBar(visible=False)
@@ -593,8 +590,6 @@ def sidebar_footer(page: ft.Page):
                                  message_type=MessageType.ERROR)
                 return  # Não continua se houve erro
 
-            print(f"Debug  -> e.control.data: {e.control.data}")
-            print(f"Debug  -> colors: {colors}")
             # Atualiza o estado local ANTES de atualizar a UI globalmente
             user_dict = page.app_state.usuario  # Pega o dicionário atual
             # Atualiza as cores no dicionário
@@ -628,12 +623,6 @@ def sidebar_footer(page: ft.Page):
             e.control.bgcolor = ft.Colors.with_opacity(
                 0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
             e.control.update()
-            # This should now print
-            print(
-                f"Debug -> handle_icon_hover: bgcolor: {e.control.bgcolor}, e.data: {e.data}")
-        else:
-            print(
-                f"Debug -> handle_icon_hover called by unexpected control: {type(e.control)}")
     # --- Fim da Nova Função ---
 
     # --- Definições comuns para os Containers de Ícone ---
@@ -885,5 +874,4 @@ def sidebar_container(page: ft.Page):
             ]
         )
     )
-    print("Retornando sidebar")
     return sidebar

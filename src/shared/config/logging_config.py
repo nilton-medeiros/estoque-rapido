@@ -13,8 +13,6 @@ def get_log_dir():
 class LogConfig:
     def __init__(self, log_level=logging.DEBUG):
         log_dir = get_log_dir()
-        print("Entrou em LogConfig")
-        print(f"log_dir: {log_dir}")
 
         try:
             os.makedirs(log_dir, exist_ok=True)
@@ -23,7 +21,6 @@ class LogConfig:
             return  # Caso não consiga criar o diretório
 
         log_file = os.path.join(log_dir, "app.log")
-        print(f"log_file: {log_file}")
 
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
@@ -36,7 +33,6 @@ class LogConfig:
 
         try:
             file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
-            print("Criou o file_handler")
         except Exception as e:
             print(f"Error creating RotatingFileHandler: {e}")
             return  # Caso não consiga criar o logger, não tenta mais nada

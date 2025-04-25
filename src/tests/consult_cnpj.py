@@ -18,8 +18,6 @@ async def consult_cnpj_api(cnpj):
         }
         response = requests.get(url, headers=headers)
     """
-    print("Consultando CNPJ...")
-
     try:
         # Faz a consulta à API
         url = f"https://brasilapi.com.br/api/cnpj/v1/{cnpj_clean}"

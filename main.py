@@ -112,8 +112,6 @@ def main(page: ft.Page):
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            print(
-                f"Atualizando nome da empresa: {page.app_state.empresa.get('trade_name', page.app_state.empresa.get('corporate_name'))}")
             page.company_name_text_btn.text = page.app_state.empresa.get(
                 'trade_name', 'corporate_name')
             # O update deve ser no controlador que chama o evento após chamar este evento
@@ -122,8 +120,6 @@ def main(page: ft.Page):
     def update_empresa_form_dependent_ui():
         if not page.app_state.empresa.get('id') or page.app_state.empresa.get('id') == page.app_state.empresa_form.get('id'):
             if hasattr(page, 'company_name_text_btn'):
-                print(
-                    f"Atualizando nome da empresa: {page.app_state.empresa_form.get('trade_name', page.app_state.empresa_form.get('corporate_name'))}")
                 page.company_name_text_btn.text = page.app_state.empresa_form.get(
                     'trade_name', 'corporate_name')
 
@@ -183,8 +179,6 @@ def main(page: ft.Page):
                 page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
-                print(
-                    f'Acessando a página /home. Usuário id: {page.app_state.usuario.get('id')}')
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     home_container = home_page(page)
@@ -197,7 +191,6 @@ def main(page: ft.Page):
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     )
                 else:
-                    print('Usuário não autenticado. Redirecionando para /login')
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form':
                 # Verifica se usuário está logado

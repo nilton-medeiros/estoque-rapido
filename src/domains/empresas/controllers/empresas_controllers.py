@@ -232,7 +232,6 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
-        print(f"Debug handle_get_empresas  ->  ids_empresas: {ids_empresas}")
         list_empresas = await empresas_services.find_all(ids_empresas=ids_empresas)
 
         if list_empresas:

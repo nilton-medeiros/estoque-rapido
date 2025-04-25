@@ -15,7 +15,6 @@ def home_page(page: ft.Page):
        app_colors.update(colors) # Atualiza as cores globais do app
        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color'))
 
-    print(f"Página Home -> user_colors: {page.app_state.usuario.get('user_colors')}")
     # if colors := page.app_state.usuario.get('user_colors'):
         # page.theme.color_scheme.primary = colors.get('primary')
         # page.theme.color_scheme.primary_container = colors.get('container')
@@ -119,8 +118,6 @@ def home_page(page: ft.Page):
 
             side_right = content.content.controls[0].content.controls[1]
 
-            print(f"page.width: {page.width}")
-
             if page.width < 1024:
                 # Oculta imagem de fundo
                 side_right.visible = False
@@ -146,5 +143,4 @@ def home_page(page: ft.Page):
         data=appbar,
     )
 
-    print("Retornando parent_container para a View (conteúdo da página home)")
     return parent_container

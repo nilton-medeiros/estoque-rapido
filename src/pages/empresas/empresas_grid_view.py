@@ -14,8 +14,6 @@ def empresas_grid(page: ft.Page):
     # page.vertical_alignment = ft.MainAxisAlignment.START
     # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
 
-    print("Entrou em empresas_grid...")
-
     # --- Indicador de Carregamento (Spinner) ---
     progress_ring = ft.ProgressRing(width=32, height=32, stroke_width=3)
     loading_container = ft.Container(
@@ -59,13 +57,11 @@ def empresas_grid(page: ft.Page):
 
     def handle_action_click(action: str):
         """Função para lidar com cliques nas ações do menu ou botões."""
-        print(f"Ação '{action}' selecionada.")
         match action:
             case "Incluir":
                 page.data = "/home/empresas/grid"
                 page.go('/home/empresas/form')
             case _: # Placeholder para outras ações
-                print(f"Ação '{action}' não implementada ainda.")
                 pass # Implementar outras ações conforme necessário
 
     appbar = ft.AppBar(
@@ -105,12 +101,10 @@ def empresas_grid(page: ft.Page):
 
     # --- Função Assíncrona para Carregar Dados e Atualizar a UI ---
     async def load_data_and_update_ui():
-        print("Iniciando busca de empresas no banco de dados...")
         empresas_data = []
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
         set_empresas = page.app_state.usuario.get('empresas', []) # Usar get com default
-        print(f"Debug load_data_and_update_ui  -> set_empresas: {set_empresas}")
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***
@@ -126,15 +120,11 @@ def empresas_grid(page: ft.Page):
             else:
                  empresas_data = [] # Se não há IDs, a lista está vazia
 
-            print(f"Consulta finalizada. Empresas encontradas: {len(empresas_data)}")
-
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear() # Limpar conteúdo anterior
             if not empresas_data: # Checa se a lista é vazia ou None
-                print("Nenhuma empresa encontrada, mostrando imagem padrão.")
                 content_area.controls.append(empty_content_display)
             else:
-                print("Construindo grid de empresas...")
                 # Usar ResponsiveRow para um layout de grid responsivo
                 # Ajuste colunas para diferentes tamanhos de tela
                 # --- Construir o Grid de Cards ---
@@ -164,7 +154,6 @@ def empresas_grid(page: ft.Page):
                 # content_area.controls.extend(cards)
 
         except Exception as e:
-            print(f"Erro ao buscar ou processar empresas: {e}")
             # Mostrar uma mensagem de erro para o usuário
             content_area.controls.clear()
             content_area.controls.append(
@@ -183,12 +172,10 @@ def empresas_grid(page: ft.Page):
             # --- Atualizar Visibilidade da UI ---
             loading_container.visible = False
             content_area.visible = True
-            print("Atualizando a interface do usuário...")
             # Importante: Atualizar a página para refletir as mudanças
             # Checar se o contexto da página ainda é válido antes de atualizar
             if page.client_storage: # Uma checagem se a página ainda está ativa
                  page.update()
-                 print("Interface atualizada.")
             else:
                  print("Contexto da página perdido, não foi possível atualizar.")
 

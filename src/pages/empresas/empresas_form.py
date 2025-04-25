@@ -53,7 +53,6 @@ class EmpresaView:
         # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
-        print(f"Debug  -> _create_form_fields.app_colors: {app_colors}")
 
         self.cnpj = ft.TextField(
             col={'xs': 10, 'md': 10, 'lg': 3},
@@ -319,7 +318,6 @@ class EmpresaView:
             project_root = find_project_root(__file__)
             # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
             img_file = project_root / self.local_upload_file
-            print(f"Debug:  -> img_file: {img_file}")
             logo_img = ft.Image(
                 src=img_file,
                 error_content=ft.Text(self.initials_corporate_name),
@@ -331,10 +329,6 @@ class EmpresaView:
             )
             self.logo_frame.content = logo_img
             self.logo_frame.update()
-
-            print(f"Debug: -> Atualizado ft.Image: {img_file}")
-
-        print(f"Debug:  -> self.local_upload_file: {self.local_upload_file}")
 
 
     def _handle_cnpj_change(self, e = None):
@@ -494,7 +488,6 @@ class EmpresaView:
             self.populate_form_fields()
         self.page.update()
 
-        print(f"Debug -> self.data:  {self.data}")
 
     def populate_form_fields(self):
         """Preenche os campos do formulário com os dados da empresa"""
@@ -528,8 +521,6 @@ class EmpresaView:
             self.state.value = address.get('state', '')
             self.postal_code.value = address.get('postal_code', '')
 
-        print(f"Debug: -> address: {address}")
-        print(f"Debug: -> self.street.value: {self.street.value}")
 
         if size_enum := self.data.get('size'):
             self.size_cia.value = size_enum.name
@@ -637,12 +628,10 @@ class EmpresaView:
 
         size_info = None
         if self.size_cia.value:
-            print(f"Debug:  {self.size_cia.value}")
             size_info = self.size_cia.value
 
         cnpj = None
         if self.cnpj.value:
-            print(f"Debug:  {self.cnpj.value}")
             cnpj = CNPJ(self.cnpj.value)
 
         phone = None
@@ -710,7 +699,6 @@ class EmpresaView:
                     dateCreated=pg.get('dateCreated'),
                 )
 
-        print(logo)
         return Empresa(
             id=id,
             corporate_name=self.corporate_name.value,
@@ -732,9 +720,6 @@ class EmpresaView:
     def send_to_bucket(self):
         # Faz o upload do arquivo de logo para o bucket
         if not self.local_upload_file or not self.cnpj.value:
-            print('Debug:  Erro no upload do logo para o Bucket')
-            print(f"cnpj: {self.cnpj.value}")
-            print(f"local_upload_file: {self.local_upload_file}")
             # Não há arquivo local para enviar
             return False
 
@@ -835,7 +820,6 @@ def empresas_form(page: ft.Page):
 
     def onclick_previous_route(e):
         previous_route = '/home'
-        print(f"Debug  -> empresas_form page.data: {page.data}")
         if page.data:
             previous_route = page.data
         page.go(previous_route)
@@ -896,9 +880,6 @@ def empresas_form(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        print(f"Debug: -> empresa: {empresa}")
-        print(f"Debug: -> empresa: {str(empresa)}")
-        print("Debug: -> Chamando o controller de handle_save_empresas")
         result = await empresas_controllers.handle_save_empresas(empresa)
 
         if result["is_error"]:
@@ -919,7 +900,6 @@ def empresas_form(page: ft.Page):
             # Se o usuário não tem empresa associada e selecionada, associa a nova empresa
             user['empresa_id'] = empresa.id
 
-        print("Debug: -> Chamando o controller de update_empresas_usuarios")
         # Atualiza usuário no banco de dados
         result = await usuarios_controllers.handle_update_empresas_usuarios(
             user_id=user['id'],
@@ -935,7 +915,6 @@ def empresas_form(page: ft.Page):
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
         previous_route = '/home'
-        print(f"Debug  -> empresas_form page.data: {page.data}")
         if page.data:
             previous_route = page.data
         page.go(previous_route)
@@ -952,7 +931,6 @@ def empresas_form(page: ft.Page):
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
         previous_route = '/home'
-        print(f"Debug  -> empresas_form page.data: {page.data}")
         if page.data:
             previous_route = page.data
         page.go(previous_route)

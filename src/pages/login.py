@@ -84,8 +84,6 @@ class LoginView:
         self.page.user_name_text.visible = False  # Invisible, sem uso
         self.page.company_name_text_btn.visible = False  # Invisible, sem uso
 
-        print(f"Debug  -> login (app_colors): {app_colors}")
-
         return ft.Container(
             alignment=ft.alignment.center,
             bgcolor=ft.Colors.BLACK,
@@ -197,18 +195,12 @@ class LoginView:
 
             self.page.app_state.set_usuario(user.to_dict())
 
-            print(
-                f"Usuário autenticado: {user.name.nome_completo} ({user.email})")
-
             if user.empresa_id is None:
-                print("Usuário não tem empresa registrada.")
                 self.page.app_state.clear_empresa_data()
                 self.page.on_resized = None
-                print('Redirecionando para /home')
                 self.page.go('/home')
                 return
 
-            print(f"Usuário tem empresa registrada: {user.empresa_id} ({user.name.iniciais})")
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
             result = await empresas_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
@@ -222,10 +214,7 @@ class LoginView:
             # Adiciona o empresa_id no state e publíca-a
             self.page.app_state.set_empresa(cia.to_dict())
 
-            print(f"Empresa atual registrada: {cia.corporate_name}")
-
             self.page.on_resized = None
-            print('Redirecionando para /home')
             self.page.go('/home')
 
         finally:
