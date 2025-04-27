@@ -13,7 +13,9 @@ from src.pages.home.home_page import home_page
 from src.pages.signup import signup
 from src.pages.landing_page import landing_page
 from src.pages.login import login
-from src.services import AppStateManager  # Alterado para AppStateManager
+from src.services import AppStateManager
+from src.shared.config import get_app_colors
+from src.shared.config.user_session import prepare_the_user_session
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +26,6 @@ flet_key = os.getenv('FLET_SECRET_KEY')
 os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
-
-
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
@@ -45,7 +45,7 @@ def reconfigure_logging():
     file_handler.setLevel(logging.INFO)
 
     # Configure os loggers do uvicorn
-    for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
+    for logger_name in ["flet_web.fastapi", "uvicorn", "uvicorn.access", "uvicorn.error"]:
         logger = logging.getLogger(logger_name)
         # Remova todos os handlers existentes (especialmente os do console)
         for handler in logger.handlers[:]:
@@ -53,7 +53,6 @@ def reconfigure_logging():
         # Adicione apenas o handler de arquivo
         logger.addHandler(file_handler)
         logger.propagate = False
-
 
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
@@ -73,11 +72,11 @@ def main(page: ft.Page):
         tooltip="Clique aqui e preencha os dados da empresa"
     )
 
-    #  Uso de sessions
-    if not hasattr(page, 'sessions_data'):
-        page.sessions_data = {}
+    # Configurar cores padrão imediatamente para evitar erros
+    default_colors = get_app_colors('yellow')
+    page.session.set("user_colors", default_colors)  # Garante que há sempre uma cor padrão
 
-    # Usando uma abordagem mais profissional com States e Pubsub
+    # Inicialize o estado da aplicação
     app_state = AppStateManager(page)
     page.app_state = app_state  # Torna o app_state acessível globalmente
 
@@ -148,7 +147,7 @@ def main(page: ft.Page):
     page.spacing = 0
 
     def handle_icon_hover(e):
-        """Muda o bgcolor do container no hover."""
+        """Muda o bgcolor do container no hover"""
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
@@ -277,5 +276,6 @@ if __name__ == '__main__':
         target=main,
         assets_dir="assets",
         upload_dir="uploads",
-        view=ft.WEB_BROWSER
+        view=ft.AppView.WEB_BROWSER
+        # view=ft.WEB_BROWSER
     )

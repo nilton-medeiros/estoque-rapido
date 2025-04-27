@@ -4,6 +4,7 @@ import flet as ft
 from typing import Optional, Dict, Any
 from .state_validator import StateValidator
 from src.shared import MessageType, message_snackbar
+from src.shared.config.user_session import refresh_the_user_session
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,14 @@ class AppStateManager:
 
             self._state['usuario'] = usuario_data
 
-            from src.shared.config import app_colors
-
             # Atualiza as cores do usuário
             if colors := usuario_data.get('user_colors', {}):
-                if colors.get('base_color') and colors.get('primary') and colors.get('container') and colors.get('accent'):
-                    app_colors.update(colors)
+                if all(key in colors for key in ['base_color','primary', 'container', 'accent', 'appbar']):
+                    try:
+                        refresh_the_user_session(page=self.page, colors=colors)
+                    except Exception as e:
+                        # ignora: Client storage está com problemas de fábrica, na prática está salvando.
+                        logger.error(f"Erro ao atualizar as cores do usuário: {str(e)}")
 
             self.page.pubsub.send_all("usuario_updated")
             return True
@@ -79,7 +82,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                self.handle_error(error)
+                self.handle_error(f"Erro de validação: {error}")
                 return False
 
             self._state['empresa'] = empresa_data
@@ -103,7 +106,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                self.handle_error(error)
+                self.handle_error(f"Erro de validação: {error}")
                 return False
 
             self._state['empresa_form'] = empresa_data
@@ -115,8 +118,7 @@ class AppStateManager:
             return False
 
     def handle_error(self, error_message: str):
-        logger.error(f"Erro: {error_message}")
-
+        logger.error(error_message)
         """Centraliza o tratamento de erros"""
         self.page.pubsub.send_all("error_occurred")
         message_snackbar(self.page, error_message, MessageType.ERROR)
@@ -126,7 +128,6 @@ class AppStateManager:
         self._state['usuario'] = {}
         self._state['empresa'] = {}
         self._state['empresa_form'] = {}
-        self.page.sessions_data.clear()  # Limpa a sessão do usuário na página principal
         self.page.pubsub.send_all("usuario_updated")
         self.page.pubsub.send_all("empresa_updated")
         self.page.pubsub.send_all("empresa_form_updated")

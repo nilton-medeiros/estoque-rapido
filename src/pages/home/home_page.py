@@ -2,7 +2,6 @@ import flet as ft
 
 from src.pages.home.sidebar import sidebar_container
 from src.pages.home.content import main_content
-from src.shared.config import app_colors
 
 # from src.shared.config.app_theme import AppTheme
 
@@ -12,7 +11,6 @@ def home_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
 
     if colors := page.app_state.usuario.get('user_colors'):
-       app_colors.update(colors) # Atualiza as cores globais do app
        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color'))
 
     # if colors := page.app_state.usuario.get('user_colors'):

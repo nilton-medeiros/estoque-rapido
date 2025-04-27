@@ -1,4 +1,4 @@
-def get_app_colors(cor: str) -> dict:
+def get_app_colors(color_name: str) -> dict:
     app_colors = {
         'deeppurple': {'base_color': 'deeppurple','primary': '#673AB7', 'container': '#B39DDB', 'accent': '#7C4DFF', 'appbar': '#512DA8'},
         'purple': {'base_color': 'purple','primary': '#9C27B0', 'container': '#CE93D8', 'accent': '#E040FB', 'appbar': '#7B1FA2'},
@@ -13,9 +13,10 @@ def get_app_colors(cor: str) -> dict:
         'red': {'base_color': 'red','primary': '#F44336', 'container': '#EF9A9A', 'accent': '#FF5252', 'appbar': '#D32F2F'},
     }
 
-    return app_colors.get(cor, {
-        'base_color': 'blue',
-        'primary': '#2196F3',
-        'container': '#90CAF9',
-        'accent': '#448AFF'
+    return app_colors.get(color_name, {
+        'base_color': 'yellow',
+        'primary': '#FFEB3B',  # ft.Colors.YELLOW
+        'container': '#FFF59D',  # ft.Colors.YELLOW_200
+        'accent': '#FFD740',  # ft.Colors.YELLOW_ACCENT_400
+        'appbar': '#FBC02D', # ft.Colors.YELLOW_700
     })

@@ -1,5 +1,7 @@
 import flet as ft
 
+from src.shared.config.user_session import prepare_the_user_session
+
 
 class LoginButton:
     '''
@@ -104,6 +106,7 @@ class LoginButton:
         )
 
     def handle_login(self, _):
+        prepare_the_user_session(self.page)
         self.page.go('/login')
 
     def update_sizes(self, width: int):

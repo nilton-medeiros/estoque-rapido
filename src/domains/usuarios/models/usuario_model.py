@@ -84,7 +84,7 @@ class Usuario:
 
         self.photo_url = self.photo_url.strip() if self.photo_url else None
 
-        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color', 'primary', 'container', 'accent']):
+        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color','primary', 'container', 'accent', 'appbar']):
             self.user_colors = get_app_colors('blue')
 
     def adicionar_empresa(self, empresa_id: str) -> None:

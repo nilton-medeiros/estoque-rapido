@@ -9,7 +9,6 @@ from src.pages.partials.get_responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 
 from src.shared import MessageType, message_snackbar, validate_email
-from src.shared.config import app_colors
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
@@ -26,9 +25,9 @@ class LoginView:
         self.password_input = None
         self.error_text = None
         self.login_button = None
+        self.app_colors = page.session.get("user_colors")
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
-
         self.page.update()
 
     def build_login_button(self, sizes: dict) -> ft.OutlinedButton:
@@ -55,7 +54,7 @@ class LoginView:
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
-                    color=app_colors["accent"],
+                    color=self.app_colors["accent"],
                     width=sizes["border_width"]
                 ),
                 padding=ft.padding.symmetric(
@@ -70,9 +69,9 @@ class LoginView:
         sizes = get_responsive_sizes(self.page.width)
 
         self.email_input = build_input_field(
-            page_width=self.page.width, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
         self.password_input = build_input_field(
-            page_width=self.page.width, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.login_button = self.build_login_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
@@ -90,7 +89,7 @@ class LoginView:
             opacity=0.75,
             padding=ft.padding.all(sizes["form_padding"]),
             border_radius=10,  # Suaviza as bordas
-            border=ft.border.all(color=app_colors['accent'], width=1),
+            border=ft.border.all(color=self.app_colors['accent'], width=1),
             shadow=ft.BoxShadow(
                 offset=ft.Offset(2, 2),  # Deslocamento horizontal e vertical
                 blur_radius=16,  # Raio de desfoque
@@ -125,16 +124,16 @@ class LoginView:
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
                         content=ft.Text(value="Criar uma conta",
-                                        color=app_colors["accent"]),
+                                        color=self.app_colors["accent"]),
                         on_click=lambda _: self.page.go('/signup'),
                     ),
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     ft.TextButton(
                         text="Voltar",
                         icon=ft.CupertinoIcons.BACK,
-                        icon_color=app_colors['primary'],
+                        icon_color=self.app_colors['primary'],
                         style=ft.ButtonStyle(
-                            color=app_colors["accent"]),
+                            color=self.app_colors["accent"]),
                         on_click=lambda _: self.page.go('/'),
                     )
                 ],
@@ -192,7 +191,6 @@ class LoginView:
 
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["authenticated_user"]
-
             self.page.app_state.set_usuario(user.to_dict())
 
             if user.empresa_id is None:
@@ -245,7 +243,7 @@ class LoginView:
         self.login_button.style = ft.ButtonStyle(
             color=ft.Colors.WHITE,
             side=ft.BorderSide(
-                color=app_colors['primary'],
+                color=self.app_colors['primary'],
                 width=sizes["border_width"]
             ),
             padding=ft.padding.symmetric(
@@ -280,6 +278,7 @@ def login(page: ft.Page):
     Retorna:
         ft.Stack: Stack contendo imagem de fundo e formulário de login.
     '''
+
     login_view = LoginView(page)
 
     return ft.Stack(

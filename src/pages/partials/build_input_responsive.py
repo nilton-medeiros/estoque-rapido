@@ -1,11 +1,11 @@
 import flet as ft
 
 from src.pages.partials.get_responsive_sizes import get_responsive_sizes
-from src.shared.config import app_colors
 
-def build_input_field(page_width: int, col: dict = None, icon: str = None, **kwargs) -> ft.TextField:
+def build_input_field(page_width: int, app_colors: dict, col: dict = None, icon: str = None, **kwargs) -> ft.TextField:
     sizes = get_responsive_sizes(page_width)
     prefix = None
+
     if icon:
         # O container garante um padding entre o ícone e o input
         # O padding é aplicado apenas no lado direito

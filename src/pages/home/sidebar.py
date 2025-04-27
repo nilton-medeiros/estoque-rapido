@@ -9,7 +9,6 @@ from src.presentation.components.functionality_graphics import FiscalProgressBar
 from src.domains.usuarios import handle_update_photo_usuarios, handle_update_colors_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar
 from src.shared.config.get_app_colors import get_app_colors
-from src.shared.config import app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -330,8 +329,6 @@ def sidebar_header(page: ft.Page):
 
                         page.app_state.set_usuario(usuario.to_dict())
 
-                        page.pubsub.send_all("usuario_updated")
-
                     color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                     message_snackbar(
                         page=page, message=result["message"], message_type=color)
@@ -595,7 +592,6 @@ def sidebar_footer(page: ft.Page):
             # Atualiza as cores no dicionário
             user_dict['user_colors'] = colors
             page.app_state.set_usuario(user_dict)  # Atualiza o estado
-            app_colors.update(colors)  # Atualiza as cores globais do app
 
         except ValueError as e:
             logger.error(str(e))

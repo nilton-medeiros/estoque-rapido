@@ -13,7 +13,6 @@ from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import EmpresaSize
 from src.domains.usuarios.controllers import usuarios_controllers
 from src.pages.partials.build_input_responsive import build_input_field
-from src.shared.config import app_colors
 from src.shared.utils.field_validation_functions import validate_email
 from src.shared.utils.find_project_root import find_project_root
 from src.shared.utils.gen_uuid import get_uuid
@@ -41,6 +40,7 @@ class EmpresaView:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
+        self.app_colors = page.session.get("user_colors")
 
         # Responsividade
         self._create_form_fields()
@@ -60,18 +60,18 @@ class EmpresaView:
             prefix=ft.Container(
                 content=ft.Icon(
                     name=ft.Icons.WARNING,
-                    color=app_colors['accent'],
+                    color=self.app_colors['accent'],
                     size=self.icon_size,
                 ),
                 padding=ft.padding.only(right=10),
             ),
             text_size=self.font_size,
-            border_color=app_colors["primary"],
-            focused_border_color=app_colors["container"],
+            border_color=self.app_colors["primary"],
+            focused_border_color=self.app_colors["container"],
             text_align=ft.TextAlign.LEFT,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
-                color=app_colors["primary"],  # Cor do label igual à borda
+                color=self.app_colors["primary"],  # Cor do label igual à borda
                 weight=ft.FontWeight.W_500  # Label um pouco mais grosso
             ),
             hint_style=ft.TextStyle(
@@ -79,7 +79,7 @@ class EmpresaView:
                 weight=ft.FontWeight.W_300  # Placeholder um pouco mais fino
             ),
             # Duração do fade do placeholder
-            cursor_color=app_colors["primary"],
+            cursor_color=self.app_colors["primary"],
             focused_color=ft.Colors.GREY_500,
             text_style=ft.TextStyle(                        # Estilo do texto digitado
                 color=ft.Colors.WHITE,
@@ -92,9 +92,9 @@ class EmpresaView:
             col={'xs': 2, 'md': 2, 'lg': 1},
             icon=ft.Icons.SEARCH,
             icon_size=self.icon_size,
-            selected_icon_color=app_colors["container"],
+            selected_icon_color=self.app_colors["container"],
             tooltip="Consultar CNPJ",
-            hover_color=app_colors["container"],
+            hover_color=self.app_colors["container"],
             disabled=True,
             on_click=self._consult_cnpj
         )
@@ -102,6 +102,7 @@ class EmpresaView:
         # Razão Social
         self.corporate_name = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 8},
             label="Razão Social",
             icon=ft.Icons.CORPORATE_FARE,
@@ -109,6 +110,7 @@ class EmpresaView:
         # Nome Fantasia
         self.trade_name = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome Fantasia",
             icon=ft.Icons.STORE,
@@ -116,6 +118,7 @@ class EmpresaView:
         # Nome da loja
         self.store_name = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome da Loja",
             icon=ft.Icons.STORE_MALL_DIRECTORY,
@@ -125,12 +128,14 @@ class EmpresaView:
 
         self.ie = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Estadual",
             icon=ft.Icons.REAL_ESTATE_AGENT,
         )
         self.im = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Municipal",
             icon=ft.Icons.REAL_ESTATE_AGENT,
@@ -139,6 +144,7 @@ class EmpresaView:
         # Informações de Contato
         self.email = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 8, 'lg': 6},
             label="Email",
             icon=ft.Icons.EMAIL,
@@ -146,6 +152,7 @@ class EmpresaView:
         )
         self.phone = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 4, 'lg': 6},
             label="Telefone",
             icon=ft.Icons.PHONE,
@@ -157,18 +164,21 @@ class EmpresaView:
         # Endereço
         self.street = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 6},
             label="Rua",
             icon=ft.Icons.LOCATION_ON,
         )
         self.number = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Número",
             icon=ft.Icons.NUMBERS,
         )
         self.complement = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Complemento",
             icon=ft.Icons.ADD_LOCATION,
@@ -177,12 +187,14 @@ class EmpresaView:
         )
         self.neighborhood = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 5},
             label="Bairro",
             icon=ft.Icons.LOCATION_CITY,
         )
         self.city = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Cidade",
             icon=ft.Icons.LOCATION_CITY,
@@ -191,6 +203,7 @@ class EmpresaView:
         )
         self.state = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 2, 'lg': 3},
             label="Estado",
             icon=ft.Icons.LOCATION_CITY,
@@ -201,6 +214,7 @@ class EmpresaView:
         )
         self.postal_code = build_input_field(
             page_width=self.page.width,
+            app_colors=self.app_colors,
             col={'xs': 12, 'md': 10, 'lg': 12},
             label="CEP",
             icon=ft.Icons.LOCATION_CITY,
@@ -220,7 +234,7 @@ class EmpresaView:
         )
 
         def on_hover_logo(e):
-            color = app_colors["container"] if e.data == "true" else app_colors["primary"]
+            color = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
             icon_container = self.camera_icon.content
             logo_container = self.logo_frame
             icon_container.color = color
@@ -271,7 +285,7 @@ class EmpresaView:
             return
 
         self.logo_frame.border = ft.border.all(
-            color=app_colors["primary"], width=1)
+            color=self.app_colors["primary"], width=1)
         self.logo_frame.update()
 
         upload_file = UploadFile(
@@ -354,8 +368,8 @@ class EmpresaView:
             logo_container.disabled = False
             icon_container.disabled = False
             logo_container.border = ft.border.all(
-                color=app_colors["primary"], width=1)
-            icon_container.content.color = app_colors["primary"]
+                color=self.app_colors["primary"], width=1)
+            icon_container.content.color = self.app_colors["primary"]
 
 
     async def _consult_cnpj(self, e):
