@@ -15,7 +15,6 @@ from src.pages.landing_page import landing_page
 from src.pages.login import login
 from src.services import AppStateManager
 from src.shared.config import get_app_colors
-from src.shared.config.user_session import prepare_the_user_session
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +72,7 @@ def main(page: ft.Page):
     )
 
     # Configurar cores padrão imediatamente para evitar erros
-    default_colors = get_app_colors('yellow')
-    page.session.set("user_colors", default_colors)  # Garante que há sempre uma cor padrão
+    page.session.set("user_colors", get_app_colors('yellow'))  # Garante que há sempre uma cor padrão
 
     # Inicialize o estado da aplicação
     app_state = AppStateManager(page)

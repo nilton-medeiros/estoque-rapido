@@ -4,7 +4,6 @@ import flet as ft
 from typing import Optional, Dict, Any
 from .state_validator import StateValidator
 from src.shared import MessageType, message_snackbar
-from src.shared.config.user_session import refresh_the_user_session
 
 logger = logging.getLogger(__name__)
 
@@ -56,11 +55,7 @@ class AppStateManager:
             # Atualiza as cores do usuário
             if colors := usuario_data.get('user_colors', {}):
                 if all(key in colors for key in ['base_color','primary', 'container', 'accent', 'appbar']):
-                    try:
-                        refresh_the_user_session(page=self.page, colors=colors)
-                    except Exception as e:
-                        # ignora: Client storage está com problemas de fábrica, na prática está salvando.
-                        logger.error(f"Erro ao atualizar as cores do usuário: {str(e)}")
+                    self.page.session.set("user_colors", colors)
 
             self.page.pubsub.send_all("usuario_updated")
             return True

@@ -820,9 +820,9 @@ def empresas_form(page: ft.Page):
     #         'container')
 
     route_title = "home/empresas/form"
-    empresa = page.app_state.empresa_form
+    empresa_f = page.app_state.empresa_form
 
-    if id := empresa.get('id'):
+    if id := empresa_f.get('id'):
         route_title += f"/{id}"
     else:
         route_title += "/new"
@@ -902,9 +902,9 @@ def empresas_form(page: ft.Page):
             return
 
         empresa.id = result["id"]
-        # Atualiza o estado do app com o nova empresa antes da navegação
-        page.app_state.set_empresa_form(empresa.to_dict())
-        page.pubsub.send_all("empresa_form_updated")
+        # Atualiza o estado do app com o nova empresa antes da navegação se não existir
+        if not page.app_state.empresa.get('id'):
+            page.app_state.set_empresa(empresa.to_dict())
 
         # Associa a empresa a lista de empresas do usuário
         user = page.app_state.usuario
@@ -916,9 +916,9 @@ def empresas_form(page: ft.Page):
 
         # Atualiza usuário no banco de dados
         result = await usuarios_controllers.handle_update_empresas_usuarios(
-            user_id=user['id'],
+            usuario_id=user['id'],
+            empresas=user['empresas'],
             empresa_ativa_id=user['empresa_id'],
-            empresas=user['empresas']
         )
 
         if result["is_error"]:
@@ -928,11 +928,11 @@ def empresas_form(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
+        page.app_state.clear_empresa_form_data()
         previous_route = '/home'
         if page.data:
             previous_route = page.data
         page.go(previous_route)
-
 
     def exit_form_empresa(e):
         if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
@@ -944,6 +944,7 @@ def empresas_form(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
+        page.app_state.clear_empresa_form_data()
         previous_route = '/home'
         if page.data:
             previous_route = page.data

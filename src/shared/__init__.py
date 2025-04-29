@@ -1,5 +1,4 @@
 from .config.logging_config import LogConfig
-from .config.user_session import prepare_the_user_session, refresh_the_user_session
 from .utils.deep_translator import deepl_translator
 from .utils.field_validation_functions import validate_password_strength, validate_email, format_phone_number, validate_phone
 from .utils.gen_uuid import get_uuid

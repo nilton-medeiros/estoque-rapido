@@ -123,3 +123,7 @@ class EmpresasServices:
     async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
         """Busca todas as empresas do usuário logado."""
         return await self.repository.find_all(ids_empresas)
+
+    async def delete(self, empresa_id: str) -> bool:
+        """Exclui uma empresa do banco de dados."""
+        return await self.repository.delete(empresa_id)

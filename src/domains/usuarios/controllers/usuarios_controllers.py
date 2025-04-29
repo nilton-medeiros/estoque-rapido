@@ -1,5 +1,7 @@
 import logging
 
+from typing import List
+
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
@@ -344,27 +346,27 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     return response
 
 
-async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, empresas: set) -> dict:
+async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
 
     Args:
-        user_id (str): ID do usuário.
+        usuario_id (str): ID do usuário.
         empresa_id (str): ID da empresa ativa.
         empresas (set): Conjunto de empresas associada ao usuário.
 
     Returns:
-        bool: True se foi atualizado com sucesso, False caso contrário.
+        response (dict): Dicionário contendo is_error e uma mensagem.
 
     Raises:
         ValueError: Se houver um erro de validação ao atualizar usuário.
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> user_id = '12345678901234567890123456789012'
+        >>> usuario_id = '12345678901234567890123456789012'
         >>> empresa_id = '12345678901234567890123456789012'
         >>> empresas = {'12345678901234567890123456789012', '12345678901234567890123456789012'}
-        >>> response = await handle_update_empresas_usuarios(user_id, empresa_id, empresas)
+        >>> response = await handle_update_empresas_usuarios(usuario_id, empresa_id, empresas)
         >>> print(response)
     """
     response = {
@@ -372,12 +374,12 @@ async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, e
         "message": "",
     }
 
-    # Verifica se o id ou colors foram passados
-    if not user_id or not empresa_ativa_id or not empresas:
+    # Verifica se o id, empresa_ativa_id e empresas foram passados
+    if not usuario_id or empresas is None:
         response["is_error"] = True
-        response["message"] = "Os argumentos user_id, empresa_ativa_id e empresas devem ser passados"
-        logger.warning(response["message"])
-        return response
+        msg = f"Os argumentos usuario_id e empresas devem ser passados. usuario_id: {usuario_id}, empresas: {empresas}"
+        response["message"] = msg
+        logger.error(msg)
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -385,14 +387,55 @@ async def handle_update_empresas_usuarios(user_id: str, empresa_ativa_id: str, e
         usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo color no usuário
-        is_updated = await usuarios_services.update_empresas(user_id, empresa_ativa_id, empresas)
+        is_updated = await usuarios_services.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_ativa_id)
 
         if is_updated:
             response["message"] = "Empresa(s) do Usuário atualizada com sucessso!"
         else:
             response["is_error"] = True
-            response["message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {user_id}"
+            response["message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {usuario_id}"
             logger.error(response["message"])
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+async def handle_find_all_usuarios(empresa_id: str) -> List[Usuario]:
+    """Busca todos os usuário da empresa_id"""
+    response = {
+        "is_error": False,
+        "message": "",
+        "usuarios": []
+    }
+
+    # Verifica se o id da empresa foi passado.
+    if not empresa_id:
+        response["is_error"] = True
+        response["message"] = "O ID da empresa deve ser passado"
+        logger.warning(response["message"])
+        return response
+
+    try:
+        # Usa o repositório do Firebase para buscar o usuário
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+
+        usuarios = await usuarios_services.find_all(empresa_id)
+
+
+        if len(usuarios) > 0:
+            # Retorna lista de usuários
+            response["usuarios"] = usuarios
+            response["message"] = "Usuários encontrados com sucesso!"
+        else:
+            response["message"] = f"Usuários não encontrados. Verifique o empresa_id: {empresa_id}"
+
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"

@@ -2,13 +2,13 @@ import logging
 
 from typing import List, Optional
 
+from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
 
-from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
-from src.shared import deepl_translator, get_first_and_last_name
+from src.shared import deepl_translator
 from storage.data.firebase.firebase_initialize import get_firebase_app
 
 logger = logging.getLogger(__name__)
@@ -265,9 +265,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).offset(offset).limit(limit) # Testar este Novo método
-            query = self.collection.where(
-                field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
+            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).offset(
+                offset).limit(limit)  # Testar este Novo método
+            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -646,7 +646,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
 
-    async def update_empresas(self, usuario_id: str, empresa_id: str, empresas: set) -> bool:
+    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str = None) -> bool:
         """
         Atualiza campos empresa_id e empresas do usuário.
 
@@ -663,18 +663,24 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             ValueError: Se os campos não forem válidas
         """
         try:
-            if not usuario_id or not empresa_id or not empresas:
+            if not usuario_id or empresas is None:
                 raise ValueError(
-                    "Os campos usuario_id, empresa_id e empresas não podem ser vazios")
+                    "Os campos usuario_id e empresas não podem ser vazios")
 
+            # Obtem o documento pelo seu id
             doc_ref = self.collection.document(usuario_id)
             doc = doc_ref.get()
 
             if not doc.exists:
                 return False
 
-            doc_ref.update({"empresa_id": empresa_id,
-                           "empresas": list(empresas)})
+            if empresa_id:
+                # Atualiza a empresa ativa e a lista de empresas (registra lista vazia também)
+                doc_ref.update({"empresa_id": empresa_id,
+                            "empresas": list(empresas)})
+            else:
+                # Atualiza a lista de empresas (pode ser vazia)
+                doc_ref.update({"empresas": list(empresas)})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':

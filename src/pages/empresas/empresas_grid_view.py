@@ -1,13 +1,13 @@
+import logging
+
 import flet as ft
-import asyncio  # Importar asyncio se precisar simular delays ou usar recursos async
+# import asyncio  # Importar asyncio se precisar simular delays ou usar recursos async
 
-# Assumindo que handle_get_empresas é async ou pode ser awaited
-# Se for síncrona e demorada, a UI ainda congelará durante sua execução.
-# PRECISA ser async para o spinner ser eficaz durante a espera.
-from src.domains.empresas.controllers.empresas_controllers import handle_get_empresas
-from src.domains.empresas.models.empresa_model import Empresa
-
+import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.pages.empresas.empresas_actions as empresas_actions
 # Rota: /home/empresas/grid
+
+logger = logging.getLogger(__name__)
 
 
 def empresas_grid(page: ft.Page):
@@ -62,8 +62,6 @@ def empresas_grid(page: ft.Page):
 
     def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
-        print(f"e: {str(e)}")
-        print(f"e.control.data: {e.control.data}")
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
 
@@ -72,17 +70,17 @@ def empresas_grid(page: ft.Page):
         match action:
             case "INCLUIR":
                 page.go('/home/empresas/form')
-            case "PRINCIPAL":
-                print(f"Dados Principais {empresa.id}")
-            case "FISCAL":
-                print(f"Dados Fiscais {empresa.id}")
-            case "CERTIFICADO":
-                print(f"Certificado Digital {empresa.id}")
+            # ... outros cases ...
             case "EXCLUIR":
                 print(f"Excluir {empresa.id}")
-            case _:  # Placeholder para outras ações
-                pass  # Implementar outras ações conforme necessário
-
+                is_deleted = empresas_actions.delete(empresa, e.control.page)
+                if is_deleted:
+                    # Reexecuta o carregamento. Atualizar a lista de empresas na tela
+                    print("Atualizando a grade de empresas")
+                    page.run_task(load_data_and_update_ui)
+                    # Não precisa de page.update() aqui, pois run_task já fará isso
+            case _:
+                pass
 
     appbar = ft.AppBar(
         leading=ft.Container(
@@ -129,7 +127,7 @@ def empresas_grid(page: ft.Page):
             # empresas_data = await asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
 
             if set_empresas:  # Só busca se houver IDs
-                result = await handle_get_empresas(ids_empresas=set_empresas)
+                result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
                 empresas_data = result.get('data_list', [])
             else:
                 empresas_data = []  # Se não há IDs, a lista está vazia
@@ -158,10 +156,12 @@ def empresas_grid(page: ft.Page):
                                                 content=ft.PopupMenuButton(
                                                     icon=ft.Icons.MORE_VERT, tooltip="Mais Ações",
                                                     items=[
-                                                        ft.PopupMenuItem(text="Dados Principais", icon=ft.Icons.EDIT_NOTE_OUTLINED, data={'action': 'PRINCIPAL', 'data': empresa}, on_click=handle_action_click),
+                                                        ft.PopupMenuItem(text="Dados Principais", icon=ft.Icons.EDIT_NOTE_OUTLINED, data={
+                                                                         'action': 'PRINCIPAL', 'data': empresa}, on_click=handle_action_click),
                                                         ft.PopupMenuItem(
                                                             text="Nota Fiscal", icon=ft.Icons.RECEIPT_LONG_OUTLINED, data={'action': 'FISCAL', 'data': empresa}, on_click=handle_action_click),
-                                                        ft.PopupMenuItem(text="Certificado Digital", icon=ft.Icons.SECURITY_OUTLINED, data={'action': 'CERTIFICADO', 'data': empresa}, on_click=handle_action_click),
+                                                        ft.PopupMenuItem(text="Certificado Digital", icon=ft.Icons.SECURITY_OUTLINED, data={
+                                                                         'action': 'CERTIFICADO', 'data': empresa}, on_click=handle_action_click),
                                                         ft.PopupMenuItem(
                                                             text="Excluir Empresa", icon=ft.Icons.DELETE_OUTLINE, data={'action': 'EXCLUIR', 'data': empresa}, on_click=handle_action_click),
                                                     ],

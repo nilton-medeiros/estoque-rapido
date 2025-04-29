@@ -278,7 +278,6 @@ def login(page: ft.Page):
     Retorna:
         ft.Stack: Stack contendo imagem de fundo e formulário de login.
     '''
-
     login_view = LoginView(page)
 
     return ft.Stack(

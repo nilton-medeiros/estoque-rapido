@@ -113,7 +113,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
             # Busca a empresa pelo ID
             empresa = await empresas_services.find_by_id(id)
         else:
-            raise ValueError("O id deve ser passado")
+            raise ValueError("Busca empresa por ID: O id deve ser informado")
 
         if empresa:
             response["message"] = "Empresa encontrada com sucesso!"
@@ -122,7 +122,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui
             response["is_error"] = True
-            response["message"] = "Empresa não encontrada"
+            response["message"] = f"Empresa não encontrada id {id}"
 
     except ValueError as e:
         response["is_error"] = True
@@ -240,6 +240,64 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
         else:
             response["is_error"] = True
             response["message"] = "Nenhuma empresas encontrada!"
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+async def handle_delete_empresas(id: str) -> bool:
+    """
+    Manipula a operação de excluir uma empresa.
+
+    Esta função manipula a operação de excluiruma empresa no banco de dados utilizando o ID fornecido.
+    Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
+
+    Args:
+        id (str): O ID do empresa a ser excluído.
+
+    Returns:
+        bool: True se bem sucedido ou False em caso de erro.
+
+    Raises:
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> is_deleted = await handle_delete_empresas_by_id('abc123')
+        >>> print(is_deleted)
+    """
+
+    response = {
+        "is_error": False,
+        "message": "",
+    }
+
+    try:
+        # Usa o repositório do Firebase
+        repository = FirebaseEmpresasRepository()
+        empresas_services = EmpresasServices(repository)
+
+        is_deleted = False
+
+        if id:
+            # Exclui a empresa pelo ID
+            is_deleted = await empresas_services.delete(id)
+        else:
+            raise ValueError("O id deve ser passado")
+
+        if is_deleted:
+            response["message"] = "Empresa excluída com sucesso!"
+        else:
+            # Improvável, pois se não encontrar a empresa, é retornado uma exceção
+            # Mas, caso aconteça, é tratado aqui
+            response["is_error"] = True
+            response["message"] = "Erro ao excluir empresa"
+
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"Erro de validação: {str(e)}"

@@ -3,7 +3,7 @@ from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
 
-from google.cloud.firestore import Query
+# from google.cloud.firestore import Query
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
 from firebase_admin import exceptions

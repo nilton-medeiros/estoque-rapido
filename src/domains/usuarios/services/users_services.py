@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
@@ -88,6 +88,18 @@ class UsuariosServices:
         """
         return await self.repository.find_by_email(email)
 
+    async def find_all(self, empresa_id: str) -> List[Usuario]:
+        """
+        Encontra todos os usuários pelo ID da empresa usando o repositório.
+
+        Parâmetros:
+            empresa_id (str): ID da empresa a ser encontrado
+
+        Retorna:
+            List[Usuario]: Lista de Usuario encontrado ou [] se não existir
+        """
+        return await self.repository.find_all(empresa_id)
+
     async def update_photo(self, usuario_id: str, photo_url: str) -> Optional[Usuario]:
         """
         Atualiza a foto do usuário para o campo photo_url usando o repositório.
@@ -114,7 +126,7 @@ class UsuariosServices:
         """
         return await self.repository.update_colors(usuario_id, colors)
 
-    async def update_empresas(self, usuario_id: str, empresa_id: str, empresas: set) -> bool:
+    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str = None) -> bool:
         """
         Atualiza a empresa selecionada e a lista de empresas do usuário para o campo  usando o repositório.
 
@@ -126,7 +138,7 @@ class UsuariosServices:
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return await self.repository.update_empresas(usuario_id, empresa_id, empresas)
+        return await self.repository.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_id)
 
     async def delete(self, usuario_id: str) -> bool:
         """Deleta um usuário pelo usuario_id usando o repositório."""
