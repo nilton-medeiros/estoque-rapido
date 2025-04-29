@@ -154,6 +154,7 @@ def main(page: ft.Page):
         page.views.clear()
         pg_view = None
 
+        print(f"Debug  -> e.route: {e.route}")
         match e.route:
             case '/':    # Raiz: Landing Page
                 pg_view = ft.View(

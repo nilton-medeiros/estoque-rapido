@@ -204,6 +204,9 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 else:
                     logger.warning(f"Documento com ID {empresa_id} não encontrado")
 
+            # Ordenar a lista de empresas por corporate_name
+            empresas.sort(key=lambda empresa: empresa.corporate_name)
+
             return empresas
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':

@@ -110,7 +110,7 @@ class Empresa:
 
         # Remove os espaços em branco ou garante que seja None caso vazio ''
         self.trade_name = self.trade_name.upper().strip() if self.trade_name else None
-        self.store_name = self.store_name.strip() if self.store_name else None
+        self.store_name = self.store_name.strip().capitalize() if self.store_name else None
         self.ie = self.ie.strip() if self.ie else None
         self.im = self.im.strip() if self.im else None
         self.logo_url = self.logo_url.strip() if self.logo_url else None

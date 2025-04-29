@@ -408,13 +408,13 @@ def sidebar_header(page: ft.Page):
 
     def on_click_empresa_btn(e):
         if current_company.get('id'):
-            # Se já existe uma empresa, seta a empresa atual para o form
-            page.app_state.set_empresa_form(current_company)
+            print(f"Debug  ->  current_company_id: {current_company.get('id')}")
+            # Se já existe uma empresa, redireciona para a grade de empresas
+            page.go('/home/empresas/grid')
         else:
             # Se não existe empresa, limpa o form
             page.app_state.clear_empresa_form_data()
-        page.data = '/home'
-        page.go('/home/empresas/form')
+            page.go('/home/empresas/form')
 
     page.company_name_text_btn.on_click = on_click_empresa_btn
 
@@ -608,7 +608,6 @@ def sidebar_footer(page: ft.Page):
         page.update()  # Garante que a UI reflita a nova cor primária
 
     def on_click_business_btn(e):
-        page.data = "/home"
         page.go('/home/empresas/grid')
 
     # --- Nova Função de Hover ---
@@ -855,6 +854,8 @@ def sidebar_footer(page: ft.Page):
 
 
 def sidebar_container(page: ft.Page):
+    page.data = '/home'
+
     sidebar = ft.Container(
         col={"xs": 0, "md": 5, "lg": 4, "xxl": 3},
         expand=True,

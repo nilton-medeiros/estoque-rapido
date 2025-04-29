@@ -14,7 +14,7 @@ def empresas_grid(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/empresas/grid"
-
+    print(f"Debug  ->  Entrou em {page.data}")
     # Resetar alinhamentos da página que podem interferir com o layout da View
     # page.vertical_alignment = ft.MainAxisAlignment.START
     # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
@@ -69,8 +69,8 @@ def empresas_grid(page: ft.Page):
 
         match action:
             case "INCLUIR":
+                print("Debug:  ->  Incluir: Redirecionando para '/home/empresas/form'")
                 page.go('/home/empresas/form')
-            # ... outros cases ...
             case "EXCLUIR":
                 print(f"Excluir {empresa.id}")
                 is_deleted = empresas_actions.delete(empresa, e.control.page)
@@ -151,6 +151,7 @@ def empresas_grid(page: ft.Page):
                                         controls=[
                                             ft.Text(
                                                 f"{empresa.corporate_name}", weight=ft.FontWeight.BOLD),
+                                            # Container do PopMenuButton para não deixar colado com a margem direita de Column
                                             ft.Container(
                                                 # padding=ft.padding.only(right=5),
                                                 content=ft.PopupMenuButton(

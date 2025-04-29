@@ -86,6 +86,10 @@ def delete(empresa, page: ft.Page) -> None:
             e_delete.page.update()
             return True
 
+        # Se a empresa deletada é a que está logada, limpa do app_state.
+        if empresa.id == page.app_state.empresa.get('id'):
+            page.app_state.clear_empresa_data()
+
         # Atualiza as empresas dos usuários
         for usuario in usuarios:
             # Atualiza o set de empresas no usuário
@@ -93,6 +97,7 @@ def delete(empresa, page: ft.Page) -> None:
             usuario.empresas.discard(empresa.id)
 
             try:
+                # Atualiza empresas do usuário, removendo dos usuários a empresa deletada
                 response = await usuarios_controllers.handle_update_empresas_usuarios(
                     usuario_id=usuario.id, empresas=usuario.empresas, empresa_ativa_id=usuario.empresa_id)
 
@@ -100,14 +105,6 @@ def delete(empresa, page: ft.Page) -> None:
                     logger.warning(
                         f"Erro ao atualizar empresas do usuário {usuario.id}: {response['message']}")
 
-                # Se usuario for o usuário logado, atualiza o estado do usuário na aplicação
-                if usuario.id == page.app_state.usuario.get('id'):
-                    if usuario.empresa_id not in usuario.empresas:
-                        usuario.empresa_id = usuario.empresas[0] if usuario.empresas else None
-                    page.app_state.set_usuario(usuario.to_dict())
-                    # ToDo: Buscar empresa_data no db para empresa usuario.empresa_id
-                    # Seta a empresa logada
-                    # page.app_state.set_empresa(empresa_data.to_dict())
             except Exception as ex:
                 msg = f"Erro ao atualizar empresas do usuário {usuario.id}: {ex}"
                 logger.error(msg)
@@ -117,11 +114,37 @@ def delete(empresa, page: ft.Page) -> None:
                 message_snackbar(message=msg, message_type=MessageType.ERROR, page=e_delete.page)
                 return False
 
-        # Se a empresa deletada é a que está logada, limpa do app_state.
-        if empresa.id == page.app_state.empresa.get('id'):
-            page.app_state.clear_empresa_data()
+            # Se usuario for o usuário logado, atualiza o estado do usuário na aplicação
+            if usuario.id == page.app_state.usuario.get('id'):
+                if usuario.empresa_id not in usuario.empresas:
+                    print(f"Debug  ->  usuario.empresas: {usuario.empresas}")
+                    usuario.empresa_id = next(iter(usuario.empresas), None)
+                # Atualiza usuário logado (current user)
+                page.app_state.set_usuario(usuario.to_dict())
 
-        # Fechar o diálogo
+                if usuario.empresa_id is None:
+                    page.app_state.clear_empresa_data()
+                elif usuario.empresa_id != page.app_state.empresa.get('id'):
+                    # Se a empresa ativa do usuário não for a empresa logada, atualiza empresa logada
+                    try:
+                        response = await empresas_controllers.handle_get_empresas_by_id(usuario.empresa_id)
+
+                        if response.get('is_error'):
+                            logger.error(
+                                f"Erro ao buscar empresa logada. usuario_id {usuario.id}, empresa_id {usuario.empresa_id}: {response['message']}")
+                        else:
+                            page.app_state.set_empresa(response['empresa'].to_dict())
+
+                    except Exception as ex:
+                        msg = f"Erro ao buscar empresa logada. usuario_id {usuario.id}, empresa_id {usuario.empresa_id}: {ex}"
+                        logger.error(msg)
+                        print(msg)
+                        dlg_modal.open = False
+                        e_delete.page.update()
+                        message_snackbar(message=msg, message_type=MessageType.ERROR, page=e_delete.page)
+                        return False
+
+        # Fim do for: Fechar o diálogo
         dlg_modal.open = False
         return True
 

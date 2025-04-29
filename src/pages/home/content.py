@@ -20,7 +20,7 @@ from typing import Callable
 def main_content():
     def on_hover_card(e):
         # Verifica se o cursor entrou ou saiu
-        e.control.bgcolor = "#3a3a46" if e.data == "true" else ft.Colors.ON_INVERSE_SURFACE
+        e.control.bgcolor = ft.Colors.OUTLINE_VARIANT if e.data == "true" else ft.Colors.ON_INVERSE_SURFACE
         e.control.update()
 
     def content_card(icons: list, title: str, click_action: Callable[[any], None]) -> ft.Card:
