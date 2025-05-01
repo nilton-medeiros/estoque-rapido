@@ -2,6 +2,7 @@ from typing import Optional
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.shared.utils.gen_uuid import get_uuid
 
@@ -120,10 +121,10 @@ class EmpresasServices:
         """
         return await self.repository.find_by_id(empresa_id)
 
-    async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
-        """Busca todas as empresas do usuário logado."""
-        return await self.repository.find_all(ids_empresas)
+    async def update_status(self, empresa_id: str, status: Status) -> bool:
+        """Altera o status para DELETED de uma empresa do banco de dados."""
+        return await self.repository.update_status(empresa_id=empresa_id, status=status)
 
-    async def delete(self, empresa_id: str) -> bool:
-        """Exclui uma empresa do banco de dados."""
-        return await self.repository.delete(empresa_id)
+    async def find_all(self, ids_empresas: set[str]|list[str], status_active: bool = True) -> list[Empresa]:
+        """Busca todas as empresas do usuário logado."""
+        return await self.repository.find_all(ids_empresas=ids_empresas, status_active=status_active)

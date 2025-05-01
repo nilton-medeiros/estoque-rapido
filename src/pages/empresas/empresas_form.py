@@ -620,7 +620,7 @@ class EmpresaView:
         """
         Retorna um objeto Empresa com os dados do formulário.
         """
-        from src.domains.empresas import Address, CNPJ, EmpresaSize, CodigoRegimeTributario, Environment, FiscalData, CertificateA1
+        from src.domains.empresas import Address, CNPJ, CodigoRegimeTributario, Environment, FiscalData, CertificateA1
         from src.domains.shared import PhoneNumber, Password
         from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 

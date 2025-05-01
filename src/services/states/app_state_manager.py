@@ -54,7 +54,7 @@ class AppStateManager:
 
             # Atualiza as cores do usuário
             if colors := usuario_data.get('user_colors', {}):
-                if all(key in colors for key in ['base_color','primary', 'container', 'accent', 'appbar']):
+                if all(key in colors for key in ['base_color', 'primary', 'container', 'accent', 'appbar']):
                     self.page.session.set("user_colors", colors)
 
             self.page.pubsub.send_all("usuario_updated")
@@ -109,7 +109,8 @@ class AppStateManager:
             return True
 
         except Exception as e:
-            self.handle_error(f"Erro ao atualizar empresa para o formulário: {str(e)}")
+            self.handle_error(
+                f"Erro ao atualizar empresa para o formulário: {str(e)}")
             return False
 
     def handle_error(self, error_message: str):

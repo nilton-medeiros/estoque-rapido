@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Optional, Dict
 
 """
@@ -6,9 +7,10 @@ ToDo: Refatorar, aqui não deveria invocar diretamente a AsaasPaymentGateway
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
+from src.domains.shared.password import Password
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.domains.shared.phone_number import PhoneNumber
-from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario
+from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario, Status
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 
@@ -50,7 +52,8 @@ class Empresa:
 
     Attributes:
         corporate_name (str): Razão Social da empresa.
-        email: str: E-mail da empresa.
+        email (str): E-mail da empresa.
+        status (Status:Enum): Status da empresa.
         cnpj (CNPJ): CNPJ da empresa.
         id (Optional[str]): ID opcional da empresa.
         trade_name (Optional[str]): Nome fantasia da empresa.
@@ -75,6 +78,9 @@ class Empresa:
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
+    status: Status = Status.ACTIVE
+    deleted_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
     trade_name: Optional[str] = None  # Nome fantasia
     store_name: Optional[str] = 'Matriz'
     cnpj: Optional[CNPJ] = None  # CNPJ do emitente da NFCe
@@ -100,13 +106,15 @@ class Empresa:
         Realiza validações adicionais e formatações necessárias.
         """
         # Campos obrigatórios
-        self.corporate_name = self.corporate_name.upper().strip() if self.corporate_name else None
+        self.corporate_name = self.corporate_name.upper(
+        ).strip() if self.corporate_name else None
         if not self.corporate_name:
             raise ValueError("O campo 'corporate_name' é obrigatório.")
 
         self.email = self.email.lower().strip() if self.email else None
         if not self.email or "@" not in self.email:
-            raise ValueError("O campo 'email' é obrigatório e deve conter um endereço de e-mail válido.")
+            raise ValueError(
+                "O campo 'email' é obrigatório e deve conter um endereço de e-mail válido.")
 
         # Remove os espaços em branco ou garante que seja None caso vazio ''
         self.trade_name = self.trade_name.upper().strip() if self.trade_name else None
@@ -220,4 +228,129 @@ class Empresa:
             "certificate_a1": self.get_certificate_data(),
             "logo_url": self.logo_url,
             "payment_gateway": self.payment_gateway.__dict__ if self.payment_gateway else None,
+            "status": self.status,
+            "deleted_at": self.deleted_at,
+            "archived_at": self.archived_at,
         }
+
+    def to_dict_db(self) -> dict:
+        """
+        Converte o objeto Empresa e todos os seus atributos para um dicionário.
+
+        Returns:
+            dict: Representação da entidade Empresa como dicionário para um database.
+            O ID da empresa não faz parte dos campos a serem salvos/alterados.
+            O repositório do database obtem o ID do objeto Empresa.
+        """
+
+        dict_db = {
+           "corporate_name": self.corporate_name,
+           "trade_name": self.trade_name,
+           "store_name": self.store_name,
+           "cnpj": self.cnpj.raw_cnpj,
+           "email": self.email,
+           "ie": self.ie,
+           "im": self.im,
+           "phone": self.phone.get_e164(),
+           "address": self.address.__dict__ if self.address else None,
+           "size": self.size.name if self.size else None,
+           "fiscal": self.get_nfce_data(),
+           "certificate_a1": self.get_certificate_data(),
+           "logo_url": self.logo_url,
+           "payment_gateway": self.payment_gateway.__dict__ if self.payment_gateway else None,
+           "status": self.status.name,
+           "deleted_at": self.deleted_at,
+           "archived_at": self.archived_at,
+        }
+
+        # Remove campos desnecessários para o banco de dados,
+        # por exemplo, campos que não devem ser salvos ou são None (null)
+        dict_db_filtered = {k: v for k, v in dict_db.items() if v is not None}
+
+        return dict_db_filtered
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Empresa':
+        """
+        Cria uma instância de Empresa a partir de um dicionário.
+
+        Args:
+            data (dict): Dicionário contendo os dados da empresa.
+
+        Returns:
+            Empresa: Nova instância de Empresa.
+        """
+        return cls(
+            id=data["id"],
+            corporate_name=data.get("corporate_name"),
+            trade_name=data.get("trade_name"),
+            store_name=data.get("store_name"),
+            cnpj=CNPJ(data.get("cnpj")) if data.get("cnpj") else None,
+            email=data.get("email"),
+            ie=data.get("ie"),
+            im=data.get("im"),
+            phone=PhoneNumber(data.get("phone")) if data.get("phone") else None,
+            address=Address(
+                street=data["address"].get("street"),
+                number=data["address"].get("number"),
+                complement=data["address"].get("complement"),
+                neighborhood=data["address"].get("neighborhood"),
+                city=data["address"].get("city"),
+                state=data["address"].get("state"),
+                postal_code=data["address"].get("postal_code"),
+            ) if data.get("address") else None,
+            size=EmpresaSize[data.get("size")] if data.get("size") else None,
+            fiscal=FiscalData(
+                crt=CodigoRegimeTributario[data.get("crt_name")] if data.get("crt_name") else None,
+                environment=Environment[data.get("getenvironment_name")] if data.get("getenvironment_name") else None,
+                nfce_series=data.get("nfce_series"),
+                nfce_number=data.get("nfce_number"),
+                nfce_sefaz_id_csc=data.get("nfce_sefaz_id_csc"),
+                nfce_sefaz_csc=data.get("nfce_sefaz_csc"),
+                nfce_api_enabled=data.get("nfce_api_enabled"),
+            ) if data.get("fiscal") else None,
+            certificate_a1=CertificateA1(
+                password=Password.from_encrypted(data["certificate_a1"].get("password")) if data["certificate_a1"].get("password") else None,
+                serial_number=data["certificate_a1"].get("serial_number"),
+                not_valid_before=data["certificate_a1"].get("not_valid_before"),
+                not_valid_after=data["certificate_a1"].get("not_valid_after"),
+                subject_name=data["certificate_a1"].get("subject_name"),
+                file_name=data["certificate_a1"].get("file_name"),
+                cpf_cnpj=data["certificate_a1"].get("cpf_cnpj"),
+                nome_razao_social=data["certificate_a1"].get("nome_razao_social"),
+                storage_path=data["certificate_a1"].get("storage_path"),
+            ) if data.get("certificate_a1") else None,
+            logo_url=data.get("logo_url"),
+            payment_gateway=AsaasPaymentGateway(
+                customer_id=data["payment_gateway"].get("customer_id"),
+                nextDueDate=data["payment_gateway"].get("nextDueDate"),
+                billingType=data["payment_gateway"].get("billingType"),
+                status=data["payment_gateway"].get("status"),
+                dateCreated=data["payment_gateway"].get("dateCreated"),
+            ) if data.get("payment_gateway") else None,
+            status=Status[data.get("status", "ACTIVE")],
+            deleted_at=data.get("deleted_at"),
+            archived_at=data.get("archived_at"),
+        )
+
+    def set_status(self, new_status: Status) -> None:
+        """
+        Altera o status da empresa e atualiza o deleted_at conforme o novo status.
+
+        Args:
+            novo_status (Status: Enum): O novo status da empresa ('active', 'archived' ou 'deleted').
+
+        Raises:
+            ValueError: Se o novo status for inválido.
+        """
+        self.status: Status = new_status
+        if new_status == Status.DELETED:
+            self.deleted_at = datetime.now()
+            self.archived_at = None
+        elif new_status == Status.ARCHIVED:
+            self.deleted_at = None
+            self.archived_at = datetime.now()
+        elif new_status == Status.ACTIVE:
+            # Limpa a data de deleção e arquivado se empresa for reativada.
+            self.deleted_at = None
+            self.archived_at = None

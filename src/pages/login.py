@@ -203,14 +203,22 @@ class LoginView:
             result = await empresas_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["is_error"]:
-                message_snackbar(
-                    page=self.page, message=result["message"], message_type=MessageType.ERROR)
+                print(f"Debug  -> {result["message"]}")
+                user.empresa_id = None
+                self.page.app_state.clear_empresa_data()
+                self.page.on_resized = None
+                self.page.go('/home')
                 return
 
             cia: Empresa = result["empresa"]
 
             # Adiciona o empresa_id no state e publíca-a
-            self.page.app_state.set_empresa(cia.to_dict())
+            if cia.status.name == 'ACTIVE':
+                self.page.app_state.set_empresa(cia.to_dict())
+            else:
+                print(f"Debug  -> empresa_id: {cia.id}, status: {cia.status.value}")
+                user.empresa_id = None
+                self.page.app_state.clear_empresa_data()
 
             self.page.on_resized = None
             self.page.go('/home')

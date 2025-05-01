@@ -10,6 +10,7 @@ from firebase_admin import exceptions
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importação direta
 from src.domains.empresas.models.empresa_model import Empresa  # Importação direta
+from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 from src.shared import deepl_translator
@@ -52,9 +53,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             str: O ID do documento da empresa salva.
         """
         try:
-            empresa_dict = self._empresa_to_dict(empresa)
             # Insere ou atualiza o documento na coleção 'empresas'
-            self.collection.document(empresa.id).set(empresa_dict, merge=True)
+            self.collection.document(empresa.id).set(empresa.to_dict_db(), merge=True)
             return empresa.id  # Garante que o ID retornado seja o ID real do documento
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -78,6 +78,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
     async def find_by_id(self, id: str) -> Optional[Empresa]:
         """
         Encontrar uma empresa pelo seu identificador único.
+        O fato do sistema estar de posse do ID, significa que não precisa filtrar empresa por status ativo
 
         Args:
             id (str): O identificador único da empresa.
@@ -90,7 +91,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             if doc.exists:
                 empresa_data = doc.to_dict()
                 empresa_data['id'] = doc.id
-                return self._doc_to_empresa(empresa_data)
+                return Empresa.from_dict(empresa_data)  # Cria uma estância de Empresa
             return None  # Retorna None se o documento não existir
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -110,6 +111,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
     async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
         """
         Encontrar uma empresa pelo seu CNPJ.
+        O módulo que solicitou a empresa pelo CNPJ deve tratar o status da empresa. (ATIVO, ARQUIVADO E DELETADO)
 
         Args:
             cnpj (CNPJ): O CNPJ da empresa a ser encontrada.
@@ -129,7 +131,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 doc = docs[0]
                 empresa_data = doc.to_dict()
                 empresa_data['id'] = doc.id
-                return self._doc_to_empresa(empresa_data)
+                return Empresa.from_dict(empresa_data)  # Cria uma estância de Empresa
 
             return None
         except exceptions.FirebaseError as e:
@@ -149,7 +151,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
     async def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
         """
-        Verificar se uma empresa existe com o CNPJ fornecido.
+        Verificar se uma empresa existe com o CNPJ fornecido independente do status da empresa.
 
         Args:
             cnpj (CNPJ): O CNPJ da empresa a ser verificado.
@@ -176,12 +178,13 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    async def find_all(self, ids_empresas: set[str]) -> list[Empresa]:
+    async def find_all(self, ids_empresas: set[str]|list[str], status_active: bool = True) -> list[Empresa]:
         """
-        Faz uma busca de todas as empresas que estão na lista de ids_empresas.
+        Faz uma busca de todas as empresas que estão na lista de ids_empresas e pelo seu status.
 
         Args:
-            ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado
+            ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado.
+            status_active (bool): Status requerido (ACTIVE, ARCHIVED ou DELETED)
 
         Return:
             list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar
@@ -189,6 +192,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Exception: Se ocorrer erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
+            # Se o argumento ids_empresas for um conjunto (set), converte para lista
             ids_empresas_list = list(ids_empresas)
 
             # Buscar documentos diretamente pelos IDs
@@ -197,10 +201,14 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 doc_ref = self.collection.document(empresa_id)
                 doc = doc_ref.get()
                 if doc.exists:
-                    doc_dict = doc.to_dict()
-                    # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
-                    doc_dict['id'] = doc.id  # Isso ajuda se o seu método _doc_to_empresa precisa do ID
-                    empresas.append(self._doc_to_empresa(doc_dict))
+                    # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
+                    empresa_data = doc.to_dict()
+                    print(f"doc: {doc}")
+                    print(f"empresa_data: {empresa_data}")
+                    if (status_active and empresa_data.get('status') == 'ACTIVE') or (not status_active and empresa_data.get('status') != 'ACTIVE'):
+                        # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
+                        empresa_data['id'] = doc.id
+                        empresas.append(Empresa.from_dict(empresa_data))
                 else:
                     logger.warning(f"Documento com ID {empresa_id} não encontrado")
 
@@ -226,22 +234,34 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
 
-    async def delete(self, empresa_id: str) -> bool:
+    async def update_status(self, empresa_id: str, status: Status) -> bool:
         """
-        Excluir uma empresa pelo seu identificador único.
+        Altera o status de uma empresa pelo seu identificador único para DELETED.
+        Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
+        A exclusão definitiva ocorrerá após 90 dias da mudança para Status.DELETED,
+        realizada periodicamente por uma Cloud Function.
 
         Args:
             empresa_id (str): O identificador único da empresa.
+            status (Status): O novo status da empresa.
 
         Retorna:
-            bool: True se a exclusão for bem-sucedida, False caso contrário.
+            bool: True se alteração for bem-sucedida, False caso contrário.
 
         Levanta:
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
         """
         try:
-            self.collection.document(empresa_id).delete()
+            # self.collection.document(empresa_id).delete()
+            if status == Status.DELETED:
+                fields = {'status': status.name, "deleted_at": firestore.SERVER_TIMESTAMP}
+            else:
+                fields = {'status': status.name, "archived_at": firestore.SERVER_TIMESTAMP}
+
+            self.collection.document(empresa_id).update(fields)
+
             return True
+        # ToDo: Corrigir respostas adequadas
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.info(f"Empresa com id '{empresa_id}' não encontrada para exclusão.")
@@ -262,153 +282,3 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
             translated_error = deepl_translator(str(e))
             raise Exception(f"Erro inesperado ao excluir empresa: {translated_error}")
-
-
-    def _doc_to_empresa(self, doc_data: dict) -> Empresa:
-        """
-        Converter os dados de um documento do Firestore em uma instância de empresa.
-
-        Args:
-            doc_data (dict): Os dados do documento Firestore representando uma empresa.
-
-        Retorna:
-            Empresa: A instância correspondente da empresa.
-        """
-        from src.domains.empresas import Address, CertificateA1, CodigoRegimeTributario, EmpresaSize, Environment, FiscalData
-        from src.domains.shared import PhoneNumber
-
-        address = None
-        if doc_data.get('address'):
-            address_data = doc_data['address']
-            address = Address(
-                street=address_data.get('street'),
-                number=address_data.get('number'),
-                complement=address_data.get('complement'),
-                neighborhood=address_data.get('neighborhood'),
-                city=address_data.get('city'),
-                state=address_data.get('state'),
-                postal_code=address_data.get('postal_code'),
-            )
-
-        size_info = None
-        if size_name := doc_data.get('size'):
-            size_info = EmpresaSize[size_name]
-
-        fiscal_info = None
-        if fiscal := doc_data.get('fiscal'):
-
-            # Obtem o enum CodigoRegimeTributario correspondente ao código crt_code
-            crt_enum = None
-            amb_enum = None
-
-            # Obtem o 'name' do enum CRT vindo do banco
-            if fiscal.get('crt_name'):
-                crt_enum = CodigoRegimeTributario[fiscal['crt_name']]
-
-            # Obtem o 'name' do ambiente fiscal vindo do banco
-            if fiscal.get('environment_name'):
-                amb_enum = Environment[fiscal['environment_name']]
-
-            fiscal_info = FiscalData(
-                crt=crt_enum,
-                environment=amb_enum,
-                nfce_series=fiscal.get('nfce_series'),
-                nfce_number=fiscal.get('nfce_number'),
-                nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc'),
-                nfce_sefaz_csc=fiscal.get('nfce_sefaz_csc'),
-                nfce_api_enabled=fiscal.get('nfce_api_enabled'),
-            )
-
-        certificate_a1 = None
-
-        from src.domains.shared.password import Password
-
-        if certificate := doc_data.get("certificate_a1"):
-            encrypted_password = certificate.get("password")
-            # Criar instância a partir do valor criptografado
-            password = Password.from_encrypted(encrypted_password)
-            certificate_a1 = CertificateA1(
-                password=password,
-                serial_number=certificate.get('serial_number'),
-                not_valid_before=certificate.get('not_valid_before'),
-                not_valid_after=certificate.get('not_valid_after'),
-                subject_name=certificate.get('subject_name'),
-                file_name=certificate.get('file_name'),
-                cpf_cnpj=certificate.get('cpf_cnpj'),
-                nome_razao_social=certificate.get('nome_razao_social'),
-                storage_path=certificate.get('storage_path'),
-            )
-
-        """
-        ToDo: Substituir o AsaasPaymentGateway por um repositório específico para o gateway de pagamento
-        O repositório é o responsável por qual é gateway atual que deve ser usado.
-        """
-        payment_gateway = None
-        if pg := doc_data.get("payment_gateway"):
-            payment_gateway = AsaasPaymentGateway(
-                customer_id=pg.get('customer_id'),
-                nextDueDate=pg.get('nextDueDate'),
-                billingType=pg.get('billingType'),
-                status=pg.get('status'),
-                dateCreated=pg.get('dateCreated'),
-            )
-
-        cnpj = None
-        if doc_data.get('cnpj'):
-            cnpj = CNPJ(doc_data['cnpj'])
-
-        phone = None
-        if doc_data.get('phone'):
-            phone = PhoneNumber(doc_data['phone'])
-
-        return Empresa(
-            id=doc_data.get('id'),
-            corporate_name=doc_data.get('corporate_name'),
-            trade_name=doc_data.get('trade_name'),
-            store_name=doc_data.get('store_name', "Matriz"),
-            cnpj=cnpj,
-            email=doc_data.get('email'),
-            ie=doc_data.get('ie'),
-            im=doc_data.get('im'),
-            phone=phone,
-            address=address,
-            size=size_info,
-            fiscal=fiscal_info,
-            certificate_a1=certificate_a1,
-            logo_url=doc_data.get('logo_url'),
-            payment_gateway=payment_gateway,
-        )
-
-    def _empresa_to_dict(self, empresa: Empresa) -> dict:
-        """
-        Converter uma instância de empresa em um dicionário para armazenamento no Firestore.
-
-        Args:
-            empresa (Empresa): A instância da empresa a ser convertida.
-
-        Retorna:
-            dict: A representação da empresa em formato de dicionário.
-        """
-
-        empresa_dict = empresa.to_dict()
-
-        if empresa.cnpj:
-            # Armazena o CNPJ como string
-            empresa_dict.update({
-                'cnpj': empresa.cnpj.raw_cnpj,
-            })
-        if empresa.phone:
-            # Armazena o telefone como string
-            empresa_dict.update({
-                'phone': empresa.phone.get_e164(),
-            })
-        if empresa.size:
-            # Armazena o name do enum size
-            empresa_dict.update({
-                'size': empresa.size,
-            })
-
-        # Remove os campos desnecessários para o Firestore; O id é passado diretamente no documento de referencia
-        empresa_dict.pop('id', None)
-        empresa_dict_filtered = {k: v for k, v in empresa_dict.items() if v is not None}
-        return empresa_dict_filtered

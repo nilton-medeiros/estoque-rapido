@@ -141,9 +141,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             int: O número de usuários encontrados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)) # Testar este Novo método
-            query = self.collection.where(
-                field_path='empresas', op_string='array_contains', value=empresa_id)
+            query = self.collection.where(filter=FieldFilter(
+                "empresas", "array_contains", empresa_id))
+            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id) # método antigo
             docs = query.get()
             return len(docs)
         except exceptions.FirebaseError as e:
@@ -221,9 +221,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("email", "==", email)) # Testar este Novo método
             query = self.collection.where(
-                field_path='email', op_string='==', value=email).limit(1)
+                filter=FieldFilter("email", "==", email))
+            # query = self.collection.where(field_path='email', op_string='==', value=email).limit(1)  # Método antigo
             docs = query.stream()
 
             for doc in docs:
@@ -266,7 +266,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         """
         try:
             query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).offset(
-                offset).limit(limit)  # Testar este Novo método
+                offset).limit(limit)
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
             docs = query.stream()
@@ -312,12 +312,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("email", "==", email)).limit(1) # Testar este Novo método
             query = self.collection.where(
-                field_path='email', op_string='==', value=email).limit(1)
+                filter=FieldFilter("email", "==", email)).limit(1)
+            # query = self.collection.where(field_path='email', op_string='==', value=email).limit(1)  # Método antigo
             docs = query.stream()
 
             for doc in docs:
+                # Pega o primeiro elemento e vaza (só tem um mesmo, limitado por .limit(1))
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
                 return Usuario.from_dict(usuario_data)
@@ -358,9 +359,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(filter=FieldFilter("name", ">=", name)).where(filter=FieldFilter("name", "<=", name + '\uf8ff'))
-            query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(
-                'name', '>=', name).where('name', '<=', name + '\uf8ff')
+            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(
+                filter=FieldFilter("name", ">=", name)).where(filter=FieldFilter("name", "<=", name + '\uf8ff'))
+            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -406,10 +407,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            # query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(filter=FieldFilter("profile", "==", profile))
-            query = self.collection.where(
-                field_path='empresas', op_string='array_contains', value=empresa_id
-            ).where(field_path='profile', op_string='==', value=profile)
+            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(
+                filter=FieldFilter("profile", "==", profile))
+            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(field_path='profile', op_string='==', value=profile)  # Método antigo
 
             docs = query.stream()
             usuarios: List[Usuario] = []
@@ -677,7 +677,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if empresa_id:
                 # Atualiza a empresa ativa e a lista de empresas (registra lista vazia também)
                 doc_ref.update({"empresa_id": empresa_id,
-                            "empresas": list(empresas)})
+                                "empresas": list(empresas)})
             else:
                 # Atualiza a lista de empresas (pode ser vazia)
                 doc_ref.update({"empresas": list(empresas)})

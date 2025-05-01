@@ -2,23 +2,28 @@ import logging
 import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+from src.domains.empresas.models.empresa_subclass import Status
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
 from src.shared import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
-def delete(empresa, page: ft.Page) -> None:
+
+async def delete(empresa, page: ft.Page) -> None:
     # Definir dlg_modal ANTES de usá-lo em delete_company
-        # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
+    # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
+
     async def delete_company(e_delete):
         print('Deletando empresa...')
+        # Obter a página a partir do evento é mais seguro em callbacks
+        page = e_delete.page
 
         # --- Acesso ao controle de texto ---
         try:
             # dlg_modal é acessível aqui devido ao closure
             status_text_control = dlg_modal.content.controls[2]
-            status_text_control.visible = True
+            status_text_control.visible = True  # Mostra o texto de 'Aguarde...'
 
             # Opcional: Desabilitar botões enquanto processa
             for btn in dlg_modal.actions:
@@ -26,23 +31,34 @@ def delete(empresa, page: ft.Page) -> None:
 
             # Atualizar a página (ou o diálogo) para mostrar a mudança
             # Usar e_delete.page garante que estamos atualizando a página correta
-            e_delete.page.update()
+            page.update()
 
-            # print(f"Lógica de exclusão para {empresa.id} executada.")
-            result = await empresas_controllers.handle_delete_empresas(empresa.id)
-            # --- Após a exclusão ---
-            # Se empresa excluída com sucesso, atualiza empresas do usuário
+            # OPERAÇÃO SOFT DELETE: Muda o status para excluído a empresa pelo ID
+            # ToDo: Verificar se há produtos, pedidos, ou estoque para este empresa_id
+            """
+            Aviso: Se houver produtos, pedidos ou estoque vinculados, o status será definido como Status.ARCHIVED.
+            Caso contrário, o registro poderá ter o status Status.DELETED.
+            Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
+            A exclusão definitiva ocorrerá após 90 dias da mudança para Status.DELETED, realizada periodicamente por uma Cloud Function.
+            """
 
-            page = e_delete.page  # Obter a instância da página a partir do evento
+            print(f"Lógica de exclusão para {empresa.id} em execução...")
+            # Implemente aqui a lógica para buscar produtos, pedidos e estoque vinculados.
+            # ...
+            # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
+            # Caso contrário, muda o status para ARCHIVED
+            status = Status.DELETED  # Até implementar pesquisa de vínculo, assume que não há vínculo
+            result = await empresas_controllers.handle_status_empresas(empresa.id, status=status)
 
             if result.get('is_error'):
                 # Fechar o diálogo
                 dlg_modal.open = False
-                e_delete.page.update()
+                page.update()
                 message_snackbar(
                     message=result['message'], message_type=MessageType.WARNING, page=page)
                 return False
 
+            empresa.set_status(status)
         except IndexError:
             logger.debug(
                 "Erro: Não foi possível encontrar o controle de texto de status (índice 2).")
@@ -50,119 +66,59 @@ def delete(empresa, page: ft.Page) -> None:
                 "Debug: Erro: Não foi possível encontrar o controle de texto de status (índice 2).")
             # Ainda assim, fechar o diálogo em caso de erro interno
             dlg_modal.open = False
-            e_delete.page.update()
+            page.update()
             return False
         except Exception as ex:
             print(f"Erro durante a exclusão: {ex}")
             dlg_modal.open = False
-            e_delete.page.update()
+            page.update()
             message_snackbar(
-                message=f"Erro ao excluir empresa: {ex}", message_type=MessageType.ERROR, page=e_delete.page)
+                message=f"Erro ao excluir empresa: {ex}", message_type=MessageType.ERROR, page=page)
             return False
-
-        try:
-            # Busca e atualiza todos os usuários da empresa excluída
-            response = await usuarios_controllers.handle_find_all_usuarios(empresa.id)
-
-            if response.get('is_error'):
-                # Fechar o diálogo
-                dlg_modal.open = False
-                e_delete.page.update()
-                message_snackbar(
-                    message=response['message'], message_type=MessageType.WARNING, page=page)
-                return False
-        except Exception as ex:
-            msg = f"Erro ao consultar todos os usuários da empresa {empresa.id}: {ex}"
-            print(msg)
-            dlg_modal.open = False
-            e_delete.page.update()
-            message_snackbar(message=msg, message_type=MessageType.ERROR, page=e_delete.page)
-            return False
-
-        usuarios = response['usuarios']
-
-        if not response['usuarios']:
-            dlg_modal.open = False
-            e_delete.page.update()
-            return True
 
         # Se a empresa deletada é a que está logada, limpa do app_state.
         if empresa.id == page.app_state.empresa.get('id'):
             page.app_state.clear_empresa_data()
 
-        # Atualiza as empresas dos usuários
-        for usuario in usuarios:
-            # Atualiza o set de empresas no usuário
-            # Discard: Não da erro se a empresa já não existe mais no set de empresas
-            usuario.empresas.discard(empresa.id)
-
-            try:
-                # Atualiza empresas do usuário, removendo dos usuários a empresa deletada
-                response = await usuarios_controllers.handle_update_empresas_usuarios(
-                    usuario_id=usuario.id, empresas=usuario.empresas, empresa_ativa_id=usuario.empresa_id)
-
-                if response.get('is_error'):
-                    logger.warning(
-                        f"Erro ao atualizar empresas do usuário {usuario.id}: {response['message']}")
-
-            except Exception as ex:
-                msg = f"Erro ao atualizar empresas do usuário {usuario.id}: {ex}"
-                logger.error(msg)
-                print(msg)
-                dlg_modal.open = False
-                e_delete.page.update()
-                message_snackbar(message=msg, message_type=MessageType.ERROR, page=e_delete.page)
-                return False
-
-            # Se usuario for o usuário logado, atualiza o estado do usuário na aplicação
-            if usuario.id == page.app_state.usuario.get('id'):
-                if usuario.empresa_id not in usuario.empresas:
-                    print(f"Debug  ->  usuario.empresas: {usuario.empresas}")
-                    usuario.empresa_id = next(iter(usuario.empresas), None)
-                # Atualiza usuário logado (current user)
-                page.app_state.set_usuario(usuario.to_dict())
-
-                if usuario.empresa_id is None:
-                    page.app_state.clear_empresa_data()
-                elif usuario.empresa_id != page.app_state.empresa.get('id'):
-                    # Se a empresa ativa do usuário não for a empresa logada, atualiza empresa logada
-                    try:
-                        response = await empresas_controllers.handle_get_empresas_by_id(usuario.empresa_id)
-
-                        if response.get('is_error'):
-                            logger.error(
-                                f"Erro ao buscar empresa logada. usuario_id {usuario.id}, empresa_id {usuario.empresa_id}: {response['message']}")
-                        else:
-                            page.app_state.set_empresa(response['empresa'].to_dict())
-
-                    except Exception as ex:
-                        msg = f"Erro ao buscar empresa logada. usuario_id {usuario.id}, empresa_id {usuario.empresa_id}: {ex}"
-                        logger.error(msg)
-                        print(msg)
-                        dlg_modal.open = False
-                        e_delete.page.update()
-                        message_snackbar(message=msg, message_type=MessageType.ERROR, page=e_delete.page)
-                        return False
-
+        print(f"Debug  ->  empresa_id: {empresa.id}, state.empresa.id: {page.app_state.empresa.get('id')}")
+        print("Debug:  ->  Empresa excluída com sucesso! Fechando dialog dlg_modal")
         # Fim do for: Fechar o diálogo
         dlg_modal.open = False
+        page.update()
         return True
 
-    def close_dlg(e_close):  # Renomear 'e'
+    def close_dlg(e_close):
         dlg_modal.open = False
         e_close.page.update()
 
+    warning_text = ft.Text(
+        "Aviso: Este registro será excluído permanentemente após 90 dias. "
+        "Caso exista estoque ou pedidos vinculados a esta empresa, "
+        "a empresa será apenas arquivada e não poderá ser excluída definitivamente.",
+        theme_style=ft.TextThemeStyle.BODY_MEDIUM,
+        selectable=True,
+        expand=True,
+    )
+
+    # Um AlertDialog Responsivo com limite de largura para 700 pixels
     dlg_modal = ft.AlertDialog(
         modal=True,
-        title=ft.Text("Por favor confirme"),
-        content=ft.Column([
-            ft.Text(empresa.corporate_name),
-            ft.Text("Você realmente deseja excluir esta empresa?"),
-            ft.Text("Excluindo empresa. Aguarde...", visible=False),
-        ],
-            # É bom definir tight=True se você fixa a altura
-            # ou ajustar a altura para caber o novo texto
-            height=100, tight=True),
+        title=ft.Text("Mover para lixeira?"),
+        content=ft.Column(
+            [
+                ft.Text(empresa.corporate_name,
+                        weight=ft.FontWeight.BOLD, selectable=True),
+                ft.Text(f"ID: {empresa.id}", selectable=True),
+                ft.Row([ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED), warning_text]),
+                ft.Text("Movendo empresa para a lixeira. Aguarde...",
+                        visible=False),
+            ],
+            # tight = True: É bom definir tight=True se você fixa a altura com o conteúdo
+            # tight = False: Estica a altura até o limite da altura da página
+            tight=True,
+            width=700,
+            spacing=10,
+        ),
         actions=[
             # Passa a função delete_company como callback
             ft.TextButton("Sim", on_click=delete_company),
@@ -176,3 +132,11 @@ def delete(empresa, page: ft.Page) -> None:
     page.overlay.append(dlg_modal)
     dlg_modal.open = True
     page.update()
+
+
+async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> None:
+    return await usuarios_controllers.handle_update_empresas_usuarios(
+        usuario_id=usuario_id,
+        empresas=empresas,
+        empresa_ativa_id=empresa_id
+    )

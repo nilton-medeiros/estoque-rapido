@@ -3,6 +3,7 @@ import logging
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.implementations.firebase_empresas_repository import FirebaseEmpresasRepository
 from src.domains.empresas.services.empresas_services import EmpresasServices
 
@@ -197,15 +198,16 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     return response
 
 
-async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
+async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> list:
     """
-    Busca todas as empresas do usuário logado.
+    Busca todas as empresas do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
 
     Esta função retorna todas as empresas do usuário logado, se não houver empresas, retorna uma lista vazia.
     Ela utiliza um repositório específico para realizar a busca e retorna a lista de empresas, se encontrada.
 
     Args:
         ids_empresas (set[str]|list[str]): Uma lista ou conjunto de ID's das empresas do usuário logado.
+        status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativa (arquivadas ou deletadas).
 
     Returns:
         list: Uma lista de empresas do usuário logado.
@@ -232,7 +234,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
-        list_empresas = await empresas_services.find_all(ids_empresas=ids_empresas)
+        list_empresas = await empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
 
         if list_empresas:
             response["message"] = "Empresas encontradas com sucesso!"
@@ -251,18 +253,17 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str]) -> list:
 
     return response
 
-async def handle_delete_empresas(id: str) -> bool:
+async def handle_status_empresas(id: str, status: Status) -> bool:
     """
-    Manipula a operação de excluir uma empresa.
-
-    Esta função manipula a operação de excluiruma empresa no banco de dados utilizando o ID fornecido.
+    Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados utilizando o ID fornecido.
     Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
 
     Args:
         id (str): O ID do empresa a ser excluído.
+        status (Status): Pode ser ARCHIVED, DELETED ou ACTIVE.
 
     Returns:
-        bool: True se bem sucedido ou False em caso de erro.
+        dict: response se bem sucedido ou em caso de erro.
 
     Raises:
         Exception: Se ocorrer um erro inesperado durante a operação.
@@ -275,6 +276,7 @@ async def handle_delete_empresas(id: str) -> bool:
     response = {
         "is_error": False,
         "message": "",
+        "status": None,
     }
 
     try:
@@ -282,16 +284,16 @@ async def handle_delete_empresas(id: str) -> bool:
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_deleted = False
+        is_updated = False
 
         if id:
-            # Exclui a empresa pelo ID
-            is_deleted = await empresas_services.delete(id)
+            is_updated = await empresas_services.update_status(empresa_id=id, status=status)
         else:
             raise ValueError("O id deve ser passado")
 
-        if is_deleted:
-            response["message"] = "Empresa excluída com sucesso!"
+        if is_updated:
+            response["status"] = status
+            response["message"] = f"Status da empresa alterado com sucesso! Status: {status.value}"
         else:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui

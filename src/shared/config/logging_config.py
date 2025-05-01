@@ -32,7 +32,8 @@ class LogConfig:
         root_logger.setLevel(logging.DEBUG) # Definir o nível do root logger para o mais baixo possível (DEBUG)
 
         try:
-            file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
+            # file_handler = RotatingFileHandler(log_file, maxBytes=5242880, backupCount=5)
+            file_handler = RotatingFileHandler(log_file, maxBytes=1048576, backupCount=5)
         except Exception as e:
             print(f"Error creating RotatingFileHandler: {e}")
             return  # Caso não consiga criar o logger, não tenta mais nada

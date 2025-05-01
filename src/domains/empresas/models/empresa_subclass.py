@@ -2,6 +2,12 @@
 from enum import Enum
 
 
+class Status(Enum):
+    ACTIVE = "Ativo"
+    ARCHIVED = "Arquivado"
+    DELETED = "Lixeira"
+
+
 class Environment(Enum):
     HOMOLOGACAO = "Homologação"
     PRODUCAO = "Produção"

@@ -39,7 +39,8 @@ async def handle_login_usuarios(email: str, password: str) -> dict:
 
     except InvalidCredentialsException as e:
         response["is_error"] = True
-        response["message"] = "Credenciais inválidas"  # str(e) # Não deve ser exposto para o usuário, mensagem genérica
+        # str(e) # Não deve ser exposto para o usuário, mensagem genérica
+        response["message"] = "Credenciais inválidas"
 
     except AuthenticationException as e:
         response["is_error"] = True
@@ -163,7 +164,8 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
             response["usuario"] = usuario
         else:
             response["is_error"] = True
-            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
+            response[
+                "message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
 
     except ValueError as e:
         response["is_error"] = True
@@ -374,7 +376,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         "message": "",
     }
 
-    # Verifica se o id, empresa_ativa_id e empresas foram passados
+    # Verifica se o id e empresas foram passados
     if not usuario_id or empresas is None:
         response["is_error"] = True
         msg = f"Os argumentos usuario_id e empresas devem ser passados. usuario_id: {usuario_id}, empresas: {empresas}"
@@ -393,7 +395,8 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
             response["message"] = "Empresa(s) do Usuário atualizada com sucessso!"
         else:
             response["is_error"] = True
-            response["message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {usuario_id}"
+            response[
+                "message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {usuario_id}"
             logger.error(response["message"])
     except ValueError as e:
         response["is_error"] = True
@@ -405,6 +408,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         logger.error(response["message"])
 
     return response
+
 
 async def handle_find_all_usuarios(empresa_id: str) -> List[Usuario]:
     """Busca todos os usuário da empresa_id"""
@@ -428,13 +432,13 @@ async def handle_find_all_usuarios(empresa_id: str) -> List[Usuario]:
 
         usuarios = await usuarios_services.find_all(empresa_id)
 
-
         if len(usuarios) > 0:
             # Retorna lista de usuários
             response["usuarios"] = usuarios
             response["message"] = "Usuários encontrados com sucesso!"
         else:
-            response["message"] = f"Usuários não encontrados. Verifique o empresa_id: {empresa_id}"
+            response[
+                "message"] = f"Usuários não encontrados. Verifique o empresa_id: {empresa_id}"
 
     except ValueError as e:
         response["is_error"] = True

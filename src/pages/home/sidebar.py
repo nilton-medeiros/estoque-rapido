@@ -854,6 +854,7 @@ def sidebar_footer(page: ft.Page):
 
 
 def sidebar_container(page: ft.Page):
+    """Container Esquerdo vertical na Home page do usuário"""
     page.data = '/home'
 
     sidebar = ft.Container(

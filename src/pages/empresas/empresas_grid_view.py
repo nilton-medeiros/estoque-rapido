@@ -5,6 +5,7 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 import src.pages.empresas.empresas_actions as empresas_actions
+from src.shared.utils.message_snackbar import MessageType, message_snackbar
 # Rota: /home/empresas/grid
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ def empresas_grid(page: ft.Page):
             0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    def handle_action_click(e):
+    async def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
@@ -68,12 +69,34 @@ def empresas_grid(page: ft.Page):
         print(f"action: {action}")
 
         match action:
-            case "INCLUIR":
+            case "INSERT":
                 print("Debug:  ->  Incluir: Redirecionando para '/home/empresas/form'")
                 page.go('/home/empresas/form')
-            case "EXCLUIR":
+            case "SELECT":
+                # Seleciona a empresa para trabalhar
+                print(f"Debug  ->  Selecionar {empresa.id}")
+                page.app_state.set_empresa(empresa.to_dict())
+                usuario_id = page.app_state.usuario.get('id')
+                empresas = page.app_state.usuario.get('empresas')
+                result = await empresas_actions.user_update(usuario_id, empresa.id, empresas)
+                if result['is_error']:
+                    logger.warning(result['message'])
+                    print(f"Debug  ->  {result['message']}")
+                    message_snackbar(
+                        message=result['message'], message_type=MessageType.WARNING, page=page)
+                    return
+                page.go('/home')  # Redireciona para página home do usuário
+            case "MAIN_DATA":
+                print(f"Dados principais {empresa.id}")
+                page.app_state.set_empresa_form(empresa.to_dict())
+                page.go('/home/empresas/form')
+            case "TAX_DATA":
+                print(f"Dados fiscais {empresa.id}")
+            case "DIGITAL_CERTIFICATE":
+                print(f"Certificado digital {empresa.id}")
+            case "SOFT_DELETE":
                 print(f"Excluir {empresa.id}")
-                is_deleted = empresas_actions.delete(empresa, e.control.page)
+                is_deleted = await empresas_actions.delete(empresa, e.control.page)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     print("Atualizando a grade de empresas")
@@ -103,7 +126,7 @@ def empresas_grid(page: ft.Page):
                 padding=ft.padding.only(right=10),
                 content=ft.IconButton(
                     icon=ft.Icons.ADD_CIRCLE_OUTLINE, tooltip="Incluir Nova Empresa",
-                    data={'action': 'INCLUIR', 'data': None},
+                    data={'action': 'INSERT', 'data': None},
                     on_click=handle_action_click,
                 ),
             ),
@@ -127,6 +150,7 @@ def empresas_grid(page: ft.Page):
             # empresas_data = await asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
 
             if set_empresas:  # Só busca se houver IDs
+                # Busca as empresas do usuário e por default somente as empresas ativas
                 result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
                 empresas_data = result.get('data_list', [])
             else:
@@ -157,14 +181,45 @@ def empresas_grid(page: ft.Page):
                                                 content=ft.PopupMenuButton(
                                                     icon=ft.Icons.MORE_VERT, tooltip="Mais Ações",
                                                     items=[
-                                                        ft.PopupMenuItem(text="Dados Principais", icon=ft.Icons.EDIT_NOTE_OUTLINED, data={
-                                                                         'action': 'PRINCIPAL', 'data': empresa}, on_click=handle_action_click),
                                                         ft.PopupMenuItem(
-                                                            text="Nota Fiscal", icon=ft.Icons.RECEIPT_LONG_OUTLINED, data={'action': 'FISCAL', 'data': empresa}, on_click=handle_action_click),
-                                                        ft.PopupMenuItem(text="Certificado Digital", icon=ft.Icons.SECURITY_OUTLINED, data={
-                                                                         'action': 'CERTIFICADO', 'data': empresa}, on_click=handle_action_click),
+                                                            text="Selecionar empresa",
+                                                            tooltip="Escolha esta empresa para trabalhar com ela",
+                                                            icon=ft.Icons.SELECT_ALL,
+                                                            data={
+                                                                'action': 'SELECT', 'data': empresa},
+                                                            on_click=handle_action_click
+                                                        ),
                                                         ft.PopupMenuItem(
-                                                            text="Excluir Empresa", icon=ft.Icons.DELETE_OUTLINE, data={'action': 'EXCLUIR', 'data': empresa}, on_click=handle_action_click),
+                                                            text="Dados Principais",
+                                                            tooltip="Ver ou editar dados principais da empresa",
+                                                            icon=ft.Icons.EDIT_NOTE_OUTLINED,
+                                                            data={
+                                                                'action': 'MAIN_DATA', 'data': empresa},
+                                                            on_click=handle_action_click
+                                                        ),
+                                                        ft.PopupMenuItem(
+                                                            text="Dados Fiscais",
+                                                            tooltip="Ver ou editar dados fiscais da empresa",
+                                                            icon=ft.Icons.RECEIPT_LONG_OUTLINED,
+                                                            data={
+                                                                'action': 'TAX_DATA', 'data': empresa},
+                                                            on_click=handle_action_click
+                                                        ),
+                                                        ft.PopupMenuItem(
+                                                            text="Certificado Digital",
+                                                            tooltip="Informações e upload do certificado digital",
+                                                            icon=ft.Icons.SECURITY_OUTLINED,
+                                                            data={
+                                                                'action': 'DIGITAL_CERTIFICATE', 'data': empresa},
+                                                            on_click=handle_action_click),
+                                                        ft.PopupMenuItem(
+                                                            text="Excluir Empresa",
+                                                            tooltip="Move empresa para a lixeira, após 90 dias remove do banco de dados",
+                                                            icon=ft.Icons.DELETE_OUTLINE,
+                                                            data={
+                                                                'action': 'SOFT_DELETE', 'data': empresa},
+                                                            on_click=handle_action_click
+                                                        ),
                                                     ],
                                                 ),
                                             ),
