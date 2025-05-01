@@ -59,7 +59,7 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
-#### Em alguns Windows: Apenas active na raiz do projeto:
+#### Em alguns Windows: Apenas 'activate' na raiz do projeto:
 
 ```bash
 activate
