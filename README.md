@@ -59,6 +59,12 @@ source venv/bin/activate
 venv\Scripts\activate
 ```
 
+#### Em alguns Windows: Apenas active na raiz do projeto:
+
+```bash
+activate
+```
+
 ### Atualize o pip
 
 ```bash
