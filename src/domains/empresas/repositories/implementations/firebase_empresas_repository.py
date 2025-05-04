@@ -203,8 +203,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 if doc.exists:
                     # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
                     empresa_data = doc.to_dict()
-                    print(f"doc: {doc}")
-                    print(f"empresa_data: {empresa_data}")
                     if (status_active and empresa_data.get('status') == 'ACTIVE') or (not status_active and empresa_data.get('status') != 'ACTIVE'):
                         # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
                         empresa_data['id'] = doc.id
@@ -218,19 +216,15 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             return empresas
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
-                print(f"ERROR: Permissão negada ao consultar lista de empresas do usuário logado: {e}")
                 logger.warning(f"Permissão negada ao consultar lista de empresas do usuário logado: {e}")
             elif e.code == 'unavailable':
-                print(f"ERROR: Serviço do Firestore indisponível ao consultar lista de empresas do usuário logado: {e}")
                 logger.error(f"Serviço do Firestore indisponível ao consultar lista de empresas do usuário logado: {e}")
                 raise Exception(f"Serviço do Firestore temporariamente indisponível.")
             else:
-                print(f"ERROR: Erro do Firebase ao consultar lista de empresas do usuário logado: Código: {e.code}, Detalhes: {e}")
                 logger.error(f"Erro do Firebase ao consultar lista de empresas do usuário logado: Código: {e.code}, Detalhes: {e}")
             raise  # Re-lançar a exceção para tratamento em camadas superiores
         except Exception as e:
             # Captura outros erros inesperados (problemas de rede, etc.)
-            print(f"ERROR: Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             logger.error(f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
 
@@ -255,8 +249,10 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             # self.collection.document(empresa_id).delete()
             if status == Status.DELETED:
                 fields = {'status': status.name, "deleted_at": firestore.SERVER_TIMESTAMP}
-            else:
+            elif status == Status.ARCHIVED:
                 fields = {'status': status.name, "archived_at": firestore.SERVER_TIMESTAMP}
+            elif status == Status.ACTIVE:
+                fields = {'status': status.name, "archived_at": None, "deleted_at": None}
 
             self.collection.document(empresa_id).update(fields)
 

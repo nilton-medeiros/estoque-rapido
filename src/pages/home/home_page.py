@@ -98,7 +98,7 @@ def home_page(page: ft.Page):
     )
 
     def on_page_resized(e=None):
-        if page.width < 768:  # Modo Mobile
+        if page.width < 1024:  # Modo Mobile, tablet
             # Ajustar layout para modo mobile
             sidebar.visible = False
             content.col = {"xs": 12}  # O conteúdo ocupa toda a largura

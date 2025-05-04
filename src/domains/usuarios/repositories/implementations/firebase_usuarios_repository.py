@@ -582,12 +582,10 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             else:
                 logger.error(
                     f"Erro desconhecido do Firebase ao atualizar a foto: {e.code}")
-            print(f"DEBUG (e): {str(e)}")
             translated_error = deepl_translator(str(e))
             raise Exception(
                 f"Erro ao atualizar a foto do usuário com ID '{id}': {translated_error}")
         except Exception as e:
-            print(f"DEBUG (e): {str(e)}")
             logger.error(
                 f"Erro inesperado ao atualizar a foto do usuario com ID '{id}': {str(e)}")
             raise Exception(

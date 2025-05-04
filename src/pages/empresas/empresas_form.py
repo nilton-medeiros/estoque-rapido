@@ -47,8 +47,9 @@ class EmpresaView:
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
 
+
     def _create_form_fields(self):
-        """Cria todos os campos do formulário"""
+        """Cria os campos do formulário Principal"""
 
         # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
@@ -277,6 +278,7 @@ class EmpresaView:
             spacing=0,
         )
 
+
     async def _show_logo_dialog(self, e) -> None:
         cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
         if len(cnpj_clean) < 14:
@@ -454,6 +456,7 @@ class EmpresaView:
             self.consult_cnpj_button.disabled = not bool(self.cnpj.value)
             self.consult_cnpj_button.update()
 
+
     def build_form(self) -> ft.Container:
         """Constrói o formulário de cadastro de empresa"""
         def responsive_row(controls):
@@ -495,6 +498,7 @@ class EmpresaView:
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             border_radius=ft.border_radius.all(10),
         )
+
 
     def did_mount(self):
         if self.data and self.data.get('id'):
@@ -560,6 +564,7 @@ class EmpresaView:
             self.logo_url = None
             self.previous_logo_url = None
 
+
     def validate_form(self) -> Optional[str]:
         """
         Valida os campos do formulário. Retorna uma mensagem de erro se algum campo obrigatório não estiver preenchido.
@@ -579,6 +584,7 @@ class EmpresaView:
             return "É preciso CNPJ válido para salvar o logo da empresa"
         # Se todos os campos obrigatórios estão preenchidos, retorna None
         return None
+
 
     def _page_resize(self, e):
         if self.page.width < 600:
@@ -615,6 +621,7 @@ class EmpresaView:
         # Atualiza o padding do container
         self.form.padding = self.padding
         self.form.update()
+
 
     def get_form_object(self) -> Empresa:
         """
@@ -713,23 +720,24 @@ class EmpresaView:
                     dateCreated=pg.get('dateCreated'),
                 )
 
-        return Empresa(
-            id=id,
-            corporate_name=self.corporate_name.value,
-            trade_name=self.trade_name.value,
-            store_name=self.store_name.value,
-            cnpj=cnpj,
-            email=self.email.value,
-            ie=self.ie.value,
-            im=self.im.value,
-            phone=phone,
-            address=address,
-            size=size_info,
-            fiscal=fiscal_info,
-            certificate_a1=certificate_a1,
-            logo_url=logo,
-            payment_gateway=payment,
-        )
+        return Empresa.from_dict({
+            "id": id,
+            "corporate_name": self.corporate_name.value,
+            "trade_name": self.trade_name.value,
+            "store_name": self.store_name.value,
+            "cnpj": cnpj,
+            "email": self.email.value,
+            "ie": self.ie.value,
+            "im": self.im.value,
+            "phone": phone,
+            "address": address,
+            "size": size_info,
+            "fiscal": fiscal_info,
+            "certificate_a1": certificate_a1,
+            "logo_url": logo,
+            "payment_gateway": payment,
+        })
+
 
     def send_to_bucket(self):
         # Faz o upload do arquivo de logo para o bucket
@@ -794,8 +802,10 @@ class EmpresaView:
             except:
                 pass  # Ignora erros na limpeza do arquivo
 
+
     def build(self) -> ft.Container:
         return self.form
+
 
     def clear_form(self):
         """Limpa os campos do formulário"""
@@ -811,7 +821,7 @@ class EmpresaView:
                 logo.update()
 
 
-# Rota: /home/empresas/form
+# Rota: /home/empresas/form/principal
 def empresas_form(page: ft.Page):
     """Página de cadastro de empresas"""
     # if colors := page.app_state.usuario.get('user_colors'):
@@ -832,12 +842,6 @@ def empresas_form(page: ft.Page):
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    def onclick_previous_route(e):
-        previous_route = '/home'
-        if page.data:
-            previous_route = page.data
-        page.go(previous_route)
-
     appbar = ft.AppBar(
         leading=ft.Container(
             alignment=ft.alignment.center_left,
@@ -851,13 +855,13 @@ def empresas_form(page: ft.Page):
                 alignment=ft.alignment.center,
                 on_hover=handle_icon_hover,
                 content=ft.Icon(ft.Icons.ARROW_BACK),
-                # on_click=lambda _: page.go("/home"),
-                on_click=onclick_previous_route,
+                on_click=lambda _: page.go(page.data if page.data else '/home'),
+                # on_click=onclick_previous_route,
                 tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
             ),
         ),
-        title=ft.Text(route_title),
+        title=ft.Text(route_title, size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER), # Exemplo com opacidade
         adaptive=True,
     )
@@ -903,8 +907,7 @@ def empresas_form(page: ft.Page):
 
         empresa.id = result["id"]
         # Atualiza o estado do app com o nova empresa antes da navegação se não existir
-        if not page.app_state.empresa.get('id'):
-            page.app_state.set_empresa(empresa.to_dict())
+        page.app_state.set_empresa(empresa.to_dict())
 
         # Associa a empresa a lista de empresas do usuário
         user = page.app_state.usuario
@@ -929,10 +932,7 @@ def empresas_form(page: ft.Page):
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.app_state.clear_empresa_form_data()
-        previous_route = '/home'
-        if page.data:
-            previous_route = page.data
-        page.go(previous_route)
+        page.go(page.data if page.data else '/home')
 
     def exit_form_empresa(e):
         if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
@@ -945,11 +945,7 @@ def empresas_form(page: ft.Page):
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.app_state.clear_empresa_form_data()
-        previous_route = '/home'
-        if page.data:
-            previous_route = page.data
-        page.go(previous_route)
-
+        page.go(page.data if page.data else '/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(

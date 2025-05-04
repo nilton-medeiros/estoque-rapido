@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from src.pages.empresas.empresas_form import empresas_form
+from src.pages.empresas.empresas_form_dados_fiscais import empresas_form_dados_fiscais
 from src.pages.empresas.empresas_grid_view import empresas_grid
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
@@ -154,7 +155,6 @@ def main(page: ft.Page):
         page.views.clear()
         pg_view = None
 
-        print(f"Debug  -> e.route: {e.route}")
         match e.route:
             case '/':    # Raiz: Landing Page
                 pg_view = ft.View(
@@ -190,13 +190,20 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
-            case '/home/empresas/form':
+            case '/home/empresas/grid':
+                # Verifica se usuário está logado
+                if page.app_state.usuario.get('id'):
+                    page.on_resized = None
+                    pg_view = empresas_grid(page)
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/empresas/form/principal':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     form = empresas_form(page)
                     pg_view = ft.View(
-                        route='/home/empresas/form',
+                        route='/home/empresas/form/principal',
                         appbar=form.data,
                         controls=[form],
                         scroll=ft.ScrollMode.AUTO,
@@ -206,11 +213,20 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
-            case '/home/empresas/grid':
+            case '/home/empresas/form/dados-fiscais':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    pg_view = empresas_grid(page)
+                    form = empresas_form_dados_fiscais(page)
+                    pg_view = ft.View(
+                        route='/home/empresas/form/dados-fiscais',
+                        appbar=form.data,
+                        controls=[form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/signup':  # Registro

@@ -15,7 +15,6 @@ async def delete(empresa, page: ft.Page) -> None:
     # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
 
     async def delete_company(e_delete):
-        print('Deletando empresa...')
         # Obter a página a partir do evento é mais seguro em callbacks
         page = e_delete.page
 
@@ -80,7 +79,8 @@ async def delete(empresa, page: ft.Page) -> None:
         if empresa.id == page.app_state.empresa.get('id'):
             page.app_state.clear_empresa_data()
 
-        print(f"Debug  ->  empresa_id: {empresa.id}, state.empresa.id: {page.app_state.empresa.get('id')}")
+        print(
+            f"Debug  ->  empresa_id: {empresa.id}, state.empresa.id: {page.app_state.empresa.get('id')}")
         print("Debug:  ->  Empresa excluída com sucesso! Fechando dialog dlg_modal")
         # Fim do for: Fechar o diálogo
         dlg_modal.open = False
@@ -140,3 +140,27 @@ async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> None:
         empresas=empresas,
         empresa_ativa_id=empresa_id
     )
+
+
+async def show_banner(page: ft.Page, message) -> None:
+    def close_banner(e):
+        banner.open = False
+        e.control.page.update()
+
+    banner = ft.Banner(
+        bgcolor=ft.Colors.PRIMARY,
+        leading=ft.Icon(ft.Icons.WARNING_AMBER, color=ft.Colors.ON_PRIMARY, size=40),
+        content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
+        actions=[ft.ElevatedButton(
+            text="Entendi",
+            style=ft.ButtonStyle(
+                color=ft.Colors.ON_PRIMARY_CONTAINER,
+                bgcolor=ft.Colors.PRIMARY_CONTAINER,
+            ),
+            on_click=close_banner
+        )],
+    )
+
+    page.overlay.append(banner)
+    banner.open = True
+    page.update()

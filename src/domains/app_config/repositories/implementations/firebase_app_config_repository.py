@@ -46,7 +46,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
                 app_data['id'] = doc.id
                 return self._doc_to_config(app_data)
             else:
-                print('Documento não encontrado!')
+                logger.error('Documento não encontrado!')
         except Exception as e:
             logger.error(f'Erro ao buscar documento: {e}')
 

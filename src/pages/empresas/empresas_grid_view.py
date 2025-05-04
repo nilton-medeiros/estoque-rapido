@@ -15,7 +15,7 @@ def empresas_grid(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/empresas/grid"
-    print(f"Debug  ->  Entrou em {page.data}")
+
     # Resetar alinhamentos da página que podem interferir com o layout da View
     # page.vertical_alignment = ft.MainAxisAlignment.START
     # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
@@ -70,36 +70,36 @@ def empresas_grid(page: ft.Page):
 
         match action:
             case "INSERT":
-                print("Debug:  ->  Incluir: Redirecionando para '/home/empresas/form'")
-                page.go('/home/empresas/form')
+                page.go('/home/empresas/form/principal')
             case "SELECT":
                 # Seleciona a empresa para trabalhar
-                print(f"Debug  ->  Selecionar {empresa.id}")
                 page.app_state.set_empresa(empresa.to_dict())
                 usuario_id = page.app_state.usuario.get('id')
                 empresas = page.app_state.usuario.get('empresas')
                 result = await empresas_actions.user_update(usuario_id, empresa.id, empresas)
                 if result['is_error']:
                     logger.warning(result['message'])
-                    print(f"Debug  ->  {result['message']}")
                     message_snackbar(
                         message=result['message'], message_type=MessageType.WARNING, page=page)
                     return
                 page.go('/home')  # Redireciona para página home do usuário
             case "MAIN_DATA":
-                print(f"Dados principais {empresa.id}")
                 page.app_state.set_empresa_form(empresa.to_dict())
-                page.go('/home/empresas/form')
+                page.go('/home/empresas/form/principal')
             case "TAX_DATA":
-                print(f"Dados fiscais {empresa.id}")
+                if empresa.cnpj:
+                    page.app_state.set_empresa_form(empresa.to_dict())
+                    page.go('/home/empresas/form/dados-fiscais')
+                    page.run_task(load_data_and_update_ui)  # Por enquanto, o form dados-fiscais não retorna se salvou ou não, então recarrega empresas de qualquer forma
+                else:
+                    await empresas_actions.show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
+
             case "DIGITAL_CERTIFICATE":
                 print(f"Certificado digital {empresa.id}")
             case "SOFT_DELETE":
-                print(f"Excluir {empresa.id}")
-                is_deleted = await empresas_actions.delete(empresa, e.control.page)
+                is_deleted = await empresas_actions.delete(empresa, page)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
-                    print("Atualizando a grade de empresas")
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case _:
@@ -118,7 +118,7 @@ def empresas_grid(page: ft.Page):
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
             ),
         ),
-        title=ft.Text("Empresas"),
+        title=ft.Text(f"Empresas", size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
         actions=[
@@ -278,6 +278,7 @@ def empresas_grid(page: ft.Page):
             if page.client_storage:  # Uma checagem se a página ainda está ativa
                 page.update()
             else:
+                logger.info("Contexto da página perdido, não foi possível atualizar.")
                 print("Contexto da página perdido, não foi possível atualizar.")
 
     # --- Disparar Carregamento dos Dados ---

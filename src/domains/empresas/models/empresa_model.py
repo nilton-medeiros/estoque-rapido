@@ -280,55 +280,88 @@ class Empresa:
         Returns:
             Empresa: Nova instância de Empresa.
         """
+        cnpj = None
+        if cnpj_data := data.get("cnpj"):
+            if isinstance(cnpj_data, CNPJ):
+                cnpj = cnpj_data
+            elif isinstance(cnpj_data, str):
+                cnpj = CNPJ(cnpj_data)
+
+        phone = None
+        if phone_data := data.get("phone"):
+            if isinstance(phone_data, PhoneNumber):
+                phone = phone_data
+            elif isinstance(phone_data, str):
+                phone = PhoneNumber(phone_data)
+
+        address = None
+        if address_data := data.get("address"):
+            if isinstance(address_data, Address):
+                address = address_data
+            elif isinstance(address_data, dict):
+                address = Address(**address_data)
+
+        size = None
+        if size_data := data.get("size"):
+            if isinstance(size_data, EmpresaSize):
+                size = size_data
+            elif type(size_data) is str:
+                size = EmpresaSize[size_data]
+
+        fiscal = None
+        if fiscal_data := data.get("fiscal"):
+            if isinstance(fiscal_data, FiscalData):
+                fiscal = fiscal_data
+            elif isinstance(fiscal_data, dict):
+                fiscal = FiscalData(
+                    crt=CodigoRegimeTributario[fiscal_data.get("crt_name")] if fiscal_data.get("crt_name") else None,
+                    environment=Environment[fiscal_data.get("environment_name")] if fiscal_data.get("environment_name") else None,
+                    nfce_series=fiscal_data.get("nfce_series"),
+                    nfce_number=fiscal_data.get("nfce_number"),
+                    nfce_sefaz_id_csc=fiscal_data.get("nfce_sefaz_id_csc"),
+                    nfce_sefaz_csc=fiscal_data.get("nfce_sefaz_csc"),
+                    nfce_api_enabled=fiscal_data.get("nfce_api_enabled", False),
+                )
+
+        certificate_a1 = None
+        if certificate_a1_data := data.get("certificate_a1"):
+            if isinstance(certificate_a1_data, CertificateA1):
+                certificate_a1 = certificate_a1_data
+            elif isinstance(certificate_a1_data, dict):
+                certificate_a1 = CertificateA1(**certificate_a1_data)
+
+        payment_gateway = None
+        if payment_gateway_data := data.get("payment_gateway"):
+            if isinstance(payment_gateway_data, AsaasPaymentGateway):
+                payment_gateway = payment_gateway_data
+            elif isinstance(payment_gateway_data, dict):
+                payment_gateway = AsaasPaymentGateway(**payment_gateway_data)
+
+        status = Status.ACTIVE
+
+        if status_data := data.get("status"):
+            if isinstance(status_data, Status):
+                status = status_data
+            elif type(status_data) is str:
+                status = Status[status_data]
+
         return cls(
             id=data["id"],
             corporate_name=data.get("corporate_name"),
             trade_name=data.get("trade_name"),
             store_name=data.get("store_name"),
-            cnpj=CNPJ(data.get("cnpj")) if data.get("cnpj") else None,
+            cnpj=cnpj,
             email=data.get("email"),
             ie=data.get("ie"),
             im=data.get("im"),
-            phone=PhoneNumber(data.get("phone")) if data.get("phone") else None,
-            address=Address(
-                street=data["address"].get("street"),
-                number=data["address"].get("number"),
-                complement=data["address"].get("complement"),
-                neighborhood=data["address"].get("neighborhood"),
-                city=data["address"].get("city"),
-                state=data["address"].get("state"),
-                postal_code=data["address"].get("postal_code"),
-            ) if data.get("address") else None,
-            size=EmpresaSize[data.get("size")] if data.get("size") else None,
-            fiscal=FiscalData(
-                crt=CodigoRegimeTributario[data.get("crt_name")] if data.get("crt_name") else None,
-                environment=Environment[data.get("getenvironment_name")] if data.get("getenvironment_name") else None,
-                nfce_series=data.get("nfce_series"),
-                nfce_number=data.get("nfce_number"),
-                nfce_sefaz_id_csc=data.get("nfce_sefaz_id_csc"),
-                nfce_sefaz_csc=data.get("nfce_sefaz_csc"),
-                nfce_api_enabled=data.get("nfce_api_enabled"),
-            ) if data.get("fiscal") else None,
-            certificate_a1=CertificateA1(
-                password=Password.from_encrypted(data["certificate_a1"].get("password")) if data["certificate_a1"].get("password") else None,
-                serial_number=data["certificate_a1"].get("serial_number"),
-                not_valid_before=data["certificate_a1"].get("not_valid_before"),
-                not_valid_after=data["certificate_a1"].get("not_valid_after"),
-                subject_name=data["certificate_a1"].get("subject_name"),
-                file_name=data["certificate_a1"].get("file_name"),
-                cpf_cnpj=data["certificate_a1"].get("cpf_cnpj"),
-                nome_razao_social=data["certificate_a1"].get("nome_razao_social"),
-                storage_path=data["certificate_a1"].get("storage_path"),
-            ) if data.get("certificate_a1") else None,
+            phone=phone,
+            address=address,
+            size=size,
+            fiscal=fiscal,
+            certificate_a1=certificate_a1,
             logo_url=data.get("logo_url"),
-            payment_gateway=AsaasPaymentGateway(
-                customer_id=data["payment_gateway"].get("customer_id"),
-                nextDueDate=data["payment_gateway"].get("nextDueDate"),
-                billingType=data["payment_gateway"].get("billingType"),
-                status=data["payment_gateway"].get("status"),
-                dateCreated=data["payment_gateway"].get("dateCreated"),
-            ) if data.get("payment_gateway") else None,
-            status=Status[data.get("status", "ACTIVE")],
+            payment_gateway=payment_gateway,
+            status=status,
             deleted_at=data.get("deleted_at"),
             archived_at=data.get("archived_at"),
         )

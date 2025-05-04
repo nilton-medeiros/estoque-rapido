@@ -31,7 +31,6 @@ async def consult_cnpj_api(cnpj):
                 }
 
     except Exception as error:
-        print(f"Erro ao consultar CNPJ: {str(error)}")
         # Mostra erro genérico
         return {
             'is_error': True,

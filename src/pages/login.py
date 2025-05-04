@@ -203,7 +203,6 @@ class LoginView:
             result = await empresas_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["is_error"]:
-                print(f"Debug  -> {result["message"]}")
                 user.empresa_id = None
                 self.page.app_state.clear_empresa_data()
                 self.page.on_resized = None
@@ -216,7 +215,6 @@ class LoginView:
             if cia.status.name == 'ACTIVE':
                 self.page.app_state.set_empresa(cia.to_dict())
             else:
-                print(f"Debug  -> empresa_id: {cia.id}, status: {cia.status.value}")
                 user.empresa_id = None
                 self.page.app_state.clear_empresa_data()
 

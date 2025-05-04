@@ -66,7 +66,7 @@ async def handle_save_empresas(empresa: Empresa) -> dict:
 
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
+        response["message"] = f"handle_save_empresas ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
@@ -127,7 +127,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
 
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
+        response["message"] = f"handle_get_empresas_by_id ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
@@ -189,7 +189,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
 
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
+        response["message"] = f"handle_get_empresas_by_cnpj ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True
@@ -244,8 +244,8 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
             response["message"] = "Nenhuma empresas encontrada!"
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
-        logger.error(response["message"])
+        response["message"] = f"handle_get_empresas ValueError: Erro de validação: {str(e)}"
+        logger.error(f'handle_get_empresas ValueError: {response["message"]}')
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
@@ -302,7 +302,7 @@ async def handle_status_empresas(id: str, status: Status) -> bool:
 
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
+        response["message"] = f"handle_status_empresas().ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True

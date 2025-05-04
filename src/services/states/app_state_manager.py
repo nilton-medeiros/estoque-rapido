@@ -77,7 +77,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                self.handle_error(f"Erro de validação: {error}")
+                self.handle_error(f"set_empresa(). Erro de validação: {error}")
                 return False
 
             self._state['empresa'] = empresa_data
@@ -101,7 +101,7 @@ class AppStateManager:
             is_valid, error = self._validator.validate_empresa_data(
                 empresa_data)
             if not is_valid:
-                self.handle_error(f"Erro de validação: {error}")
+                self.handle_error(f"set_empresa_form(). Erro de validação: {error}")
                 return False
 
             self._state['empresa_form'] = empresa_data
