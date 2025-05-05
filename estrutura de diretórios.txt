@@ -1,6 +1,7 @@
 estoquerapido/
 ├── .venv/
 ├── .vscode/
+│   ├── leia-me.txt
 │   └── settings.json
 ├── assets/
 │   ├── audios/
@@ -161,15 +162,17 @@ estoquerapido/
 │   └── __init__.py
 ├── storage/
 │   ├── buckets/
-│   │   ├── __init__.py
-│   │   └── aws_s3_storage.py
-│   ├── data/
 │   │   ├── contracts/
 │   │   │   ├── __init__.py
-│   │   │   ├── bucket_storage.py
-│   │   ├── firebase/
+│   │   │   └─── bucket_storage.py
+│   │   ├── implementations/
 │   │   │   ├── __init__.py
-│   │   │   └── firebase_initialize.py
+│   │   │   └── aws_s3_storage.py
+│   │   └── __init__.py
+│   ├── data/
+│   │   └── firebase/
+│   │       ├── __init__.py
+│   │       └── firebase_initialize.py
 │   └── temp/
 ├── temp/
 ├── uploads/

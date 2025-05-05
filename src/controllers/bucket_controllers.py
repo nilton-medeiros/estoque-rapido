@@ -1,7 +1,7 @@
 import logging
 
 from src.services.buckets.bucket_services import BucketServices
-from storage.buckets.aws_s3_storage import AmazonS3Adapter
+from storage.buckets.implementations.aws_s3_storage import AmazonS3Adapter
 import boto3
 
 logger = logging.getLogger(__name__)

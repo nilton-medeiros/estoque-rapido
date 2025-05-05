@@ -1,5 +1,5 @@
 from src.services.aws.s3_file_manager import S3FileManager
-from storage.data.contracts.bucket_storage import BucketStorage
+from storage.buckets.contracts.bucket_storage import BucketStorage
 
 
 class AmazonS3Adapter(BucketStorage):
