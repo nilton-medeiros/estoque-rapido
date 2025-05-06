@@ -105,14 +105,24 @@ def empresas_grid(page: ft.Page):
             case _:
                 pass
 
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.update()
+
     appbar = ft.AppBar(
         leading=ft.Container(
             alignment=ft.alignment.center_left,
             padding=ft.padding.only(left=10),
             content=ft.Container(
-                width=40, height=40, border_radius=ft.border_radius.all(20),
-                ink=True, bgcolor=ft.Colors.TRANSPARENT, alignment=ft.alignment.center,
-                on_hover=handle_icon_hover, content=ft.Icon(
+                width=40,
+                height=40,
+                border_radius=ft.border_radius.all(20),
+                ink=True,
+                bgcolor=ft.Colors.TRANSPARENT,
+                alignment=ft.alignment.center,
+                on_hover=handle_icon_hover,
+                content=ft.Icon(
                     ft.Icons.ARROW_BACK),
                 on_click=lambda _: page.go("/home"), tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
@@ -123,12 +133,19 @@ def empresas_grid(page: ft.Page):
         adaptive=True,
         actions=[
             ft.Container(
-                padding=ft.padding.only(right=10),
-                content=ft.IconButton(
-                    icon=ft.Icons.ADD_CIRCLE_OUTLINE, tooltip="Incluir Nova Empresa",
-                    data={'action': 'INSERT', 'data': None},
-                    on_click=handle_action_click,
-                ),
+                width=43,
+                height=43,
+                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
+                ink=True,
+                bgcolor=ft.Colors.TRANSPARENT,
+                alignment=ft.alignment.center,
+                on_hover=handle_icon_hover,
+                content=ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE, size=30),
+                tooltip="Adicionar nova empresa",
+                data={'action': 'INSERT', 'data': None},
+                on_click=handle_action_click,
+                margin=ft.margin.only(right=10),
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
             ),
         ],
     )
@@ -284,9 +301,19 @@ def empresas_grid(page: ft.Page):
     # --- Disparar Carregamento dos Dados ---
     # Executa a função async em background. A UI mostrará o spinner primeiro.
     page.run_task(load_data_and_update_ui)
-
     # --- Retornar Estrutura Inicial da Página como ft.View ---
     # A View inclui a AppBar e a área de conteúdo principal (que inicialmente mostra o spinner)
+    page.floating_action_button = ft.FloatingActionButton(
+        icon=ft.Image(
+            src="icons/Recycle_Bin_icon-icons.com_55510.ico",
+            error_content="Lixeira: Empresas inativas e arquivadas",
+        ),
+        # on_click=lambda _: page.go("/home/empresas/lixeira")
+        on_click=lambda _: print("Lixeira: Empresas inativas e arquivadas FOI CLICADA"),
+        mini=False,
+        tooltip="Lixeira: Empresas inativas e arquivadas",
+    )
+
     return ft.View(
         route="/home/empresas/grid",  # A rota que esta view corresponde
         controls=[

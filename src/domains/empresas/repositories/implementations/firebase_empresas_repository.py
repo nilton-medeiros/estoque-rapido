@@ -54,7 +54,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         """
         try:
             # Insere ou atualiza o documento na coleção 'empresas'
-            await self.collection.document(empresa.id).set(
+            self.collection.document(empresa.id).set(
                 empresa.to_dict_db(), merge=True)
             return empresa.id  # Garante que o ID retornado seja o ID real do documento
         except exceptions.FirebaseError as e:
@@ -89,7 +89,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Optional[Empresa]: Uma instância da empresa se encontrada, None caso contrário.
         """
         try:
-            doc = await self.collection.document(id).get()
+            doc = self.collection.document(id).get()
             if doc.exists:
                 empresa_data = doc.to_dict()
                 empresa_data['id'] = doc.id
@@ -133,10 +133,10 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         try:
             query = self.collection.where(filter=FieldFilter(
                 "cnpj", "==", cnpj.raw_cnpj)).limit(1)
-            docs_snapshot = await query.get()
+            docs = query.get()
 
-            if docs_snapshot.docs:
-                doc = docs_snapshot.docs[0]  # Obtem o primeiro DocumentSnapshot
+            if docs:
+                doc = docs[0]  # Obtem o primeiro DocumentSnapshot
                 empresa_data = doc.to_dict()
                 empresa_data['id'] = doc.id
                 # Cria uma estância de Empresa
@@ -176,8 +176,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         try:
             query = self.collection.where(filter=FieldFilter(
                 "cnpj", "==", cnpj.raw_cnpj)).limit(1)
-            docs_snapshot = await query.get()
-            return len(docs_snapshot.docs) > 0
+            docs = query.get()
+            return len(docs) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
                 logger.warning(
@@ -219,7 +219,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             empresas = []
             for empresa_id in ids_empresas_list:
                 doc_ref = self.collection.document(empresa_id)
-                doc = await doc_ref.get()
+                doc = doc_ref.get()
                 if doc.exists:
                     # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
                     empresa_data = doc.to_dict()
@@ -283,7 +283,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 fields = {'status': status.name,
                           "archived_at": None, "deleted_at": None}
 
-            await self.collection.document(empresa_id).update(fields)
+            self.collection.document(empresa_id).update(fields)
 
             return True
         # ToDo: Corrigir respostas adequadas
@@ -327,8 +327,8 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             query = self.collection.where(filter=FieldFilter(
                 "id", "in", ids_empresas_list)).where(filter=FieldFilter("status" "<>", "ACTIVE"))
             # A construção da query é sincrona, mas o get() é assincrono, precisa do await
-            docs_snapshot = await query.get()
-            return len(docs_snapshot.docs)
+            docs = query.get()
+            return len(docs)
 
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':

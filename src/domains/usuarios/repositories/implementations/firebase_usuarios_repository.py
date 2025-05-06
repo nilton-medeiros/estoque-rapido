@@ -52,7 +52,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Para outros erros inesperados.
         """
         try:
-            # Busca o usuário pelo email
+            # Busca o usuário pelo email, await aqui é necessário
             user = await self.find_by_email(email)
             if not user:
                 raise UserNotFoundException("Usuário não encontrado")
@@ -88,8 +88,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                     f"Erro ao autenticar usuário: {translated_error}")
         except Exception as e:
             logger.error(f"Erro de autenticação: {str(e)}")
-            # translated_error = deepl_translator(str(e))
-            raise AuthenticationException(f"Erro de autenticação: {str(e)}")
+            translated_error = deepl_translator(str(e))
+            raise AuthenticationException(f"Erro de autenticação: {translated_error}")
 
     async def save(self, usuario: Usuario) -> str:
         """
@@ -107,7 +107,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         try:
             # Insere ou Atualiza na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
-            await self.collection.document(usuario.id).set(
+            self.collection.document(usuario.id).set(
                 usuario.to_dict_db(), merge=True)
             return usuario.id
         except exceptions.FirebaseError as e:
@@ -144,8 +144,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             query = self.collection.where(filter=FieldFilter(
                 "empresas", "array_contains", empresa_id))
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id) # método antigo
-            docs_snapshot = await query.get()
-            return len(docs_snapshot.docs)
+            docs = query.get()
+            return len(docs)
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
                 logger.error("Argumento inválido fornecido para a consulta.")
@@ -181,7 +181,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            doc = await self.collection.document(id).get()
+            doc = self.collection.document(id).get()
             if doc.exists:
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
@@ -223,8 +223,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         try:
             query = self.collection.where(
                 filter=FieldFilter("email", "==", email)).limit(1)
-            docs = await query.get()
-            return len(docs.docs) > 0
+            docs = query.get()
+            return len(docs) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
                 logger.warning(
@@ -265,7 +265,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 offset).limit(limit)
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
-            docs = await query.stream()
+            docs = query.stream()
             usuarios: List[Usuario] = []
 
             for doc in docs:
@@ -310,11 +310,11 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         try:
             query = self.collection.where(
                 filter=FieldFilter("email", "==", email)).limit(1)
-            docs = await query.get()
+            docs = query.get()
 
-            if docs.docs:
+            if docs:
                 # Pega o primeiro elemento e vaza (só tem um mesmo, limitado por .limit(1))
-                doc = docs.docs[0]
+                doc = docs[0]
                 usuario_data = doc.to_dict()
                 usuario_data['id'] = doc.id
                 return Usuario.from_dict(usuario_data)
@@ -358,7 +358,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 filter=FieldFilter("name", ">=", name)).where(filter=FieldFilter("name", "<=", name + '\uf8ff'))
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
 
-            docs = await query.stream()
+            docs = query.stream()
             usuarios: List[Usuario] = []
 
             for doc in docs:
@@ -406,7 +406,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 filter=FieldFilter("profile", "==", profile))
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(field_path='profile', op_string='==', value=profile)  # Método antigo
 
-            docs = await query.stream()
+            docs = query.stream()
             usuarios: List[Usuario] = []
 
             for doc in docs:
@@ -447,7 +447,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         """
         try:
             # Deleta do Firestore
-            await self.collection.document(usuario_id).delete()
+            self.collection.document(usuario_id).delete()
             logger.info(f"Usuário com id '{usuario_id}' excluído com sucesso.")
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -496,13 +496,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 raise ValueError("O novo perfil não pode ser vazio")
 
             doc_ref = self.collection.document(id)
-            doc = await doc_ref.get()
+            doc = doc_ref.get()
 
             if not doc.exists:
                 return None
 
-            await doc_ref.update({"profile": new_profile})
-            usuario_data = await doc_ref.get().to_dict()
+            doc_ref.update({"profile": new_profile})
+            usuario_data = doc_ref.get().to_dict()
             usuario_data['id'] = doc.id
             return Usuario.from_dict(usuario_data)
         except exceptions.FirebaseError as e:
@@ -551,13 +551,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 raise ValueError("A nova foto não pode ser vazia")
 
             doc_ref = self.collection.document(id)
-            doc = await doc_ref.get()
+            doc = doc_ref.get()
 
             if not doc.exists:
                 return None
 
-            await doc_ref.update({"photo_url": new_photo})
-            usuario_data = await doc_ref.get().to_dict()
+            doc_ref.update({"photo_url": new_photo})
+            usuario_data = doc_ref.get().to_dict()
             usuario_data['id'] = doc.id
             return Usuario.from_dict(usuario_data)
         except exceptions.FirebaseError as e:
@@ -606,12 +606,12 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 raise ValueError("A nova cor não pode ser vazia")
 
             doc_ref = self.collection.document(id)
-            doc = await doc_ref.get()
+            doc = doc_ref.get()
 
             if not doc.exists:
                 return False
 
-            await doc_ref.update({"user_colors": new_colors})
+            doc_ref.update({"user_colors": new_colors})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -662,18 +662,18 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             # Obtem o documento pelo seu id
             doc_ref = self.collection.document(usuario_id)
-            doc = await doc_ref.get()
+            doc = doc_ref.get()
 
             if not doc.exists:
                 return False
 
             if empresa_id:
                 # Atualiza a empresa ativa e a lista de empresas (registra lista vazia também)
-                await doc_ref.update({"empresa_id": empresa_id,
+                doc_ref.update({"empresa_id": empresa_id,
                                 "empresas": list(empresas)})
             else:
                 # Atualiza a lista de empresas (pode ser vazia)
-                await doc_ref.update({"empresas": list(empresas)})
+                doc_ref.update({"empresas": list(empresas)})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':

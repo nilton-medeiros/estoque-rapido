@@ -616,45 +616,6 @@ def sidebar_footer(page: ft.Page):
     def logoff_user(e):
         page.go('/logout')
 
-    # async def change_user_colors(e):
-    #     # Atualiza a cor primária da interface no thema do app
-    #     # page.theme.color_scheme.primary = e.control.data
-    #     page.theme = page.dark_theme = ft.Theme(
-    #         color_scheme_seed=e.control.data)
-    #     user = page.app_state.usuario
-    #     msg_error = None
-    #     colors = get_app_colors(e.control.data)
-    #     try:
-    #         result = await handle_update_colors_usuarios(id=user.get('id'), colors=colors)
-    #         if result["is_error"]:
-    #             msg_error = result["message"]
-    #             # Reverter a mudança de tema se a atualização falhar? Opcional.
-    #             # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
-    #             # page.update()
-    #             message_snackbar(page=page, message=msg_error,
-    #                              message_type=MessageType.ERROR)
-    #             return  # Não continua se houve erro
-
-    #         # Atualiza o estado local ANTES de atualizar a UI globalmente
-    #         user_dict = page.app_state.usuario  # Pega o dicionário atual
-    #         # Atualiza as cores no dicionário
-    #         user_dict['user_colors'] = colors
-    #         page.app_state.set_usuario(user_dict)  # Atualiza o estado
-
-    #     except ValueError as e:
-    #         logger.error(str(e))
-    #         msg_error = f"Erro: {str(e)}"
-    #     except RuntimeError as e:
-    #         logger.error(str(e))
-    #         # Provavelmente um erro de digitação, deveria ser "Erro na atualização"
-    #         msg_error = f"Erro no upload: {str(e)}"
-
-    #     if msg_error:
-    #         message_snackbar(page=page, message=msg_error,
-    #                          message_type=MessageType.ERROR)
-    #     # Atualiza a página para refletir a mudança de tema
-    #     page.update()  # Garante que a UI reflita a nova cor primária
-
     def on_click_business_btn(e):
         page.go('/home/empresas/grid')
 
