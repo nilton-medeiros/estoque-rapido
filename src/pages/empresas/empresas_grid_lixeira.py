@@ -1,25 +1,20 @@
 import logging
 
 import flet as ft
-# import asyncio  # Importar asyncio se precisar simular delays ou usar recursos async
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
-from src.domains.empresas.models.empresa_subclass import Status
 import src.pages.empresas.empresas_actions as empresas_actions
 from src.shared.utils.message_snackbar import MessageType, message_snackbar
-# Rota: /home/empresas/grid
+from src.shared.utils.time_zone import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
 
 
-def empresas_grid(page: ft.Page):
-    """Página de exibição das empresas do usuário logado em formato Cards"""
+# Rota: /home/empresas/grid/lixeira
+def empresas_grid_lixeira(page: ft.Page):
+    """Página de exibição das empresas do usuário logado que estão inativas ('DELETED') e arquivadas ('ARCHIVED') em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
-    page.data = "/home/empresas/grid"
-
-    # Resetar alinhamentos da página que podem interferir com o layout da View
-    # page.vertical_alignment = ft.MainAxisAlignment.START
-    # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
+    # page.data = "/home/empresas/grid/lixeira"
 
     # --- Indicador de Carregamento (Spinner) ---
     progress_ring = ft.ProgressRing(width=32, height=32, stroke_width=3)
@@ -44,9 +39,8 @@ def empresas_grid(page: ft.Page):
     # --- Conteúdo Padrão Vazio (definido uma vez) ---
     empty_content_display = ft.Container(
         content=ft.Image(
-            # src=f"images/empty_folder.png",
-            src=f"images/steel_cabinets_documents_empty.png",
-            error_content=ft.Text("Nenhuma empresa cadastrada"),
+            src=f"icons/recycle_empy_1772.png",
+            error_content=ft.Text("Vazio"),
             width=300,
             height=300,
             fit=ft.ImageFit.COVER,
@@ -61,49 +55,15 @@ def empresas_grid(page: ft.Page):
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
 
-        print(f"action: {action}")
-        print(f"empresa: {empresa}")
-
         match action:
-            case "INSERT":
-                page.go('/home/empresas/form/principal')
-            case "SELECT":
-                # Seleciona a empresa para trabalhar
-                page.app_state.set_empresa(empresa.to_dict())
-                usuario_id = page.app_state.usuario.get('id')
-                empresas = page.app_state.usuario.get('empresas')
-                result = await empresas_actions.user_update(usuario_id, empresa.id, empresas)
-                if result['is_error']:
-                    logger.warning(result['message'])
-                    message_snackbar(
-                        message=result['message'], message_type=MessageType.WARNING, page=page)
-                    return
-                page.go('/home')  # Redireciona para página home do usuário
-            case "MAIN_DATA":
-                page.app_state.set_empresa_form(empresa.to_dict())
-                page.go('/home/empresas/form/principal')
-            case "TAX_DATA":
-                if empresa.cnpj:
-                    page.app_state.set_empresa_form(empresa.to_dict())
-                    page.go('/home/empresas/form/dados-fiscais')
-                else:
-                    await empresas_actions.show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
-            case "DIGITAL_CERTIFICATE":
-                print(f"Certificado digital {empresa.id}")
-            case "SOFT_DELETE":
-                is_deleted = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
-                print(f"Debug  ->  Resultado de SOFT_DELETE para '{empresa.corporate_name}': {is_deleted}")
-                if is_deleted:
+            case "RESTORE":
+                is_restore = await empresas_actions.restore_from_trash(page=page, empresa_id=empresa.id)
+                if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
-            case "ARCHIVE":
-                is_archived = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
-                print(f"Debug  ->  Resultado de ARCHIVE para '{empresa.corporate_name}': {is_archived}")
-                if is_archived:
-                    # Reexecuta o carregamento. Atualizar a lista de empresas na tela
-                    page.run_task(load_data_and_update_ui)
-                    # Não precisa de page.update() aqui, pois run_task já fará isso
+            case "outro case":
+                pass
             case _:
                 pass
 
@@ -111,6 +71,13 @@ def empresas_grid(page: ft.Page):
         """Muda o bgcolor do container no hover."""
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
+
+    current_trash_icon_filename = "recycle_empy_1771.png"
+    ft_image = ft.Image(
+        src=f"icons/recycle_empy_1771.png",
+        fit=ft.ImageFit.CONTAIN,
+        error_content=ft.Text("Erro"),
+    )
 
     appbar = ft.AppBar(
         leading=ft.Container(
@@ -126,11 +93,11 @@ def empresas_grid(page: ft.Page):
                 on_hover=handle_icon_hover,
                 content=ft.Icon(
                     ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home"), tooltip="Voltar",
+                on_click=lambda _: page.go("/home/empresas/grid"), tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
             ),
         ),
-        title=ft.Text(f"Empresas", size=18),
+        title=ft.Text(f"Empresas excluídas ou arquivadas", size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
         actions=[
@@ -141,11 +108,7 @@ def empresas_grid(page: ft.Page):
                 ink=True,
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE, size=30),
-                tooltip="Adicionar nova empresa",
-                data={'action': 'INSERT', 'data': None},
-                on_click=handle_action_click,
+                content=ft_image,
                 margin=ft.margin.only(right=10),
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
             ),
@@ -153,7 +116,6 @@ def empresas_grid(page: ft.Page):
     )
 
     empresas_inactivated = 0
-
     # --- Função Assíncrona para Carregar Dados e Atualizar a UI ---
     async def load_data_and_update_ui():
         empresas_data = []
@@ -173,7 +135,7 @@ def empresas_grid(page: ft.Page):
 
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
-                result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
+                result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
                 empresas_data = result.get('data_list')
                 empresas_inactivated = result.get('inactivated')
             else:
@@ -197,7 +159,7 @@ def empresas_grid(page: ft.Page):
                                     ft.Row(
                                         controls=[
                                             ft.Text(
-                                                f"{empresa.corporate_name}", weight=ft.FontWeight.BOLD),
+                                                f"{empresa.corporate_name}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
                                             # Container do PopMenuButton para não deixar colado com a margem direita de Column
                                             ft.Container(
                                                 # padding=ft.padding.only(right=5),
@@ -205,50 +167,11 @@ def empresas_grid(page: ft.Page):
                                                     icon=ft.Icons.MORE_VERT, tooltip="Mais Ações",
                                                     items=[
                                                         ft.PopupMenuItem(
-                                                            text="Selecionar empresa",
-                                                            tooltip="Escolha esta empresa para trabalhar com ela",
-                                                            icon=ft.Icons.SELECT_ALL,
+                                                            text="Restaurar",
+                                                            tooltip="Restaurar empresa da lixeira",
+                                                            icon=ft.Icons.RESTORE,
                                                             data={
-                                                                'action': 'SELECT', 'data': empresa},
-                                                            on_click=handle_action_click
-                                                        ),
-                                                        ft.PopupMenuItem(
-                                                            text="Dados Principais",
-                                                            tooltip="Ver ou editar dados principais da empresa",
-                                                            icon=ft.Icons.EDIT_NOTE_OUTLINED,
-                                                            data={
-                                                                'action': 'MAIN_DATA', 'data': empresa},
-                                                            on_click=handle_action_click
-                                                        ),
-                                                        ft.PopupMenuItem(
-                                                            text="Dados Fiscais",
-                                                            tooltip="Ver ou editar dados fiscais da empresa",
-                                                            icon=ft.Icons.RECEIPT_LONG_OUTLINED,
-                                                            data={
-                                                                'action': 'TAX_DATA', 'data': empresa},
-                                                            on_click=handle_action_click
-                                                        ),
-                                                        ft.PopupMenuItem(
-                                                            text="Certificado Digital",
-                                                            tooltip="Informações e upload do certificado digital",
-                                                            icon=ft.Icons.SECURITY_OUTLINED,
-                                                            data={
-                                                                'action': 'DIGITAL_CERTIFICATE', 'data': empresa},
-                                                            on_click=handle_action_click),
-                                                        ft.PopupMenuItem(
-                                                            text="Excluir Empresa",
-                                                            tooltip="Move empresa para a lixeira, após 90 dias remove do banco de dados",
-                                                            icon=ft.Icons.DELETE_OUTLINE,
-                                                            data={
-                                                                'action': 'SOFT_DELETE', 'data': empresa},
-                                                            on_click=handle_action_click
-                                                        ),
-                                                        ft.PopupMenuItem(
-                                                            text="Arquivar Empresa",
-                                                            tooltip="A empresa será movida para a lixeira e permanecerá lá indefinidamente até que você a restaure.",
-                                                            icon=ft.Icons.INVENTORY_2_OUTLINED,
-                                                            data={
-                                                                'action': 'ARCHIVE', 'data': empresa},
+                                                                'action': 'RESTORE', 'data': empresa},
                                                             on_click=handle_action_click
                                                         ),
                                                     ],
@@ -257,20 +180,41 @@ def empresas_grid(page: ft.Page):
                                         ],
                                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                                     ),
-                                    ft.Text(f"{empresa.trade_name if empresa.trade_name else 'Nome fantasia N/A'}",
+                                    ft.Text(f"{empresa.store_name if empresa.store_name else 'Loja N/A'}  {str(empresa.phone) if empresa.phone else ''}", color=ft.Colors.WHITE54,
                                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                    ft.Text(f"{empresa.store_name if empresa.store_name else 'Loja N/A'}  {str(empresa.phone) if empresa.phone else ''}",
-                                            theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                    ft.Text(
-                                        f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}", theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                    ft.Text(
-                                        f"Email: {empresa.email}", theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                    ft.Text(f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(f"Excluído em: {format_datetime_to_utc_minus_3(empresa.deleted_at)}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_SMALL, visible=empresa.status.name == 'DELETED'),
+                                            ft.Text(f"Arquivado em: {format_datetime_to_utc_minus_3(empresa.archived_at)}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_SMALL, visible=empresa.status.name == 'ARCHIVED'),
+                                            ft.Container(
+                                                content=ft.Icon(
+                                                    name=ft.Icons.AUTO_DELETE_OUTLINED if empresa.status.name == 'DELETED' else ft.Icons.RESTORE_OUTLINED,
+                                                    color=ft.Colors.PRIMARY,
+                                                ),
+                                                margin=ft.margin.only(right=10),
+                                                tooltip="Restaurar",
+                                                data={'action': 'RESTORE', 'data': empresa},
+                                                on_hover=handle_icon_hover,
+                                                on_click=handle_action_click,
+                                                # width=40,
+                                                # height=40,
+                                                border_radius=ft.border_radius.all(20),
+                                                ink=True,
+                                                bgcolor=ft.Colors.TRANSPARENT,
+                                                alignment=ft.alignment.center,
+                                                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                                            ),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
                                 ])
                             ),
                             margin=ft.margin.all(5),
                             # Configuração responsiva para cada card
                             # Cada card com sua própria configuração de colunas
-                            col={"xs": 12, "sm": 6, "md": 4, "lg": 3}
+                            col={"xs": 12, "sm": 6, "md": 4, "lg": 3},
+                            tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if empresa.status.name == 'DELETED' else 'Empresa arquivada! Pode estar vinculada a pedidos ou produtos.'}",
                         ) for empresa in empresas_data  # Criar um card para cada empresa
                     ],
                     columns=12,  # Total de colunas no sistema de grid
@@ -290,7 +234,7 @@ def empresas_grid(page: ft.Page):
                         ft.Icon(ft.icons.ERROR_OUTLINE,
                                 color=ft.colors.RED, size=50),
                         ft.Text(
-                            f"Ocorreu um erro ao carregar as empresas.", color=ft.colors.RED),
+                            f"Ocorreu um erro ao carregar as empresas inativas.", color=ft.colors.RED),
                         # Cuidado ao expor detalhes de erro
                         ft.Text(f"Detalhes: {e}",
                                 color=ft.colors.RED, size=10),
@@ -301,13 +245,11 @@ def empresas_grid(page: ft.Page):
                 )
             )
         finally:
-            # --- Atualizar Visibilidade da UI ---
             current_trash_icon_filename = "recycle_full_1771.png" if empresas_inactivated else "recycle_empy_1771.png"
+            if ft_image and isinstance(ft_image, ft.Image): # Garante que ft_image é uma Image
+                ft_image.src = f"icons/{current_trash_icon_filename}"
 
-            if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
-                fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Empresas inativas ou arquivadas: {empresas_inactivated}"
-
+            # --- Atualizar Visibilidade da UI ---
             loading_container.visible = False
             content_area.visible = True
             # Importante: Atualizar a página para refletir as mudanças
@@ -322,48 +264,18 @@ def empresas_grid(page: ft.Page):
     # Executa a função async em background. A UI mostrará o spinner primeiro.
     page.run_task(load_data_and_update_ui)
 
-    # trash_icon = "recycle_full_55510.png" if empresas_inactivated else "recycle_empy_55510.png"
-
-    fab = ft.FloatingActionButton(
-        # icon=ft.Icons.FOLDER_DELETE_OUTLINED,
-        content=ft.Image(
-            # src="icons/recycle_empty_delete_trash_1771.png",
-            src=f"icons/recycle_empy_1771.png",
-            width=48,
-            height=36,
-            fit=ft.ImageFit.CONTAIN,
-            error_content=ft.Text("Erro"),
-        ),
-        on_click=lambda _: page.go("/home/empresas/grid/lixeira"),
-        # on_click=lambda _: print("Empresas inativas e arquivadas FOI CLICADA"),
-        tooltip="Empresas inativas e arquivadas",
-        bgcolor=ft.Colors.TRANSPARENT,
-    )
-
     # --- Retornar Estrutura Inicial da Página como ft.View ---
     # A View inclui a AppBar e a área de conteúdo principal (que inicialmente mostra o spinner)
     return ft.View(
-        route="/home/empresas/grid",  # A rota que esta view corresponde
+        route="/home/empresas/grid/lixeira",  # A rota que esta view corresponde
         controls=[
             loading_container,  # Mostra o spinner inicialmente
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
-        floating_action_button=fab,
         vertical_alignment=ft.MainAxisAlignment.START,  # Alinha conteúdo ao topo
         # Deixa o conteúdo esticar horizontalmente
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         # Adiciona um padding ao redor da área de conteúdo
         padding=ft.padding.all(10)
     )
-
-    # ft.View(
-    #     scroll=ft.ScrollMode.AUTO,
-    #     bgcolor=ft.Colors.BLACK,
-    # )
-
-# Nota: Garanta que a função `handle_get_empresas` localizada em
-# `src.domains.empresas.controllers.empresas_controllers` esteja definida como uma função `async def`
-# para que esta abordagem de indicador de carregamento funcione sem congelar a UI durante a chamada ao banco de dados.
-# Se for uma função síncrona, você precisará adaptá-la usando técnicas como
-# `asyncio.to_thread` conforme mostrado nos comentários dentro de `load_data_and_update_ui`.

@@ -210,7 +210,10 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativa (arquivadas ou deletadas).
 
     Returns:
-        list: Uma lista de empresas do usuário logado.
+        is_error (bool): True se houve erro na operação, False caso contrário.
+        message (str): Uma mensagem de sucesso ou erro.
+        data_list (list): Uma lista de empresas do usuário logado ou [].
+        inactivated (int): Quantidade de empresas inativadas
 
     Raises:
         ValueError: Se houver um erro de validação ao buscar empresas.
@@ -224,7 +227,8 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
     response = {
         "is_error": False,
         "message": "",
-        "data_list": []
+        "data_list": [],
+        "inactivated": 0,
     }
 
     try:
@@ -234,7 +238,8 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
-        list_empresas = await empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        list_empresas, quantify = await empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        response["inactivated"] = quantify if quantify else 0
 
         if list_empresas:
             response["message"] = "Empresas encontradas com sucesso!"
@@ -245,11 +250,9 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"handle_get_empresas ValueError: Erro de validação: {str(e)}"
-        logger.error(f'handle_get_empresas ValueError: {response["message"]}')
     except Exception as e:
         response["is_error"] = True
         response["message"] = str(e)
-        logger.error(response["message"])
 
     return response
 

@@ -54,6 +54,8 @@ class Empresa:
         corporate_name (str): Razão Social da empresa.
         email (str): E-mail da empresa.
         status (Status:Enum): Status da empresa.
+        deleted_at: (datetime): Data de exclusão
+        archived_at: (datetime): Data de arquivamento
         cnpj (CNPJ): CNPJ da empresa.
         id (Optional[str]): ID opcional da empresa.
         trade_name (Optional[str]): Nome fantasia da empresa.
@@ -247,7 +249,7 @@ class Empresa:
            "corporate_name": self.corporate_name,
            "trade_name": self.trade_name,
            "store_name": self.store_name,
-           "cnpj": self.cnpj.raw_cnpj,
+           "cnpj": self.cnpj.raw_cnpj if self.cnpj else None,
            "email": self.email,
            "ie": self.ie,
            "im": self.im,

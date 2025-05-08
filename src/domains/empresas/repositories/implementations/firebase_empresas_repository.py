@@ -217,12 +217,17 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
             # Buscar documentos diretamente pelos IDs
             empresas = []
+            quantify_inactivated = 0
+
             for empresa_id in ids_empresas_list:
                 doc_ref = self.collection.document(empresa_id)
                 doc = doc_ref.get()
                 if doc.exists:
-                    # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
                     empresa_data = doc.to_dict()
+                    if empresa_data.get('status') != 'ACTIVE':
+                        # Registra a quantidade de empresas inativadas ('ARCHIVED' ou 'DELETED')
+                        quantify_inactivated += 1
+                    # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
                     if (status_active and empresa_data.get('status') == 'ACTIVE') or (not status_active and empresa_data.get('status') != 'ACTIVE'):
                         # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
                         empresa_data['id'] = doc.id
@@ -234,7 +239,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             # Ordenar a lista de empresas por corporate_name
             empresas.sort(key=lambda empresa: empresa.corporate_name)
 
-            return empresas
+            return empresas, quantify_inactivated
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
                 logger.warning(
@@ -274,14 +279,11 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         try:
             # self.collection.document(empresa_id).delete()
             if status == Status.DELETED:
-                fields = {'status': status.name,
-                          "deleted_at": firestore.SERVER_TIMESTAMP}
+                fields = {'status': status.name, "deleted_at": firestore.SERVER_TIMESTAMP, "archived_at": None}
             elif status == Status.ARCHIVED:
-                fields = {'status': status.name,
-                          "archived_at": firestore.SERVER_TIMESTAMP}
+                fields = {'status': status.name, "archived_at": firestore.SERVER_TIMESTAMP, "deleted_at": None}
             elif status == Status.ACTIVE:
-                fields = {'status': status.name,
-                          "archived_at": None, "deleted_at": None}
+                fields = {'status': status.name, "archived_at": None, "deleted_at": None}
 
             self.collection.document(empresa_id).update(fields)
 

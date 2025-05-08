@@ -9,6 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from src.pages.empresas.empresas_form import empresas_form
 from src.pages.empresas.empresas_form_dados_fiscais import empresas_form_dados_fiscais
+from src.pages.empresas.empresas_grid_lixeira import empresas_grid_lixeira
 from src.pages.empresas.empresas_grid_view import empresas_grid
 from src.pages.home.home_page import home_page
 from src.pages.signup import signup
@@ -195,6 +196,12 @@ def main(page: ft.Page):
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
                     pg_view = empresas_grid(page)
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/empresas/grid/lixeira':
+                if page.app_state.usuario.get('id'):
+                    page.on_resized = None
+                    pg_view = empresas_grid_lixeira(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/principal':

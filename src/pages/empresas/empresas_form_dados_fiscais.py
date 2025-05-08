@@ -391,6 +391,7 @@ def empresas_form_dados_fiscais(page: ft.Page):
                 content=ft.Icon(ft.Icons.ARROW_BACK),
                 on_click=lambda _: page.go(page.data if page.data else '/home'),
                 tooltip="Voltar",
+                # clip_behavior: O conteúdo será recortado (ou não) de acordo com esta opção.
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
             ),
         ),
