@@ -335,10 +335,19 @@ def sidebar_header(page: ft.Page):
                     page.close(dialog)
 
         def close_dialog(e):
-            page.close(dialog)
-            if page.overlay:
-                page.overlay.pop()
-                page.update()
+            print("Entrou em close_dialog(338)")
+            # Mark the dialog to be closed
+            dialog.open = False
+
+            # Remove the FilePicker from the overlay.
+            # It was added using page.overlay.append(pick_files_dialog).
+            # Using .remove() is more explicit than .pop().
+            if pick_files_dialog in page.overlay:
+                print("Entrou em close_dialog(341) - Removendo FilePicker do overlay")
+                page.overlay.remove(pick_files_dialog)
+
+            # Send all changes (dialog closing, overlay modification) in a single update
+            page.update()
 
         # Criando o diálogo
         dialog = ft.AlertDialog(
