@@ -61,9 +61,6 @@ def empresas_grid(page: ft.Page):
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
 
-        print(f"action: {action}")
-        print(f"empresa: {empresa}")
-
         match action:
             case "INSERT":
                 # Garante que ao entrar no formulário principal, os campos estejam vazio
@@ -91,17 +88,15 @@ def empresas_grid(page: ft.Page):
                 else:
                     await empresas_actions.show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
             case "DIGITAL_CERTIFICATE":
-                print(f"Certificado digital {empresa.id}")
+                print(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
                 is_deleted = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
-                print(f"Debug  ->  Resultado de SOFT_DELETE para '{empresa.corporate_name}': {is_deleted}")
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case "ARCHIVE":
                 is_archived = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
-                print(f"Debug  ->  Resultado de ARCHIVE para '{empresa.corporate_name}': {is_archived}")
                 if is_archived:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
@@ -153,6 +148,46 @@ def empresas_grid(page: ft.Page):
             ),
         ],
     )
+
+    def handle_info_click(e):
+        empresa = e.control.data.get('data')
+        page_ctx = e.control.page # Obter a página do contexto do controle
+
+        info_messages_list = []
+
+        if not empresa.cnpj:
+            info_messages_list.append("CNPJ: Não informado para emissão de NFCe.")
+        if not empresa.certificate_a1:
+            info_messages_list.append("A1: Certificado A1 não informado para emissão de NFCe.")
+        if empresa.get_complete_address() == "Endereço não informado":
+            info_messages_list.append("Endereço: Não informado.")
+
+        nfce_is_enabled = empresa.is_nfce_enabled() # Chamada correta do método
+        if not nfce_is_enabled:
+            info_messages_list.append("NFCe: Não configurado.")
+
+        final_info_message = "\n".join(info_messages_list)
+        if not final_info_message: # Se a lista estiver vazia, significa que tudo está ok
+            final_info_message = "Esta empresa está configurada para emitir NFCe."
+
+        def close_dialog(e_dialog):
+            info_dialog.open = False
+            page_ctx.update()
+
+        info_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Status da Empresa"),
+            content=ft.Text(final_info_message),
+            actions=[
+                ft.TextButton("Entendi", on_click=close_dialog)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            on_dismiss=lambda _: logger.info(f"Dialog de informação para {empresa.id} dispensado.")
+        )
+
+        page_ctx.overlay.append(info_dialog)
+        info_dialog.open = True
+        page_ctx.update()
 
     empresas_inactivated = 0
 
@@ -215,7 +250,7 @@ def empresas_grid(page: ft.Page):
                                                             on_click=handle_action_click
                                                         ),
                                                         ft.PopupMenuItem(
-                                                            text="Dados Principais",
+                                                            text="Dados principais",
                                                             tooltip="Ver ou editar dados principais da empresa",
                                                             icon=ft.Icons.EDIT_NOTE_OUTLINED,
                                                             data={
@@ -223,7 +258,7 @@ def empresas_grid(page: ft.Page):
                                                             on_click=handle_action_click
                                                         ),
                                                         ft.PopupMenuItem(
-                                                            text="Dados Fiscais",
+                                                            text="Dados fiscais",
                                                             tooltip="Ver ou editar dados fiscais da empresa",
                                                             icon=ft.Icons.RECEIPT_LONG_OUTLINED,
                                                             data={
@@ -231,14 +266,14 @@ def empresas_grid(page: ft.Page):
                                                             on_click=handle_action_click
                                                         ),
                                                         ft.PopupMenuItem(
-                                                            text="Certificado Digital",
+                                                            text="Certificado digital",
                                                             tooltip="Informações e upload do certificado digital",
                                                             icon=ft.Icons.SECURITY_OUTLINED,
                                                             data={
                                                                 'action': 'DIGITAL_CERTIFICATE', 'data': empresa},
                                                             on_click=handle_action_click),
                                                         ft.PopupMenuItem(
-                                                            text="Excluir Empresa",
+                                                            text="Excluir empresa",
                                                             tooltip="Move empresa para a lixeira, após 90 dias remove do banco de dados",
                                                             icon=ft.Icons.DELETE_OUTLINE,
                                                             data={
@@ -246,7 +281,7 @@ def empresas_grid(page: ft.Page):
                                                             on_click=handle_action_click
                                                         ),
                                                         ft.PopupMenuItem(
-                                                            text="Arquivar Empresa",
+                                                            text="Arquivar empresa",
                                                             tooltip="A empresa será movida para a lixeira e permanecerá lá indefinidamente até que você a restaure.",
                                                             icon=ft.Icons.INVENTORY_2_OUTLINED,
                                                             data={
@@ -265,8 +300,28 @@ def empresas_grid(page: ft.Page):
                                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                                     ft.Text(
                                         f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}", theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                    ft.Text(
-                                        f"Email: {empresa.email}", theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(f"Email: {empresa.email}", theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                            ft.Container(
+                                                content=ft.Icon(
+                                                    name=ft.Icons.INFO_OUTLINED,
+                                                    color=ft.Colors.PRIMARY,
+                                                ),
+                                                margin=ft.margin.only(right=10),
+                                                tooltip="Informações sobre o status",
+                                                data={'action': 'INFO', 'data': empresa},
+                                                on_hover=handle_icon_hover,
+                                                on_click=handle_info_click,
+                                                border_radius=ft.border_radius.all(20),
+                                                ink=True,
+                                                bgcolor=ft.Colors.TRANSPARENT,
+                                                alignment=ft.alignment.center,
+                                                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                                            ),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
                                 ])
                             ),
                             margin=ft.margin.all(5),

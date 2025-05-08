@@ -1,4 +1,6 @@
+import datetime
 import logging
+import math # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
@@ -72,7 +74,6 @@ def empresas_grid_lixeira(page: ft.Page):
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    current_trash_icon_filename = "recycle_empy_1771.png"
     ft_image = ft.Image(
         src=f"icons/recycle_empy_1771.png",
         fit=ft.ImageFit.CONTAIN,
@@ -115,15 +116,76 @@ def empresas_grid_lixeira(page: ft.Page):
         ],
     )
 
-    empresas_inactivated = 0
+    def handle_info_click(e):
+        empresa = e.control.data.get('data')
+        page_ctx = e.control.page # Obter a página do contexto do controle
+
+        info_title = "Informação da Empresa"
+        info_message = ""
+
+        if empresa.status.name == 'DELETED':
+            if empresa.deleted_at:  # Verifica se a data de exclusão está definida
+                # Data em que o item foi movido para a lixeira (presumivelmente UTC)
+                data_movido_lixeira = empresa.deleted_at
+
+                # Data final para exclusão permanente (90 dias após mover para lixeira)
+                data_exclusao_permanente = data_movido_lixeira + datetime.timedelta(days=90)
+
+                # Data e hora atuais em UTC para comparação consistente
+                agora_utc = datetime.datetime.now(datetime.timezone.utc)
+
+                # Calcula o tempo restante até a exclusão permanente
+                tempo_restante = data_exclusao_permanente - agora_utc
+
+                days_left = 0  # Valor padrão caso o tempo já tenha expirado
+                if tempo_restante.total_seconds() > 0:
+                    # Converte o tempo restante para dias (float)
+                    dias_restantes_float = tempo_restante.total_seconds() / (24 * 60 * 60)
+                    # Arredonda para cima para o próximo dia inteiro
+                    days_left = math.ceil(dias_restantes_float)
+
+                if days_left == 0:
+                    info_message = "Esta empresa está na lixeira. A exclusão permanente está prevista para hoje ou já pode ter ocorrido."
+                elif days_left == 1:
+                    info_message = f"Esta empresa está na lixeira. A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dia."
+                else:
+                    info_message = f"Esta empresa está na lixeira. A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dias."
+            else:
+                # Caso deleted_at não esteja definido
+                info_message = "Esta empresa está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
+        elif empresa.status.name == 'ARCHIVED':
+            info_message = "Esta empresa está arquivada. Empresas arquivadas não são removidas automaticamente e podem estar vinculadas a outros registros como pedidos ou produtos."
+        else:
+            info_message = "Status desconhecido."
+
+        def close_dialog(e_dialog):
+            info_dialog.open = False
+            page_ctx.update()
+
+        info_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(info_title),
+            content=ft.Text(info_message),
+            actions=[
+                ft.TextButton("Entendi", on_click=close_dialog)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            on_dismiss=lambda _: logger.info(f"Dialog de informação para {empresa.id} dispensado.")
+        )
+
+        page_ctx.overlay.append(info_dialog)
+        info_dialog.open = True
+        page_ctx.update()
+
     # --- Função Assíncrona para Carregar Dados e Atualizar a UI ---
     async def load_data_and_update_ui():
-        empresas_data = []
-        nonlocal empresas_inactivated
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
         set_empresas = page.app_state.usuario.get(
             'empresas', [])  # Usar get com default
+
+        empresas_data = []
+        empresas_inactivated = 0
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***
@@ -160,6 +222,11 @@ def empresas_grid_lixeira(page: ft.Page):
                                         controls=[
                                             ft.Text(
                                                 f"{empresa.corporate_name}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
+                                            ft.Container(expand=True),
+                                            ft.Icon(
+                                                name=ft.Icons.INVENTORY_2_OUTLINED if empresa.status.name == 'ARCHIVED' else ft.Icons.DELETE_FOREVER_OUTLINED,
+                                                color=ft.Colors.BLUE if empresa.status.name == 'ARCHIVED' else ft.Colors.RED
+                                            ),
                                             # Container do PopMenuButton para não deixar colado com a margem direita de Column
                                             ft.Container(
                                                 # padding=ft.padding.only(right=5),
@@ -174,36 +241,72 @@ def empresas_grid_lixeira(page: ft.Page):
                                                                 'action': 'RESTORE', 'data': empresa},
                                                             on_click=handle_action_click
                                                         ),
+                                                        ft.PopupMenuItem(
+                                                            text="Informações",
+                                                            tooltip="Informações sobre o status",
+                                                            icon=ft.Icons.INFO_OUTLINED,
+                                                            data={
+                                                                'action': 'INFO', 'data': empresa},
+                                                            on_click=handle_info_click
+                                                        ),
                                                     ],
                                                 ),
                                             ),
                                         ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                        alignment=ft.MainAxisAlignment.START,
                                     ),
                                     ft.Text(f"{empresa.store_name if empresa.store_name else 'Loja N/A'}  {str(empresa.phone) if empresa.phone else ''}", color=ft.Colors.WHITE54,
                                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                                     ft.Text(f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                                     ft.Row(
                                         controls=[
-                                            ft.Text(f"Excluído em: {format_datetime_to_utc_minus_3(empresa.deleted_at)}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_SMALL, visible=empresa.status.name == 'DELETED'),
-                                            ft.Text(f"Arquivado em: {format_datetime_to_utc_minus_3(empresa.archived_at)}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_SMALL, visible=empresa.status.name == 'ARCHIVED'),
-                                            ft.Container(
-                                                content=ft.Icon(
-                                                    name=ft.Icons.AUTO_DELETE_OUTLINED if empresa.status.name == 'DELETED' else ft.Icons.RESTORE_OUTLINED,
-                                                    color=ft.Colors.PRIMARY,
-                                                ),
-                                                margin=ft.margin.only(right=10),
-                                                tooltip="Restaurar",
-                                                data={'action': 'RESTORE', 'data': empresa},
-                                                on_hover=handle_icon_hover,
-                                                on_click=handle_action_click,
-                                                # width=40,
-                                                # height=40,
-                                                border_radius=ft.border_radius.all(20),
-                                                ink=True,
-                                                bgcolor=ft.Colors.TRANSPARENT,
-                                                alignment=ft.alignment.center,
-                                                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                                            ft.Text(
+                                                value=f"Excluído em: {format_datetime_to_utc_minus_3(empresa.deleted_at)}",
+                                                color=ft.Colors.RED,
+                                                theme_style=ft.TextThemeStyle.BODY_SMALL,
+                                                visible=empresa.status.name == 'DELETED'
+                                            ),
+                                            ft.Text(
+                                                value=f"Arquivado em: {format_datetime_to_utc_minus_3(empresa.archived_at)}",
+                                                color=ft.Colors.WHITE54,
+                                                theme_style=ft.TextThemeStyle.BODY_SMALL,
+                                                visible=empresa.status.name == 'ARCHIVED'
+                                            ),
+                                            ft.Row(
+                                                controls=[
+                                                    ft.Container(
+                                                        content=ft.Icon(
+                                                            name=ft.Icons.RESTORE_OUTLINED,
+                                                            color=ft.Colors.PRIMARY,
+                                                        ),
+                                                        margin=ft.margin.only(right=5),
+                                                        tooltip="Restaurar",
+                                                        data={'action': 'RESTORE', 'data': empresa},
+                                                        on_hover=handle_icon_hover,
+                                                        on_click=handle_action_click,
+                                                        border_radius=ft.border_radius.all(20),
+                                                        ink=True,
+                                                        bgcolor=ft.Colors.TRANSPARENT,
+                                                        alignment=ft.alignment.center,
+                                                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                                                    ),
+                                                    ft.Container(
+                                                        content=ft.Icon(
+                                                            name=ft.Icons.INFO_OUTLINED,
+                                                            color=ft.Colors.PRIMARY,
+                                                        ),
+                                                        margin=ft.margin.only(right=10),
+                                                        tooltip="Informações sobre o status",
+                                                        data={'action': 'INFO', 'data': empresa},
+                                                        on_hover=handle_icon_hover,
+                                                        on_click=handle_info_click,
+                                                        border_radius=ft.border_radius.all(20),
+                                                        ink=True,
+                                                        bgcolor=ft.Colors.TRANSPARENT,
+                                                        alignment=ft.alignment.center,
+                                                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                                                    ),
+                                                ],
                                             ),
                                         ],
                                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -214,7 +317,7 @@ def empresas_grid_lixeira(page: ft.Page):
                             # Configuração responsiva para cada card
                             # Cada card com sua própria configuração de colunas
                             col={"xs": 12, "sm": 6, "md": 4, "lg": 3},
-                            tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if empresa.status.name == 'DELETED' else 'Empresa arquivada! Pode estar vinculada a pedidos ou produtos.'}",
+                            tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if empresa.status.name == 'DELETED' else 'Empresa arquivada não será removida do banco de dados! Pode estar vinculada a pedidos ou produtos.'}",
                         ) for empresa in empresas_data  # Criar um card para cada empresa
                     ],
                     columns=12,  # Total de colunas no sistema de grid
