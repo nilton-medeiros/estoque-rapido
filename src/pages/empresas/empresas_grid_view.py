@@ -66,6 +66,8 @@ def empresas_grid(page: ft.Page):
 
         match action:
             case "INSERT":
+                # Garante que ao entrar no formulário principal, os campos estejam vazio
+                page.app_state.clear_empresa_form_data()
                 page.go('/home/empresas/form/principal')
             case "SELECT":
                 # Seleciona a empresa para trabalhar
@@ -306,7 +308,7 @@ def empresas_grid(page: ft.Page):
 
             if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
                 fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Empresas inativas ou arquivadas: {empresas_inactivated}"
+                fab.tooltip = f"Empresas inativas: {empresas_inactivated}"
 
             loading_container.visible = False
             content_area.visible = True
@@ -335,8 +337,7 @@ def empresas_grid(page: ft.Page):
             error_content=ft.Text("Erro"),
         ),
         on_click=lambda _: page.go("/home/empresas/grid/lixeira"),
-        # on_click=lambda _: print("Empresas inativas e arquivadas FOI CLICADA"),
-        tooltip="Empresas inativas e arquivadas",
+        tooltip="Empresas inativas",
         bgcolor=ft.Colors.TRANSPARENT,
     )
 
