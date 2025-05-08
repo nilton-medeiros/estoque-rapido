@@ -55,7 +55,7 @@ def main_content():
         )
 
     # Obter a data corrente, ex: '04 de março'
-    date_description = datetime.datetime.now().strftime("%d de %B")
+    date_description = datetime.datetime.now().strftime("%A, %d de %B")
     # Garantir que o texto esteja em UTF-8
     # date_description = date_description.encode().decode('utf-8')
 
@@ -104,13 +104,7 @@ def main_content():
                     alignment=ft.MainAxisAlignment.START,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     controls=[
-                        ft.Text(
-                            "Hoje",
-                            style=ft.TextStyle(
-                                color=ft.Colors.WHITE,
-                                weight=ft.FontWeight.W_900,
-                                size=20,
-                            )
+                        ft.Text("Hoje", style=ft.TextStyle(color=ft.Colors.WHITE, weight=ft.FontWeight.W_900, size=20)
                         ),
                         ft.Container(
                             content=ft.Text(
