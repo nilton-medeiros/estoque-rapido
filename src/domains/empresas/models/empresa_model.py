@@ -151,21 +151,32 @@ class Empresa:
         Returns:
             bool: True se a emissão de NFC-e estiver configurada, False caso contrário.
         """
+        # Primeiro, verificar o CNPJ da empresa, que é fundamental.
+        if not self.cnpj:
+            return False
+
+        # Depois, verificar se os dados fiscais existem.
         f = self.fiscal
         if not f:
             return False
 
-        required_attributes = [
+        # Lista de atributos fiscais que devem estar preenchidos (não None).
+        # nfce_api_enabled é um booleano e será verificado separadamente ou no final.
+        required_fiscal_data_fields = [
             f.crt,
             f.environment,
             f.nfce_series,
             f.nfce_number,
             f.nfce_sefaz_id_csc,
             f.nfce_sefaz_csc,
-            f.nfce_api_enabled,
         ]
 
-        return all(required_attributes)
+        # Verifica se todos os campos de dados fiscais necessários estão preenchidos.
+        if not all(required_fiscal_data_fields):
+            return False
+
+        # Por fim, verifica se a API NFC-e está habilitada.
+        return f.nfce_api_enabled
 
     def get_nfce_data(self) -> Optional[Dict]:
         """
