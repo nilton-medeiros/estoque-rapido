@@ -1,6 +1,6 @@
 import logging
 
-from typing import List, Optional
+from typing import Optional
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
@@ -245,7 +245,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    async def find_all(self, empresa_id, limit: int = 100, offset: int = 0) -> List[Usuario]:
+    async def find_all(self, empresa_id, limit: int = 100, offset: int = 0) -> list[Usuario]:
         """
         Retorna uma lista paginada de usuários.
 
@@ -255,7 +255,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             offset (int): Número de registros a pular.
 
         Returns:
-            List[Usuario]: Lista de usuários encontrados.
+            list[Usuario]: Lista de usuários encontrados.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -266,7 +266,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
 
             docs = query.stream()
-            usuarios: List[Usuario] = []
+            usuarios: list[Usuario] = []
 
             for doc in docs:
                 usuario_data = doc.to_dict()
@@ -339,7 +339,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    async def find_by_name(self, empresa_id, name: str) -> List[Usuario]:
+    async def find_by_name(self, empresa_id, name: str) -> list[Usuario]:
         """
         Busca usuários da empresa logada que contenham o nome especificado.
 
@@ -348,7 +348,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             name (str): Nome ou parte do nome a ser buscado.
 
         Returns:
-            List[Usuario]: Lista de usuários que correspondem à busca.
+            list[Usuario]: Lista de usuários que correspondem à busca.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -359,7 +359,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
 
             docs = query.stream()
-            usuarios: List[Usuario] = []
+            usuarios: list[Usuario] = []
 
             for doc in docs:
                 usuario_data = doc.to_dict()
@@ -387,7 +387,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo nome '{name}': {e}")
             raise
 
-    async def find_by_profile(self, empresa_id: str, profile: str) -> List[Usuario]:
+    async def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
         """
         Busca usuários por perfil.
 
@@ -396,7 +396,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             profile (str): Perfil a ser buscado.
 
         Returns:
-            List[Usuario]: Lista de usuários com o perfil especificado.
+            list[Usuario]: Lista de usuários com o perfil especificado.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -407,7 +407,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(field_path='profile', op_string='==', value=profile)  # Método antigo
 
             docs = query.stream()
-            usuarios: List[Usuario] = []
+            usuarios: list[Usuario] = []
 
             for doc in docs:
                 usuario_data = doc.to_dict()

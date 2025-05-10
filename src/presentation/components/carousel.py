@@ -1,9 +1,8 @@
 import flet as ft
-from typing import List
 
 
 class Carousel(ft.Column):
-    def __init__(self, controls: List[ft.Control], height: int = 250):
+    def __init__(self, controls: list[ft.Control], height: int = 250):
         super().__init__()
         self.height = height
 

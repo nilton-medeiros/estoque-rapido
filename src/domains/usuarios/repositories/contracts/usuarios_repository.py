@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Optional
 from firebase_admin.auth import UserRecord
 from src.domains.usuarios.models.usuario_model import Usuario
 
@@ -45,7 +45,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_all(self, limit: int = 100, offset: int = 0) -> List[Usuario]:
+    async def find_all(self, limit: int = 100, offset: int = 0) -> list[Usuario]:
         """Retorna uma lista paginada de usuários."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
@@ -55,7 +55,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_name(self, name: str) -> List[Usuario]:
+    async def find_by_name(self, name: str) -> list[Usuario]:
         """
         Busca usuários da empresa logada que contenham o nome especificado
         (primeiro nome ou sobrenome).
@@ -63,7 +63,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_profile(self, profile: str) -> List[Usuario]:
+    async def find_by_profile(self, profile: str) -> list[Usuario]:
         """Busca usuários por perfil."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 

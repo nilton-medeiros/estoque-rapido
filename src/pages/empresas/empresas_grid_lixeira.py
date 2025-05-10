@@ -132,7 +132,7 @@ def empresas_grid_lixeira(page: ft.Page):
                 data_exclusao_permanente = data_movido_lixeira + datetime.timedelta(days=90)
 
                 # Data e hora atuais em UTC para comparação consistente
-                agora_utc = datetime.datetime.now(datetime.timezone.utc)
+                agora_utc = datetime.datetime.now(datetime.UTC)
 
                 # Calcula o tempo restante até a exclusão permanente
                 tempo_restante = data_exclusao_permanente - agora_utc

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
@@ -88,7 +88,7 @@ class UsuariosServices:
         """
         return await self.repository.find_by_email(email)
 
-    async def find_all(self, empresa_id: str) -> List[Usuario]:
+    async def find_all(self, empresa_id: str) -> list[Usuario]:
         """
         Encontra todos os usuários pelo ID da empresa usando o repositório.
 
@@ -96,7 +96,7 @@ class UsuariosServices:
             empresa_id (str): ID da empresa a ser encontrado
 
         Retorna:
-            List[Usuario]: Lista de Usuario encontrado ou [] se não existir
+            list[Usuario]: Lista de Usuario encontrado ou [] se não existir
         """
         return await self.repository.find_all(empresa_id)
 

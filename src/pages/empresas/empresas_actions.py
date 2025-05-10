@@ -49,7 +49,8 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
             # Caso contrário, muda o status para ARCHIVED
-            result = await empresas_controllers.handle_status_empresas(empresa.id, status=status)
+            user = page_ctx.app_state.usuario
+            result = await empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
 
             dlg_modal.open = False # Fechar diálogo antes de um possível snackbar
             page_ctx.update()

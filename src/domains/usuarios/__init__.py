@@ -1,1 +1,3 @@
-from .controllers.usuarios_controllers import handle_save_usuarios, handle_get_usuarios, handle_update_photo_usuarios, handle_update_colors_usuarios
+from .controllers.usuarios_controllers import handle_login_usuarios, handle_save_usuarios,\
+    handle_get_usuarios, handle_update_photo_usuarios, handle_update_colors_usuarios, \
+    handle_update_empresas_usuarios, handle_find_all_usuarios

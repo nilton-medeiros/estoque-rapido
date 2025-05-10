@@ -898,7 +898,8 @@ def empresas_form(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        result = await empresas_controllers.handle_save_empresas(empresa)
+        user = page.app_state.usuario
+        result = await empresas_controllers.handle_save_empresas(empresa, user=user)
 
         if result["is_error"]:
             message_snackbar(
@@ -910,7 +911,6 @@ def empresas_form(page: ft.Page):
         page.app_state.set_empresa(empresa.to_dict())
 
         # Associa a empresa a lista de empresas do usuário
-        user = page.app_state.usuario
         user['empresas'].add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
 
         if not user.get('empresa_id'):

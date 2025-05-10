@@ -16,7 +16,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-async def handle_save_empresas(empresa: Empresa) -> dict:
+async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
     """
     Manipula a operação de salvar empresa.
 
@@ -26,6 +26,7 @@ async def handle_save_empresas(empresa: Empresa) -> dict:
 
     Args:
         empresa (Empresa): A instância do empresa a ser salva.
+        usuario (Ususario): Usuário logado.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do empresa.
@@ -55,11 +56,11 @@ async def handle_save_empresas(empresa: Empresa) -> dict:
 
         if empresa.id:
             # Alterar empresa existente
-            id = await empresas_services.update(empresa)
+            id = await empresas_services.update(empresa, usuario)
         else:
             # Criar novo empresa
             operation = "criada"
-            id = await empresas_services.create(empresa)
+            id = await empresas_services.create(empresa, usuario)
 
         response["message"] = f"Empresa {operation} com sucesso!"
         response["id"] = id
@@ -256,24 +257,26 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
 
     return response
 
-async def handle_status_empresas(id: str, status: Status) -> bool:
+
+async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Status) -> dict:
     """
-    Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados utilizando o ID fornecido.
+    Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados.
     Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
 
     Args:
-        id (str): O ID do empresa a ser excluído.
-        status (Status): Pode ser ARCHIVED, DELETED ou ACTIVE.
+        empresa (Empresa): A instância da empresa a ser alterada.
+        usuario (Ususario): Usuário logado.
+        status (Status): Novo status da empresa. ARCHIVED, DELETED ou ACTIVE.
 
     Returns:
-        dict: response se bem sucedido ou em caso de erro.
+        response (dict): Retorna as informações necessárias, inclusive as de erros.
 
     Raises:
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> is_deleted = await handle_delete_empresas_by_id('abc123')
-        >>> print(is_deleted)
+        >>> response = await handle_update_status_empresas(empresa, Status.DELETED)
+        >>> print(response)
     """
 
     response = {
@@ -289,10 +292,20 @@ async def handle_status_empresas(id: str, status: Status) -> bool:
 
         is_updated = False
 
-        if id:
-            is_updated = await empresas_services.update_status(empresa_id=id, status=status)
-        else:
-            raise ValueError("O id deve ser passado")
+        if not usuario:
+            raise ValueError("Usuário não informado em args: handle_update_status_empresas")
+        if not isinstance(usuario, dict):
+            raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
+        if not empresa:
+            raise ValueError("Empresa não informada em args: handle_update_status_empresas")
+        if not isinstance(empresa, Empresa):
+            raise ValueError("Empresa não é uma instância de Empresa em args: handle_update_status_empresas")
+        if not status:
+            raise ValueError("Status não informado em args: handle_update_status_empresas")
+        if not isinstance(status, Status):
+            raise ValueError("Argumento status não é uma instância de Status")
+
+        is_updated = await empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
 
         if is_updated:
             response["status"] = status
@@ -301,11 +314,11 @@ async def handle_status_empresas(id: str, status: Status) -> bool:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui
             response["is_error"] = True
-            response["message"] = "Erro ao excluir empresa"
+            response["message"] = "Erro ao alterar o status da empresa"
 
     except ValueError as e:
         response["is_error"] = True
-        response["message"] = f"handle_status_empresas().ValueError: Erro de validação: {str(e)}"
+        response["message"] = f"handle_update_status_empresas().ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["is_error"] = True

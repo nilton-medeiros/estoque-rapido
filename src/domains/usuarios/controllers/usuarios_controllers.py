@@ -1,11 +1,10 @@
 import logging
 
-from typing import List
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
-from src.domains.usuarios.services.users_services import UsuariosServices
+from src.domains.usuarios.services.usuarios_services import UsuariosServices
 
 logger = logging.getLogger(__name__)
 
@@ -297,57 +296,6 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
     return response
 
 
-async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
-    """
-    Update no campo photo_url do usuário.
-
-    Esta função manipula a operação de atualizar um único campo 'photo_url' do usuário. Ela utiliza um repositório
-    específico para realizar as operações necessárias.
-
-    Args:
-        id (str): ID do usuário.
-        photo_url (str): String com o link ou path e nome da foto do usuário a ser atualizado.
-
-    Returns:
-        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do usuário.
-
-    Raises:
-        ValueError: Se houver um erro de validação ao atualizar o campo photo_url do usuário.
-        Exception: Se ocorrer um erro inesperado durante a operação.
-
-    Exemplo:
-        >>> id = '12345678901234567890123456789012'
-        >>> response = await handle_update_field_usuarios(id, photo_url)
-        >>> print(response)
-    """
-    response = {
-        "is_error": False,
-        "message": "",
-        "usuario": None
-    }
-
-    try:
-        # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
-        repository = FirebaseUsuariosRepository()
-        usuarios_services = UsuariosServices(repository)
-
-        # Atualiza o campo photo_url no usuário
-        usuario = await usuarios_services.update_photo(id, photo_url)
-
-        response["message"] = "Foto do Usuário atualizada com sucessso!"
-        response["usuario"] = usuario
-
-    except ValueError as e:
-        response["is_error"] = True
-        response["message"] = f"Erro de validação: {str(e)}"
-        logger.error(response["message"])
-    except Exception as e:
-        response["is_error"] = True
-        response["message"] = str(e)
-
-    return response
-
-
 async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
@@ -410,7 +358,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
     return response
 
 
-async def handle_find_all_usuarios(empresa_id: str) -> List[Usuario]:
+async def handle_find_all_usuarios(empresa_id: str) -> list[Usuario]:
     """Busca todos os usuário da empresa_id"""
     response = {
         "is_error": False,

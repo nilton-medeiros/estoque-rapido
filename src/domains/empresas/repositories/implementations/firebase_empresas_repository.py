@@ -1,5 +1,6 @@
 import logging
 from enum import Enum  # Certifique-se de importar o módulo 'Enum'
+from datetime import datetime, UTC # Adicionado para isinstance
 
 from typing import Optional
 
@@ -43,9 +44,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         """
         Salvar uma empresa no banco de dados Firestore.
 
-        O ID (empresa_id) é o próprio CNPJ, o Firestore Insere se não existir ou atualiza se existir.
-        Garante a unicidade do CNPJ no banco de dados.
-
         Args:
             empresa (Empresa): A instância da empresa a ser salva.
 
@@ -53,10 +51,81 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             str: O ID do documento da empresa salva.
         """
         try:
+            data_to_save = empresa.to_dict_db()
+
+            # Atenção: É responsabilidade do método .to_dict_db() da classe Empresa que remova todos os atributos None e retorna um dicionário limpo.
+
+            # Se data_to_save.get("created_at") for None, significa que é uma nova entidade
+            # e o serviço não definiu um valor, então usamos SERVER_TIMESTAMP.
+            # Isso pressupõe que, para atualizações, empresa.created_at já estará
+            # preenchido com seu valor existente do banco de dados.
+            if not data_to_save.get("created_at"):
+                # Se não existe o campo created_at ou é None, atribui TIMESTAMP
+                data_to_save['created_at'] = firestore.SERVER_TIMESTAMP
+                empresa.created_at = datetime.now(UTC)  # placeholders
+
+            # updated_at é sempre definido/atualizado com o timestamp do servidor.
+            data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP
+            empresa.updated_at = datetime.now(UTC)  # placeholders
+
+            # Se data_to_save.get("status") for 'ACTIVE' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como ACTIVE
+            if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
+                data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP
+                empresa.activated_at = datetime.now(UTC)  # placeholders
+
+            # SOFT DELETE: Marca a entidade como DELETADA.
+            # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como DELETED
+            if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
+                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP
+                empresa.deleted_at = datetime.now(UTC)  # placeholders
+
+            # Se data_to_save.get("status") for 'ARCHIVED' e data_to_save.get("archived_at") for None, significa que é uma entidade marcada como ARCHIVED
+            if data_to_save.get("status") == 'ARCHIVED' and not data_to_save.get("archived_at"):
+                data_to_save['archived_at'] = firestore.SERVER_TIMESTAMP
+                empresa.archived_at = datetime.now(UTC)  # placeholders
+
+            doc_ref = self.collection.document(empresa.id)
             # Insere ou atualiza o documento na coleção 'empresas'
-            self.collection.document(empresa.id).set(
-                empresa.to_dict_db(), merge=True)
-            return empresa.id  # Garante que o ID retornado seja o ID real do documento
+            doc_ref.set( # Chamada síncrona
+                data_to_save, merge=True)
+
+            # Após salvar, lê o documento de volta para obter os timestamps resolvidos
+            # e atualizar o objeto 'empresa' em memória.
+            try:
+                doc_snapshot = doc_ref.get() # Chamada síncrona
+                if doc_snapshot.exists:
+                    empresa_data_from_db = doc_snapshot.to_dict()
+
+                    # O SDK do Firestore converte timestamps para objetos datetime do Python ao ler.
+                    created_at_from_db = empresa_data_from_db.get('created_at')
+                    updated_at_from_db = empresa_data_from_db.get('updated_at')
+                    activated_at_from_db = empresa_data_from_db.get('activated_at')
+                    deleted_at_from_db = empresa_data_from_db.get('deleted_at')
+                    archived_at_from_db = empresa_data_from_db.get('archived_at')
+
+                    # Atribui de fato o valor que veio do firestore convertido
+                    if isinstance(created_at_from_db, datetime):
+                        empresa.created_at = created_at_from_db
+
+                    if isinstance(updated_at_from_db, datetime):
+                        empresa.updated_at = updated_at_from_db
+
+                    if isinstance(activated_at_from_db, datetime):
+                        empresa.activated_at = activated_at_from_db
+
+                    if isinstance(deleted_at_from_db, datetime):
+                        empresa.deleted_at = deleted_at_from_db
+
+                    if isinstance(archived_at_from_db, datetime):
+                        empresa.archived_at = archived_at_from_db
+                else:
+                    logger.warning(f"Documento {empresa.id} não encontrado imediatamente após o set para releitura dos timestamps.")
+            except Exception as e_read:
+                logger.error(f"Erro ao reler o documento {empresa.id} para atualizar timestamps no objeto em memória: {str(e_read)}")
+                # A operação de save principal foi bem-sucedida.
+                # O objeto 'empresa' em memória ainda terá os SERVER_TIMESTAMPs como placeholders nos campos de data.
+
+            return empresa.id
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
                 logger.error("Argumento inválido fornecido.")
@@ -260,6 +329,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             raise
 
     async def update_status(self, empresa_id: str, status: Status) -> bool:
+    # ToDo: EXCLUIR ESTE MÉTODO após substituição completa pelo método save(), excluir do contract repository também
         """
         Altera o status de uma empresa pelo seu identificador único para DELETED.
         Esta aplicação não exclui efetivamente o registro, apenas altera seu status.

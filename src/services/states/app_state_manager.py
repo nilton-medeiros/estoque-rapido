@@ -1,7 +1,7 @@
 import logging
 import flet as ft
 
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 from .state_validator import StateValidator
 from src.shared import MessageType, message_snackbar
 
@@ -15,7 +15,7 @@ class AppStateManager:
 
     def __init__(self, page: ft.Page):
         self.page = page
-        self._state: Dict[str, Any] = {
+        self._state: dict[str, Any] = {
             'usuario': {},
             'empresa': {},
             'empresa_form': {},

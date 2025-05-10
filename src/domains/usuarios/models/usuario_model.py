@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Set
+from typing import Set
 from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
@@ -20,11 +20,11 @@ class Usuario:
         name (NomePessoa): Nome do usuário.
         phone_number (PhoneNumber): Número de telefone do usuário.
         profile (str): Perfil do usuário.
-        id (Optional[str]): ID opcional do usuário.
-        empresa_id (Optional[str]): ID da última empresa logada.
+        id (str | None): ID opcional do usuário.
+        empresa_id (str | None): ID da última empresa logada.
         empresas (Set[str]): Conjunto de IDs de empresas associadas ao usuário.
-        photo_url (Optional[str]): URL da foto de perfil do usuário.
-        user_colors (Optional[dict]): Cor preferencial do usuário.
+        photo_url (str | None): URL da foto de perfil do usuário.
+        user_colors (dict | None): Cor preferencial do usuário.
 
 
     Example:
@@ -42,11 +42,11 @@ class Usuario:
     name: NomePessoa
     phone_number: PhoneNumber
     profile: str
-    id: Optional[str] = field(default=None)
-    empresa_id: Optional[str] = field(default=None)
+    id: str | None = field(default=None)
+    empresa_id: str | None = field(default=None)
     empresas: Set[str] = field(default_factory=set)
-    photo_url: Optional[str] = field(default=None)
-    user_colors: Optional[Dict] = field(default_factory=dict)
+    photo_url: str | None = field(default=None)
+    user_colors: dict | None = field(default_factory=dict)
 
     # Lista de perfis permitidos
     ALLOWED_PROFILES = {"admin", "cobrança",

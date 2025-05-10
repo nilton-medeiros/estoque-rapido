@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -27,7 +26,7 @@ class AppConfig:
     dfe_api_token_expires_in: datetime
     debug: bool = False
     timeout: int = 30
-    id: Optional[str] = field(default=None)
+    id: str | None = field(default=None)
 
     def __post_init__(self):
         """

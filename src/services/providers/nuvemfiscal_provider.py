@@ -1,9 +1,9 @@
 import os
 import urllib.parse
 import logging
-from typing import Dict, Optional
+from typing import Optional
 import aiohttp
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 
 import src.domains.app_config.controllers.app_config_controllers as controllers
 from src.domains.empresas import CertificateA1, Empresa, Environment
@@ -194,7 +194,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
             self.settings.dfe_api_token_expires_in = self.token_expires_in
 
         # Obtem a data e hora do servidor em UTC
-        agora_utc = datetime.now(timezone.utc)
+        agora_utc = datetime.now(UTC)
 
         # Se não encontrou, obtem um novo token, se encontrou (is_found), verifica a validade do token
         if not self.token_expires_in or (self.token_expires_in <= agora_utc):
@@ -220,12 +220,12 @@ class NuvemFiscalDFeProvider(DFeProvider):
                         f"Erro ao salvar settings no db: Mensagem {response['message']}")
                     return None
 
-    async def _new_token_get(self) -> Optional[Dict]:
+    async def _new_token_get(self) -> Optional[dict]:
         """
         Obtém um novo token de acesso usando o fluxo OAuth 2.0 client_credentials.
 
         Returns:
-            Dict: Dicionário contendo o token e informações relacionadas ou None em caso de erro
+            dict: Dicionário contendo o token e informações relacionadas ou None em caso de erro
         """
         try:
             # Configuração do endpoint e headers
@@ -268,8 +268,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
                     token_data = await response.json()
 
                     # Adiciona timestamp da criação do token
-                    token_data['created_at'] = datetime.now(
-                        timezone.utc).isoformat()
+                    token_data['created_at'] = datetime.now(UTC).isoformat()
 
                     logger.info("Token obtido com sucesso")
                     return token_data
