@@ -18,5 +18,6 @@
     "states": "context",
     "general_info": "Docs",
     "app_config": "config",
+    "produtos": "webpack",
   },
 }
