@@ -1,5 +1,6 @@
 import flet as ft
 
+# ToDo: Este componente está sem uso, por enquanto!
 
 class Carousel(ft.Column):
     def __init__(self, controls: list[ft.Control], height: int = 250):

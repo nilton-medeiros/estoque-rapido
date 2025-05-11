@@ -7,20 +7,17 @@ from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 import src.shared.utils.tools as tools
 
+from src.domains.empresas import EmpresaSize
 from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import EmpresaSize
-from src.domains.usuarios.controllers import usuarios_controllers
-from src.pages.partials.build_input_responsive import build_input_field
-from src.shared.utils.field_validation_functions import validate_email
-from src.shared.utils.find_project_root import find_project_root
-from src.shared.utils.gen_uuid import get_uuid
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
 
-from src.services.upload.upload_files import UploadFile
-from src.services.apis.consult_cnpj_api import consult_cnpj_api
+from src.pages.partials import build_input_field
+from src.shared import validate_email, get_uuid, MessageType, message_snackbar
+from src.shared.utils.find_project_path import find_project_root
 
+from src.services import UploadFile, consult_cnpj_api
 
 import flet as ft
 
@@ -627,9 +624,11 @@ class EmpresaView:
         """
         Retorna um objeto Empresa com os dados do formulário.
         """
-        from src.domains.empresas import Address, CNPJ, CodigoRegimeTributario, Environment, FiscalData, CertificateA1
+        from src.domains.empresas import Address, CodigoRegimeTributario, Environment, FiscalData
+        from src.domains.empresas.models.certificate_a1 import CertificateA1
+        from src.domains.empresas.models.empresa_model import Empresa
         from src.domains.shared import PhoneNumber, Password
-        from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
+        from src.services import AsaasPaymentGateway
 
         id = None
         if self.data and self.data.get('id'):
@@ -822,7 +821,7 @@ class EmpresaView:
 
 
 # Rota: /home/empresas/form/principal
-def empresas_form(page: ft.Page):
+def form_principal(page: ft.Page):
     """Página de cadastro de empresas"""
     # if colors := page.app_state.usuario.get('user_colors'):
     #     page.theme.color_scheme.primary = colors.get('primary')
@@ -906,7 +905,6 @@ def empresas_form(page: ft.Page):
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return
 
-        empresa.id = result["id"]
         # Atualiza o estado do app com o nova empresa antes da navegação se não existir
         page.app_state.set_empresa(empresa.to_dict())
 

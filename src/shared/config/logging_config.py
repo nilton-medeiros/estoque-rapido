@@ -3,7 +3,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-from src.shared.utils.find_project_root import find_project_root
+# Importação direta para evitar ciclo, pois o src/shared/__init__.py
+# importa LogConfig que chama get_log_dir() que importa find_project_root formando um cíclo
+from src.shared.utils.find_project_path import find_project_root
 
 def get_log_dir():
     project_root = find_project_root(__file__)

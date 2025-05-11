@@ -1,7 +1,7 @@
 import logging
 from src.domains.empresas import Environment
-from src.services.apis.dfe_services import DFeServices
 from src.services.providers.nuvemfiscal_provider import NuvemFiscalDFeProvider
+from src.services.apis.dfe_services import DFeServices
 
 logger = logging.getLogger(__name__)
 

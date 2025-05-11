@@ -1,2 +1,0 @@
-from .contracts.app_config_repository import AppConfigRepository
-from .implementations.firebase_app_config_repository import FirebaseAppConfigRepository

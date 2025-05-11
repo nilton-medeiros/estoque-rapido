@@ -4,7 +4,7 @@ from src.domains.app_config.models.app_config_model import AppConfig
 from src.domains.app_config.repositories.contracts.app_config_repository import AppConfigRepository
 from src.shared import deepl_translator
 
-from storage.data.firebase.firebase_initialize import get_firebase_app
+from storage.data import get_firebase_app
 from firebase_admin import firestore
 from firebase_admin import exceptions
 

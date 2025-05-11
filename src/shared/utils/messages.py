@@ -43,3 +43,29 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
     page.update()
     snack_bar.open = True
     page.update()
+
+
+async def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
+    def close_banner(e):
+        banner.open = False
+        e.control.page.update()
+
+    banner = ft.Banner(
+        bgcolor=ft.Colors.PRIMARY,
+        leading=ft.Icon(ft.Icons.WARNING_AMBER,
+                        color=ft.Colors.ON_PRIMARY, size=40),
+        content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
+        actions=[ft.ElevatedButton(
+            text=btn_text,
+            icon=ft.icons.CLOSE,
+            style=ft.ButtonStyle(
+                color=ft.Colors.ON_PRIMARY_CONTAINER,
+                bgcolor=ft.Colors.PRIMARY_CONTAINER,
+            ),
+            on_click=close_banner
+        )],
+    )
+
+    page.overlay.append(banner)
+    banner.open = True
+    page.update()

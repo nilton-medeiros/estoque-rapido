@@ -1,7 +1,6 @@
 import logging
 
-
-from src.domains.empresas.models.cnpj import CNPJ
+from src.domains.empresas.models.cnpj import CNPJ  # Importar diretamente para evitar cíclo em src/domains/empresa/__init__.py
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.implementations.firebase_empresas_repository import FirebaseEmpresasRepository

@@ -9,7 +9,7 @@ from src.domains.shared.domain_exceptions import AuthenticationException, Invali
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared import deepl_translator
-from storage.data.firebase.firebase_initialize import get_firebase_app
+from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
 

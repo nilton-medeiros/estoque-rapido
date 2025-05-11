@@ -7,16 +7,11 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from src.pages.empresas.empresas_form import empresas_form
-from src.pages.empresas.empresas_form_dados_fiscais import empresas_form_dados_fiscais
-from src.pages.empresas.empresas_grid_lixeira import empresas_grid_lixeira
-from src.pages.empresas.empresas_grid_view import empresas_grid
-from src.pages.home.home_page import home_page
-from src.pages.signup import signup
-from src.pages.landing_page import landing_page
-from src.pages.login import login
+from src.pages.empresas import form_principal, form_dados_fiscais, grid_view, grid_lixeira
+from src.pages.home import dashboard
+from src.pages import render_signup, render_landing_page, render_login
 from src.services import AppStateManager
-from src.shared.config import get_app_colors
+from src.shared import get_app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +155,7 @@ def main(page: ft.Page):
             case '/':    # Raiz: Landing Page
                 pg_view = ft.View(
                     route='/',
-                    controls=[landing_page(page)],
+                    controls=[render_landing_page(page)],
                     appbar=page.appbar,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -168,7 +163,7 @@ def main(page: ft.Page):
             case '/login':
                 pg_view = ft.View(
                     route='/login',
-                    controls=[login(page)],
+                    controls=[render_login(page)],
                     bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -180,7 +175,7 @@ def main(page: ft.Page):
                 # Acesso a página /home somente usuários logados
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    home_container = home_page(page)
+                    home_container = dashboard(page)
                     pg_view = ft.View(
                         route='/home',
                         appbar=home_container.data,
@@ -195,20 +190,20 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    pg_view = empresas_grid(page)
+                    pg_view = grid_view(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid/lixeira':
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    pg_view = empresas_grid_lixeira(page)
+                    pg_view = grid_lixeira(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/principal':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    form = empresas_form(page)
+                    form = form_principal(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/principal',
                         appbar=form.data,
@@ -224,7 +219,7 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'):
                     page.on_resized = None
-                    form = empresas_form_dados_fiscais(page)
+                    form = form_dados_fiscais(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/dados-fiscais',
                         appbar=form.data,
@@ -239,7 +234,7 @@ def main(page: ft.Page):
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
-                    controls=[signup(page)],
+                    controls=[render_signup(page)],
                     bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,

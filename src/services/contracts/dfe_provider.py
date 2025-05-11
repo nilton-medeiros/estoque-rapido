@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.domains.empresas import CertificateA1, Empresa
+from src.domains.empresas.models.certificate_a1 import CertificateA1
+from src.domains.empresas.models.empresa_model import Empresa
 
 class DFeProvider(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de usuários."""

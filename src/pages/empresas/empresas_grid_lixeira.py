@@ -6,14 +6,13 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 import src.pages.empresas.empresas_actions as empresas_actions
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
-from src.shared.utils.time_zone import format_datetime_to_utc_minus_3
+from src.shared import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
 
 
 # Rota: /home/empresas/grid/lixeira
-def empresas_grid_lixeira(page: ft.Page):
+def grid_lixeira(page: ft.Page):
     """Página de exibição das empresas do usuário logado que estão inativas ('DELETED') e arquivadas ('ARCHIVED') em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     # page.data = "/home/empresas/grid/lixeira"
@@ -59,7 +58,7 @@ def empresas_grid_lixeira(page: ft.Page):
 
         match action:
             case "RESTORE":
-                is_restore = await empresas_actions.restore_from_trash(page=page, empresa_id=empresa.id)
+                is_restore = await empresas_actions.restore_from_trash(page=page, empresa=empresa)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)

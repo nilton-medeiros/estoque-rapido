@@ -1,9 +1,9 @@
 import flet as ft
 
-from src.pages.partials.login_button import LoginButton
+from src.pages.partials import LoginButton
 
 
-def landing_page(page: ft.Page):
+def render_landing_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
 
     title_bar = ft.Text(

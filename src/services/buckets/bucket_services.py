@@ -1,4 +1,4 @@
-from storage.buckets.contracts.bucket_storage import BucketStorage
+from storage.buckets import BucketStorage
 
 
 class BucketServices:

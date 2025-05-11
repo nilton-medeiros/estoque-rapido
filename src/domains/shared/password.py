@@ -2,22 +2,38 @@ from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import os
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Password:
     def __init__(self, value: str):
+        self.error: bool = False
+        self.error_message: str | None = None
+        self.value: str | None = None
+
         load_dotenv()
         key = os.getenv("FERNET_KEY")
         if not key:
+            logger.error("FERNET_KEY não encontrada no ambiente.")
             raise ValueError("FERNET_KEY não encontrada no ambiente.")
         try:
             self._cipher_suite = Fernet(
                 key.encode() if isinstance(key, str) else key)
         except Exception as e:
+            logger.error("Chave Fernet inválida: %s")
             raise ValueError(f"Chave Fernet inválida: {e}")
 
         if not isinstance(value, str):
+            logger.error("A senha deve ser uma string.")
             raise TypeError("A senha deve ser uma string.")
 
+        if len(value) < 8:
+            logger.warning("A senha deve ter pelo menos 8 caracteres.")
+            self.error = True
+            self.error_message = "A senha deve ter:\n• pelo menos 8 caracteres"
+            return
         self.value = self._encrypt(value)
 
     def __eq__(self, other):
@@ -73,7 +89,6 @@ class Password:
         # Se for string (senha em texto plano)
         elif isinstance(data, str):
             return cls(data)
-
         raise ValueError("Formato inválido para criar Password.")
 
     @staticmethod

@@ -154,11 +154,15 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
     page.update()
     return await operation_complete_future
 
-async def restore_from_trash(page, empresa_id) -> bool:
-    logger.info(f"Restaurando empresa ID: {empresa_id} da lixeira")
-    result = await empresas_controllers.handle_status_empresas(id=empresa_id, status=Status.ACTIVE)
+async def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
+    logger.info(f"Restaurando empresa ID: {empresa.id} da lixeira")
+    result = await empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=page.app_state.usuario, status=Status.ACTIVE)
 
-    return True if not result.get('is_error') else False
+    if result.get('is_error'):
+        message_snackbar(page=page, message=result.get("message"), message_type=MessageType.ERROR)
+        return False
+    message_snackbar(page=page, message="Empresa restaurada com sucesso!")
+    return True
 
 
 async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> None:
@@ -167,28 +171,3 @@ async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> None:
         empresas=empresas,
         empresa_ativa_id=empresa_id
     )
-
-
-async def show_banner(page: ft.Page, message) -> None:
-    def close_banner(e):
-        banner.open = False
-        e.control.page.update()
-
-    banner = ft.Banner(
-        bgcolor=ft.Colors.PRIMARY,
-        leading=ft.Icon(ft.Icons.WARNING_AMBER,
-                        color=ft.Colors.ON_PRIMARY, size=40),
-        content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
-        actions=[ft.ElevatedButton(
-            text="Entendi",
-            style=ft.ButtonStyle(
-                color=ft.Colors.ON_PRIMARY_CONTAINER,
-                bgcolor=ft.Colors.PRIMARY_CONTAINER,
-            ),
-            on_click=close_banner
-        )],
-    )
-
-    page.overlay.append(banner)
-    banner.open = True
-    page.update()

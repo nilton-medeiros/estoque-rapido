@@ -1,6 +1,6 @@
 import logging
 
-from src.services.buckets.bucket_services import BucketServices
+from src.services import BucketServices
 from storage.buckets.implementations.aws_s3_storage import AmazonS3Adapter
 import boto3
 

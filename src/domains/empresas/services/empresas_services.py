@@ -5,7 +5,7 @@ from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
-from src.shared.utils.gen_uuid import get_uuid
+from src.shared import get_uuid
 
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,
@@ -129,6 +129,7 @@ class EmpresasServices:
             empresa.archived_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.archived_by_id = usuario.get("id")
             empresa.archived_by_name = user_name.nome_completo()
+
         id = await self.repository.save(empresa)
         if id:
             return True

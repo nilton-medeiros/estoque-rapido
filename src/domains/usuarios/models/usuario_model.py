@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.password import Password
-from src.shared.config import get_app_colors
+from src.shared import get_app_colors
 
 
 @dataclass

@@ -11,7 +11,7 @@ from src.domains.empresas.controllers import empresas_controllers
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import CodigoRegimeTributario, EmpresaSize, Environment
 from src.pages.partials.build_input_responsive import build_input_field
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
@@ -354,7 +354,7 @@ class EmpresaViewDadosFiscais:
 
 
 # Rota: /home/empresas/form/dados-fiscais
-def empresas_form_dados_fiscais(page: ft.Page):
+def form_dados_fiscais(page: ft.Page):
     """Página de cadstro dos dados fiscais da empresa"""
 
     route_title = "home/empresas/form/dados-fiscais"

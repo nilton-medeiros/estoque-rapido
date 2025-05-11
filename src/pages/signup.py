@@ -2,14 +2,14 @@ import flet as ft
 from typing import Optional
 
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+from src.domains.usuarios import Usuario
 
 from src.domains.shared import NomePessoa, Password, PhoneNumber
-from src.domains.usuarios.models.usuario_model import Usuario
 from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
 
 import flet as ft
 
-from src.pages.partials.get_responsive_sizes import get_responsive_sizes
+from src.pages.partials.responsive_sizes import get_responsive_sizes
 from src.pages.partials.build_input_responsive import build_input_field
 
 
@@ -301,7 +301,7 @@ class SignupView:
         return self.form
 
 
-def signup(page: ft.Page):
+def render_signup(page: ft.Page):
     '''
     Cria uma página Container de formulário de registro para novos usuários.
 

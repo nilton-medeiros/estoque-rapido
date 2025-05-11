@@ -1,11 +1,10 @@
 import flet as ft
 
+from src.pages.home import main_content
 from src.pages.home.sidebar import sidebar_container
-from src.pages.home.content import main_content
 
-# from src.shared.config.app_theme import AppTheme
 
-def home_page(page: ft.Page):
+def dashboard(page: ft.Page):
     """Página Home do usuário logado"""
     # page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK

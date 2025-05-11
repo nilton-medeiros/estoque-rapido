@@ -3,15 +3,13 @@ import logging
 import flet as ft
 from typing import Optional
 
-from src.domains.shared.nome_pessoa import NomePessoa
-from src.domains.shared.password import Password
-from src.pages.partials.get_responsive_sizes import get_responsive_sizes
-from src.pages.partials.build_input_responsive import build_input_field
+from src.domains.shared import NomePessoa, Password
+from src.pages.partials import get_responsive_sizes, build_input_field
 
 from src.shared import MessageType, message_snackbar, validate_email
 
-import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
-import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+import src.domains.empresas as emp_controllers
+import src.domains.usuarios as usu_controllers
 
 from src.domains.empresas.models.empresa_model import Empresa
 
@@ -152,11 +150,11 @@ class LoginView:
 
         self.email_input.value = email
 
-        # ToDo: Passar esta responsabilidade para a classe Password
-        password = self.password_input.value
+        # A classe Password lida com senhas inválidas
+        password = Password(self.password_input.value)
 
-        if len(password) < 8:
-            return "A senha deve ter:\n• pelo menos 8 caracteres"
+        if password.error:
+            return password.error_message
 
         return None
 
@@ -181,7 +179,7 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = await usuarios_controllers.handle_login_usuarios(
+            result = await usu_controllers.handle_login_usuarios(
                 email=self.email_input.value, password=self.password_input.value)
 
             if result["is_error"]:
@@ -200,7 +198,7 @@ class LoginView:
                 return
 
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
-            result = await empresas_controllers.handle_get_empresas_by_id(id=user.empresa_id)
+            result = await emp_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["is_error"]:
                 user.empresa_id = None
@@ -274,7 +272,7 @@ class LoginView:
         return self.form
 
 
-def login(page: ft.Page):
+def render_login(page: ft.Page):
     '''
     Cria uma página Container de formulário de login de usuários.
 

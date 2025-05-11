@@ -14,7 +14,7 @@ from src.domains.empresas.models.empresa_model import Empresa  # Importação di
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.shared import deepl_translator
-from storage.data.firebase.firebase_initialize import get_firebase_app
+from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
 
@@ -328,66 +328,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
 
-    async def update_status(self, empresa_id: str, status: Status) -> bool:
-    # ToDo: EXCLUIR ESTE MÉTODO após substituição completa pelo método save(), excluir do contract repository também
-        """
-        Altera o status de uma empresa pelo seu identificador único para DELETED.
-        Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
-        A exclusão definitiva ocorrerá após 90 dias da mudança para Status.DELETED,
-        realizada periodicamente por uma Cloud Function.
-
-        Args:
-            empresa_id (str): O identificador único da empresa.
-            status (Status): O novo status da empresa.
-
-        Retorna:
-            bool: True se alteração for bem-sucedida, False caso contrário.
-
-        Levanta:
-            Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a exclusão.
-        """
-        try:
-            # self.collection.document(empresa_id).delete()
-            if status == Status.DELETED:
-                fields = {'status': status.name, "deleted_at": firestore.SERVER_TIMESTAMP, "archived_at": None}
-            elif status == Status.ARCHIVED:
-                fields = {'status': status.name, "archived_at": firestore.SERVER_TIMESTAMP, "deleted_at": None}
-            elif status == Status.ACTIVE:
-                fields = {'status': status.name, "archived_at": None, "deleted_at": None}
-
-            self.collection.document(empresa_id).update(fields)
-
-            return True
-        # ToDo: Corrigir respostas adequadas
-        except exceptions.FirebaseError as e:
-            if e.code == 'not-found':
-                logger.info(
-                    f"Empresa com id '{empresa_id}' não encontrada para exclusão.")
-                # Retorna True pois o estado desejado (não existir) já foi atingido
-                return True
-            elif e.code == 'permission-denied':
-                logger.error(
-                    f"Permissão negada ao excluir empresa com id '{empresa_id}': {e}")
-                translated_error = deepl_translator(str(e))
-                raise Exception(
-                    f"Erro de permissão ao excluir empresa: {translated_error}")
-            elif e.code == 'unavailable':
-                logger.error(
-                    f"Serviço do Firestore indisponível ao excluir empresa com id '{empresa_id}': {e}")
-                translated_error = deepl_translator(str(e))
-                raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
-            else:
-                logger.error(
-                    f"Erro do Firebase ao excluir empresa com id '{empresa_id}': Código: {e.code}, Detalhes: {e}")
-                translated_error = deepl_translator(str(e))
-                raise Exception(f"Erro ao excluir empresa: {translated_error}")
-        except Exception as e:
-            logger.error(
-                f"Erro inesperado ao excluir empresa com id '{empresa_id}': {str(e)}")
-            translated_error = deepl_translator(str(e))
-            raise Exception(
-                f"Erro inesperado ao excluir empresa: {translated_error}")
 
     async def count_inactivated(self, ids_empresas: set[str] | list[str]) -> int:
         """Conta as empresas inativas (deletadas ou arquivadas) dentro do conjunto ou lista de ids_empresas do usuário logado."""

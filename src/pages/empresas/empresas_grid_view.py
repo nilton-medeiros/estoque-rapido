@@ -6,13 +6,13 @@ import flet as ft
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 from src.domains.empresas.models.empresa_subclass import Status
 import src.pages.empresas.empresas_actions as empresas_actions
-from src.shared.utils.message_snackbar import MessageType, message_snackbar
+from src.shared import MessageType, message_snackbar
 # Rota: /home/empresas/grid
 
 logger = logging.getLogger(__name__)
 
 
-def empresas_grid(page: ft.Page):
+def grid_view(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/empresas/grid"

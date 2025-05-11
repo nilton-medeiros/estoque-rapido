@@ -6,7 +6,9 @@ import aiohttp
 from datetime import datetime, timedelta, UTC
 
 import src.domains.app_config.controllers.app_config_controllers as controllers
-from src.domains.empresas import CertificateA1, Empresa, Environment
+from src.domains.empresas import Environment
+from src.domains.empresas.models.certificate_a1 import CertificateA1
+from src.domains.empresas.models.empresa_model import Empresa
 from src.services.contracts.dfe_provider import DFeProvider
 
 logger = logging.getLogger(__name__)
@@ -183,7 +185,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
 
     async def _token_get(self):
         # Acessa o database para consultar informações do token, o id do documento é 'settings'
-        response = controllers.handle_get_config("settings")
+        response = controllers.handle_get_config("app_settings")
 
         if response['is_found']:
             # Verifica se o token expirou

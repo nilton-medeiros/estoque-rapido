@@ -39,9 +39,3 @@ class EmpresasRepository(ABC):
         """Lista as empresas do usuário logado"""
         raise NotImplementedError(
             "Este método deve ser implementado pela subclasse")
-
-    @abstractmethod
-    async def update_status(self, empresa_id: str, status: Status) -> bool:
-        """Altera o status para DELETED de uma empresa por seu ID."""
-        raise NotImplementedError(
-            "Este método deve ser implementado pela subclasse")

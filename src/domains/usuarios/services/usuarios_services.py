@@ -2,7 +2,7 @@ from typing import Optional
 
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
-from src.shared.utils.gen_uuid import get_uuid
+from src.shared import get_uuid
 
 
 class UsuariosServices:

@@ -1,6 +1,6 @@
 import flet as ft
 
-from src.pages.partials.get_responsive_sizes import get_responsive_sizes
+from .responsive_sizes import get_responsive_sizes
 
 def build_input_field(page_width: int, app_colors: dict, col: dict = None, icon: str = None, **kwargs) -> ft.TextField:
     sizes = get_responsive_sizes(page_width)

@@ -3,16 +3,16 @@ from datetime import datetime
 from typing import Any  # Necessário para dict[str, Any]
 
 """
-ToDo: Refatorar, aqui não deveria invocar diretamente a AsaasPaymentGateway
+ToDo: Refatorar. Aqui não deveria invocar diretamente a AsaasPaymentGateway (Está quebrando regra DDD)
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
-from src.domains.shared.password import Password
-from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
-from src.domains.shared.phone_number import PhoneNumber
-from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario, Status
-from src.domains.empresas.models.cnpj import CNPJ
+from src.domains.shared import Password, PhoneNumber
+from src.services import AsaasPaymentGateway
+from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario
 from src.domains.empresas.models.certificate_a1 import CertificateA1
+from src.domains.empresas.models.cnpj import CNPJ
+from src.domains.empresas.models.empresa_subclass import Status
 
 
 @dataclass
@@ -367,46 +367,56 @@ class Empresa:
             elif type(size_data) is str:
                 size = EmpresaSize[size_data]
 
-        fiscal = None
+        fiscal: FiscalData | None = None
         if fiscal_data := data.get("fiscal"):
             if isinstance(fiscal_data, FiscalData):
                 fiscal = fiscal_data
             elif isinstance(fiscal_data, dict):
+                # Processar enums e valores convertidos separadamente para maior clareza
+                crt_name = fiscal_data.get("crt_name")
+                crt = CodigoRegimeTributario[crt_name] if crt_name else None
+
+                env_name = fiscal_data.get("environment_name")
+                environment = Environment[env_name] if env_name else None
+
+                nfce_series_raw = fiscal_data.get("nfce_series")
+                nfce_series = int(nfce_series_raw) if nfce_series_raw is not None else None
+
+                # Criar objeto fiscal com valores processados
                 fiscal = FiscalData(
-                    crt=CodigoRegimeTributario[fiscal_data.get(
-                        "crt_name")] if fiscal_data.get("crt_name") else None,
-                    environment=Environment[fiscal_data.get("environment_name")] if fiscal_data.get(
-                        "environment_name") else None,
-                    nfce_series=int(fiscal_data.get("nfce_series")) if fiscal_data.get(
-                        "nfce_series") is not None else None,
+                    crt=crt,
+                    environment=environment,
+                    nfce_series=nfce_series,
                     nfce_number=fiscal_data.get("nfce_number"),
                     nfce_sefaz_id_csc=fiscal_data.get("nfce_sefaz_id_csc"),
                     nfce_sefaz_csc=fiscal_data.get("nfce_sefaz_csc"),
-                    nfce_api_enabled=fiscal_data.get(
-                        "nfce_api_enabled", False),
+                    nfce_api_enabled=fiscal_data.get("nfce_api_enabled", False),
                 )
 
-        certificate_a1 = None
-        if certificate_a1_data := data.get("certificate_a1"):
-            if isinstance(certificate_a1_data, CertificateA1):
-                certificate_a1 = certificate_a1_data
-            elif isinstance(certificate_a1_data, dict):
-                # É preciso garantir que 'password' seja um objeto Password
-                password_value = certificate_a1_data.pop('password', None)
-                if password_value is not None:
-                    if isinstance(password_value, Password):
-                        cert_password = password_value
-                    else:
-                        # Assume que é uma string
-                        cert_password = Password(str(password_value))
-                    certificate_a1 = CertificateA1(
-                        password=cert_password, **certificate_a1_data)
-                else:
-                    # Lidar com o caso de senha ausente se for um cenário válido
-                    raise ValueError(
-                        "Senha do certificado ausente ao criar CertificateA1 a partir de dict")
+        certificate_a1: CertificateA1 | None = None
+        if certificate_a1_input_data := data.get("certificate_a1"):
+            # Caso já seja uma instância do tipo correto
+            if isinstance(certificate_a1_input_data, CertificateA1):
+                certificate_a1 = certificate_a1_input_data
 
-        payment_gateway = None
+            # Caso seja um dicionário, extrair dados e criar nova instância
+            elif isinstance(certificate_a1_input_data, dict):
+                # Extrair a senha do certificado
+                password_value = certificate_a1_input_data.get('password')
+                if password_value is None:
+                    raise ValueError("Senha do certificado ausente ao criar CertificateA1 a partir de dict")
+
+                # Converter para objeto Password se necessário
+                cert_password = (password_value if isinstance(password_value, Password)
+                                else Password(str(password_value)))
+
+                # Criar cópia do dicionário sem a senha para passar como kwargs
+                cert_data = {k: v for k, v in certificate_a1_input_data.items() if k != 'password'}
+
+                # Criar nova instância de CertificateA1
+                certificate_a1 = CertificateA1(password=cert_password, **cert_data)
+
+        payment_gateway : AsaasPaymentGateway | None = None
         if payment_gateway_data := data.get("payment_gateway"):
             if isinstance(payment_gateway_data, AsaasPaymentGateway):
                 payment_gateway = payment_gateway_data
