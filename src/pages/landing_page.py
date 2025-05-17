@@ -13,7 +13,7 @@ def render_landing_page(page: ft.Page):
 
     def handle_page_resize(e):
         # Obtém a largura da página de forma segura
-        width = page.width
+        width: int|float = page.width if page.width else 0
         size = 18
 
         title_bar.value = "ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças"
@@ -265,7 +265,7 @@ def render_landing_page(page: ft.Page):
         alignment=ft.alignment.center,
         content=ft.Column(
             spacing=0,
-            alignment=ft.alignment.center,
+            alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=ft.ScrollMode.AUTO,
             controls=[

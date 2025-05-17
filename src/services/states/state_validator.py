@@ -44,3 +44,22 @@ class StateValidator:
                 return False, f"Campo obrigatório ausente: {field}"
 
         return True, ""
+
+    @staticmethod
+    def validate_form_data(form_data: dict, required_fields: list[str]) -> Tuple[bool, str]:
+        """
+        Valida os dados de form_data.
+        Retorna uma tupla (is_valid, error_message).
+        """
+        if not isinstance(form_data, dict):
+            return False, "Dados do formulário devem ser um dicionário"
+
+        if not isinstance(required_fields, list):
+            return True, ""  # Se não passou a lista, não valida nada
+
+        # Campos obrigatórios da entidade em Dados de formulário
+        for field in required_fields:
+            if field not in form_data:
+                return False, f"Campo obrigatório ausente: {field}"
+
+        return True, ""

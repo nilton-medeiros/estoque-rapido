@@ -7,9 +7,10 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from src.pages import render_signup, render_landing_page, render_login
 from src.pages.empresas import form_principal, form_dados_fiscais, grid_view, grid_lixeira
 from src.pages.home import dashboard
-from src.pages import render_signup, render_landing_page, render_login
+from src.pages.produtos.produto_categorias_form import form_produto_categorias
 from src.services import AppStateManager
 from src.shared import get_app_colors
 
@@ -17,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 # Carrega a chave do Flet para assinar URLs temporárias de upload
 load_dotenv()
-flet_key = os.getenv('FLET_SECRET_KEY')
+flet_key: str|None = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
-os.environ["FLET_SECRET_KEY"] = flet_key
+if flet_key:
+    os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
 def reconfigure_logging():
@@ -53,12 +55,12 @@ def reconfigure_logging():
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
     page.clean()
-    page.user_name_text = ft.Text("Nenhum Usuário logado")
-    page.company_name_text_btn = ft.TextButton(
+    page.user_name_text: ft.Text = ft.Text("Nenhum Usuário logado") # type: ignore
+    page.company_name_text_btn: ft.TextButton = ft.TextButton( # type: ignore
         text="NENHUMA EMPRESA SELECIONADA",
         style=ft.ButtonStyle(
             alignment=ft.alignment.center,
-            mouse_cursor="pointer",
+            # mouse_cursor="pointer",
             text_style=ft.TextStyle(
                 color=ft.Colors.WHITE,
                 size=14,
@@ -73,58 +75,49 @@ def main(page: ft.Page):
 
     # Inicialize o estado da aplicação
     app_state = AppStateManager(page)
-    page.app_state = app_state  # Torna o app_state acessível globalmente
+    page.app_state = app_state  # type: ignore # Torna o app_state acessível globalmente
 
     # Registrar o evento para mudanças
     def handle_pubsub(message):
         match message:
             case "usuario_updated":
-                if page.app_state.usuario.get('name'):
+                if page.app_state.usuario.get('name'): # type: ignore
                     # Atualiza elementos da UI que dependem do usuário
                     update_usuario_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
             case "empresa_updated":
-                if page.app_state.empresa.get('corporate_name'):
+                if page.app_state.empresa.get('corporate_name'): # type: ignore
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados à empresa
                     clear_empresa_ui()
-            case "empresa_form_updated":
-                # Atualiza elementos da UI que dependem do formulário de empresa
-                update_empresa_form_dependent_ui()
 
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = page.app_state.usuario['name'].nome_completo
+            page.user_name_text.value = page.app_state.usuario['name'].nome_completo # type: ignore
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.user_name_text.update()
 
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = page.app_state.empresa.get(
+            page.company_name_text_btn.text = page.app_state.empresa.get( # type: ignore
                 'trade_name', 'corporate_name')
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.company_name_text_btn.update()
 
-    def update_empresa_form_dependent_ui():
-        if not page.app_state.empresa.get('id') or page.app_state.empresa.get('id') == page.app_state.empresa_form.get('id'):
-            if hasattr(page, 'company_name_text_btn'):
-                page.company_name_text_btn.text = page.app_state.empresa_form.get(
-                    'trade_name', 'corporate_name')
-
     def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = ""
+            page.user_name_text.value = "" # type: ignore
             # page.user_name_text.update()
 
     def clear_empresa_ui():
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"
+            page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA" # type: ignore
             # page.company_name_text_btn.update()
 
     # Registra o handler do PubSub
@@ -169,11 +162,11 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             case '/logout':
-                page.app_state.clear_state()
+                page.app_state.clear_states() # type: ignore
                 page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
-                if page.app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     home_container = dashboard(page)
                     pg_view = ft.View(
@@ -188,20 +181,20 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     pg_view = grid_view(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid/lixeira':
-                if page.app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     pg_view = grid_lixeira(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/principal':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     form = form_principal(page)
                     pg_view = ft.View(
@@ -217,11 +210,26 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/dados-fiscais':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'):
+                if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     form = form_dados_fiscais(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/dados-fiscais',
+                        appbar=form.data,
+                        controls=[form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case 'home/produtos/categorias/form':
+                if page.app_state.usuario.get('id'): # type: ignore
+                    page.on_resized = None
+                    form = form_produto_categorias(page)
+                    pg_view = ft.View(
+                        route='home/produtos/categorias/form',
                         appbar=form.data,
                         controls=[form],
                         scroll=ft.ScrollMode.AUTO,
@@ -277,7 +285,7 @@ def main(page: ft.Page):
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()
         top_view = page.views[-1]
-        page.go(top_view.route)
+        page.go(top_view.route) # type: ignore
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop

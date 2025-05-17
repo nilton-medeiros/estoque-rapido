@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 def grid_lixeira(page: ft.Page):
     """Página de exibição das empresas do usuário logado que estão inativas ('DELETED') e arquivadas ('ARCHIVED') em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
-    # page.data = "/home/empresas/grid/lixeira"
 
     # --- Indicador de Carregamento (Spinner) ---
     progress_ring = ft.ProgressRing(width=32, height=32, stroke_width=3)
@@ -180,8 +179,7 @@ def grid_lixeira(page: ft.Page):
     async def load_data_and_update_ui():
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get(
-            'empresas', [])  # Usar get com default
+        set_empresas = page.app_state.usuario.get('empresas', [])  # type: ignore # Usar get com default
 
         empresas_data = []
         empresas_inactivated = 0

@@ -26,7 +26,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             # dlg_modal é acessível aqui devido ao closure
             # status_text_control = dlg_modal.content.controls[3] # Originalmente [2], que era um erro
             # status_text_control.visible = True
-            status_processing_text.visible = True # Usar referência direta
+            status_processing_text.visible = True  # Usar referência direta
 
             # Opcional: Desabilitar botões enquanto processa
             for btn in dlg_modal.actions:
@@ -44,7 +44,8 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             A exclusão definitiva ocorrerá após 90 dias da mudança para Status.DELETED, realizada periodicamente por uma Cloud Function.
             """
 
-            logger.info(f"Iniciando operação '{status.name}' para empresa ID: {empresa.id}")
+            logger.info(
+                f"Iniciando operação '{status.name}' para empresa ID: {empresa.id}")
             # Implemente aqui a lógica para buscar produtos, pedidos e estoque vinculados.
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
@@ -52,7 +53,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             user = page_ctx.app_state.usuario
             result = await empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
 
-            dlg_modal.open = False # Fechar diálogo antes de um possível snackbar
+            dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
 
             if result.get('is_error'):
@@ -62,17 +63,20 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
                     operation_complete_future.set_result(False)
                 return
 
-            empresa.set_status(status)
             # Se a empresa deletada é a que está logada, limpa do app_state.
             if empresa.id == page_ctx.app_state.empresa.get('id'):
                 page_ctx.app_state.clear_empresa_data()
 
-            logger.info(f"Operação '{status.name}' para empresa ID: {empresa.id} concluída com sucesso.")
+            logger.info(
+                f"Operação '{status.name}' para empresa ID: {empresa.id} concluída com sucesso.")
             if not operation_complete_future.done():
                 operation_complete_future.set_result(True)
 
-        except IndexError as ie: # Deveria ser menos provável com referência direta
-            logger.error(f"IndexError em send_to_trash_company_async: {ie}. Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")
+        except IndexError as ie:  # Deveria ser menos provável com referência direta
+            # type: ignore
+            logger.error(
+                f"IndexError em send_to_trash_company_async: {ie}.\
+                Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")  # type: ignore
             # Ainda assim, fechar o diálogo em caso de erro interno
             if dlg_modal:
                 dlg_modal.open = False
@@ -94,7 +98,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
         dlg_modal.open = False
         e_close.page.update()
         if not operation_complete_future.done():
-            operation_complete_future.set_result(False) # Usuário cancelou
+            operation_complete_future.set_result(False)  # Usuário cancelou
 
     text = "Aviso: A empresa será movida para a lixeira e permanecerá lá indefinidamente até que você a restaure."
     action_title = "Mover para lixeira?"
@@ -116,7 +120,8 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
         expand=True,
     )
 
-    status_processing_text = ft.Text("Processando sua solicitação. Aguarde...", visible=False)
+    status_processing_text = ft.Text(
+        "Processando sua solicitação. Aguarde...", visible=False)
 
     # Um AlertDialog Responsivo com limite de largura para 700 pixels
     dlg_modal = ft.AlertDialog(
@@ -128,7 +133,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
                         weight=ft.FontWeight.BOLD, selectable=True),
                 ft.Text(f"ID: {empresa.id}", selectable=True),
                 ft.Row([ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED), warning_text]),
-                status_processing_text, # Controle referenciado
+                status_processing_text,  # Controle referenciado
             ],
             # tight = True: É bom definir tight=True se você fixa a altura com o conteúdo
             # tight = False: Estica a altura até o limite da altura da página
@@ -138,13 +143,16 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
         ),
         actions=[
             # Passa a função delete_company como callback
-            ft.ElevatedButton("Sim", icon=ft.Icons.CHECK_CIRCLE_OUTLINE, on_click=send_to_trash_company_async),
+            ft.ElevatedButton("Sim", icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
+                              on_click=send_to_trash_company_async),
             ft.OutlinedButton("Não", icon=ft.Icons.CLOSE, on_click=close_dlg),
         ],
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e_dismiss: (
-            logger.info(f"Modal dialog para empresa {empresa.id} ({status.name}) foi descartado."),
-            close_dlg(e_dismiss) # Garante que a future seja resolvida se descartado
+            logger.info(
+                f"Modal dialog para empresa {empresa.id} ({status.name}) foi descartado."),
+            # Garante que a future seja resolvida se descartado
+            close_dlg(e_dismiss)
         )
     )
     # Adiciona ao overlay e abre
@@ -154,18 +162,23 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
     page.update()
     return await operation_complete_future
 
+
 async def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     logger.info(f"Restaurando empresa ID: {empresa.id} da lixeira")
-    result = await empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=page.app_state.usuario, status=Status.ACTIVE)
+    result = await empresas_controllers.handle_update_status_empresas(
+        empresa=empresa,
+        usuario=page.app_state.usuario, # type: ignore
+        status=Status.ACTIVE)
 
     if result.get('is_error'):
-        message_snackbar(page=page, message=result.get("message"), message_type=MessageType.ERROR)
+        message_snackbar(
+            page=page, message=result["message"], message_type=MessageType.ERROR)
         return False
     message_snackbar(page=page, message="Empresa restaurada com sucesso!")
     return True
 
 
-async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> None:
+async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
     return await usuarios_controllers.handle_update_empresas_usuarios(
         usuario_id=usuario_id,
         empresas=empresas,

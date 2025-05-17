@@ -1,3 +1,5 @@
+from typing import Any
+from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.services.contracts.dfe_provider import DFeProvider
 
 
@@ -6,8 +8,8 @@ class DFeServices:
         self.provider = provider
         self.cpf_cnpj = cpf_cnpj
 
-    async def certificate_save(self, certificado: bytes, password: str):
-        return self.provider.certificate_save(self.cpf_cnpj, certificado, password)
+    async def certificate_save(self, certificado: bytes, password: str) -> dict:
+        return await self.provider.certificate_save(self.cpf_cnpj, certificado, password)
 
     async def certificate_get(self):
         pass

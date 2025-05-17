@@ -1,7 +1,7 @@
 import os
 import urllib.parse
 import logging
-from typing import Optional
+from typing import Any, Optional
 import aiohttp
 from datetime import datetime, timedelta, UTC
 
@@ -9,6 +9,7 @@ import src.domains.app_config.controllers.app_config_controllers as controllers
 from src.domains.empresas import Environment
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.shared.password import Password
 from src.services.contracts.dfe_provider import DFeProvider
 
 logger = logging.getLogger(__name__)
@@ -17,11 +18,11 @@ logger = logging.getLogger(__name__)
 class NuvemFiscalDFeProvider(DFeProvider):
     """Um Provider para gerenciar a integração com a API da Nuvem Fiscal"""
 
-    def __init__(self, ambiente: Environment):
+    async def __init__(self, ambiente: Environment):
         self.token = None
         self.token_expires_in = None
         self.settings = None
-        self._token_get()
+        await self._token_get()
 
         # Verifica se o ambiente é do tipo correto
         if not isinstance(ambiente, Environment):
@@ -36,7 +37,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
             else "https://api.sandbox.nuvemfiscal.com.br"
         )
 
-    async def certificate_save(self, cpf_cnpj: str, certificate_binary: bytes, password: str) -> CertificateA1:
+    async def certificate_save(self, cpf_cnpj: str, certificate_binary: bytes, password: str) -> dict[str, Any]:
         """
         Cadastra ou atualiza um certificado digital e vincula a empresa emitente,
         para que possa iniciar a emissão de notas.
@@ -103,12 +104,12 @@ class NuvemFiscalDFeProvider(DFeProvider):
                                 certificate_data.get("not_valid_before").replace("Z", "+00:00")),
                             not_valid_after=datetime.fromisoformat(
                                 certificate_data.get("not_valid_after").replace("Z", "+00:00")),
-                            thumbprint=certificate_data.get("thumbprint"),
+                            # thumbprint=certificate_data.get("thumbprint"),
                             subject_name=certificate_data.get("subject_name"),
                             cpf_cnpj=certificate_data.get("cpf_cnpj"),
                             nome_razao_social=certificate_data.get(
                                 "nome_razao_social"),
-                            password=password
+                            password=Password(password)
                         )
 
                         result = {
@@ -183,9 +184,9 @@ class NuvemFiscalDFeProvider(DFeProvider):
         """Exclui uma empresa (emitente/prestador) no Provedor de DFe."""
         raise NotImplementedError("Módulo aguardando implementação")
 
-    async def _token_get(self):
+    async def _token_get(self) -> None:
         # Acessa o database para consultar informações do token, o id do documento é 'settings'
-        response = controllers.handle_get_config("app_settings")
+        response: dict = await controllers.handle_get_config("app_settings")
 
         if response['is_found']:
             # Verifica se o token expirou
@@ -198,31 +199,35 @@ class NuvemFiscalDFeProvider(DFeProvider):
         # Obtem a data e hora do servidor em UTC
         agora_utc = datetime.now(UTC)
 
-        # Se não encontrou, obtem um novo token, se encontrou (is_found), verifica a validade do token
-        if not self.token_expires_in or (self.token_expires_in <= agora_utc):
-            # Validade do Token expirou ou token não encontrado, obtem novo token da API da Nuvemfiscal
-            token_data = self._new_token_get()
+        if self.token_expires_in and (self.token_expires_in > agora_utc):
+            # Se encontrou o token e ainda não expirou, retorna
+            return None
 
-            if token_data:
-                # Campo 'expires_in' é retornado em segundos
-                expires_in: int = token_data['expires_in']
-                date_now = datetime.fromisoformat(token_data['create_at'])
-                date_expiration = date_now + timedelta(seconds=expires_in)
+        # Validade do Token expirou ou token não encontrado, obtem novo token da API da Nuvemfiscal
+        token_data: dict[str, Any]|None = await self._new_token_get()
 
-                self.token = token_data['access_token']
-                self.token_expires_in = date_expiration
-                self.settings.dfe_api_token = self.token
-                self.settings.dfe_api_token_expires_in = date_expiration
+        if token_data:
+            # Campo 'expires_in' é retornado em segundos
+            expires_in: int = token_data['expires_in']
+            date_now = datetime.fromisoformat(token_data['create_at'])
+            date_expiration = date_now + timedelta(seconds=expires_in)
 
-                # Atualiza a nova configuração no database coleção app_config id: settings
-                response = controllers.handle_save_config(
-                    settings=self.settings, create_new=False)
-                if response['is_error']:
-                    logger.error(
-                        f"Erro ao salvar settings no db: Mensagem {response['message']}")
-                    return None
+            self.token = token_data['access_token']
+            self.token_expires_in = date_expiration
+            if not self.settings:
+                return None
 
-    async def _new_token_get(self) -> Optional[dict]:
+            self.settings.dfe_api_token = self.token
+            self.settings.dfe_api_token_expires_in = date_expiration
+
+            # Atualiza a nova configuração no database coleção app_config id: settings
+            response = await controllers.handle_save_config(settings=self.settings, create_new=False)
+            if response['is_error']:
+                logger.error(
+                    f"Erro ao salvar settings no db: Mensagem {response['message']}")
+                return None
+
+    async def _new_token_get(self) -> dict[str, Any]|None:
         """
         Obtém um novo token de acesso usando o fluxo OAuth 2.0 client_credentials.
 

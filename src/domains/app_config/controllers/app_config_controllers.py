@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from src.domains.app_config.models.app_config_model import AppConfig
 from src.domains.app_config.repositories.implementations.firebase_app_config_repository import FirebaseAppConfigRepository
@@ -53,10 +53,10 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
 
         if create_new:
             # Criar nova configuração
-            config_id = await settings_services.create_config(settings)
+            config_id = await settings_services.create(settings)
         else:
             # Alterar configuração existente
-            config_id = await settings_services.update_config(settings)
+            config_id = await settings_services.update(settings)
 
         response["message"] = f"Configuração {operation} com sucessso!"
         response["config_id"] = config_id
@@ -73,7 +73,7 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     return response
 
 
-async def handle_get_config(config_id: str = None) -> dict:
+async def handle_get_config(config_id: str) -> dict:
     """
     Manipula a operação de buscar uma configuração.
 
@@ -95,7 +95,7 @@ async def handle_get_config(config_id: str = None) -> dict:
         >>> response = await handle_get_config(id)
         >>> print(response)
     """
-    response = {
+    response: dict = {
         "is_found": False,
         "is_error": False,
         "message": "",

@@ -11,7 +11,7 @@ class Password:
     def __init__(self, value: str):
         self.error: bool = False
         self.error_message: str | None = None
-        self.value: str | None = None
+        self.value: bytes | None = None
 
         load_dotenv()
         key = os.getenv("FERNET_KEY")
@@ -65,12 +65,14 @@ class Password:
             str: Senha descriptografada.
         """
         try:
+            if not self.value:
+                raise ValueError("Senha não criptografada.")
             return self._cipher_suite.decrypt(self.value).decode()
         except Exception as e:
             raise ValueError(f"Erro ao descriptografar a senha: {e}")
 
     @classmethod
-    def from_dict(cls, data) -> 'Password':
+    def from_dict(cls, data: bytes|dict|str) -> 'Password':
         """
         Cria uma instância de Password a partir de um valor (dicionário ou bytes).
         """

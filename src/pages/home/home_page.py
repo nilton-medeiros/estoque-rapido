@@ -9,8 +9,8 @@ def dashboard(page: ft.Page):
     # page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
-    if colors := page.app_state.usuario.get('user_colors'):
-       page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color'))
+    if colors := page.app_state.usuario.get('user_colors'): # type: ignore
+       page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color')) # type: ignore
 
     # if colors := page.app_state.usuario.get('user_colors'):
         # page.theme.color_scheme.primary = colors.get('primary')
@@ -27,8 +27,10 @@ def dashboard(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
+    page_width: int|float = page.width if page.width else 0
+
     def toggle_sidebar(e):
-        if page.width < 768:
+        if page_width < 768:
             # Mobile
             sidebar.visible = not sidebar.visible
             content.visible = not sidebar.visible
@@ -97,7 +99,7 @@ def dashboard(page: ft.Page):
     )
 
     def on_page_resized(e=None):
-        if page.width < 1024:  # Modo Mobile, tablet
+        if page_width < 1024:  # Modo Mobile, tablet
             # Ajustar layout para modo mobile
             sidebar.visible = False
             content.col = {"xs": 12}  # O conteúdo ocupa toda a largura
@@ -113,9 +115,9 @@ def dashboard(page: ft.Page):
             layout.spacing = 10
             page.bgcolor = ft.Colors.BLACK
 
-            side_right = content.content.controls[0].content.controls[1]
+            side_right = content.content.controls[0].content.controls[1] # type: ignore
 
-            if page.width < 1024:
+            if page_width < 1024:
                 # Oculta imagem de fundo
                 side_right.visible = False
             else:
@@ -132,7 +134,7 @@ def dashboard(page: ft.Page):
         alignment=ft.alignment.center,
         content=ft.Column(
             spacing=0,
-            alignment=ft.alignment.center,
+            alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=None,
             controls=[layout]

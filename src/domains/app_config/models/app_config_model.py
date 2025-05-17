@@ -49,3 +49,4 @@ class AppConfig:
         # Validação do campo 'timeout'
         if self.timeout <= 0:
             raise ValueError("O campo 'timeout' deve ser maior que zero.")
+    

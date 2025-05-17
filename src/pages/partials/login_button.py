@@ -10,7 +10,7 @@ class LoginButton:
         page (ft.Page): Recebe um ft.Page
 
     Methods:
-        get_responsive_sizes: Obtem um dicionário com os devidos tamanhos:
+        _get_sizes: Obtem um dicionário com os devidos tamanhos:
             font_size: tamanho de fonte adaptativo
             icon_size: tamanho do ícone proporcional
             button_width: Largura do botão ajustável
@@ -26,10 +26,15 @@ class LoginButton:
 
     def __init__(self, page: ft.Page):
         self.page = page
+        self.page_width: int|float = page.width if page.width else 0
         self.btn_login = self.build_login_button()
 
-    def get_responsive_sizes(self, page_width: int) -> dict:
-        if page_width < 600:  # Mobile
+
+    def _get_sizes(self, width: int|float|None = None) -> dict:
+        if not width:
+            width =self.page_width
+
+        if width < 600:  # Mobile
             return {
                 "font_size": 14,
                 "icon_size": 16,
@@ -37,7 +42,7 @@ class LoginButton:
                 "spacing": 4,
                 "border_width": 1.5
             }
-        elif page_width < 1024:  # Tablet
+        elif width < 1024:  # Tablet
             return {
                 "font_size": 16,
                 "icon_size": 20,
@@ -55,7 +60,7 @@ class LoginButton:
             }
 
     def build_login_button(self) -> ft.OutlinedButton:
-        sizes = self.get_responsive_sizes(self.page.width)
+        sizes = self._get_sizes()
 
         return ft.OutlinedButton(
             content=ft.Row(
@@ -84,14 +89,14 @@ class LoginButton:
                     "": ft.BorderSide(color=ft.Colors.BLUE_400, width=sizes["border_width"]),
                     # Hover
                     "hovered": ft.BorderSide(color=ft.Colors.BLUE_300, width=sizes["border_width"]),
-                },
+                }, # type: ignore
                 padding=ft.padding.symmetric(
                     horizontal=sizes["spacing"] * 2,
                     vertical=sizes["spacing"]
                 ),
                 bgcolor={
                     "": ft.Colors.TRANSPARENT,  # Normal
-                    "hovered": ft.Colors.BLUE_600  # Hover
+                    "hovered": ft.Colors.BLUE_600  # type: ignore # Hover
                 }
             ),
             on_click=self.handle_login,
@@ -106,15 +111,15 @@ class LoginButton:
     def handle_login(self, _):
         self.page.go('/login')
 
-    def update_sizes(self, width: int):
-        sizes = self.get_responsive_sizes(width)
+    def update_sizes(self, width: int|float):
+        sizes = self._get_sizes(width)
 
         # Atualiza o ícone
-        icon_control = self.btn_login.content.controls[0]
+        icon_control = self.btn_login.content.controls[0] # type: ignore
         icon_control.size = sizes["icon_size"]
 
         # Atualiza o texto
-        text_control = self.btn_login.content.controls[1]
+        text_control = self.btn_login.content.controls[1] # type: ignore
         text_control.size = sizes["font_size"]
 
         # Atualiza a largura do botão
@@ -123,7 +128,7 @@ class LoginButton:
         # Recria o estilo do botão
         self.btn_login.style = ft.ButtonStyle(
             color=ft.Colors.WHITE,
-            side=ft.BorderSide(
+            side=ft.BorderSide( # type: ignore
                 color=ft.Colors.BLUE_400,
                 width=sizes["border_width"]
             ),

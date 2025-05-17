@@ -1,6 +1,6 @@
 import logging
-import os
-import asyncio
+# import os
+# import asyncio
 
 from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 from typing import Optional
@@ -10,6 +10,7 @@ import flet as ft
 from src.domains.empresas.controllers import empresas_controllers
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import CodigoRegimeTributario, EmpresaSize, Environment
+from src.domains.usuarios.models.usuario_model import Usuario
 from src.pages.partials.build_input_responsive import build_input_field
 from src.shared import MessageType, message_snackbar
 
@@ -19,13 +20,14 @@ logger = logging.getLogger(__name__)
 class EmpresaViewDadosFiscais:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.data = page.app_state.empresa_form
+        self.page_width: int|float = page.width if page.width else 0
+        self.data = page.app_state.form_data # type: ignore
         # Vars propiedades
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
         self.input_width = 400,
-        self.app_colors = page.session.get("user_colors")
+        self.app_colors: dict = page.session.get("user_colors")  # type: ignore
 
         # Responsividade
         self._create_form_fields()
@@ -50,7 +52,7 @@ class EmpresaViewDadosFiscais:
 
         # CNPJ: Somente leitura
         self.cnpj = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 5, 'lg': 3},
             label="CNPJ",
@@ -60,7 +62,7 @@ class EmpresaViewDadosFiscais:
         )
         # Nome da loja
         self.store_name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 7, 'lg': 4},
             label="Nome da Loja",
@@ -69,7 +71,7 @@ class EmpresaViewDadosFiscais:
         )
         # Razão Social: Somente leitura
         self.corporate_name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 5},
             label="Razão Social",
@@ -96,7 +98,7 @@ class EmpresaViewDadosFiscais:
             filled=True,
             border=ft.InputBorder.OUTLINE,
             border_color=self.app_colors["primary"],
-            width=self.input_width,
+            width=self.input_width, # type: ignore
         )
 
         # CRT: Regime Tributário
@@ -116,7 +118,7 @@ class EmpresaViewDadosFiscais:
             filled=True,
             border=ft.InputBorder.OUTLINE,
             border_color=self.app_colors["primary"],
-            width=self.input_width,
+            width=self.input_width, # type: ignore
         )
         # Tipo de Ambiente
         self.environment = ft.Dropdown(
@@ -134,11 +136,11 @@ class EmpresaViewDadosFiscais:
             filled=True,
             border=ft.InputBorder.OUTLINE,
             border_color=self.app_colors["primary"],
-            width=self.input_width,
+            width=self.input_width, # type: ignore
         )
         # Próximo Número de Série da Nota Fiscal
         self.nfce_series = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Série NFC-e",
@@ -146,7 +148,7 @@ class EmpresaViewDadosFiscais:
         )
         # Próximo Número da Nota Fiscal
         self.nfce_number = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Número NFC-e",
@@ -155,7 +157,7 @@ class EmpresaViewDadosFiscais:
         )
         # Credenciais Sefaz concedido ao emissor de NFCe
         self.nfce_sefaz_id_csc = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Identificação do CSC",
@@ -165,7 +167,7 @@ class EmpresaViewDadosFiscais:
             keyboard_type=ft.KeyboardType.NUMBER,
         )
         self.nfce_sefaz_csc = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Código do CSC",
@@ -280,12 +282,12 @@ class EmpresaViewDadosFiscais:
 
 
     def _page_resize(self, e):
-        if self.page.width < 600:
+        if self.page_width < 600:
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
             self.input_width = 280,
-        elif self.page.width < 1024:
+        elif self.page_width < 1024:
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -329,7 +331,7 @@ class EmpresaViewDadosFiscais:
             self.data['fiscal'] = fiscal_data
 
         # Atualiza 'size' diretamente
-        self.data['size'] = EmpresaSize[self.size_cia.value]
+        self.data['size'] = EmpresaSize[self.size_cia.value] # type: ignore
 
         # Atualiza os dados dentro do dicionário 'fiscal'
         fiscal_data['crt_name'] = self.crt.value
@@ -358,15 +360,15 @@ def form_dados_fiscais(page: ft.Page):
     """Página de cadstro dos dados fiscais da empresa"""
 
     route_title = "home/empresas/form/dados-fiscais"
-    empresa_f = page.app_state.empresa_form
+    empresa_form = page.app_state.form_data # type: ignore
 
-    if id := empresa_f.get('id'):
+    if id := empresa_form.get('id'):
         route_title += f"/{id}"
     else:
         message_snackbar(page=page, message="Empresa não definida", message_type=MessageType.WARNING)
         page.go(page.data if page.data else '/home')
 
-    if not empresa_f.get('cnpj'):
+    if not empresa_form.get('cnpj'):
         message_snackbar(page=page, message="CNPJ não definido", message_type=MessageType.WARNING)
         page.go(page.data if page.data else '/home')
 
@@ -419,7 +421,8 @@ def form_dados_fiscais(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        result = await empresas_controllers.handle_save_empresas(empresa)
+        user: dict = page.app_state.usuario # type: ignore
+        result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["is_error"]:
             message_snackbar(
@@ -427,11 +430,11 @@ def form_dados_fiscais(page: ft.Page):
             return
 
         # Atualiza o estado do app com o nova empresa antes da navegação se não existir
-        page.app_state.set_empresa(empresa.to_dict())
+        page.app_state.set_empresa(empresa.to_dict()) # type: ignore
 
-        # Limpa o formulário salvo e limpa a empresa do app state: empresa_form e volta para a página inicial do usuário
+        # Limpa o formulário salvo e limpa a empresa do app state: form_data e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_empresa_form_data()
+        page.app_state.clear_form_data() # type: ignore
         message_snackbar(page=page, message=result["message"],
                          message_type=MessageType.SUCCESS)
         page.go(page.data if page.data else '/home')
@@ -439,7 +442,7 @@ def form_dados_fiscais(page: ft.Page):
     def exit_form_empresa(e):
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_empresa_form_data()
+        page.app_state.clear_form_data() # type: ignore
         page.go(page.data if page.data else '/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"

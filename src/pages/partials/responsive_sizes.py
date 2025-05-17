@@ -1,4 +1,6 @@
-def get_responsive_sizes(page_width: int) -> dict:
+def get_responsive_sizes(page_width: int|float|None) -> dict[str, int|float]:
+    if not page_width:
+        page_width = 0
     if page_width < 600:  # Mobile
         return {
             "font_size": 14,

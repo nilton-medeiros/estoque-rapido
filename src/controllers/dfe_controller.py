@@ -55,7 +55,7 @@ async def handle_upload_certificate_a1(
         provider = NuvemFiscalDFeProvider(ambiente)
         dfe_service = DFeServices(provider, cpf_cnpj)
 
-        result = await dfe_service.certificate_save(certificado=certificate_content, password=a1_password)
+        result: dict = await dfe_service.certificate_save(certificado=certificate_content, password=a1_password)
 
         response["is_error"] = result.get("is_error")
         response["message"] = result.get("message")

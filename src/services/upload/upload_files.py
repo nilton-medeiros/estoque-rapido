@@ -16,9 +16,9 @@ class UploadFile:
         self.is_url_web = False
         self.url_file = None
         self.upload_completed = False
-        self.progress_bar = ft.ProgressBar(visible=False)
-        self.picker_dialog = ft.FilePicker(
-            on_result=self._pick_files_result,
+        self.progress_bar:ft.ProgressBar = ft.ProgressBar(visible=False)
+        self.picker_dialog:ft.FilePicker = ft.FilePicker(
+            on_result=self._pick_files_result, # type: ignore
             on_upload=self._pick_files_progress,
         )
         self.dialog = self._create_dialog()
@@ -69,22 +69,18 @@ class UploadFile:
     def _on_source_change(self, e):
         """Atualiza a interface com base na fonte selecionada (arquivo ou URL)."""
         self.is_url_web = e.control.value == "url"
-        self.dialog.content.controls[1].visible = self.is_url_web
+        self.dialog.content.controls[1].visible = self.is_url_web # type: ignore
         self.page.update()
 
     def update_file_source(self, e):
         if self.is_url_web:
-            url = self.dialog.content.controls[1].value.strip()
+            url = self.dialog.content.controls[1].value.strip() # type: ignore
             if not url:
                 self.message_error = "URL não pode estar vazia"
-                self.future.set_result(None)
-                return
-            if not self._validate_url(url):
-                self.message_error = "URL inválida ou inacessível"
-                self.future.set_result(None)
+                self.future.set_result(None) # type: ignore
                 return
             self.url_file = url
-            self.future.set_result(url)
+            self.future.set_result(url) # type: ignore
         else:
             self.picker_dialog.pick_files(
                 allow_multiple=False,
@@ -93,7 +89,7 @@ class UploadFile:
 
     def cancel_dialog(self, e):
         self.message_error = "Obtenção do Logo cancelado pelo usuário"
-        self.future.set_result(None)
+        self.future.set_result(None) # type: ignore
         self.close_dialog()
 
     def close_dialog(self):
@@ -102,10 +98,10 @@ class UploadFile:
 
     async def _pick_files_result(self, e: ft.FilePickerResultEvent) -> None:
         if not e.files:
-            self.future.set_result(None)
+            self.future.set_result(None) # type: ignore
             return
         await self._upload_files(e.files)
-        self.future.set_result(self.url_file)
+        self.future.set_result(self.url_file) # type: ignore
         self.close_dialog()
 
     async def _upload_files(self, files: list) -> None:

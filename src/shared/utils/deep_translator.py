@@ -36,7 +36,7 @@ def deepl_translator(texto_ingles: str) -> str:
         # Configura a API Deepl
         translator = deepl.Translator(auth_key)
         traducao = translator.translate_text(texto_ingles, source_lang="EN", target_lang="PT-BR")
-        return traducao.text  # Retorna apenas o texto traduzido
+        return traducao.text # type: ignore  # Retorna apenas o texto traduzido
     except deepl.DeepLException as e:
         logger.error(f"Erro ao usar a API Deepl: {e}")
         raise Exception(f"Erro ao usar a API Deepl: {e}")

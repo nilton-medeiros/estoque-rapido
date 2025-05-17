@@ -35,7 +35,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         self.db = firestore.client()
         self.collection = self.db.collection('usuarios')
 
-    async def authentication(self, email, password) -> Optional[Usuario]:
+    async def authentication(self, email, password) -> Usuario | None:
         """
         Autentica um usuário com o email e senha fornecidos.
 
@@ -104,6 +104,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         Retorna:
             str: O ID do documento do usuário salvo.
         """
+        # usuario.id é adicionado em usuarios_services.create(), como o id pode ser None no model, o pylance acusa que o return empresa.id não pode ser str|None
+        if usuario.id is None:
+            raise Exception("Erro ao salvar usuário: ID não informado")
 
         try:
             # Insere ou Atualiza na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
@@ -167,7 +170,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             logger.error(f"Erro inesperado ao contar usuários: {e}")
             raise e
 
-    async def find_by_id(self, id: str) -> Optional[Usuario]:
+    async def find_by_id(self, id: str) -> Usuario | None:
         """
         Busca um usuário pelo ID.
 
@@ -175,7 +178,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             id (str): ID do usuário.
 
         Returns:
-            Optional[Usuario]: Usuário encontrado ou None se não existir.
+            Usuario | None: Usuário encontrado ou None se não existir.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -245,7 +248,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    async def find_all(self, empresa_id, limit: int = 100, offset: int = 0) -> list[Usuario]:
+    async def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
         """
         Retorna uma lista paginada de usuários.
 
@@ -294,7 +297,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuários da empresa id '{empresa_id}': {e}")
             raise
 
-    async def find_by_email(self, email: str) -> Optional[Usuario]:
+    async def find_by_email(self, email: str) -> Usuario | None:
         """
         Encontrar um usuário pelo seu email.
 
@@ -302,7 +305,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             email (str): O email do usuário a ser encontrado.
 
         Returns:
-            Optional[Usuario]: Uma instância do usuário se encontrado, None caso contrário.
+            Usuario | None: Uma instância do usuário se encontrado, None caso contrário.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -316,6 +319,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 # Pega o primeiro elemento e vaza (só tem um mesmo, limitado por .limit(1))
                 doc = docs[0]
                 usuario_data = doc.to_dict()
+                if not usuario_data:
+                    return None
                 usuario_data['id'] = doc.id
                 return Usuario.from_dict(usuario_data)
             return None
@@ -435,7 +440,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo pefil do usuário '{profile}': {e}")
             raise
 
-    async def delete(self, usuario_id: str) -> None:
+    async def delete(self, usuario_id: str) -> bool:
         """
         Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
 
@@ -449,6 +454,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # Deleta do Firestore
             self.collection.document(usuario_id).delete()
             logger.info(f"Usuário com id '{usuario_id}' excluído com sucesso.")
+            return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(
@@ -476,7 +482,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao deletar usuário com id '{usuario_id}': {str(e)}")
 
-    async def update_profile(self, id: str, new_profile: str) -> Optional[Usuario]:
+    async def update_profile(self, id: str, new_profile: str) -> Usuario | None:
         """
         Atualiza o perfil de um usuário.
 
@@ -485,7 +491,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             new_profile (str): Novo perfil a ser atribuído
 
         Returns:
-            Optional[Usuario]: Usuário atualizado ou None se não existir
+            Usuario | None: Usuário atualizado ou None se não existir
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados
@@ -531,7 +537,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar o perfil do usuário com ID '{id}': {str(e)}")
 
-    async def update_photo(self, id: str, new_photo: str) -> Optional[Usuario]:
+    async def update_photo(self, id: str, new_photo: str) -> Usuario | None:
         """
         Atualiza a foto de um usuário.
 
@@ -540,7 +546,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             new_photo (str): Link para a nova foto a ser atribuída
 
         Returns:
-            Optional[Usuario]: Usuário atualizado ou None se não existir
+            Usuario | None: Usuário atualizado ou None se não existir
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados
@@ -639,7 +645,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
 
-    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str = None) -> bool:
+    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """
         Atualiza campos empresa_id e empresas do usuário.
 

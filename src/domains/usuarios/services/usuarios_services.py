@@ -35,7 +35,7 @@ class UsuariosServices:
         # Adicione lógica de negócios aqui, se necessário
         return await self.repository.authentication(email, password)
 
-    async def create(self, usuario: Usuario) -> Usuario:
+    async def create(self, usuario: Usuario) -> str:
         """
         Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
 
@@ -59,7 +59,7 @@ class UsuariosServices:
         # Envia para o repositório selecionado em usuarios_controllrer salvar
         return await self.repository.save(usuario)
 
-    async def update(self, usuario: Usuario) -> Usuario:
+    async def update(self, usuario: Usuario) -> str:
         if usuario.id is None:
             raise ValueError("ID do usuário é necessário para atualização")
         return await self.repository.save(usuario)
@@ -100,7 +100,7 @@ class UsuariosServices:
         """
         return await self.repository.find_all(empresa_id)
 
-    async def update_photo(self, usuario_id: str, photo_url: str) -> Optional[Usuario]:
+    async def update_photo(self, usuario_id: str, photo_url: str) -> Usuario | None:
         """
         Atualiza a foto do usuário para o campo photo_url usando o repositório.
 
@@ -113,7 +113,7 @@ class UsuariosServices:
         """
         return await self.repository.update_photo(usuario_id, photo_url)
 
-    async def update_colors(self, usuario_id: str, colors: str) -> bool:
+    async def update_colors(self, usuario_id: str, colors: dict[str, str]) -> bool:
         """
         Atualiza a cor favorita do usuário para o campo  usando o repositório.
 
@@ -126,7 +126,7 @@ class UsuariosServices:
         """
         return await self.repository.update_colors(usuario_id, colors)
 
-    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str = None) -> bool:
+    async def update_empresas(self, usuario_id: str, empresas: set[str], empresa_id: str|None = None) -> bool:
         """
         Atualiza a empresa selecionada e a lista de empresas do usuário para o campo  usando o repositório.
 

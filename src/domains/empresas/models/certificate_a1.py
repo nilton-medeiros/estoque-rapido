@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from src.domains.shared.password import Password
 
@@ -9,18 +8,18 @@ from src.domains.shared.password import Password
 class CertificateA1:
     """Certificado digital (PFX ou P12)."""
     password: Password
-    serial_number: Optional[str] = None  # Número de série do certificado
-    issuer_name: Optional[str] = None  # Emissor do certificado
+    serial_number: str|None = None  # Número de série do certificado
+    issuer_name: str|None = None  # Emissor do certificado
     # Data e hora de início da validade do certificado
-    not_valid_before: Optional[datetime] = None
+    not_valid_before: datetime|None = None
     # Data e hora do fim da validade do certificado
-    not_valid_after: Optional[datetime] = None
+    not_valid_after: datetime|None = None
 
     # O thumbprint (ou impressão digital) de um certificado digital A1 é uma representação única e compacta do certificado
-    # thumbprint: Optional[str] = None  NÃO USADO
-    subject_name: Optional[str] = None  # Nome do assunto
-    file_name: Optional[str] = None  # Nome do arquivo
+    # thumbprint: str|None = None  NÃO USADO
+    subject_name: str|None = None  # Nome do assunto
+    file_name: str|None = None  # Nome do arquivo
     # Documento da pessoa ou empresa dona do certificado A1
-    cpf_cnpj: Optional[str] = None
-    nome_razao_social: Optional[str] = None
-    storage_path: str = None
+    cpf_cnpj: str|None = None
+    nome_razao_social: str|None = None
+    storage_path: str|None = None

@@ -29,7 +29,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
         self.db = firestore.client()
         self.collection = self.db.collection('app_config')
 
-    async def get(self, config_id: str) -> AppConfig:
+    async def get(self, config_id: str) -> AppConfig | None:
         """
         Encontrar uma configuração do sistema (app_config) pelo seu identificador único.
 
@@ -119,7 +119,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
 
     def _config_to_dict(self, config: AppConfig) -> dict:
         # Converte o objeto datetime do python para o Timestamp do Firestore
-        timestamp_expires_in = firestore.Timestamp.from_datetime(config.dfe_api_token_expires_in)
+        timestamp_expires_in = firestore.Timestamp.from_datetime(config.dfe_api_token_expires_in) # type: ignore
 
         config_dict = {
             'id': config.id,

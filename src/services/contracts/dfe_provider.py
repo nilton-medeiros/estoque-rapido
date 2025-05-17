@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.empresa_model import Empresa
@@ -7,7 +8,7 @@ class DFeProvider(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de usuários."""
 
     @abstractmethod
-    async def certificate_save(self, cpf_cnpj: str, certificate: bytes, password: str) -> CertificateA1:
+    async def certificate_save(self, cpf_cnpj: str, certificate_binary: bytes, password: str) -> dict[str, Any]:
         """
         Cadastra ou atualiza um certificado digital e vincula a empresa emitente,
         para que possa iniciar a emissão de notas.

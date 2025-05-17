@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importar diretamente para evitar cíclo em src/domains/empresa/__init__.py
 from src.domains.empresas.models.empresa_model import Empresa
@@ -198,7 +199,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     return response
 
 
-async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> list:
+async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> dict[str, Any]:
     """
     Busca todas as empresas do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
 
@@ -209,7 +210,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         ids_empresas (set[str]|list[str]): Uma lista ou conjunto de ID's das empresas do usuário logado.
         status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativa (arquivadas ou deletadas).
 
-    Returns:
+    Returns (dict):
         is_error (bool): True se houve erro na operação, False caso contrário.
         message (str): Uma mensagem de sucesso ou erro.
         data_list (list): Uma lista de empresas do usuário logado ou [].

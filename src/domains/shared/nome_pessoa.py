@@ -16,7 +16,7 @@ class NomePessoa:
         >>> print(pessoa.nome_completo)  # Imprime: João Silva
     """
 
-    def __init__(self, first_name: str, last_name: str = None):
+    def __init__(self, first_name: str, last_name: str|None = None):
         """
         Inicializa a instância de NomePessoa com validação e formatação.
 
@@ -34,10 +34,12 @@ class NomePessoa:
         self.last_name = ''
 
         if first_name:
+            # Se o primeiro nome no args first_name não é vazio ""
             self.first_name = first_name.strip().capitalize()
             if last_name:
                 self.last_name = last_name.strip().capitalize()
-        else:
+        elif last_name:
+            # Se o primeiro nome no args first_name é vazio ""
             self.first_name = last_name.strip().capitalize()
 
     @classmethod

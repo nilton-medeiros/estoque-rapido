@@ -9,6 +9,6 @@ class BucketStorage(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def delete(self, key: str) -> str:
-        """Retorna a url completa do arquivo no bucket"""
+    def delete(self, key: str) -> bool:
+        """Retorna True se sucesso ao deletar, False caso contrário"""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")

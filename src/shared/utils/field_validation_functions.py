@@ -33,7 +33,7 @@ def validate_email(email: str) -> bool:
     """
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not email:
-        return False, "O email é obrigatório"
+        return False
     if not re.match(email_pattern, email):
         return False
     return True

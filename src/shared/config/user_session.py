@@ -25,7 +25,7 @@ async def prepare_the_user_session(page: ft.Page) -> None:
         loop = asyncio.get_running_loop()
         result = await asyncio.wait_for(
             loop.run_in_executor(None, lambda: page.client_storage.get(f"{PREFIX}user-settings")),
-            timeout=asyncio.timeout
+            timeout=asyncio.timeout # type: ignore
         )
         logger.debug(f"client_storage.get({f"{PREFIX}user-settings"}) retornou: {result}")
         user_settings = result
@@ -63,7 +63,7 @@ async def refresh_the_user_session(page: ft.Page, colors: dict) -> None:
         user_settings = {"colors": colors}
         await asyncio.wait_for(
             loop.run_in_executor(None, lambda: page.client_storage.set(f"{PREFIX}user-settings", user_settings)),
-            timeout=asyncio.timeout
+            timeout=asyncio.timeout # type: ignore
         )
         page.session.set("user_colors", colors)
 

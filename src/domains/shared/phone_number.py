@@ -41,7 +41,7 @@ class PhoneNumber:
         return self.get_national()
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'PhoneNumber':
+    def from_dict(cls, data: str | dict) -> 'PhoneNumber':
         """
         Cria uma instância de PhoneNumber a partir de um dicionário.
 

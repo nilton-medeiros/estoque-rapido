@@ -1,7 +1,6 @@
 import logging
 
 import flet as ft
-from typing import Optional
 
 from src.domains.shared import NomePessoa, Password
 from src.pages.partials import get_responsive_sizes, build_input_field
@@ -18,12 +17,13 @@ logger = logging.getLogger(__name__)
 
 class LoginView:
     def __init__(self, page: ft.Page):
-        self.page = page
-        self.email_input = None
-        self.password_input = None
-        self.error_text = None
-        self.login_button = None
-        self.app_colors = page.session.get("user_colors")
+        self.page: ft.Page = page
+        self.page_width = page.width if page.width else 0
+        self.email_input: ft.TextField
+        self.password_input: ft.TextField
+        self.error_text: ft.Text
+        self.login_button: ft.OutlinedButton
+        self.app_colors: dict = page.session.get("user_colors") # type: ignore
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
         self.page.update()
@@ -64,22 +64,22 @@ class LoginView:
         )
 
     def build_form(self) -> ft.Container:
-        sizes = get_responsive_sizes(self.page.width)
+        sizes = get_responsive_sizes(self.page_width)
 
         self.email_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page_width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
         self.password_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
-        self.login_button = self.build_login_button(sizes)
-        self.error_text = ft.Text(
+            page_width=self.page_width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+        self.login_button: ft.OutlinedButton = self.build_login_button(sizes)
+        self.error_text: ft.Text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
 
         # Debug: Dados Fakes como hardcord, remover isto em produção
         self.email_input.value = 'ajolie@gmail.com'
         self.password_input.value = 'Aj#45678'
 
-        self.page.user_name_text.visible = False  # Invisible, sem uso
-        self.page.company_name_text_btn.visible = False  # Invisible, sem uso
+        self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
+        self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -115,8 +115,8 @@ class LoginView:
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     self.password_input,
                     self.error_text,
-                    self.page.user_name_text,   # Invisible, sem uso
-                    self.page.company_name_text_btn,   # Invisible, sem uso
+                    self.page.user_name_text,   # Invisible, sem uso # type: ignore
+                    self.page.company_name_text_btn,   # Invisible, sem uso # type: ignore
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -139,8 +139,8 @@ class LoginView:
             ),
         )
 
-    def validate_form(self) -> Optional[str]:
-        email = self.email_input.value
+    def validate_form(self) -> str|None:
+        email: str = self.email_input.value # type: ignore
         email = email.strip().lower()
 
         if not email:
@@ -148,10 +148,10 @@ class LoginView:
         if not validate_email(email):
             return "Email inválido"
 
-        self.email_input.value = email
+        self.email_input.value = email # type: ignore
 
         # A classe Password lida com senhas inválidas
-        password = Password(self.password_input.value)
+        password = Password(self.password_input.value) # type: ignore
 
         if password.error:
             return password.error_message
@@ -160,7 +160,7 @@ class LoginView:
 
     async def handle_login(self, _):
         # Desabilita o botão imediatamente para evitar múltiplos cliques
-        self.login_button.disabled = True
+        self.login_button.disabled = True # type: ignore
         self.login_button.update()
 
         # Detalhes de UX, com o estado de carregamento do botão
@@ -180,7 +180,7 @@ class LoginView:
             self.error_text.update()
 
             result = await usu_controllers.handle_login_usuarios(
-                email=self.email_input.value, password=self.password_input.value)
+                email=self.email_input.value, password=self.password_input.value) # type: ignore
 
             if result["is_error"]:
                 message_snackbar(
@@ -189,10 +189,10 @@ class LoginView:
 
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["authenticated_user"]
-            self.page.app_state.set_usuario(user.to_dict())
+            self.page.app_state.set_usuario(user.to_dict()) # type: ignore
 
             if user.empresa_id is None:
-                self.page.app_state.clear_empresa_data()
+                self.page.app_state.clear_empresa_data() # type: ignore
                 self.page.on_resized = None
                 self.page.go('/home')
                 return
@@ -202,7 +202,7 @@ class LoginView:
 
             if result["is_error"]:
                 user.empresa_id = None
-                self.page.app_state.clear_empresa_data()
+                self.page.app_state.clear_empresa_data() # type: ignore
                 self.page.on_resized = None
                 self.page.go('/home')
                 return
@@ -211,10 +211,10 @@ class LoginView:
 
             # Adiciona o empresa_id no state e publíca-a
             if cia.status.name == 'ACTIVE':
-                self.page.app_state.set_empresa(cia.to_dict())
+                self.page.app_state.set_empresa(cia.to_dict()) # type: ignore
             else:
                 user.empresa_id = None
-                self.page.app_state.clear_empresa_data()
+                self.page.app_state.clear_empresa_data() # type: ignore
 
             self.page.on_resized = None
             self.page.go('/home')
@@ -235,13 +235,13 @@ class LoginView:
         self.password_input.text_size = sizes["font_size"]
 
         # Atualiza o botão
-        icon_control = self.login_button.content.controls[0]
+        icon_control = self.login_button.content.controls[0] # type: ignore
         icon_control.size = sizes["icon_size"]
 
-        text_control = self.login_button.content.controls[1]
+        text_control = self.login_button.content.controls[1] # type: ignore
         text_control.size = sizes["font_size"]
 
-        self.login_button.content.spacing = sizes["spacing"]
+        self.login_button.content.spacing = sizes["spacing"] # type: ignore
         self.login_button.width = sizes["button_width"]
 
         self.login_button.style = ft.ButtonStyle(
@@ -258,8 +258,8 @@ class LoginView:
 
         # Atualiza o container principal
         form_column = self.form.content
-        form_column.controls[0].size = sizes["font_size"] * 2  # Título
-        form_column.controls[1].size = sizes["font_size"]      # Subtítulo
+        form_column.controls[0].size = sizes["font_size"] * 2  # type: ignore # Título
+        form_column.controls[1].size = sizes["font_size"]      # type: ignore # Subtítulo
 
         self.error_text.size = sizes["font_size"]
 

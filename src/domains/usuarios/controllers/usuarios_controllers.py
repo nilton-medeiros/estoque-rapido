@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
@@ -16,8 +17,8 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-async def handle_login_usuarios(email: str, password: str) -> dict:
-    response = {
+async def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
+    response: dict[str, Any] = {
         "is_error": False,
         "authenticated_user": None,
         "message": "",
@@ -52,7 +53,7 @@ async def handle_login_usuarios(email: str, password: str) -> dict:
     return response
 
 
-async def handle_save_usuarios(usuario: Usuario) -> dict:
+async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
     """
     Manipula a operação de salvar usuário.
 
@@ -75,7 +76,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict:
         >>> response = await handle_save_usuarios(usuario)
         >>> print(response)
     """
-    response = {
+    response: dict[str, Any] = {
         "is_error": False,
         "message": "",
         "id": None
@@ -110,7 +111,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict:
     return response
 
 
-async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
+async def handle_get_usuarios(id: str | None = None, email: str | None = None) -> dict[str, Any]:
     """
     Manipula a operação de buscar usuário.
 
@@ -133,7 +134,7 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
         >>> response = await handle_get_usuarios(email)
         >>> print(response)
     """
-    response = {
+    response: dict[str, Any] = {
         "is_error": False,
         "message": "",
         "usuario": None
@@ -155,7 +156,7 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
 
         if id:
             usuario = await usuarios_services.find_by_id(id)
-        else:
+        elif email:
             usuario = await usuarios_services.find_by_email(email)
 
         if usuario:
@@ -178,7 +179,7 @@ async def handle_get_usuarios(id: str = None, email: str = None) -> dict:
     return response
 
 
-async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
+async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any]:
     """
     Update no campo photo_url do usuário.
 
@@ -201,7 +202,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
         >>> response = await handle_update_field_usuarios(id, photo_url)
         >>> print(response)
     """
-    response = {
+    response: dict[str, Any] = {
         "is_error": False,
         "message": "",
         "usuario": None
@@ -229,7 +230,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict:
     return response
 
 
-async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
+async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, Any]:
     """
     Update no campo colors do usuário.
 
@@ -252,7 +253,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
         >>> response = await handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
         >>> print(response)
     """
-    response = {
+    response: dict[str, Any] = {
         "is_error": False,
         "message": "",
     }
@@ -265,7 +266,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
         return response
 
     # Verifica se colors é um dicionário e contém os campos corretos
-    if not isinstance(colors, dict) or not all(key in colors for key in ['base_color', 'primary', 'container', 'accent']):
+    if not all(key in colors for key in ['base_color', 'primary', 'container', 'accent']):
         response["is_error"] = True
         response["message"] = "O argumento color deve ser um dicionário com os campos 'base_color', 'primary', 'container' e 'accent'"
         logger.warning(response["message"])
@@ -296,7 +297,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict) -> dict:
     return response
 
 
-async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str = None) -> dict:
+async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
 
@@ -358,9 +359,10 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
     return response
 
 
-async def handle_find_all_usuarios(empresa_id: str) -> list[Usuario]:
+async def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
     """Busca todos os usuário da empresa_id"""
-    response = {
+    # Exemplo de tipagem profunda: dict[str, bool|str|list[Usuario|None]]. Esta é mais simples: dict[str, Any]
+    response: dict[str, Any] = {
         "is_error": False,
         "message": "",
         "usuarios": []

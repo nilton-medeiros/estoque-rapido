@@ -1,10 +1,9 @@
-from datetime import datetime
-from typing import Optional
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
+from src.domains.shared.nome_pessoa import NomePessoa
 from src.shared import get_uuid
 
 """
@@ -68,14 +67,14 @@ class EmpresasServices:
         empresa.id = 'emp_' + get_uuid()
         # A atribuição de created_at e updated_at será feita pelo repositório do banco de dados
         # usando SERVER_TIMESTAMP do banco de dados.
-        empresa.created_by_id = user.get("id")
-        user_name = user.get("name")
-        empresa.created_by_name = user_name.nome_completo()  # Desnormalização para otimizar indices no banco de dados
+        empresa.created_by_id = user["id"]
+        user_name: NomePessoa = user["name"]
+        empresa.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return await self.repository.save(empresa)
 
-    async def update(self, empresa: Empresa, usuario: dict) -> Empresa:
+    async def update(self, empresa: Empresa, usuario: dict) -> str:
         """Atualiza os dados de uma empresa existente.
 
         Este método atualiza os dados de uma empresa existente. Ele envia as informações
@@ -104,38 +103,38 @@ class EmpresasServices:
 
         # A atribuição de updated_at será feita pelo repositório
         # usando SERVER_TIMESTAMP do banco de dados.
-        empresa.updated_by_id = usuario.get("id")
-        user_name = usuario.get("name")
-        empresa.updated_by_name = user_name.nome_completo()  # Desnormalização para otimizar indices no banco de dados
+        empresa.updated_by_id = usuario["id"]
+        user_name = usuario["name"]
+        empresa.updated_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
-        return await self.repository.save(empresa)
+        return await self.repository.save(empresa=empresa)
 
     async def update_status(self, empresa: Empresa, usuario: dict, status: Status) -> bool:
         """Altera o status de uma empresa no banco de dados."""
-        user_name = usuario.get("name")
+        user_name: NomePessoa = usuario["name"]
 
         if status.name == "ACTIVE":
             empresa.status = Status.ACTIVE
             empresa.activated_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.activated_by_id = usuario.get("id")
-            empresa.activated_by_name = user_name.nome_completo()
+            empresa.activated_by_name = user_name.nome_completo
         elif status.name == "DELETED":
             empresa.status = Status.DELETED
             empresa.deleted_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.deleted_by_id = usuario.get("id")
-            empresa.deleted_by_name = user_name.nome_completo()
+            empresa.deleted_by_name = user_name.nome_completo
         elif status.name == "ARCHIVED":
             empresa.status = Status.ARCHIVED
             empresa.archived_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.archived_by_id = usuario.get("id")
-            empresa.archived_by_name = user_name.nome_completo()
+            empresa.archived_by_name = user_name.nome_completo
 
         id = await self.repository.save(empresa)
         if id:
             return True
         return False
 
-    async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
+    async def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
         """Busca uma empresa no banco de dados utilizando o CNPJ.
 
         Este método busca uma empresa no banco de dados utilizando o CNPJ fornecido.
@@ -145,11 +144,11 @@ class EmpresasServices:
             cnpj (CNPJ): Objeto da classe CNPJ da empresa a ser encontrada
 
         Returns:
-            Optional[Empresa]: Empresa encontrada ou None se não existir
+            Empresa | None: Empresa encontrada ou None se não existir
         """
         return await self.repository.find_by_cnpj(cnpj)
 
-    async def find_by_id(self, empresa_id: str) -> Optional[Empresa]:
+    async def find_by_id(self, empresa_id: str) -> Empresa | None:
         """Busca uma empresa no banco de dados utilizando o ID.
 
         Este método busca uma empresa no banco de dados utilizando o ID fornecido.
@@ -159,7 +158,7 @@ class EmpresasServices:
             empresa_id (str): ID da empresa a ser encontrada
 
         Returns:
-            Optional[Empresa]: Empresa encontrada ou None se não existir
+            Empresa | None: Empresa encontrada ou None se não existir
         """
         return await self.repository.find_by_id(empresa_id)
 

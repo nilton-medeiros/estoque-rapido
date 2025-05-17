@@ -15,15 +15,16 @@ from src.pages.partials.build_input_responsive import build_input_field
 
 class SignupView:
     def __init__(self, page: ft.Page):
-        self.page = page
-        self.name_input = None
-        self.email_input = None
-        self.phone_input = None
-        self.password_input = None
-        self.password_again_input = None
-        self.error_text = None
-        self.signup_button = None
-        self.app_colors = page.session.get("user_colors")
+        self.page: ft.Page = page
+        self.page_width: int|float = page.width if page.width else 0
+        self.name_input: ft.TextField
+        self.email_input: ft.TextField
+        self.phone_input: ft.TextField
+        self.password_input: ft.TextField
+        self.password_again_input: ft.TextField
+        self.error_text: ft.Text
+        self.signup_button: ft.OutlinedButton
+        self.app_colors: dict = page.session.get("user_colors") # type: ignore
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
 
@@ -65,18 +66,18 @@ class SignupView:
         )
 
     def build_form(self) -> ft.Container:
-        sizes = get_responsive_sizes(self.page.width)
+        sizes = get_responsive_sizes(self.page_width)
 
         self.name_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Nome e Sobrenome", icon=ft.Icons.PERSON)
+            page_width=self.page_width, app_colors=self.app_colors, label="Nome e Sobrenome", icon=ft.Icons.PERSON)
         self.email_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page_width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
         self.phone_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
+            page_width=self.page_width, app_colors=self.app_colors, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
         self.password_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page_width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.password_again_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page_width, app_colors=self.app_colors, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
         self.signup_button = self.build_signup_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400,
@@ -91,8 +92,8 @@ class SignupView:
         self.password_input.value = 'Aj#45678'
         self.password_again_input.value = 'Aj#45678'
 
-        self.page.user_name_text.visible = False  # Invisible, sem uso
-        self.page.company_name_text_btn.visible = False  # Invisible, sem uso
+        self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
+        self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -122,8 +123,8 @@ class SignupView:
                         color=ft.Colors.WHITE70,
                         weight=ft.FontWeight.W_300
                     ),
-                    self.page.user_name_text,   # Invisible, sem uso
-                    self.page.company_name_text_btn,   # Invisible, sem uso
+                    self.page.user_name_text,   # Invisible, sem uso # type: ignore
+                    self.page.company_name_text_btn,   # Invisible, sem uso # type: ignore
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.name_input,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
@@ -157,12 +158,12 @@ class SignupView:
         )
 
     def validate_form(self) -> Optional[str]:
-        name = self.name_input.value
-        email = self.email_input.value
-        email = email.strip().lower()
-        phone = self.phone_input.value
-        password = self.password_input.value
-        password_again = self.password_again_input.value
+        name:str = self.name_input.value if self.name_input.value else ''
+        email:str = self.email_input.value if self.email_input.value else ''
+        email:str = email.strip().lower()
+        phone:str = self.phone_input.value if self.phone_input.value else ''
+        password:str = self.password_input.value if self.password_input.value else ''
+        password_again:str = self.password_again_input.value if self.password_again_input.value else ''
 
         if not name or len(name.strip()) < 3:
             return "O nome deve ter pelo menos 3 caracteres"
@@ -210,13 +211,13 @@ class SignupView:
             self.error_text.update()
 
             first_name, last_name = get_first_and_last_name(
-                self.name_input.value)
+                self.name_input.value) # type: ignore
 
             usuario = Usuario(
-                email=self.email_input.value,
-                password=Password(self.password_input.value),
+                email=self.email_input.value, # type: ignore
+                password=Password(self.password_input.value), # type: ignore
                 name=NomePessoa(first_name, last_name),
-                phone_number=PhoneNumber(self.phone_input.value),
+                phone_number=PhoneNumber(self.phone_input.value), # type: ignore
                 profile='admin',
             )
 
@@ -229,10 +230,10 @@ class SignupView:
 
             usuario.id = result["id"]
             # Atualiza o estado do app com o novo usuário antes da navegação
-            self.page.app_state.set_usuario(usuario.to_dict())
+            self.page.app_state.set_usuario(usuario.to_dict()) # type: ignore
 
             # No registro de um novo usuario, não há empresas definidas para este usuário
-            self.page.app_state.clear_empresa_data()
+            self.page.app_state.clear_empresa_data() # type: ignore
 
             message_snackbar(
                 page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
@@ -245,7 +246,7 @@ class SignupView:
             self.signup_button.update()
 
     def page_resize(self, e):
-        sizes = get_responsive_sizes(e.page.width)
+        sizes: dict[str, int|float] = get_responsive_sizes(e.page.width)
 
         # Atualiza tamanhos dos inputs
         self.name_input.width = sizes["input_width"]
@@ -264,13 +265,13 @@ class SignupView:
         self.password_again_input.text_size = sizes["font_size"]
 
         # Atualiza o botão
-        icon_control = self.signup_button.content.controls[0]
+        icon_control = self.signup_button.content.controls[0] # type: ignore
         icon_control.size = sizes["icon_size"]
 
-        text_control = self.signup_button.content.controls[1]
+        text_control = self.signup_button.content.controls[1] # type: ignore
         text_control.size = sizes["font_size"]
 
-        self.signup_button.content.spacing = sizes["spacing"]
+        self.signup_button.content.spacing = sizes["spacing"] # type: ignore
         self.signup_button.width = sizes["button_width"]
 
         self.signup_button.style = ft.ButtonStyle(
@@ -287,8 +288,8 @@ class SignupView:
 
         # Atualiza o container principal
         form_column = self.form.content
-        form_column.controls[0].size = sizes["font_size"] * 2  # Título
-        form_column.controls[1].size = sizes["font_size"]      # Subtítulo
+        form_column.controls[0].size = sizes["font_size"] * 2  # type: ignore # Título
+        form_column.controls[1].size = sizes["font_size"]      # type: ignore # Subtítulo
 
         self.error_text.size = sizes["font_size"]
 

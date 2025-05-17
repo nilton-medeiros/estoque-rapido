@@ -1,8 +1,5 @@
 import logging
-from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 from datetime import datetime, UTC # Adicionado para isinstance
-
-from typing import Optional
 
 # from google.cloud.firestore import Query
 from google.cloud.firestore_v1.base_query import FieldFilter
@@ -40,7 +37,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         # self.transaction = self.db.transaction()
         self.collection = self.db.collection('empresas')
 
-    async def save(self, empresa: Empresa) -> str:
+    async def save(self, empresa: Empresa) -> str|None:
         """
         Salvar uma empresa no banco de dados Firestore.
 
@@ -61,27 +58,27 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             # preenchido com seu valor existente do banco de dados.
             if not data_to_save.get("created_at"):
                 # Se não existe o campo created_at ou é None, atribui TIMESTAMP
-                data_to_save['created_at'] = firestore.SERVER_TIMESTAMP
+                data_to_save['created_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 empresa.created_at = datetime.now(UTC)  # placeholders
 
             # updated_at é sempre definido/atualizado com o timestamp do servidor.
-            data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP
+            data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
             empresa.updated_at = datetime.now(UTC)  # placeholders
 
             # Se data_to_save.get("status") for 'ACTIVE' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como ACTIVE
             if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
-                data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP
+                data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 empresa.activated_at = datetime.now(UTC)  # placeholders
 
             # SOFT DELETE: Marca a entidade como DELETADA.
             # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como DELETED
             if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
-                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP
+                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 empresa.deleted_at = datetime.now(UTC)  # placeholders
 
             # Se data_to_save.get("status") for 'ARCHIVED' e data_to_save.get("archived_at") for None, significa que é uma entidade marcada como ARCHIVED
             if data_to_save.get("status") == 'ARCHIVED' and not data_to_save.get("archived_at"):
-                data_to_save['archived_at'] = firestore.SERVER_TIMESTAMP
+                data_to_save['archived_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 empresa.archived_at = datetime.now(UTC)  # placeholders
 
             doc_ref = self.collection.document(empresa.id)
@@ -146,7 +143,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             raise Exception(
                 f"Erro inesperado ao salvar empresa: {translated_error}")
 
-    async def find_by_id(self, id: str) -> Optional[Empresa]:
+    async def find_by_id(self, id: str) -> Empresa | None:
         """
         Encontrar uma empresa pelo seu identificador único.
         O fato do sistema estar de posse do ID, significa que não precisa filtrar empresa por status ativo
@@ -155,7 +152,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             id (str): O identificador único da empresa.
 
         Retorna:
-            Optional[Empresa]: Uma instância da empresa se encontrada, None caso contrário.
+            Empresa | None: Uma instância da empresa se encontrada, None caso contrário.
         """
         try:
             doc = self.collection.document(id).get()
@@ -185,7 +182,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com id '{id}': {e}")
             raise
 
-    async def find_by_cnpj(self, cnpj: CNPJ) -> Optional[Empresa]:
+    async def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
         """
         Encontrar uma empresa pelo seu CNPJ.
         O módulo que solicitou a empresa pelo CNPJ deve tratar o status da empresa. (ATIVO, ARQUIVADO E DELETADO)
@@ -194,7 +191,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             cnpj (CNPJ): O CNPJ da empresa a ser encontrada.
 
         Retorna:
-            Optional[Empresa]: Uma instância da empresa se encontrada, None caso contrário.
+            Empresa | None: Uma instância da empresa se encontrada, None caso contrário.
 
         Levanta:
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
@@ -207,10 +204,10 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             if docs:
                 doc = docs[0]  # Obtem o primeiro DocumentSnapshot
                 empresa_data = doc.to_dict()
-                empresa_data['id'] = doc.id
-                # Cria uma estância de Empresa
-                return Empresa.from_dict(empresa_data)
-
+                if empresa_data:
+                    empresa_data['id'] = doc.id
+                    # Cria uma estância de Empresa
+                    return Empresa.from_dict(empresa_data)
             return None
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -267,7 +264,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    async def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> list[Empresa]:
+    async def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> tuple[list[Empresa], int]:
         """
         Faz uma busca de todas as empresas que estão na lista de ids_empresas e pelo seu status.
 

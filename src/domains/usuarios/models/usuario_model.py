@@ -62,7 +62,7 @@ class Usuario:
             raise ValueError("O campo 'name' é obrigatório.")
 
         # Validação do campo 'email'
-        self.email = self.email.lower().strip() if self.email else None
+        self.email = self.email.lower().strip()
         if not self.email or "@" not in self.email:
             raise ValueError(
                 "O campo 'email' é obrigatório e deve conter um endereço de e-mail válido.")
@@ -186,12 +186,9 @@ class Usuario:
         return cls(
             id=data.get("id"),
             email=data.get("email", ""),
-            name=NomePessoa.from_dict(data.get("name")) if isinstance(
-                data.get("name"), dict) else data.get("name"),
-            password=Password.from_dict(data.get("password")) if isinstance(
-                data.get("password"), bytes) else data.get("password"),
-            phone_number=PhoneNumber.from_dict(data.get("phone_number")) if isinstance(
-                data.get("phone_number"), str) else data.get("phone_number"),
+            name=NomePessoa.from_dict(data["name"]) if isinstance(data.get("name"), dict) else data["name"],
+            password=Password.from_dict(data["password"]) if isinstance(data["password"], bytes) else data["password"],
+            phone_number=PhoneNumber.from_dict(data["phone_number"]) if isinstance(data["phone_number"], str) else data["phone_number"],
             profile=data.get("profile", ""),
             empresa_id=data.get("empresa_id"),
             empresas=empresas_set,

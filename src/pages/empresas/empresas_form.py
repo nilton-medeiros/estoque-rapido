@@ -1,12 +1,13 @@
 import logging
 import os
-import asyncio
+# import asyncio
 from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+from src.domains.empresas.models.cnpj import CNPJ
 import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 import src.shared.utils.tools as tools
 
@@ -27,17 +28,18 @@ logger = logging.getLogger(__name__)
 class EmpresaView:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.data = page.app_state.empresa_form
+        self.page_width: int|float = page.width if page.width else 0
+        self.data = page.app_state.form_data # type: ignore
         # Vars propiedades
-        self.logo_url: str = None
+        self.logo_url: str|None = None
         self.is_logo_url_web = False
-        self.previous_logo_url: str = None
-        self.local_upload_file: str = None
+        self.previous_logo_url: str|None = None
+        self.local_upload_file: str|None = None
         self.initials_corporate_name = "Logo"
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors = page.session.get("user_colors")
+        self.app_colors: dict = page.session.get("user_colors")  # type: ignore
 
         # Responsividade
         self._create_form_fields()
@@ -99,7 +101,7 @@ class EmpresaView:
 
         # Razão Social
         self.corporate_name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 8},
             label="Razão Social",
@@ -107,7 +109,7 @@ class EmpresaView:
         )
         # Nome Fantasia
         self.trade_name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome Fantasia",
@@ -115,7 +117,7 @@ class EmpresaView:
         )
         # Nome da loja
         self.store_name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome da Loja",
@@ -125,14 +127,14 @@ class EmpresaView:
         )
 
         self.ie = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Estadual",
             icon=ft.Icons.REAL_ESTATE_AGENT,
         )
         self.im = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Municipal",
@@ -141,7 +143,7 @@ class EmpresaView:
 
         # Informações de Contato
         self.email = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 8, 'lg': 6},
             label="Email",
@@ -149,7 +151,7 @@ class EmpresaView:
             keyboard_type=ft.KeyboardType.EMAIL,
         )
         self.phone = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 4, 'lg': 6},
             label="Telefone",
@@ -161,21 +163,21 @@ class EmpresaView:
 
         # Endereço
         self.street = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 6},
             label="Rua",
             icon=ft.Icons.LOCATION_ON,
         )
         self.number = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Número",
             icon=ft.Icons.NUMBERS,
         )
         self.complement = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Complemento",
@@ -184,14 +186,14 @@ class EmpresaView:
             hint_fade_duration=5,
         )
         self.neighborhood = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 5},
             label="Bairro",
             icon=ft.Icons.LOCATION_CITY,
         )
         self.city = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Cidade",
@@ -200,7 +202,7 @@ class EmpresaView:
             hint_fade_duration=5,
         )
         self.state = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 2, 'lg': 3},
             label="Estado",
@@ -211,7 +213,7 @@ class EmpresaView:
             max_length=2,
         )
         self.postal_code = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 10, 'lg': 12},
             label="CEP",
@@ -232,12 +234,12 @@ class EmpresaView:
         )
 
         def on_hover_logo(e):
-            color = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
+            color:str = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
             icon_container = self.camera_icon.content
             logo_container = self.logo_frame
-            icon_container.color = color
+            icon_container.color = color # type: ignore
             logo_container.border = ft.border.all(color=color, width=1)
-            icon_container.update()
+            icon_container.update() # type: ignore
             logo_container.update()
 
         self.logo_frame = ft.Container(
@@ -277,7 +279,7 @@ class EmpresaView:
 
 
     async def _show_logo_dialog(self, e) -> None:
-        cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
+        cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value)) # type: ignore
         if len(cnpj_clean) < 14:
             message_snackbar(
                 page=self.page, message="Preencha corretamente o CNPJ da empresa", message_type=MessageType.WARNING)
@@ -299,7 +301,8 @@ class EmpresaView:
         self.is_logo_url_web = upload_file.is_url_web
         self.logo_url = None
 
-        if corporate_name := self.corporate_name.value.strip():
+        corp_name: str = self.corporate_name.value if self.corporate_name.value else ''
+        if corporate_name := corp_name.strip():
             self.initials_corporate_name = tools.initials(corporate_name)
 
         if upload_file.is_url_web:
@@ -332,7 +335,7 @@ class EmpresaView:
             # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
             img_file = project_root / self.local_upload_file
             logo_img = ft.Image(
-                src=img_file,
+                src=img_file, # type: ignore
                 error_content=ft.Text(self.initials_corporate_name),
                 repeat=ft.ImageRepeat.NO_REPEAT,
                 fit=ft.ImageFit.COVER,
@@ -346,29 +349,29 @@ class EmpresaView:
 
     def _handle_cnpj_change(self, e = None):
         """Atualiza o estado do botão de consulta baseado no valor do CNPJ"""
-        cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value))
+        cnpj_clean = ''.join(filter(str.isdigit, self.cnpj.value)) # type: ignore
         cnpj_button = self.consult_cnpj_button
         logo_container = self.logo_frame
         icon_container = self.camera_icon
 
         if len(cnpj_clean) < 14:
-            self.cnpj.prefix.content.name = ft.Icons.WARNING
+            self.cnpj.prefix.content.name = ft.Icons.WARNING # type: ignore
             cnpj_button.disabled = True
             logo_container.disabled = True
             icon_container.disabled = True
             logo_container.border = ft.border.all(
                 color=ft.Colors.GREY_400, width=1)
-            icon_container.content.color = ft.Colors.GREY_400
+            icon_container.content.color = ft.Colors.GREY_400 # type: ignore
         elif len(cnpj_clean) == 14:
             # CNPJ válido, ativa o botão de consulta ao dados da empresa pelo CNPJ
             self.cnpj.value = cnpj_clean
-            self.cnpj.prefix.content.name = ft.Icons.CHECK_CIRCLE
+            self.cnpj.prefix.content.name = ft.Icons.CHECK_CIRCLE # type: ignore
             cnpj_button.disabled = False
             logo_container.disabled = False
             icon_container.disabled = False
             logo_container.border = ft.border.all(
                 color=self.app_colors["primary"], width=1)
-            icon_container.content.color = self.app_colors["primary"]
+            icon_container.content.color = self.app_colors["primary"] # type: ignore
 
 
     async def _consult_cnpj(self, e):
@@ -390,8 +393,8 @@ class EmpresaView:
                 )
                 return
 
-            data = result.get('data')
-            response = result.get('response')
+            data = result['data']
+            response = result['response']
 
             if response.status in (200, 304):
                 # Preenche os campos com os dados retornados
@@ -413,11 +416,11 @@ class EmpresaView:
 
                 match porte:
                     case 1:
-                        self.size_cia.value = EmpresaSize.MICRO
+                        self.size_cia.value = EmpresaSize.MICRO # type: ignore
                     case 3:
-                        self.size_cia.value = EmpresaSize.SMALL
+                        self.size_cia.value = EmpresaSize.SMALL # type: ignore
                     case 5:
-                        self.size_cia.value = EmpresaSize.OTHER
+                        self.size_cia.value = EmpresaSize.OTHER # type: ignore
 
                 # Mostra mensagem de sucesso
                 message_snackbar(
@@ -577,18 +580,18 @@ class EmpresaView:
             return "Email inválido"
         self.email.value = email
 
-        if len(self.cnpj.value) < 14 and self.logo_url:
+        if len(self.cnpj.value) < 14 and self.logo_url: # type: ignore
             return "É preciso CNPJ válido para salvar o logo da empresa"
         # Se todos os campos obrigatórios estão preenchidos, retorna None
         return None
 
 
     def _page_resize(self, e):
-        if self.page.width < 600:
+        if self.page_width < 600:
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
-        elif self.page.width < 1024:
+        elif self.page_width < 1024:
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -638,11 +641,11 @@ class EmpresaView:
         if self.street.value and self.postal_code.value:
             address = Address(
                 street=self.street.value,
-                number=self.number.value,
+                number=self.number.value if self.number.value else 'S/N',
                 complement=self.complement.value,
                 neighborhood=self.neighborhood.value,
-                city=self.city.value,
-                state=self.state.value,
+                city=self.city.value if self.city.value else 'São Paulo',
+                state=self.state.value if self.state.value else 'SP',
                 postal_code=self.postal_code.value,
             )
 
@@ -687,7 +690,7 @@ class EmpresaView:
 
                 fiscal_info = FiscalData(
                     crt=crt_enum,
-                    Environment=amb_enum,
+                    environment=amb_enum,
                     nfce_series=fiscal.get('nfce_series'),
                     nfce_number=fiscal.get('nfce_number'),
                     nfce_sefaz_id_csc=fiscal.get('nfce_sefaz_id_csc'),
@@ -816,7 +819,7 @@ class EmpresaView:
         if logo := self.logo_frame.content:
             if isinstance(logo, ft.Image):
                 logo.src = None
-                logo.error_content.text = "Logo"
+                logo.error_content.text = "Logo" # type: ignore
                 logo.update()
 
 
@@ -829,9 +832,9 @@ def form_principal(page: ft.Page):
     #         'container')
 
     route_title = "home/empresas/form"
-    empresa_f = page.app_state.empresa_form
+    empresa_form = page.app_state.form_data # type: ignore
 
-    if id := empresa_f.get('id'):
+    if id := empresa_form.get('id'):
         route_title += f"/{id}"
     else:
         route_title += "/new"
@@ -897,8 +900,8 @@ def form_principal(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        user = page.app_state.usuario
-        result = await empresas_controllers.handle_save_empresas(empresa, user=user)
+        user = page.app_state.usuario # type: ignore
+        result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["is_error"]:
             message_snackbar(
@@ -906,7 +909,7 @@ def form_principal(page: ft.Page):
             return
 
         # Atualiza o estado do app com o nova empresa antes da navegação se não existir
-        page.app_state.set_empresa(empresa.to_dict())
+        page.app_state.set_empresa(empresa.to_dict()) # type: ignore
 
         # Associa a empresa a lista de empresas do usuário
         user['empresas'].add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
@@ -929,7 +932,7 @@ def form_principal(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_empresa_form_data()
+        page.app_state.clear_form_data() # type: ignore
         page.go(page.data if page.data else '/home')
 
     def exit_form_empresa(e):
@@ -942,7 +945,7 @@ def form_principal(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_empresa_form_data()
+        page.app_state.clear_form_data() # type: ignore
         page.go(page.data if page.data else '/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"

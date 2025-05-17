@@ -6,7 +6,7 @@ import flet as ft
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 from src.domains.empresas.models.empresa_subclass import Status
 import src.pages.empresas.empresas_actions as empresas_actions
-from src.shared import MessageType, message_snackbar
+from src.shared import MessageType, message_snackbar, show_banner
 # Rota: /home/empresas/grid
 
 logger = logging.getLogger(__name__)
@@ -64,13 +64,13 @@ def grid_view(page: ft.Page):
         match action:
             case "INSERT":
                 # Garante que ao entrar no formulário principal, os campos estejam vazio
-                page.app_state.clear_empresa_form_data()
+                page.app_state.clear_form_data() # type: ignore
                 page.go('/home/empresas/form/principal')
             case "SELECT":
                 # Seleciona a empresa para trabalhar
-                page.app_state.set_empresa(empresa.to_dict())
-                usuario_id = page.app_state.usuario.get('id')
-                empresas = page.app_state.usuario.get('empresas')
+                page.app_state.set_empresa(empresa.to_dict()) # type: ignore
+                usuario_id = page.app_state.usuario.get('id') # type: ignore
+                empresas = page.app_state.usuario.get('empresas') # type: ignore
                 result = await empresas_actions.user_update(usuario_id, empresa.id, empresas)
                 if result['is_error']:
                     logger.warning(result['message'])
@@ -79,14 +79,14 @@ def grid_view(page: ft.Page):
                     return
                 page.go('/home')  # Redireciona para página home do usuário
             case "MAIN_DATA":
-                page.app_state.set_empresa_form(empresa.to_dict())
+                page.app_state.set_form_data(empresa.to_dict()) # type: ignore
                 page.go('/home/empresas/form/principal')
             case "TAX_DATA":
                 if empresa.cnpj:
-                    page.app_state.set_empresa_form(empresa.to_dict())
+                    page.app_state.set_form_data(empresa.to_dict()) # type: ignore
                     page.go('/home/empresas/form/dados-fiscais')
                 else:
-                    await empresas_actions.show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
+                    await show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
             case "DIGITAL_CERTIFICATE":
                 print(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
@@ -197,7 +197,7 @@ def grid_view(page: ft.Page):
         nonlocal empresas_inactivated
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get(
+        set_empresas = page.app_state.usuario.get( # type: ignore
             'empresas', [])  # Usar get com default
 
         try:
@@ -223,10 +223,12 @@ def grid_view(page: ft.Page):
             else:
                 # Usar ResponsiveRow para um layout de grid responsivo
                 # Ajuste colunas para diferentes tamanhos de tela
-                # --- Construir o Grid de Cards ---
+                # --- Constroe o Grid de Cards ---
 
                 grid = ft.ResponsiveRow(
                     controls=[
+                        # O componente Card() está sendo iterado em loop para diferentes empresas.
+                        # Por isso, não é possível movê-lo para uma variável para reduzir o nível de aninhamento.
                         ft.Card(
                             content=ft.Container(
                                 padding=15,

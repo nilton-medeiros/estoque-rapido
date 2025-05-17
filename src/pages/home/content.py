@@ -14,7 +14,7 @@ else:
         # Fallback para o locale padrão do sistema, se o desejado não estiver disponível
         locale.setlocale(locale.LC_TIME, '')
 
-from typing import Callable
+from typing import Any, Callable
 
 
 def main_content():
@@ -23,7 +23,7 @@ def main_content():
         e.control.bgcolor = ft.Colors.OUTLINE_VARIANT if e.data == "true" else ft.Colors.ON_INVERSE_SURFACE
         e.control.update()
 
-    def content_card(icons: list, title: str, click_action: Callable[[any], None]) -> ft.Card:
+    def content_card(icons: list, title: str, click_action: Callable[[Any], None]) -> ft.Card:
         return ft.Card(
             content=ft.Container(
                 content=ft.Column(

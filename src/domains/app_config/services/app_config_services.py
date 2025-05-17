@@ -1,7 +1,6 @@
-from typing import Optional
-
 from src.domains.app_config.models.app_config_model import AppConfig
 from src.domains.app_config.repositories.contracts.app_config_repository import AppConfigRepository
+from src.shared import get_uuid
 
 
 
@@ -34,36 +33,44 @@ class AppConfigServices:
     def __init__(self, repository: AppConfigRepository):
         self.repository = repository
 
-    async def create_config(self, config: AppConfig):
-        """Envia os dados da nova configuração para o repositório criar.
+    # async def create_config(self, config: AppConfig):
+    #     """Envia os dados da nova configuração para o repositório criar.
 
-        Este método é responsável por enviar os dados da nova configuração para o repositório,
-        que, por sua vez, cria uma nova entrada na entidade app_config do banco de dados.
+    #     Este método é responsável por enviar os dados da nova configuração para o repositório,
+    #     que, por sua vez, cria uma nova entrada na entidade app_config do banco de dados.
 
-        Args:
-            config (AppConfig): Instância da Configuração do sistema a ser criada.
+    #     Args:
+    #         config (AppConfig): Instância da Configuração do sistema a ser criada.
 
-        Returns:
-            ID do documento da Configuração do sistema criada
+    #     Returns:
+    #         ID do documento da Configuração do sistema criada
 
-        Raises:
-            ValueError: Descrição da exceção que pode ser lançada, se aplicável.
+    #     Raises:
+    #         ValueError: Descrição da exceção que pode ser lançada, se aplicável.
 
-        Exemplo:
-            >>> repository = FirebaseAppConfigRepository()
-            >>> config_service = AppConfigService(repository)
-            >>> config_id = await config_service.create_config(config)
-        """
+    #     Exemplo:
+    #         >>> repository = FirebaseAppConfigRepository()
+    #         >>> config_service = AppConfigService(repository)
+    #         >>> config_id = await config_service.create_config(config)
+    #     """
 
-        existing_config = await self.repository.find_by_id(config.id)
+    #     existing_config = await self.repository.find_by_id(config.id)
 
-        if existing_config:
-            raise ValueError("Já existe uma configuração com este ID")
+    #     if existing_config:
+    #         raise ValueError("Já existe uma configuração com este ID")
 
-        # Envia para o repositório selecionado em config_controllrer salvar
+    #     # Envia para o repositório selecionado em config_controllrer salvar
+    #     return await self.repository.save(config)
+
+
+    async def create(self, config: AppConfig) -> str:
+        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'app_'
+        config.id = 'app_' + get_uuid()
+       # Envia para o repositório selecionado em app_config_controllrer salvar
         return await self.repository.save(config)
 
-    async def update_config(self, config: AppConfig) -> AppConfig:
+
+    async def update(self, config: AppConfig) -> str:
         """Atualiza os dados de uma configuração existente.
 
         Este método atualiza os dados de uma configuração existente. Ele envia as informações
@@ -90,7 +97,7 @@ class AppConfigServices:
                 "ID da configuração é necessário para atualização")
         return await self.repository.save(config)
 
-    async def find_config_by_id(self, id: str) -> Optional[AppConfig]:
+    async def find_config_by_id(self, id: str) -> AppConfig|None:
         """Busca uma configuração no banco de dados utilizando o ID.
 
         Este método busca uma configuração no banco de dados utilizando o ID fornecido.
