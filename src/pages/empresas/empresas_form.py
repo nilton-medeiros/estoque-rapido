@@ -1,6 +1,10 @@
 import logging
 import os
+import base64
+import mimetypes
+
 # import asyncio
+
 from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 
 from typing import Optional
@@ -71,7 +75,7 @@ class EmpresaView:
             text_align=ft.TextAlign.LEFT,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
-                color=self.app_colors["primary"],  # Cor do label igual à borda
+                color=self.app_colors["primary"],  # Cor do label igual à borda # type: ignore
                 weight=ft.FontWeight.W_500  # Label um pouco mais grosso
             ),
             hint_style=ft.TextStyle(
@@ -250,7 +254,7 @@ class EmpresaView:
             width=350,
             height=250,
             border=ft.border.all(color=ft.Colors.GREY_400, width=1),
-            border_radius=ft.border_radius.all(10),
+            border_radius=ft.border_radius.all(20),
             on_click=self._show_logo_dialog,  # Também
             on_hover=on_hover_logo,
             disabled=self.consult_cnpj_button.disabled,
@@ -266,7 +270,7 @@ class EmpresaView:
             ink=True,
             on_hover=on_hover_logo,
             on_click=self._show_logo_dialog,
-            border_radius=ft.border_radius.all(10),
+            border_radius=ft.border_radius.all(100),
             padding=8,
             disabled=self.consult_cnpj_button.disabled,
         )
@@ -314,10 +318,8 @@ class EmpresaView:
                 src=self.logo_url,
                 error_content=ft.Text(self.initials_corporate_name),
                 repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
+                fit=ft.ImageFit.CONTAIN,
+                border_radius=ft.border_radius.all(20),
             )
             self.logo_frame.content = logo_img
             self.logo_section.update()
@@ -334,15 +336,37 @@ class EmpresaView:
             project_root = find_project_root(__file__)
             # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
             img_file = project_root / self.local_upload_file
-            logo_img = ft.Image(
-                src=img_file, # type: ignore
-                error_content=ft.Text(self.initials_corporate_name),
-                repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
-            )
+
+            try:
+                with open(img_file, "rb") as f_img:
+                    img_data = f_img.read()
+
+                base64_data = base64.b64encode(img_data).decode('utf-8')
+                mime_type, _ = mimetypes.guess_type(str(img_file))
+                if not mime_type:
+                    # Tenta inferir pela extensão se mimetypes falhar
+                    ext = str(img_file).split('.')[-1].lower()
+                    if ext == "jpg" or ext == "jpeg":
+                        mime_type = "image/jpeg"
+                    elif ext == "png":
+                        mime_type = "image/png"
+                    elif ext == "svg":
+                        mime_type = "image/svg+xml"
+                    else:
+                        mime_type = "application/octet-stream" # Fallback genérico
+
+                logo_img = ft.Image(
+                    src_base64=base64_data,
+                    error_content=ft.Text("Erro ao carregar (base64)!"),
+                    repeat=ft.ImageRepeat.NO_REPEAT,
+                    fit=ft.ImageFit.CONTAIN,
+                    border_radius=ft.border_radius.all(20),
+                )
+            except Exception as ex:
+                logger.error(f"Erro ao ler arquivo de imagem {img_file} para base64: {ex}")
+                logo_img = ft.Image(
+                    error_content=ft.Text(f"Erro crítico ao carregar imagem: {ex}"),
+                )
             self.logo_frame.content = logo_img
             self.logo_frame.update()
 
@@ -541,7 +565,7 @@ class EmpresaView:
 
 
         if size_enum := self.data.get('size'):
-            self.size_cia.value = size_enum.name
+            self.size_cia.value = size_enum
         else:
             self.size_cia.value = ''
 
@@ -554,10 +578,8 @@ class EmpresaView:
                 src=self.logo_url,
                 error_content=ft.Text("Logo"),
                 repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
+                fit=ft.ImageFit.CONTAIN,
+                border_radius=ft.border_radius.all(20),
             )
             self.logo_frame.content = logo_img
         else:
@@ -768,10 +790,8 @@ class EmpresaView:
                     src=self.logo_url,
                     error_content=ft.Text(self.initials_corporate_name),
                     repeat=ft.ImageRepeat.NO_REPEAT,
-                    fit=ft.ImageFit.COVER,
-                    border_radius=ft.border_radius.all(100),
-                    width=300,
-                    height=200,
+                    fit=ft.ImageFit.CONTAIN,
+                    border_radius=ft.border_radius.all(20),
                 )
                 self.logo_frame.content = logo_img
                 self.logo_frame.update()
@@ -851,7 +871,7 @@ def form_principal(page: ft.Page):
             content=ft.Container(
                 width=40,
                 height=40,
-                border_radius=ft.border_radius.all(20),
+                border_radius=ft.border_radius.all(100),
                 ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,

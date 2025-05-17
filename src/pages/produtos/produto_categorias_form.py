@@ -1,7 +1,9 @@
 import logging
 import os
+import base64
+import mimetypes
 
-from enum import Enum  # Certifique-se de importar o módulo 'Enum'
+from enum import Enum
 
 import flet as ft
 
@@ -21,39 +23,50 @@ logger = logging.getLogger(__name__)
 class ProdutoCategoriaView:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.empresa_logada = page.app_state.empresa
-        self.data = page.app_state.form_data  # Dados da Categoria (update) ou {} para insert
+        self.page_width = self.page.width if self.page.width else 0
+        self.empresa_logada = page.app_state.empresa # type: ignore
+        self.data = page.app_state.form_data # type: ignore  # Dados da Categoria (update) ou {} para insert
         # Imagem da categoria
         self.image_url: str | None = None
         self.is_image_url_web = False
-        self.previous_image_url: str = None
-        self.local_upload_file: str = None
+        self.previous_image_url: str|None = None
+        self.local_upload_file: str|None = None
         # Campos de redimencionamento do formulário
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors = page.session.get("user_colors")
+        self.app_colors: dict[str, str] = page.session.get("user_colors") # type: ignore
+        self.input_width = 400,
 
         # Responsividade
         self._create_form_fields()
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
 
+    def on_change_status(self, e):
+        status = e.control
+        status.label = "Produto Ativo" if e.data == "true" else "Produto Inativo (Obsoleto)"
+        status.update()
+
     def _create_form_fields(self):
         """Cria os campos do formulário Categorias de Produto"""
         self.name = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 8},
             label="Nome da Categoria",
             icon=ft.Icons.ASSIGNMENT_OUTLINED,
         )
         # Switch Ativo/Inativo
-        self.status = ft.Switch(label="Ativo", value=True, col={'xs': 12, 'md': 12, 'lg': 4})
+        self.status = ft.Switch(
+            label="Produto Ativo",
+            value=True,
+            on_change=self.on_change_status,
+            col={'xs': 12, 'md': 12, 'lg': 4})
 
         # Descrição da categoria
         self.description = build_input_field(
-            page_width=self.page.width,
+            page_width=self.page_width,
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 12},
             label="Descrição (opcional)",
@@ -63,39 +76,39 @@ class ProdutoCategoriaView:
         )
 
         def on_hover_image(e):
-            color = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
+            color: str = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
             icon_container = self.camera_icon.content
             image_container = self.image_frame
-            icon_container.color = color
+            icon_container.color = color # type: ignore
             image_container.border = ft.border.all(color=color, width=1)
-            icon_container.update()
+            icon_container.update() # type: ignore
             image_container.update()
 
         self.image_frame = ft.Container(
-            content=ft.Text("Imagem da Categoria", italic=True),
+            content=ft.Text("Imagem da Categoria (opcional)", italic=True),
             bgcolor=ft.Colors.TRANSPARENT,
             padding=10,
             alignment=ft.alignment.center,
             width=350,
             height=250,
             border=ft.border.all(color=ft.Colors.GREY_400, width=1),
-            border_radius=ft.border_radius.all(10),
+            border_radius=ft.border_radius.all(20),
             on_click=self._show_image_dialog,  # Também
             on_hover=on_hover_image,
-            disabled=self.consult_cnpj_button.disabled,
+            tooltip="Clique aqui para adicionar uma imagem da categoria",
         )
         # Campo Logo do emitente de NFCe
         self.camera_icon = ft.Container(
             content=ft.Icon(
                 name=ft.Icons.ADD_A_PHOTO_OUTLINED,
                 size=20,
-                color=ft.Colors.GREY_400,  # Cor padrão quando disabled
+                color=ft.Colors.PRIMARY,
             ),
             margin=ft.margin.only(top=-5),
             ink=True,
             on_hover=on_hover_image,
             on_click=self._show_image_dialog,
-            border_radius=ft.border_radius.all(10),
+            border_radius=ft.border_radius.all(100),
             padding=8,
         )
 
@@ -103,6 +116,7 @@ class ProdutoCategoriaView:
             controls=[self.image_frame, self.camera_icon],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=0,
+            width=1400,
         )
 
     async def _show_image_dialog(self, e) -> None:
@@ -131,10 +145,8 @@ class ProdutoCategoriaView:
                 src=self.image_url,
                 error_content=ft.Text("Erro!"),
                 repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
+                fit=ft.ImageFit.CONTAIN,
+                border_radius=ft.border_radius.all(20),
             )
             self.image_frame.content = categoria_img
             self.image_section.update()
@@ -151,15 +163,37 @@ class ProdutoCategoriaView:
             project_root = find_project_root(__file__)  # Obtem o diretório raiz do projeto
             # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
             img_file = project_root / self.local_upload_file
-            categoria_img = ft.Image(
-                src=img_file,
-                error_content=ft.Text("Erro!"),
-                repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
-            )
+
+            try:
+                with open(img_file, "rb") as f_img:
+                    img_data = f_img.read()
+
+                base64_data = base64.b64encode(img_data).decode('utf-8')
+                mime_type, _ = mimetypes.guess_type(str(img_file))
+                if not mime_type:
+                    # Tenta inferir pela extensão se mimetypes falhar
+                    ext = str(img_file).split('.')[-1].lower()
+                    if ext == "jpg" or ext == "jpeg":
+                        mime_type = "image/jpeg"
+                    elif ext == "png":
+                        mime_type = "image/png"
+                    elif ext == "svg":
+                        mime_type = "image/svg+xml"
+                    else:
+                        mime_type = "application/octet-stream" # Fallback genérico
+
+                categoria_img = ft.Image(
+                    src_base64=base64_data,
+                    error_content=ft.Text("Erro ao carregar (base64)!"),
+                    repeat=ft.ImageRepeat.NO_REPEAT,
+                    fit=ft.ImageFit.CONTAIN,
+                    border_radius=ft.border_radius.all(20),
+                )
+            except Exception as ex:
+                logger.error(f"Erro ao ler arquivo de imagem {img_file} para base64: {ex}")
+                categoria_img = ft.Image(
+                    error_content=ft.Text(f"Erro crítico ao carregar imagem: {ex}"),
+                )
             self.image_frame.content = categoria_img
             self.image_frame.update()
 
@@ -179,7 +213,7 @@ class ProdutoCategoriaView:
             controls=[
                 ft.Text("Imagem dos Produtos da Categoria", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(controls=[self.image_frame]),
+                responsive_row(controls=[self.image_section]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT), # Cria uma linha (espaço vazio) para efeito visual
                 ft.Divider(height=10),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
@@ -190,7 +224,7 @@ class ProdutoCategoriaView:
                 responsive_row(controls=[self.description]),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
-            spacing=20,
+            spacing=10,
             alignment=ft.MainAxisAlignment.SPACE_EVENLY,
         )
 
@@ -198,7 +232,7 @@ class ProdutoCategoriaView:
             content=build_content,
             padding=self.padding,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
-            border_radius=ft.border_radius.all(10),
+            border_radius=ft.border_radius.all(20),
         )
 
 
@@ -229,10 +263,8 @@ class ProdutoCategoriaView:
                 src=self.image_url,
                 error_content=ft.Text("Erro!"),
                 repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(100),
-                width=300,
-                height=200,
+                fit=ft.ImageFit.CONTAIN,
+                border_radius=ft.border_radius.all(20),
             )
             self.image_frame.content = categoria_img
         else:
@@ -250,12 +282,12 @@ class ProdutoCategoriaView:
 
 
     def _page_resize(self, e):
-        if self.page.width < 600:
+        if self.page_width < 600:
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
             self.input_width = 280,
-        elif self.page.width < 1024:
+        elif self.page_width < 1024:
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -267,7 +299,7 @@ class ProdutoCategoriaView:
             self.input_width = 400,
 
         # Atualiza os tamanhos dos campos do formulário
-        self.nome.text_size = self.font_size
+        self.name.text_size = self.font_size
         self.description.text_size = self.font_size
 
         # Atualiza o padding do container
@@ -286,8 +318,8 @@ class ProdutoCategoriaView:
         if self.image_url:
             self.data['image_url'] = self.image_url
 
-        if not self.data['empresa_id']:
-            self.data["empresa_id"] = self.empresa_id
+        if not self.data.get('empresa_id'):
+            self.data["empresa_id"] = self.empresa_logada["id"]
 
         return ProdutoCategorias.from_dict(self.data)
 
@@ -298,7 +330,8 @@ class ProdutoCategoriaView:
             # Não há arquivo local para enviar
             return False
 
-        prefix = self.app_state.usuario.get("id")
+        prefix = self.page.app_state.usuario["id"] # type: ignore
+
         if cnpj := self.empresa_logada.get("cnpj"):
             prefix = cnpj.raw_cnpj
 
@@ -320,10 +353,8 @@ class ProdutoCategoriaView:
                     src=self.image_url,
                     error_content=ft.Text("Erro!"),
                     repeat=ft.ImageRepeat.NO_REPEAT,
-                    fit=ft.ImageFit.COVER,
-                    border_radius=ft.border_radius.all(100),
-                    width=300,
-                    height=200,
+                    fit=ft.ImageFit.CONTAIN,
+                    border_radius=ft.border_radius.all(20),
                 )
                 self.image_frame.content = categoria_img
                 self.image_frame.update()
@@ -332,8 +363,8 @@ class ProdutoCategoriaView:
                 return True
 
             # A Imagem não é válida, URL não foi gerada, mantém a imagem anterior se houver
-            if self.previous_logo_url:
-                self.image_url = self.previous_logo_url
+            if self.previous_image_url:
+                self.image_url = self.previous_image_url
 
             message_snackbar(
                 page=self.page, message="Não foi possível carregar imagem da categoria de produtos!", message_type=MessageType.ERROR)
@@ -373,7 +404,7 @@ class ProdutoCategoriaView:
 def form_produto_categorias(page: ft.Page):
     """Página de cadastro de categorias de produtos."""
     route_title = "home/produtos/categorias/form"
-    categoria_data = page.app_state.form_data
+    categoria_data = page.app_state.form_data # type: ignore
 
     if id := categoria_data.get("id"):
         route_title += f"/{id}"
@@ -392,7 +423,7 @@ def form_produto_categorias(page: ft.Page):
             content=ft.Container(
                 width=40,
                 height=40,
-                border_radius=ft.border_radius.all(20),
+                border_radius=ft.border_radius.all(100),
                 ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,
@@ -449,7 +480,7 @@ def form_produto_categorias(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página anterior que a invocou
         categorias_view.clear_form()
-        page.app_state.clear_form_data()
+        page.app_state.clear_form_data() # type: ignore
         page.go(page.data if page.data else '/home')
 
     def exit_form_categorias(e):
@@ -462,25 +493,27 @@ def form_produto_categorias(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         categorias_view.clear_form()
-        page.app_state.clear_form_data()
+        page.app_state.clear_form_data() # type: ignore
         page.go(page.data if page.data else '/home')
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(
-        text="Salvar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=save_form_categorias)
+        text="Salvar", col={'xs': 5, 'md': 5, 'lg': 5}, on_click=save_form_categorias)
     exit_btn = ft.ElevatedButton(
-        text="Cancelar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_categorias)
-
+        text="Cancelar", col={'xs': 5, 'md': 5, 'lg': 5}, on_click=exit_form_categorias)
+    space_between = ft.Container(col={'xs': 2, 'md': 2, 'lg': 2})
     return ft.Column(
         controls=[
             form_container,
-            ft.Divider(height=5),
+            ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+            ft.Divider(height=10),
+            ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
             ft.ResponsiveRow(
                 columns=12,
                 expand=True,
-                spacing=20,
-                run_spacing=20,
-                controls=[save_btn, exit_btn],
+                spacing=10,
+                run_spacing=10,
+                controls=[save_btn, space_between, exit_btn],
                 alignment=ft.MainAxisAlignment.END,
             ),
         ],
