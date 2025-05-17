@@ -3,7 +3,7 @@ import flet as ft
 # Thema da aplicação. Inicia em home
 class AppTheme:
     theme = ft.Theme(
-        color_scheme=ft.ColorScheme(
+        color_scheme=ft.ColorScheme( # type: ignore
             background='#111418',
             on_background='#2d2d3a',
             on_inverse_surface='#2d2d3a',

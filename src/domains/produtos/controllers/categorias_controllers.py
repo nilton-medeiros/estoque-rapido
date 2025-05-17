@@ -2,4 +2,4 @@ from src.domains.produtos.models.produto_categorias_model import ProdutoCategori
 
 
 async def handle_save(categoria: ProdutoCategorias) -> dict:
-    pass
+    return {}

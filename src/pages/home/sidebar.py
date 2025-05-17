@@ -679,7 +679,8 @@ def sidebar_footer(page: ft.Page):
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.ASSIGNMENT_OUTLINED, color="white", size=22),
                     tooltip="Categorias de produtos",
-                    on_click=lambda _: page.go('/home/produtos/categorias/grid'),
+                    # on_click=lambda _: page.go('/home/produtos/categorias/grid'),
+                    on_click=lambda _: page.go('home/produtos/categorias/form'),
                 ),
                 # --- Ícone de Produtos ---
                 ft.Container(
