@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 class EmpresaView:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page_width: int|float = page.width if page.width else 0
         self.data = page.app_state.form_data # type: ignore
         # Vars propiedades
         self.logo_url: str|None = None
@@ -105,7 +104,7 @@ class EmpresaView:
 
         # Razão Social
         self.corporate_name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 8},
             label="Razão Social",
@@ -113,7 +112,7 @@ class EmpresaView:
         )
         # Nome Fantasia
         self.trade_name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome Fantasia",
@@ -121,7 +120,7 @@ class EmpresaView:
         )
         # Nome da loja
         self.store_name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Nome da Loja",
@@ -131,14 +130,14 @@ class EmpresaView:
         )
 
         self.ie = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Estadual",
             icon=ft.Icons.REAL_ESTATE_AGENT,
         )
         self.im = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Inscrição Municipal",
@@ -147,7 +146,7 @@ class EmpresaView:
 
         # Informações de Contato
         self.email = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 8, 'lg': 6},
             label="Email",
@@ -155,7 +154,7 @@ class EmpresaView:
             keyboard_type=ft.KeyboardType.EMAIL,
         )
         self.phone = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 4, 'lg': 6},
             label="Telefone",
@@ -167,21 +166,21 @@ class EmpresaView:
 
         # Endereço
         self.street = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 6},
             label="Rua",
             icon=ft.Icons.LOCATION_ON,
         )
         self.number = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Número",
             icon=ft.Icons.NUMBERS,
         )
         self.complement = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Complemento",
@@ -190,14 +189,14 @@ class EmpresaView:
             hint_fade_duration=5,
         )
         self.neighborhood = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 5},
             label="Bairro",
             icon=ft.Icons.LOCATION_CITY,
         )
         self.city = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Cidade",
@@ -206,7 +205,7 @@ class EmpresaView:
             hint_fade_duration=5,
         )
         self.state = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 2, 'lg': 3},
             label="Estado",
@@ -217,7 +216,7 @@ class EmpresaView:
             max_length=2,
         )
         self.postal_code = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 10, 'lg': 12},
             label="CEP",
@@ -609,11 +608,11 @@ class EmpresaView:
 
 
     def _page_resize(self, e):
-        if self.page_width < 600:
+        if self.page.width < 600: # type: ignore
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
-        elif self.page_width < 1024:
+        elif self.page.width < 1024: # type: ignore
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -844,7 +843,7 @@ class EmpresaView:
 
 
 # Rota: /home/empresas/form/principal
-def form_principal(page: ft.Page):
+def emp_form_principal(page: ft.Page):
     """Página de cadastro de empresas"""
     # if colors := page.app_state.usuario.get('user_colors'):
     #     page.theme.color_scheme.primary = colors.get('primary')

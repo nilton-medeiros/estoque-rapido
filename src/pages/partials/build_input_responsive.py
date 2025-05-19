@@ -26,12 +26,12 @@ def build_input_field(page_width: int|float, app_colors: dict[str, str], col: di
         text_align=ft.TextAlign.LEFT,
         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
         label_style=ft.TextStyle(
-            color=app_colors["primary"],          # Cor do label igual à borda
-            weight=ft.FontWeight.W_500                  # Label um pouco mais grosso
+            color=app_colors["primary"], # type: ignore # Cor do label igual à borda
+            weight=ft.FontWeight.W_500 # Label um pouco mais grosso
         ),
         hint_style=ft.TextStyle(
-            color=ft.Colors.GREY_500,          # Cor do placeholder mais visível
-            weight=ft.FontWeight.W_300                  # Placeholder um pouco mais fino
+            color=ft.Colors.GREY_500, # type: ignore # Cor do placeholder mais visível
+            weight=ft.FontWeight.W_300 # Placeholder um pouco mais fino
         ),
         # Duração do fade do placeholder
         cursor_color=app_colors["primary"],

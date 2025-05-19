@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # Rota: /home/empresas/grid/lixeira
-def grid_lixeira(page: ft.Page):
+def emp_grid_lixeira(page: ft.Page):
     """Página de exibição das empresas do usuário logado que estão inativas ('DELETED') e arquivadas ('ARCHIVED') em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
 

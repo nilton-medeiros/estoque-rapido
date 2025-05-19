@@ -27,13 +27,15 @@ def dashboard(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
-    page_width: int|float = page.width if page.width else 0
-
     def toggle_sidebar(e):
-        if page_width < 768:
+        print(f"Debug  -> page.width: {page.width}")
+        print(f"Debug  -> page.window.width: {page.window.width}")
+        if page.width < 768: # type: ignore
             # Mobile
             sidebar.visible = not sidebar.visible
             content.visible = not sidebar.visible
+            print(f"Debug  -> sidebar.visible: {sidebar.visible}")
+            print(f"Debug  -> content.visible: {content.visible}")
             if sidebar.visible:
                 sidebar.col = {"xs": 12}
                 content.col = {"xs": 0}
@@ -99,7 +101,7 @@ def dashboard(page: ft.Page):
     )
 
     def on_page_resized(e=None):
-        if page_width < 1024:  # Modo Mobile, tablet
+        if page.width < 1024: # type: ignore # Modo Mobile, tablet
             # Ajustar layout para modo mobile
             sidebar.visible = False
             content.col = {"xs": 12}  # O conteúdo ocupa toda a largura
@@ -117,7 +119,7 @@ def dashboard(page: ft.Page):
 
             side_right = content.content.controls[0].content.controls[1] # type: ignore
 
-            if page_width < 1024:
+            if page.width < 1024: # type: ignore
                 # Oculta imagem de fundo
                 side_right.visible = False
             else:

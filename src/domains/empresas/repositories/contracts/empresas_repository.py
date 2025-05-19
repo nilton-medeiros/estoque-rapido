@@ -39,3 +39,9 @@ class EmpresasRepository(ABC):
         """Lista as empresas do usuário logado"""
         raise NotImplementedError(
             "Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    async def count_inactivated(self, ids_empresas: set[str] | list[str]) -> int:
+        """Conta as empresas inativas (deletadas ou arquivadas) dentro do conjunto ou lista de ids_empresas do usuário logado."""
+        raise NotImplementedError(
+            "Este método deve ser implementado pela subclasse")

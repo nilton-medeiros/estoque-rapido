@@ -1,5 +1,99 @@
-from src.domains.produtos.models.produto_categorias_model import ProdutoCategorias
+import logging
+
+from typing import Any
+from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
+from src.domains.produtos.repositories import CategoriasRepository, FirebaseCategoriasRepository
+from src.domains.produtos.services import CategoriasServices
+
+logger = logging.getLogger(__name__)
 
 
-async def handle_save(categoria: ProdutoCategorias) -> dict:
+async def handle_save(categoria: ProdutoCategorias, usuario: dict) -> dict[str, Any]:
+    response = {
+        "is_error": False,
+        "message": "",
+        "id": None,
+    }
+
+    operation = "atualizada"
+
+    try:
+        repository = FirebaseCategoriasRepository()
+        categorias_services = CategoriasServices(repository)
+
+        if categoria.id:
+            response["id"] = await categorias_services.update(categoria, usuario)
+        else:
+            response["id"] = await categorias_services.create(categoria, usuario)
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"handle_save ValueError: Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+
+async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
     return {}
+
+
+async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:
+    """
+    Busca todas as categorias do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
+
+    Esta função retorna todas as categorias do usuário logado, se não houver categorias, retorna uma lista vazia.
+    Ela utiliza um repositório específico para realizar a busca e retorna a lista de categorias, se encontrada.
+
+    Args:
+        empresa_id (str): O ID da empresa para buscar as categorias.
+
+    Returns (dict):
+        is_error (bool): True se houve erro na operação, False caso contrário.
+        message (str): Uma mensagem de sucesso ou erro.
+        data_list (list): Uma lista de categorias da empresa logada ou [].
+        deleted (int): Quantidade de categorias deletadas (para o tooltip da lixeira).
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar categorias.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> response = await handle_get_empresas(['abc123', 'def456'])
+        >>> print(response)
+    """
+
+    response = {
+        "is_error": False,
+        "message": "",
+        "data_list": [],
+        "deleted": 0,
+    }
+
+    try:
+        # Usa o repositório do Firebase para buscar as categorias
+        repository = FirebaseCategoriasRepository()
+        categorias_services = CategoriasServices(repository)
+
+        if not empresa_id:
+            raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+        empresas_list, quantify = await categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+        response["deleted"] = quantify if quantify else 0
+
+        if empresas_list:
+            response["message"] = "Empresas encontradas com sucesso!"
+            response["data_list"] = empresas_list
+        else:
+            response["is_error"] = True
+            response["message"] = "Nenhuma categoria de produto encontrada!"
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"categorias_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+
+    return response

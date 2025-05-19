@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from src.domains.produtos.models.produtos_enum_subclass import ProdutoStatus
+from src.domains.produtos.models.produtos_subclass import ProdutoStatus
 
 
 @dataclass
@@ -17,9 +17,15 @@ class ProdutoCategorias:
     created_at: datetime | None = None
     created_by_id: str | None = None
     created_by_name: str | None = None
+    activated_at: datetime | None = None
+    activated_by_id: str | None = None
+    activated_by_name: str | None = None
     updated_at: datetime | None = None
     updated_by_id: str | None = None
     updated_by_name: str | None = None
+    inactivated_at: datetime | None = None
+    inactivated_by_id: str | None = None
+    inactivated_by_name: str | None = None
     deleted_at: datetime | None = None
     deleted_by_id: str | None = None
     deleted_by_name: str | None = None

@@ -2,16 +2,19 @@ import flet as ft
 import logging
 import time
 import threading
-from logging.handlers import RotatingFileHandler
 import os
-from pathlib import Path
 
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from dotenv import load_dotenv
+
 from src.pages import render_signup, render_landing_page, render_login
-from src.pages.empresas import form_principal, form_dados_fiscais, grid_view, grid_lixeira
+from src.pages.empresas import emp_grid_view, emp_form_principal, emp_form_dados_fiscais, emp_grid_lixeira
 from src.pages.home import dashboard
-from src.pages.produtos.produto_categorias_form import form_produto_categorias
+from src.pages.produtos import cat_grid_view, form_categorias
+
 from src.services import AppStateManager
+
 from src.shared import get_app_colors
 
 logger = logging.getLogger(__name__)
@@ -183,20 +186,20 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
-                    pg_view = grid_view(page)
+                    pg_view = emp_grid_view(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid/lixeira':
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
-                    pg_view = grid_lixeira(page)
+                    pg_view = emp_grid_lixeira(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/principal':
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
-                    form = form_principal(page)
+                    form = emp_form_principal(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/principal',
                         appbar=form.data,
@@ -212,7 +215,7 @@ def main(page: ft.Page):
                 # Verifica se usuário está logado
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
-                    form = form_dados_fiscais(page)
+                    form = emp_form_dados_fiscais(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/dados-fiscais',
                         appbar=form.data,
@@ -224,10 +227,16 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
-            case 'home/produtos/categorias/form':
+            case '/home/produtos/categorias/grid':
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
-                    form = form_produto_categorias(page)
+                    pg_view = cat_grid_view(page)
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/produtos/categorias/form':
+                if page.app_state.usuario.get('id'): # type: ignore
+                    page.on_resized = None
+                    form = form_categorias(page)
                     pg_view = ft.View(
                         route='home/produtos/categorias/form',
                         appbar=form.data,

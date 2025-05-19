@@ -71,7 +71,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 empresa.activated_at = datetime.now(UTC)  # placeholders
 
             # SOFT DELETE: Marca a entidade como DELETADA.
-            # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como DELETED
+            # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("deleted_at") for None, significa que é uma entidade marcada como DELETED
             if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
                 data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 empresa.deleted_at = datetime.now(UTC)  # placeholders
@@ -324,7 +324,6 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             logger.error(
                 f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
-
 
     async def count_inactivated(self, ids_empresas: set[str] | list[str]) -> int:
         """Conta as empresas inativas (deletadas ou arquivadas) dentro do conjunto ou lista de ids_empresas do usuário logado."""

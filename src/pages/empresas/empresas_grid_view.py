@@ -12,19 +12,14 @@ from src.shared import MessageType, message_snackbar, show_banner
 logger = logging.getLogger(__name__)
 
 
-def grid_view(page: ft.Page):
+def emp_grid_view(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/empresas/grid"
 
-    # Resetar alinhamentos da página que podem interferir com o layout da View
-    # page.vertical_alignment = ft.MainAxisAlignment.START
-    # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
-
     # --- Indicador de Carregamento (Spinner) ---
-    progress_ring = ft.ProgressRing(width=32, height=32, stroke_width=3)
     loading_container = ft.Container(
-        content=progress_ring,
+        content=ft.ProgressRing(width=32, height=32, stroke_width=3),
         alignment=ft.alignment.center,
         expand=True,  # Ocupa o espaço disponível enquanto carrega
         visible=True  # Começa visível
@@ -227,7 +222,7 @@ def grid_view(page: ft.Page):
 
                 grid = ft.ResponsiveRow(
                     controls=[
-                        # O componente Card() está sendo iterado em loop para diferentes empresas.
+                        # O componente Card() está sendo iterado em loop para uma ou mais empresas.
                         # Por isso, não é possível movê-lo para uma variável para reduzir o nível de aninhamento.
                         ft.Card(
                             content=ft.Container(
@@ -397,6 +392,10 @@ def grid_view(page: ft.Page):
         tooltip="Empresas inativas",
         bgcolor=ft.Colors.TRANSPARENT,
     )
+
+    # Resetar alinhamentos da página que podem interferir com o layout da View
+    # page.vertical_alignment = ft.MainAxisAlignment.START
+    # page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
 
     # --- Retornar Estrutura Inicial da Página como ft.View ---
     # A View inclui a AppBar e a área de conteúdo principal (que inicialmente mostra o spinner)

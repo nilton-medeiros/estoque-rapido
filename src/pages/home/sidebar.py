@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 def sidebar_header(page: ft.Page):
-    page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE # type: ignore
-    page.user_name_text.visible = True # type: ignore
-    page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM # type: ignore
-    page.company_name_text_btn.visible = True # type: ignore
+    page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE  # type: ignore
+    page.user_name_text.visible = True  # type: ignore
+    page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM  # type: ignore
+    page.company_name_text_btn.visible = True  # type: ignore
 
-    current_user = page.app_state.usuario # type: ignore
+    current_user = page.app_state.usuario  # type: ignore
     profile = ft.Text(
         value=current_user['profile'], theme_style=ft.TextThemeStyle.BODY_SMALL)
     user_photo = None
@@ -37,16 +37,16 @@ def sidebar_header(page: ft.Page):
     else:
         user_photo = ft.Text(current_user['name'].iniciais)
 
-    current_company = page.app_state.empresa # type: ignore
+    current_company = page.app_state.empresa  # type: ignore
     cia_name = None
     if current_company.get('id'):
-        page.company_name_text_btn.tooltip = "Empresa selecionada" # type: ignore
+        page.company_name_text_btn.tooltip = "Empresa selecionada"  # type: ignore
         cia_name = current_company.get(
             'trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
-        page.company_name_text_btn.text = cia_name # type: ignore
+        page.company_name_text_btn.text = cia_name  # type: ignore
     else:
-        page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa" # type: ignore
-        page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA" # type: ignore
+        page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"  # type: ignore
+        page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"  # type: ignore
 
     # page.company_name_text_btn.update()
 
@@ -86,7 +86,7 @@ def sidebar_header(page: ft.Page):
 
         # Cria o FilePicker
         pick_files_dialog = ft.FilePicker(
-            on_result=handle_file_picker_result, # type: ignore
+            on_result=handle_file_picker_result,  # type: ignore
             on_upload=handle_upload_progress
         )
 
@@ -225,7 +225,8 @@ def sidebar_header(page: ft.Page):
                     user_avatar.content = user_photo
                     user_avatar.update()
 
-                    page.app_state.set_usuario(user_updated.to_dict()) # type: ignore
+                    page.app_state.set_usuario(  # type: ignore
+                        user_updated.to_dict())  # type: ignore
 
                     # Remover a foto anterior do bucket se não for a mesma
                     if previous_user_photo and previous_user_photo != avatar_url:
@@ -305,7 +306,8 @@ def sidebar_header(page: ft.Page):
                             # Excluíndo do bucket
                             if key:
                                 try:
-                                    bucket_controllers.handle_delete_bucket(key)
+                                    bucket_controllers.handle_delete_bucket(
+                                        key)
                                 except Exception as e:
                                     logger.error(f"{e}")
 
@@ -325,7 +327,8 @@ def sidebar_header(page: ft.Page):
                         user_avatar.update()
                         usuario = result["usuario"]
 
-                        page.app_state.set_usuario(usuario.to_dict()) # type: ignore
+                        page.app_state.set_usuario(  # type: ignore
+                            usuario.to_dict())
 
                     color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
                     message_snackbar(
@@ -417,17 +420,17 @@ def sidebar_header(page: ft.Page):
             page.go('/home/empresas/grid')
         else:
             # Se não existe empresa, limpa o form
-            page.app_state.clear_form_data() # type: ignore
+            page.app_state.clear_form_data()  # type: ignore
             page.go('/home/empresas/form/principal')
 
-    page.company_name_text_btn.on_click = on_click_empresa_btn # type: ignore
+    page.company_name_text_btn.on_click = on_click_empresa_btn  # type: ignore
 
     return ft.Container(
         content=ft.Column(
             controls=[
                 photo_section,
-                page.user_name_text, # type: ignore
-                page.company_name_text_btn, # type: ignore
+                page.user_name_text,  # type: ignore
+                page.company_name_text_btn,  # type: ignore
                 status_text,
                 progress_bar,
                 profile,
@@ -440,7 +443,7 @@ def sidebar_header(page: ft.Page):
 
 
 def sidebar_content(page: ft.Page):
-    current_company = page.app_state.empresa # type: ignore
+    current_company = page.app_state.empresa  # type: ignore
 
     store = ft.Column(
         controls=[
@@ -582,8 +585,9 @@ class PopupColorItem(ft.PopupMenuItem):
         self.data: str = color
 
     async def seed_color_changed(self, e):
-        self.page.theme = self.page.dark_theme = ft.Theme(color_scheme_seed=self.data) # type: ignore
-        user = self.page.app_state.usuario # type: ignore
+        self.page.theme = self.page.dark_theme = ft.Theme(  # type: ignore
+            color_scheme_seed=self.data)  # type: ignore
+        user = self.page.app_state.usuario  # type: ignore
         msg_error = None
         colors = get_app_colors(self.data)
         try:
@@ -593,15 +597,17 @@ class PopupColorItem(ft.PopupMenuItem):
                 # Reverter a mudança de tema se a atualização falhar? Opcional.
                 # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
                 # page.update()
-                message_snackbar(page=self.page, message=msg_error, # type: ignore
+                message_snackbar(page=self.page, message=msg_error,  # type: ignore
                                  message_type=MessageType.ERROR)
                 return  # Não continua se houve erro
 
             # Atualiza o estado local ANTES de atualizar a UI globalmente
-            user_dict = self.page.app_state.usuario # type: ignore  # Pega o dicionário atual
+            # type: ignore  # Pega o dicionário atual
+            user_dict = self.page.app_state.usuario  # type: ignore
             # Atualiza as cores no dicionário
             user_dict['user_colors'] = colors
-            self.page.app_state.set_usuario(user_dict) # type: ignore  # Atualiza o estado
+            # type: ignore  # Atualiza o estado
+            self.page.app_state.set_usuario(user_dict)  # type: ignore
 
         except ValueError as e:
             logger.error(str(e))
@@ -612,10 +618,9 @@ class PopupColorItem(ft.PopupMenuItem):
             msg_error = f"Erro no upload: {str(e)}"
 
         if msg_error:
-            message_snackbar(page=self.page, message=msg_error, # type: ignore
+            message_snackbar(page=self.page, message=msg_error,  # type: ignore
                              message_type=MessageType.ERROR)
-        self.page.update() # type: ignore
-
+        self.page.update()  # type: ignore
 
 
 def sidebar_footer(page: ft.Page):
@@ -677,15 +682,20 @@ def sidebar_footer(page: ft.Page):
                 # --- Ícone Categorias de Produtos ---
                 ft.Container(
                     **icon_container_props,
-                    content=ft.Icon(ft.Icons.ASSIGNMENT_OUTLINED, color="white", size=22),
-                    tooltip="Categorias de produtos",
-                    # on_click=lambda _: page.go('/home/produtos/categorias/grid'),
-                    on_click=lambda _: page.go('home/produtos/categorias/form'),
+                    content=ft.Icon(ft.Icons.ASSIGNMENT_OUTLINED,
+                                    color="white", size=22),
+                    tooltip="Categorias de produtos" if page.app_state.empresa.get(  # type: ignore
+                        'id') else "Categorias de produtos indisponíveis: Selecione uma empresa primeiro.",
+                    on_click=lambda _: page.go(
+                        '/home/produtos/categorias/grid'),
+                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                        'id') else True,
                 ),
                 # --- Ícone de Produtos ---
                 ft.Container(
                     **icon_container_props,
-                    content=ft.Icon(ft.Icons.SHOPPING_BAG_OUTLINED, color="white", size=22),
+                    content=ft.Icon(ft.Icons.SHOPPING_BAG_OUTLINED,
+                                    color="white", size=22),
                     tooltip="Produtos",
                     # on_click=, # Adicione o handler de clique aqui quando tiver
                 ),
@@ -693,7 +703,8 @@ def sidebar_footer(page: ft.Page):
                 ft.Container(
                     **icon_container_props,
                     # content=ft.Icon(ft.Icons.FORKLIFT, color="white", size=22),
-                    content=ft.Icon(ft.Icons.FACT_CHECK_OUTLINED, color="white", size=22),
+                    content=ft.Icon(ft.Icons.FACT_CHECK_OUTLINED,
+                                    color="white", size=22),
                     # content=ft.Icon(ft.Icons.ASSIGNMENT_TURNED_IN_OUTLINED, color="white", size=22),
                     tooltip="Estoque",
                     # on_click=, # Adicione o handler de clique aqui quando tiver

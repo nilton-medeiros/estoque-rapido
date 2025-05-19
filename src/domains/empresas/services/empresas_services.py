@@ -13,7 +13,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 class EmpresasServices:
-    """Seriço de gerenciamento de empresas.
+    """Serviço de gerenciamento de empresas.
 
     A classe EmpresasServices é um serviço dedicado ao gerenciamento de empresas,
     facilitando a interação entre a aplicação e o banco de dados.
@@ -34,7 +34,7 @@ class EmpresasServices:
     def __init__(self, repository: EmpresasRepository):
         self.repository = repository
 
-    async def create(self, empresa: Empresa, user: dict):
+    async def create(self, empresa: Empresa, user: dict) -> str:
         """Envia os dados da nova empresa para o repositório criar.
 
         Este método é responsável por enviar os dados da nova empresa para o repositório,

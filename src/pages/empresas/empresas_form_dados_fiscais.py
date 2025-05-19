@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 class EmpresaViewDadosFiscais:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page_width: int|float = page.width if page.width else 0
         self.data = page.app_state.form_data # type: ignore
         # Vars propiedades
         self.font_size = 18
@@ -52,7 +51,7 @@ class EmpresaViewDadosFiscais:
 
         # CNPJ: Somente leitura
         self.cnpj = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 5, 'lg': 3},
             label="CNPJ",
@@ -62,7 +61,7 @@ class EmpresaViewDadosFiscais:
         )
         # Nome da loja
         self.store_name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 7, 'lg': 4},
             label="Nome da Loja",
@@ -71,7 +70,7 @@ class EmpresaViewDadosFiscais:
         )
         # Razão Social: Somente leitura
         self.corporate_name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 5},
             label="Razão Social",
@@ -140,7 +139,7 @@ class EmpresaViewDadosFiscais:
         )
         # Próximo Número de Série da Nota Fiscal
         self.nfce_series = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Série NFC-e",
@@ -148,7 +147,7 @@ class EmpresaViewDadosFiscais:
         )
         # Próximo Número da Nota Fiscal
         self.nfce_number = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Número NFC-e",
@@ -157,7 +156,7 @@ class EmpresaViewDadosFiscais:
         )
         # Credenciais Sefaz concedido ao emissor de NFCe
         self.nfce_sefaz_id_csc = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Identificação do CSC",
@@ -167,7 +166,7 @@ class EmpresaViewDadosFiscais:
             keyboard_type=ft.KeyboardType.NUMBER,
         )
         self.nfce_sefaz_csc = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
             label="Código do CSC",
@@ -282,12 +281,12 @@ class EmpresaViewDadosFiscais:
 
 
     def _page_resize(self, e):
-        if self.page_width < 600:
+        if self.page.width < 600: # type: ignore
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
             self.input_width = 280,
-        elif self.page_width < 1024:
+        elif self.page.width < 1024: # type: ignore
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -356,7 +355,7 @@ class EmpresaViewDadosFiscais:
 
 
 # Rota: /home/empresas/form/dados-fiscais
-def form_dados_fiscais(page: ft.Page):
+def emp_form_dados_fiscais(page: ft.Page):
     """Página de cadstro dos dados fiscais da empresa"""
 
     route_title = "home/empresas/form/dados-fiscais"

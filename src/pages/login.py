@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 class LoginView:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
-        self.page_width = page.width if page.width else 0
         self.email_input: ft.TextField
         self.password_input: ft.TextField
         self.error_text: ft.Text
@@ -64,12 +63,12 @@ class LoginView:
         )
 
     def build_form(self) -> ft.Container:
-        sizes = get_responsive_sizes(self.page_width)
+        sizes = get_responsive_sizes(self.page.width)
 
         self.email_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL) # type: ignore
         self.password_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True) # type: ignore
         self.login_button: ft.OutlinedButton = self.build_login_button(sizes)
         self.error_text: ft.Text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)

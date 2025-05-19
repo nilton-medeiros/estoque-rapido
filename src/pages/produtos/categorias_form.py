@@ -10,8 +10,8 @@ import flet as ft
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.produtos.controllers.categorias_controllers as categorias_controllers
 
-from src.domains.produtos.models.produto_categorias_model import ProdutoCategorias
-from src.domains.produtos.models.produtos_enum_subclass import ProdutoStatus
+from src.domains.produtos.models.categorias_model import ProdutoCategorias
+from src.domains.produtos.models.produtos_subclass import ProdutoStatus
 from src.pages.partials import build_input_field
 from src.services import UploadFile
 from src.shared import message_snackbar, MessageType, get_uuid
@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 class ProdutoCategoriaView:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page_width = self.page.width if self.page.width else 0
         self.empresa_logada = page.app_state.empresa # type: ignore
         self.data = page.app_state.form_data # type: ignore  # Dados da Categoria (update) ou {} para insert
         # Imagem da categoria
@@ -51,7 +50,7 @@ class ProdutoCategoriaView:
     def _create_form_fields(self):
         """Cria os campos do formulário Categorias de Produto"""
         self.name = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 8},
             label="Nome da Categoria",
@@ -66,7 +65,7 @@ class ProdutoCategoriaView:
 
         # Descrição da categoria
         self.description = build_input_field(
-            page_width=self.page_width,
+            page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 12},
             label="Descrição (opcional)",
@@ -282,12 +281,12 @@ class ProdutoCategoriaView:
 
 
     def _page_resize(self, e):
-        if self.page_width < 600:
+        if self.page.width < 600:  # type: ignore
             self.font_size = 14
             self.icon_size = 16
             self.padding = 20
             self.input_width = 280,
-        elif self.page_width < 1024:
+        elif self.page.width < 1024:  # type: ignore
             self.font_size = 16
             self.icon_size = 20
             self.padding = 40
@@ -401,7 +400,7 @@ class ProdutoCategoriaView:
 
 
 # Rota: /home/produtos/categorias/form
-def form_produto_categorias(page: ft.Page):
+def form_categorias(page: ft.Page):
     """Página de cadastro de categorias de produtos."""
     route_title = "home/produtos/categorias/form"
     categoria_data = page.app_state.form_data # type: ignore
@@ -471,7 +470,10 @@ def form_produto_categorias(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        result = await categorias_controllers.handle_save(prod_categoria)
+        result = await categorias_controllers.handle_save(
+            categoria=prod_categoria,
+            usuario=page.app_state.usuario # type: ignore
+        )
 
         if result["is_error"]:
             message_snackbar(

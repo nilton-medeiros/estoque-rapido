@@ -16,7 +16,6 @@ from src.pages.partials.build_input_responsive import build_input_field
 class SignupView:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
-        self.page_width: int|float = page.width if page.width else 0
         self.name_input: ft.TextField
         self.email_input: ft.TextField
         self.phone_input: ft.TextField
@@ -66,18 +65,18 @@ class SignupView:
         )
 
     def build_form(self) -> ft.Container:
-        sizes = get_responsive_sizes(self.page_width)
+        sizes = get_responsive_sizes(self.page.width)
 
         self.name_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Nome e Sobrenome", icon=ft.Icons.PERSON)
+            page_width=self.page.width, app_colors=self.app_colors, label="Nome e Sobrenome", icon=ft.Icons.PERSON) # type: ignore
         self.email_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL)
+            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL) # type: ignore
         self.phone_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE)
+            page_width=self.page.width, app_colors=self.app_colors, label="Celular", hint_text="11987654321", icon=ft.Icons.PHONE) # type: ignore
         self.password_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True) # type: ignore
         self.password_again_input = build_input_field(
-            page_width=self.page_width, app_colors=self.app_colors, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True)
+            page_width=self.page.width, app_colors=self.app_colors, label="Confirme a Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True) # type: ignore
         self.signup_button = self.build_signup_button(sizes)
         self.error_text = ft.Text(
             color=ft.Colors.RED_400,
