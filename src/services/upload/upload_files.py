@@ -77,10 +77,14 @@ class UploadFile:
             url = self.dialog.content.controls[1].value.strip() # type: ignore
             if not url:
                 self.message_error = "URL não pode estar vazia"
-                self.future.set_result(None) # type: ignore
+                if self.future and not self.future.done():
+                    self.future.set_result(None) # type: ignore
+                self.close_dialog() # Fechar o diálogo mesmo se a URL estiver vazia, pois "Confirmar" foi pressionado
                 return
             self.url_file = url
-            self.future.set_result(url) # type: ignore
+            if self.future and not self.future.done():
+                self.future.set_result(url) # type: ignore
+            self.close_dialog() # Fechar o diálogo após confirmar uma URL válida
         else:
             self.picker_dialog.pick_files(
                 allow_multiple=False,
@@ -98,10 +102,13 @@ class UploadFile:
 
     async def _pick_files_result(self, e: ft.FilePickerResultEvent) -> None:
         if not e.files:
-            self.future.set_result(None) # type: ignore
+            if self.future and not self.future.done():
+                self.future.set_result(None) # type: ignore
+            self.close_dialog() # Fechar o diálogo se nenhum arquivo foi selecionado (FilePicker cancelado)
             return
         await self._upload_files(e.files)
-        self.future.set_result(self.url_file) # type: ignore
+        if self.future and not self.future.done(): # Garante que o future só seja definido uma vez
+            self.future.set_result(self.url_file) # type: ignore
         self.close_dialog()
 
     async def _upload_files(self, files: list) -> None:

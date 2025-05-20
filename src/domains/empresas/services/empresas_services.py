@@ -130,9 +130,8 @@ class EmpresasServices:
             empresa.archived_by_name = user_name.nome_completo
 
         id = await self.repository.save(empresa)
-        if id:
-            return True
-        return False
+        return True if id else False
+
 
     async def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
         """Busca uma empresa no banco de dados utilizando o CNPJ.

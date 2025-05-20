@@ -8,23 +8,28 @@ from src.domains.produtos.services import CategoriasServices
 logger = logging.getLogger(__name__)
 
 
-async def handle_save(categoria: ProdutoCategorias, usuario: dict) -> dict[str, Any]:
+async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> dict[str, Any]:
+    """Salva ou atualiza uma categoria de produto."""
     response = {
         "is_error": False,
         "message": "",
         "id": None,
     }
 
-    operation = "atualizada"
-
     try:
         repository = FirebaseCategoriasRepository()
         categorias_services = CategoriasServices(repository)
+
+        operation = "atualizada"
 
         if categoria.id:
             response["id"] = await categorias_services.update(categoria, usuario)
         else:
             response["id"] = await categorias_services.create(categoria, usuario)
+            operation = "criada"
+
+        response["message"] = f"Categoria {operation} com sucesso!"
+
     except ValueError as e:
         response["is_error"] = True
         response["message"] = f"handle_save ValueError: Erro de validação: {str(e)}"
@@ -38,7 +43,49 @@ async def handle_save(categoria: ProdutoCategorias, usuario: dict) -> dict[str, 
 
 
 async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
-    return {}
+    """Manipula o status para ativo, inativo ou deletada de uma categoria de produto."""
+    response = {
+        "is_error": False,
+        "message": "",
+        "status": None,
+    }
+
+    try:
+        if not categoria.id:
+            raise ValueError("ID da categoria não pode ser nulo ou vazio")
+        if not isinstance(categoria, ProdutoCategorias):
+            raise ValueError("Categoria não é do tipo ProdutoCategorias")
+        if not usuario:
+            raise ValueError("Usuário não pode ser nulo ou vazio")
+        if not isinstance(usuario, dict):
+            raise ValueError("Usuário não é do tipo dict")
+        if not status:
+            raise ValueError("Status não pode ser nulo ou vazio")
+        if not isinstance(status, ProdutoStatus):
+            raise ValueError("Status não é do tipo ProdutoStatus")
+
+        repository = FirebaseCategoriasRepository()
+        categorias_services = CategoriasServices(repository)
+
+        is_updated = await categorias_services.update_status(categoria, usuario, status)
+
+        if is_updated:
+            response["status"] = status
+            response["message"] = f"Status da categoria atualizado com sucesso! Status: {status.value}"
+        else:
+            response["is_error"] = True
+            response["message"] = f"Não foi possível atualizar o status da categoria para {status.value}"
+
+    except ValueError as e:
+        response["is_error"] = True
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error("cat_controllers.handle_update_status(ValueError). " + response["message"])
+    except Exception as e:
+        response["is_error"] = True
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
 
 
 async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:

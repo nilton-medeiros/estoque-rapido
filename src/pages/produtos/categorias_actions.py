@@ -55,9 +55,9 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # Implemente aqui a lógica para buscar produtos, pedidos e estoque vinculados.
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
-            # Caso contrário, muda o status para ARCHIVED
+            # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = await cat_controllers.handle_update_status_categorias(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
+            result = await cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -105,7 +105,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     text = (
         "Aviso: Este registro será excluído permanentemente após 90 dias. "
         "Caso exista produtos vinculados a esta categoria, "
-        "ficará com o status 'Obsoleto' (INACTIVE) e não poderá ser excluída definitivamente."
+        "ficará com o status 'Obsoleto' (INATIVO) e não poderá ser excluída definitivamente."
     )
 
     warning_text = ft.Text(
@@ -162,7 +162,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
 async def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
     user = page.app_state.usuario # type: ignore
-    result = await cat_controllers.handle_update_status_categorias(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
+    result = await cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
 
     if result.get('is_error'):
         message_snackbar(

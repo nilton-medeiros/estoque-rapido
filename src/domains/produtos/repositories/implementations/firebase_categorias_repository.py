@@ -27,7 +27,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
 
         self.db = firestore.client()
         # self.transaction = self.db.transaction()
-        self.collection = self.db.collection('empresas')
+        self.collection = self.db.collection('produto_categorias')
 
     async def save(self, categoria: ProdutoCategorias) -> str | None:
         """
@@ -49,28 +49,26 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                 categoria.created_at = datetime.now(UTC)  # placeholders
 
             # updated_at é sempre definido/atualizado com o timestamp do servidor.
-            # type: ignore
             data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
             categoria.updated_at = datetime.now(UTC)  # placeholders
 
             # Se data_to_save.get("status") for 'ACTIVE' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como ACTIVE
             if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
-                # type: ignore
                 data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 categoria.activated_at = datetime.now(UTC)  # placeholders
 
             # SOFT DELETE: Marca a entidade como DELETADA.
             # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("deleted_at") for None, significa que é uma entidade marcada como DELETED
             if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
-                # type: ignore
                 data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 categoria.deleted_at = datetime.now(UTC)  # placeholders
 
             # Se data_to_save.get("status") for 'INACTIVE' e data_to_save.get("inactivated_at") for None, significa que é uma entidade marcada como INACTIVE
             if data_to_save.get("status") == 'INACTIVE' and not data_to_save.get("inactivated_at"):
-                # type: ignore
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 categoria.inactivated_at = datetime.now(UTC)  # placeholders
+
+            print("Debug  ->  categoria.id: ", categoria.id)
 
             doc_ref = self.collection.document(categoria.id)
             # Insere ou atualiza o documento na coleção 'produto_categorias'
@@ -81,46 +79,46 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             # e atualizar o objeto 'categoria' em memória.
             try:
                 doc_snapshot = doc_ref.get()  # Chamada síncrona
-                if doc_snapshot.exists:
-                    categoria_data_from_db = doc_snapshot.to_dict()
 
-                    # O SDK do Firestore converte timestamps para objetos datetime do Python ao ler.
-                    created_at_from_db = categoria_data_from_db.get(
-                        'created_at')
-                    updated_at_from_db = categoria_data_from_db.get(
-                        'updated_at')
-                    activated_at_from_db = categoria_data_from_db.get(
-                        'activated_at')
-                    deleted_at_from_db = categoria_data_from_db.get(
-                        'deleted_at')
-                    inactivated_at_from_db = categoria_data_from_db.get(
-                        'inactivated_at')
-
-                    # Atribui de fato o valor que veio do firestore convertido
-                    if isinstance(created_at_from_db, datetime):
-                        categoria.created_at = created_at_from_db
-
-                    if isinstance(updated_at_from_db, datetime):
-                        categoria.updated_at = updated_at_from_db
-
-                    if isinstance(activated_at_from_db, datetime):
-                        categoria.activated_at = activated_at_from_db
-
-                    if isinstance(deleted_at_from_db, datetime):
-                        categoria.deleted_at = deleted_at_from_db
-
-                    if isinstance(inactivated_at_from_db, datetime):
-                        categoria.inactivated_at = inactivated_at_from_db
-                else:
+                if not doc_snapshot.exists:
                     logger.warning(
                         f"Documento {categoria.id} não encontrado imediatamente após o set para releitura dos timestamps.")
+                    return
+
+                categoria_data_from_db = doc_snapshot.to_dict()
+
+                # O SDK do Firestore converte timestamps para objetos datetime do Python ao ler.
+                created_at_from_db = categoria_data_from_db.get(
+                    'created_at')
+                updated_at_from_db = categoria_data_from_db.get(
+                    'updated_at')
+                activated_at_from_db = categoria_data_from_db.get(
+                    'activated_at')
+                deleted_at_from_db = categoria_data_from_db.get(
+                    'deleted_at')
+                inactivated_at_from_db = categoria_data_from_db.get(
+                    'inactivated_at')
+
+                # Atribui de fato o valor que veio do firestore convertido
+                if isinstance(created_at_from_db, datetime):
+                    categoria.created_at = created_at_from_db
+
+                if isinstance(updated_at_from_db, datetime):
+                    categoria.updated_at = updated_at_from_db
+
+                if isinstance(activated_at_from_db, datetime):
+                    categoria.activated_at = activated_at_from_db
+
+                if isinstance(deleted_at_from_db, datetime):
+                    categoria.deleted_at = deleted_at_from_db
+
+                if isinstance(inactivated_at_from_db, datetime):
+                    categoria.inactivated_at = inactivated_at_from_db
             except Exception as e_read:
                 logger.error(
                     f"Erro ao reler o documento {categoria.id} para atualizar timestamps no objeto em memória: {str(e_read)}")
                 # A operação de save principal foi bem-sucedida.
                 # O objeto 'categoria' em memória ainda terá os SERVER_TIMESTAMPs como placeholders nos campos de data.
-
-            return categoria.id
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
                 logger.error("Argumento inválido fornecido.")
@@ -135,6 +133,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             translated_error = deepl_translator(str(e))
             raise Exception(f"Erro ao salvar categoria: {translated_error}")
 
+        return categoria.id
     async def get_by_id(self, categoria_id: str) -> ProdutoCategorias | None:
         """Encontra uma categoria de produto pelo ID no repositório"""
         pass

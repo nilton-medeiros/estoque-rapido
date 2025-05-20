@@ -149,8 +149,6 @@ class ProdutoCategoriaView:
             )
             self.image_frame.content = categoria_img
             self.image_section.update()
-            message_snackbar(
-                page=self.page, message="Imagem carregada com sucesso!", duration=3000)
             return
 
         """
@@ -329,10 +327,7 @@ class ProdutoCategoriaView:
             # Não há arquivo local para enviar
             return False
 
-        prefix = self.page.app_state.usuario["id"] # type: ignore
-
-        if cnpj := self.empresa_logada.get("cnpj"):
-            prefix = cnpj.raw_cnpj
+        prefix = "empresas/" + self.empresa_logada["id"] + "/categorias"
 
         file_uid = get_uuid()   # Obtem um UUID único para o arquivo
 
@@ -341,7 +336,7 @@ class ProdutoCategoriaView:
         dot_extension = dot_extension.lower()
 
         # A lógica aqui depende do Bucket utilizado, neste caso usamos o S3 da AWS, usamos o CNPJ ou user_id como diretório no bucket.
-        file_name_bucket = f"{prefix}/categ_prods_{file_uid}{dot_extension}"
+        file_name_bucket = f"{prefix}/img_{file_uid}{dot_extension}"
 
         try:
             self.image_url = bucket_controllers.handle_upload_bucket(local_path=self.local_upload_file, key=file_name_bucket)
@@ -357,8 +352,6 @@ class ProdutoCategoriaView:
                 )
                 self.image_frame.content = categoria_img
                 self.image_frame.update()
-                message_snackbar(
-                    page=self.page, message="Imagem carregada com sucesso!", duration=3000)
                 return True
 
             # A Imagem não é válida, URL não foi gerada, mantém a imagem anterior se houver
@@ -398,6 +391,8 @@ class ProdutoCategoriaView:
             if isinstance(field, (ft.Switch)):
                 field.value = True  # Por default, a categoria sempre é ativa
 
+        # Limpa o buffer com os dados de categorias carregados
+        self.data = {}
 
 # Rota: /home/produtos/categorias/form
 def form_categorias(page: ft.Page):
@@ -452,9 +447,14 @@ def form_categorias(page: ft.Page):
         # Desabilita o botão de salvar para evitar múltiplos cliques
         save_btn.disabled = True
 
+        # Instância do objeto ProdutoCategorias com os dados do formulário para enviar para o backend
+        prod_categoria: ProdutoCategorias = categorias_view.get_form_object()
+
         if not categorias_view.is_image_url_web and categorias_view.local_upload_file:
             # Envia o arquivo de imagem para o bucket
-            if not categorias_view.send_to_bucket():
+            if categorias_view.send_to_bucket():
+                prod_categoria.image_url = categorias_view.image_url
+            else:
                 message_snackbar(
                     page=page, message="Erro ao enviar imagem para o bucket", message_type=MessageType.WARNING)
 
@@ -464,9 +464,6 @@ def form_categorias(page: ft.Page):
             except:
                 pass  # Ignora erros na limpeza do arquivo
             categorias_view.local_upload_file = None
-
-        # Instância do objeto ProdutoCategorias com os dados do formulário para enviar para o backend
-        prod_categoria: ProdutoCategorias = categorias_view.get_form_object()
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.

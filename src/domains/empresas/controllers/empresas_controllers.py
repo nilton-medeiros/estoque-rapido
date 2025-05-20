@@ -278,7 +278,6 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
         >>> response = await handle_update_status_empresas(empresa, Status.DELETED)
         >>> print(response)
     """
-
     response = {
         "is_error": False,
         "message": "",
@@ -286,24 +285,22 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
     }
 
     try:
-        # Usa o repositório do Firebase
-        repository = FirebaseEmpresasRepository()
-        empresas_services = EmpresasServices(repository)
-
-        is_updated = False
-
-        if not usuario:
-            raise ValueError("Usuário não informado em args: handle_update_status_empresas")
-        if not isinstance(usuario, dict):
-            raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
         if not empresa:
             raise ValueError("Empresa não informada em args: handle_update_status_empresas")
         if not isinstance(empresa, Empresa):
             raise ValueError("Empresa não é uma instância de Empresa em args: handle_update_status_empresas")
+        if not usuario:
+            raise ValueError("Usuário não informado em args: handle_update_status_empresas")
+        if not isinstance(usuario, dict):
+            raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
         if not status:
             raise ValueError("Status não informado em args: handle_update_status_empresas")
         if not isinstance(status, Status):
             raise ValueError("Argumento status não é uma instância de Status")
+
+        # Usa o repositório do Firebase
+        repository = FirebaseEmpresasRepository()
+        empresas_services = EmpresasServices(repository)
 
         is_updated = await empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
 

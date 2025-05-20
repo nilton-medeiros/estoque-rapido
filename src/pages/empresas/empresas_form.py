@@ -43,6 +43,7 @@ class EmpresaView:
         self.icon_size = 24
         self.padding = 50
         self.app_colors: dict = page.session.get("user_colors")  # type: ignore
+        self._empresa_id = None
 
         # Responsividade
         self._create_form_fields()
@@ -654,10 +655,6 @@ class EmpresaView:
         from src.domains.shared import PhoneNumber, Password
         from src.services import AsaasPaymentGateway
 
-        id = None
-        if self.data and self.data.get('id'):
-            id = self.data.get('id')
-
         address = None
         if self.street.value and self.postal_code.value:
             address = Address(
@@ -692,8 +689,9 @@ class EmpresaView:
         certificate_a1 = None
         payment = None
 
-        if id:
+        if self.data and self.data.get('id'):
             # Se já existe um ID, mescla os dados de origem com o novo objeto
+            self._empresa_id = self.data.get("id")
 
             # Dados fiscais
             if fiscal := self.data.get('fiscal'):
@@ -743,8 +741,11 @@ class EmpresaView:
                     dateCreated=pg.get('dateCreated'),
                 )
 
+        if not self._empresa_id:
+            self._empresa_id = 'emp_' + get_uuid()
+
         return Empresa.from_dict({
-            "id": id,
+            "id": self._empresa_id,
             "corporate_name": self.corporate_name.value,
             "trade_name": self.trade_name.value,
             "store_name": self.store_name.value,
@@ -768,16 +769,15 @@ class EmpresaView:
             # Não há arquivo local para enviar
             return False
 
-        cnpj = ''.join(filter(str.isdigit, self.cnpj.value))
-        prefix = cnpj.strip()
+        prefix = f"empresas/{self._empresa_id}/logo"
         file_uid = get_uuid()   # Obtem um UUID único para o arquivo
 
         _, dot_extension = os.path.splitext(self.local_upload_file)
         # Padroniza a extensão para caracteres minúsculos
         dot_extension = dot_extension.lower()
 
-        # A lógica aqui depende do Bucket utilizado, neste caso é o S3 da AWS, usamos o CNPJ como diretório no bucket.
-        file_name_bucket = f"{prefix}/logo_img_{file_uid}{dot_extension}"
+        # A lógica aqui depende do Bucket utilizado, neste caso é o S3 da AWS, usamos o empresa_id como diretório no bucket.
+        file_name_bucket = f"{prefix}/img_{file_uid}{dot_extension}"
 
         try:
             self.logo_url = bucket_controllers.handle_upload_bucket(
@@ -841,6 +841,8 @@ class EmpresaView:
                 logo.error_content.text = "Logo" # type: ignore
                 logo.update()
 
+        # Limpa os dados de empresa carregados no buffer
+        self.data = {}
 
 # Rota: /home/empresas/form/principal
 def emp_form_principal(page: ft.Page):
@@ -901,9 +903,18 @@ def emp_form_principal(page: ft.Page):
         # Desabilita o botão de salvar para evitar múltiplos cliques
         save_btn.disabled = True
 
+        """
+        ! O método .get_form_object() deve ser executado antes do envio do logo para o bucket.
+        ! Ele garantirá a criação de um ID para a empresa, caso ainda não exista, permitindo sua identificação no bucket.
+        """
+        # Cria o objeto Empresa com os dados do formulário para enviar para o backend
+        empresa: Empresa = empresa_view.get_form_object()
+
         if not empresa_view.is_logo_url_web and empresa_view.local_upload_file:
             # Envia o arquivo de logo para o bucket
-            if not empresa_view.send_to_bucket():
+            if empresa_view.send_to_bucket():
+                empresa.logo_url = empresa_view.logo_url
+            else:
                 message_snackbar(
                     page=page, message="Erro ao enviar o logo para o bucket", message_type=MessageType.WARNING)
 
@@ -913,9 +924,6 @@ def emp_form_principal(page: ft.Page):
             except:
                 pass  # Ignora erros na limpeza do arquivo
             empresa_view.local_upload_file = None
-
-        # Cria o objeto Empresa com os dados do formulário para enviar para o backend
-        empresa: Empresa = empresa_view.get_form_object()
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
