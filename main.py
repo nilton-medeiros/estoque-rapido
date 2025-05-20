@@ -62,7 +62,7 @@ def main(page: ft.Page):
     page.company_name_text_btn: ft.TextButton = ft.TextButton( # type: ignore
         text="NENHUMA EMPRESA SELECIONADA",
         style=ft.ButtonStyle(
-            alignment=ft.alignment.center,
+            alignment=ft.alignment.center, # type: ignore
             # mouse_cursor="pointer",
             text_style=ft.TextStyle(
                 color=ft.Colors.WHITE,

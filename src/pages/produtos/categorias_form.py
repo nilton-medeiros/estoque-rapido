@@ -247,7 +247,13 @@ class ProdutoCategoriaView:
 
         status = self.data.get("status", ProdutoStatus.ACTIVE)
 
-        self.status.value = True if status.name == "ACTIVE" else False
+        if status.name == "ACTIVE":
+            self.status.value = True
+            self.status.label = "Produto Ativo"
+        else:
+            self.status.value = False
+            self.status.label = "Produto Inativo (Obsoleto)"
+
         self.description.value = self.data.get('description', '')
 
         if self.data.get("image_url"):

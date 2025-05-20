@@ -31,7 +31,6 @@ async def prepare_the_user_session(page: ft.Page) -> None:
         user_settings = result
         if not user_settings:
             # Define a cor padrão
-            print(f"Debug  -> prepare_the_user_session: user_settings não encontrada no client session")
             colors = get_app_colors('yellow')
             user_settings = {"colors": colors}
             # Armazena no navegador do cliente
@@ -40,10 +39,8 @@ async def prepare_the_user_session(page: ft.Page) -> None:
             return
         page.session.set("user_colors", user_settings["colors"])
         logger.debug("Sessão do usuário preparada com sucesso")
-        print(f"Debug  -> prepare_the_user_session: Setado page.session.user_colors: {user_settings['colors']}")
     except asyncio.TimeoutError:
         logger.error(f"Timeout ao buscar {f"{PREFIX}user-settings"} do client_storage")
-        print(f"Timeout ao buscar {f"{PREFIX}user-settings"} do client_storage")
         # Assume cor padrão
         page.session.set("user_colors", get_app_colors('yellow'))
     except Exception as e:

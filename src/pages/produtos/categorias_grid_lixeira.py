@@ -206,8 +206,14 @@ def cat_grid_lixeira(page: ft.Page):
                             content=ft.Column([
                                 ft.Row(
                                     controls=[
-                                        ft.Text(
-                                            f"{categoria.name}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
+                                        ft.Container(
+                                            image=ft.DecorationImage(src=categoria.image_url),
+                                            width=100,
+                                            height=100,
+                                            border_radius=ft.border_radius.all(10),
+                                            border=ft.border.all(width=1) if not categoria.image_url else None,
+                                        ),
+                                        # Container do PopMenuButton para não deixar colado com a margem direita de Column
                                         ft.Container(expand=True),
                                         ft.Icon(
                                             name=ft.Icons.DELETE_FOREVER_OUTLINED,
@@ -241,6 +247,8 @@ def cat_grid_lixeira(page: ft.Page):
                                     ],
                                     alignment=ft.MainAxisAlignment.START,
                                 ),
+                                ft.Text(
+                                    f"{categoria.name}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
                                 ft.Text(f"{categoria.description if categoria.description else '<Sem descrição>'}",
                                         theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                                 ft.Row(

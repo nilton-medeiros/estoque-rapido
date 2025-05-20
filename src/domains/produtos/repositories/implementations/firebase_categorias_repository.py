@@ -68,8 +68,6 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
                 categoria.inactivated_at = datetime.now(UTC)  # placeholders
 
-            print("Debug  ->  categoria.id: ", categoria.id)
-
             doc_ref = self.collection.document(categoria.id)
             # Insere ou atualiza o documento na coleção 'produto_categorias'
             doc_ref.set(  # Chamada síncrona
@@ -177,11 +175,12 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             for doc in docs:
                 categoria_data = doc.to_dict()
                 categoria_data['id'] = doc.id  # type: ignore
-                categorias.append(ProdutoCategorias.from_dict(
-                    categoria_data))  # type: ignore
 
                 if categoria_data["status"] == "DELETED":  # type: ignore
                     quantify_deleted += 1
+                if status_deleted or (categoria_data['status'] != "DELETED"): # type: ignore
+                    categorias.append(ProdutoCategorias.from_dict(
+                        categoria_data))  # type: ignore
 
             return categorias, quantify_deleted
         except exceptions.FirebaseError as e:

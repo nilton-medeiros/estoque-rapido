@@ -28,14 +28,10 @@ def dashboard(page: ft.Page):
     )
 
     def toggle_sidebar(e):
-        print(f"Debug  -> page.width: {page.width}")
-        print(f"Debug  -> page.window.width: {page.window.width}")
         if page.width < 768: # type: ignore
             # Mobile
             sidebar.visible = not sidebar.visible
             content.visible = not sidebar.visible
-            print(f"Debug  -> sidebar.visible: {sidebar.visible}")
-            print(f"Debug  -> content.visible: {content.visible}")
             if sidebar.visible:
                 sidebar.col = {"xs": 12}
                 content.col = {"xs": 0}
