@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from src.pages import render_signup, render_landing_page, render_login
 from src.pages.empresas import emp_grid_view, emp_form_principal, emp_form_dados_fiscais, emp_grid_lixeira
 from src.pages.home import dashboard
-from src.pages.produtos import cat_grid_view, form_categorias
+from src.pages.produtos import cat_grid_view, cat_grid_lixeira, form_categorias
 
 from src.services import AppStateManager
 
@@ -231,6 +231,12 @@ def main(page: ft.Page):
                 if page.app_state.usuario.get('id'): # type: ignore
                     page.on_resized = None
                     pg_view = cat_grid_view(page)
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/produtos/categorias/grid/lixeira':
+                if page.app_state.usuario.get('id'): # type: ignore
+                    page.on_resized = None
+                    pg_view = cat_grid_lixeira(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/produtos/categorias/form':

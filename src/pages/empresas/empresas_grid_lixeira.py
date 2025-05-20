@@ -1,6 +1,6 @@
 import datetime
 import logging
-import math # Adicionado para a função ceil (arredondar para cima)
+import math  # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
@@ -69,7 +69,8 @@ def emp_grid_lixeira(page: ft.Page):
 
     def handle_icon_hover(e):
         """Muda o bgcolor do container no hover."""
-        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.bgcolor = ft.Colors.with_opacity(
+            0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
     ft_image = ft.Image(
@@ -103,20 +104,21 @@ def emp_grid_lixeira(page: ft.Page):
             ft.Container(
                 width=43,
                 height=43,
-                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
+                # Metade da largura/altura para ser círculo
+                border_radius=ft.border_radius.all(20),
                 ink=True,
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,
                 content=ft_image,
                 margin=ft.margin.only(right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS  # Boa prática adicionar aqui também
             ),
         ],
     )
 
     def handle_info_click(e):
         empresa = e.control.data.get('data')
-        page_ctx = e.control.page # Obter a página do contexto do controle
+        page_ctx = e.control.page  # Obter a página do contexto do controle
 
         info_title = "Informação da Empresa"
         info_message = ""
@@ -127,7 +129,8 @@ def emp_grid_lixeira(page: ft.Page):
                 data_movido_lixeira = empresa.deleted_at
 
                 # Data final para exclusão permanente (90 dias após mover para lixeira)
-                data_exclusao_permanente = data_movido_lixeira + datetime.timedelta(days=90)
+                data_exclusao_permanente = data_movido_lixeira + \
+                    datetime.timedelta(days=90)
 
                 # Data e hora atuais em UTC para comparação consistente
                 agora_utc = datetime.datetime.now(datetime.UTC)
@@ -152,7 +155,8 @@ def emp_grid_lixeira(page: ft.Page):
                 # Caso deleted_at não esteja definido
                 info_message = "Esta empresa está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
         elif empresa.status.name == 'ARCHIVED':
-            info_message = "Esta empresa está arquivada. Empresas arquivadas não são removidas automaticamente e podem estar vinculadas a outros registros como pedidos ou produtos."
+            info_message = "Esta empresa está arquivada. Empresas arquivadas não são removidas automaticamente e \
+                podem estar vinculadas a outros registros como pedidos ou produtos."
         else:
             info_message = "Status desconhecido."
 
@@ -168,7 +172,8 @@ def emp_grid_lixeira(page: ft.Page):
                 ft.TextButton("Entendi", on_click=close_dialog)
             ],
             actions_alignment=ft.MainAxisAlignment.END,
-            on_dismiss=lambda _: logger.info(f"Dialog de informação para {empresa.id} dispensado.")
+            on_dismiss=lambda _: logger.info(
+                f"Dialog de informação para {empresa.id} dispensado.")
         )
 
         page_ctx.overlay.append(info_dialog)
@@ -179,7 +184,8 @@ def emp_grid_lixeira(page: ft.Page):
     async def load_data_and_update_ui():
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get('empresas', [])  # type: ignore # Usar get com default
+        set_empresas = page.app_state.usuario.get( # type: ignore 
+            'empresas', []) # Usar get com default
 
         empresas_data = []
         empresas_inactivated = 0
@@ -195,8 +201,8 @@ def emp_grid_lixeira(page: ft.Page):
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
                 result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
-                empresas_data = result.get('data_list')
-                empresas_inactivated = result.get('inactivated')
+                empresas_data = result['data_list']
+                empresas_inactivated = result['inactivated']
             else:
                 empresas_data = []  # Se não há IDs, a lista está vazia
 
@@ -254,7 +260,8 @@ def emp_grid_lixeira(page: ft.Page):
                                     ),
                                     ft.Text(f"{empresa.store_name if empresa.store_name else 'Loja N/A'}  {str(empresa.phone) if empresa.phone else ''}", color=ft.Colors.WHITE54,
                                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                    ft.Text(f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}", color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                    ft.Text(f"CNPJ: {empresa.cnpj if empresa.cnpj else 'N/A'}",
+                                            color=ft.Colors.WHITE54, theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                                     ft.Row(
                                         controls=[
                                             ft.Text(
@@ -276,12 +283,15 @@ def emp_grid_lixeira(page: ft.Page):
                                                             name=ft.Icons.RESTORE_OUTLINED,
                                                             color=ft.Colors.PRIMARY,
                                                         ),
-                                                        margin=ft.margin.only(right=5),
+                                                        margin=ft.margin.only(
+                                                            right=5),
                                                         tooltip="Restaurar",
-                                                        data={'action': 'RESTORE', 'data': empresa},
+                                                        data={
+                                                            'action': 'RESTORE', 'data': empresa},
                                                         on_hover=handle_icon_hover,
                                                         on_click=handle_action_click,
-                                                        border_radius=ft.border_radius.all(20),
+                                                        border_radius=ft.border_radius.all(
+                                                            20),
                                                         ink=True,
                                                         bgcolor=ft.Colors.TRANSPARENT,
                                                         alignment=ft.alignment.center,
@@ -292,12 +302,15 @@ def emp_grid_lixeira(page: ft.Page):
                                                             name=ft.Icons.INFO_OUTLINED,
                                                             color=ft.Colors.PRIMARY,
                                                         ),
-                                                        margin=ft.margin.only(right=10),
+                                                        margin=ft.margin.only(
+                                                            right=10),
                                                         tooltip="Informações sobre o status",
-                                                        data={'action': 'INFO', 'data': empresa},
+                                                        data={
+                                                            'action': 'INFO', 'data': empresa},
                                                         on_hover=handle_icon_hover,
                                                         on_click=handle_info_click,
-                                                        border_radius=ft.border_radius.all(20),
+                                                        border_radius=ft.border_radius.all(
+                                                            20),
                                                         ink=True,
                                                         bgcolor=ft.Colors.TRANSPARENT,
                                                         alignment=ft.alignment.center,
@@ -346,7 +359,8 @@ def emp_grid_lixeira(page: ft.Page):
             )
         finally:
             current_trash_icon_filename = "recycle_full_1771.png" if empresas_inactivated else "recycle_empy_1771.png"
-            if ft_image and isinstance(ft_image, ft.Image): # Garante que ft_image é uma Image
+            # Garante que ft_image é uma Image
+            if ft_image and isinstance(ft_image, ft.Image):
                 ft_image.src = f"icons/{current_trash_icon_filename}"
 
             # --- Atualizar Visibilidade da UI ---
@@ -357,7 +371,8 @@ def emp_grid_lixeira(page: ft.Page):
             if page.client_storage:  # Uma checagem se a página ainda está ativa
                 page.update()
             else:
-                logger.info("Contexto da página perdido, não foi possível atualizar.")
+                logger.info(
+                    "Contexto da página perdido, não foi possível atualizar.")
                 print("Contexto da página perdido, não foi possível atualizar.")
 
     # --- Disparar Carregamento dos Dados ---

@@ -127,10 +127,10 @@ def cat_grid_view(page: ft.Page):
         try:
             # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***
             # Se handle_get_empresas for síncrona e demorar, a UI *vai* congelar.
-            # Pode ser necessário refatorar handle_get_categorias para usar um driver de banco de dados async
+            # Pode ser necessário refatorar handle_get_all para usar um driver de banco de dados async
             # ou executá-la em uma thread separada usando asyncio.to_thread (Python 3.9+)
-            # Exemplo usando asyncio.to_thread se handle_get_empresas for sync:
-            # categorias_data = await asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
+            # Exemplo usando asyncio.to_thread se handle_get_all for sync:
+            # categorias_data = await asyncio.to_thread(handle_get_all, empresa_id=empresa_id)
 
             if empresa_id:  # Só busca as categorias de empresa logada, se houver ID
                 # Busca as categorias menos as de status 'DELETED' da empresa logada
