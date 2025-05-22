@@ -23,6 +23,9 @@ def cat_grid_view(page: ft.Page):
         visible=True  # Começa visível
     )
 
+    _all_categorias_data = []
+    _categorias_inactivated_count = 0
+
     # --- Área para o Conteúdo Real (Grid ou Imagem Vazia) ---
     # Usando uma Coluna para conter a imagem vazia ou o grid posteriormente
     content_area = ft.Column(
@@ -95,7 +98,7 @@ def cat_grid_view(page: ft.Page):
                 tooltip="Adicionar nova categoria",
                 data={'action': 'INSERT', 'data': None},
                 on_click=handle_action_click,
-                margin=ft.margin.only(right=10),
+                margin=ft.margin.only(left=10, right=10),
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
             ),
         ],
@@ -116,10 +119,131 @@ def cat_grid_view(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    # --- Função Assíncrona para Carregar Dados e Atualizar a UI ---
+    def _get_filtered_categorias() -> list:
+        """Filtra _all_categorias_data com base no valor de rg_filter."""
+        nonlocal _all_categorias_data # Acessa a variável do escopo de cat_grid_view
+        current_filter = rg_filter.value
+
+        if current_filter == "all":
+            return _all_categorias_data
+        elif current_filter == "active":
+            # Assumindo que categoria.status.name pode ser 'ACTIVE', 'INACTIVE', etc.
+            return [cat for cat in _all_categorias_data if cat.status.name == 'ACTIVE']
+        elif current_filter == "inactive": # "Descontinuado"
+            return [cat for cat in _all_categorias_data if cat.status.name == 'INACTIVE']
+        return []
+
+    def _render_grid(categorias_to_display: list):
+        """Constrói e exibe o grid de categorias ou a mensagem de vazio."""
+        nonlocal content_area, empty_content_display, handle_action_click # Acessa controles e handlers
+
+        content_area.controls.clear()
+        if not categorias_to_display:
+            content_area.controls.append(empty_content_display)
+        else:
+            grid = ft.ResponsiveRow(
+                controls=[
+                    ft.Card(
+                        content=ft.Container(
+                            padding=15,
+                            content=ft.Column([
+                                ft.Row(
+                                    controls=[
+                                        ft.Container( # Container para a imagem da categoria
+                                            width=100,
+                                            height=100,
+                                            border_radius=ft.border_radius.all(10),
+                                            border=ft.border.all(1, ft.colors.OUTLINE) if not categoria.image_url else None,
+                                            clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                                            alignment=ft.alignment.center,
+                                            content=ft.Image(
+                                                src=categoria.image_url,
+                                                fit=ft.ImageFit.COVER,
+                                                width=100,
+                                                height=100,
+                                                border_radius=ft.border_radius.all(10),
+                                                error_content=ft.Icon(ft.icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.colors.ERROR)
+                                            ) if categoria.image_url else ft.Icon(ft.icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
+                                        ),
+                                        ft.Container(
+                                            content=ft.PopupMenuButton(
+                                                icon=ft.Icons.MORE_VERT, tooltip="Mais Ações",
+                                                items=[
+                                                    ft.PopupMenuItem(
+                                                        text="Editar categoria", tooltip="Ver ou editar dados da categoria",
+                                                        icon=ft.Icons.EDIT_NOTE_OUTLINED,
+                                                        data={'action': 'EDIT', 'data': categoria},
+                                                        on_click=handle_action_click
+                                                    ),
+                                                    ft.PopupMenuItem(
+                                                        text="Excluir categoria", tooltip="Move categoria para a lixeira, após 90 dias remove do banco de dados",
+                                                        icon=ft.Icons.DELETE_OUTLINE,
+                                                        data={'action': 'SOFT_DELETE', 'data': categoria},
+                                                        on_click=handle_action_click
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                ),
+                                ft.Text(f"{categoria.name}", weight=ft.FontWeight.BOLD),
+                                ft.Text(f"{categoria.description if categoria.description else '<Sem descrição>'}",
+                                        theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                ft.Row(
+                                    controls=[
+                                        ft.Text(
+                                            value=f"Status: {categoria.status.value}", # Ex: "Ativo", "Descontinuado"
+                                            theme_style=ft.TextThemeStyle.BODY_SMALL,
+                                            color=ft.Colors.GREEN if categoria.status.name == 'ACTIVE' else ft.Colors.RED,
+                                        ),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                ),
+                            ])
+                        ),
+                        margin=ft.margin.all(5),
+                        col={"xs": 12, "sm": 6, "md": 4, "lg": 3}
+                    ) for categoria in categorias_to_display
+                ],
+                columns=12, spacing=10, run_spacing=10
+            )
+            content_area.controls.append(grid)
+
+    async def radiogroup_changed(e):
+        """Chamado quando o valor do RadioGroup muda. Filtra e renderiza o grid."""
+        nonlocal page # Acessa page para update
+        filtered_categorias = _get_filtered_categorias()
+        _render_grid(filtered_categorias)
+        if page.client_storage:
+            page.update()
+
+    rg_filter = ft.RadioGroup(
+        value="all",  # Valor inicial do filtro
+        content=ft.Row(
+            controls=[
+                ft.Radio(value="all", label="Todos"),
+                ft.Radio(value="active", label="Ativos"),
+                ft.Radio(value="inactive", label="Descontinuado"),
+            ]
+        ),
+        on_change=radiogroup_changed, # Conecta a função handler
+    )
+    # Adiciona o rg_filter às ações do AppBar agora que radiogroup_changed está definida
+    appbar.actions.insert(0, rg_filter)  # type: ignore [attr-defined]
+
     async def load_data_and_update_ui():
-        categorias_data = []
-        categorias_inactivated = 0
+        """Carrega todos os dados do banco, armazena, filtra e atualiza a UI."""
+        nonlocal _all_categorias_data, _categorias_inactivated_count, loading_container, content_area, page, fab
+
+        loading_container.visible = True
+        content_area.visible = False
+        if page.client_storage:
+            page.update() # Mostra o spinner
+
+        # Limpa os dados armazenados antes de buscar novos
+        _all_categorias_data = []
+        _categorias_inactivated_count = 0
 
         # empresa_id: ID da empresa logada para buscar as categorias desta empresa
         empresa_id = page.app_state.empresa['id'] # type: ignore
@@ -133,98 +257,40 @@ def cat_grid_view(page: ft.Page):
             # categorias_data = await asyncio.to_thread(handle_get_all, empresa_id=empresa_id)
 
             if not empresa_id:  # Só busca as categorias de empresa logada, se houver ID
-                # Mostra uma imagem de pasta vazia
-                content_area.controls.append(empty_content_display)
-                return
 
-            # Busca as categorias menos as de status 'DELETED' da empresa logada
-            result: dict = await cat_controllers.handle_get_all(empresa_id=empresa_id)
-
-            if result["status"] == "error":
-                content_area.controls.append(empty_content_display)
-                return
-
-            categorias_data = result['data']["categorias"]
-            categorias_inactivated: int = result['data']["deleted"]
-
-
-            # Usar ResponsiveRow para um layout de grid responsivo
-            # Ajuste colunas para diferentes tamanhos de tela
-            # --- Constroe o Grid de Cards ---
-            grid = ft.ResponsiveRow(
-                controls=[
-                    # O componente Card() está sendo iterado em loop para uma ou mais categorias.
-                    # Por isso, não é possível movê-lo para uma variável para reduzir o nível de aninhamento.
-                    ft.Card(
-                        content=ft.Container(
-                            padding=15,
-                            content=ft.Column([
-                                ft.Row(
-                                    controls=[
-                                        ft.Container(
-                                            image=ft.DecorationImage(src=categoria.image_url),
-                                            width=100,
-                                            height=100,
-                                            border_radius=ft.border_radius.all(10),
-                                            border=ft.border.all(width=1) if not categoria.image_url else None,
-                                        ),
-                                        # Container do PopMenuButton para não deixar colado com a margem direita de Column
-                                        ft.Container(
-                                            # padding=ft.padding.only(right=5),
-                                            content=ft.PopupMenuButton(
-                                                icon=ft.Icons.MORE_VERT, tooltip="Mais Ações",
-                                                items=[
-                                                    ft.PopupMenuItem(
-                                                        text="Editar categoria",
-                                                        tooltip="Ver ou editar dados da categoria",
-                                                        icon=ft.Icons.EDIT_NOTE_OUTLINED,
-                                                        data={
-                                                            'action': 'EDIT', 'data': categoria},
-                                                        on_click=handle_action_click
-                                                    ),
-                                                    ft.PopupMenuItem(
-                                                        text="Excluir categoria",
-                                                        tooltip="Move categoria para a lixeira, após 90 dias remove do banco de dados",
-                                                        icon=ft.Icons.DELETE_OUTLINE,
-                                                        data={
-                                                            'action': 'SOFT_DELETE', 'data': categoria},
-                                                        on_click=handle_action_click
-                                                    ),
-                                                ],
-                                            ),
-                                        ),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                ),
-                                ft.Text(
-                                    f"{categoria.name}", weight=ft.FontWeight.BOLD),
-                                ft.Text(f"{categoria.description if categoria.description else '<Sem descrição>'}",
-                                        theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                ft.Row(
-                                    controls=[
-                                        ft.Text(
-                                            value=f"Status: {categoria.status.value}",
-                                            theme_style=ft.TextThemeStyle.BODY_SMALL,
-                                            color=ft.Colors.GREEN if categoria.status.name == 'ACTIVE' else ft.Colors.RED,
-                                        ),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                ),
-                            ])
-                        ),
-                        margin=ft.margin.all(5),
-                        # Configuração responsiva para cada card
-                        # Cada card com sua própria configuração de colunas
-                        col={"xs": 12, "sm": 6, "md": 4, "lg": 3}
-                    ) for categoria in categorias_data  # Criar um card para cada categoria
-                ],
-                columns=12,  # Total de colunas no sistema de grid
-                spacing=10,  # Espaço horizontal entre os cards
-                run_spacing=10  # Espaço vertical entre as linhas
-            )
-            content_area.controls.append(grid)
             # Ou apenas adicione os cards diretamente à Coluna se preferir uma lista vertical
             # content_area.controls.extend(cards)
+                # _all_categorias_data já está vazio, _render_grid mostrará empty_content_display
+                pass
+            else:
+                # Busca as categorias menos as de status 'DELETED' da empresa logada
+                result: dict = await cat_controllers.handle_get_all(empresa_id=empresa_id)
+
+                if result["status"] == "error":
+                    logger.error(f"Erro ao buscar categorias: {result.get('message', 'Desconhecido')}")
+                    # _all_categorias_data permanece vazio, _render_grid mostrará empty_content_display
+                    # Ou podemos exibir uma mensagem de erro específica aqui:
+                    content_area.controls.clear()
+                    content_area.controls.append(
+                        ft.Container(
+                            content=ft.Text(f"Erro ao carregar dados: {result.get('message', 'Tente novamente mais tarde.')}", color=ft.colors.ERROR),
+                            alignment=ft.alignment.center,
+                            margin=ft.margin.only(top=50)
+                        )
+                    )
+                else:
+                    _all_categorias_data = result['data']["categorias"]
+                    _categorias_inactivated_count = result['data']["deleted"]
+
+            # Atualiza o ícone e tooltip do FAB
+            current_trash_icon_filename = "recycle_full_1771.png" if _categorias_inactivated_count else "recycle_empy_1771.png"
+            if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
+                fab.content.src = f"icons/{current_trash_icon_filename}"
+                fab.tooltip = f"Categorias inativas: {_categorias_inactivated_count}"
+
+            # Filtra os dados carregados (ou vazios) e renderiza o grid
+            filtered_categorias = _get_filtered_categorias()
+            _render_grid(filtered_categorias)
 
         except Exception as e:
             # Mostrar uma mensagem de erro para o usuário
@@ -232,6 +298,8 @@ def cat_grid_view(page: ft.Page):
             logger.error(f"Ocorreu um erro ao carregar as categorias de produtos. Tipo: {type(e).__name__}, Erro: {e}\nTraceback:\n{tb_str}")
 
             content_area.controls.clear()
+            _all_categorias_data = [] # Limpa dados em caso de erro geral
+            _categorias_inactivated_count = 0
             content_area.controls.append(
                 ft.Container(
                     content=ft.Column([
@@ -249,14 +317,6 @@ def cat_grid_view(page: ft.Page):
                 )
             )
         finally:
-            # --- Atualizar Visibilidade da UI ---
-            # Mostra uma lixeira vazia ou cheia
-            current_trash_icon_filename = "recycle_full_1771.png" if categorias_inactivated else "recycle_empy_1771.png"
-
-            if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
-                fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Categorias inativas: {categorias_inactivated}"
-
             loading_container.visible = False
             content_area.visible = True
             if page.client_storage:  # Uma checagem se a página ainda está ativa
