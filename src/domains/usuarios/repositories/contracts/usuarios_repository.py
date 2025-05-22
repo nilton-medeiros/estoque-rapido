@@ -19,42 +19,42 @@ class UsuariosRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de usuários."""
 
     @abstractmethod
-    async def authentication(self, email, password) -> Usuario | None:
+    def authentication(self, email, password) -> Usuario | None:
         """Retorna o usuário logado."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def save(self, usuario: Usuario) -> str:
+    def save(self, usuario: Usuario) -> str:
         """Salva ou atualiza um usuário no banco de dados."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def count(self, empresa_id: str) -> int:
+    def count(self, empresa_id: str) -> int:
         """Retorna o número total de usuários da empresa logada."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_id(self, id: str) -> Usuario | None:
+    def find_by_id(self, id: str) -> Usuario | None:
         """Busca um usuário pelo ID."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def exists_by_email(self, email: str) -> bool:
+    def exists_by_email(self, email: str) -> bool:
         """Verifica se existe um usuário com o email especificado."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
+    def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
         """Retorna uma lista paginada de usuários."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_email(self, email: str) -> Usuario | None:
+    def find_by_email(self, email: str) -> Usuario | None:
         """Busca um usuário pelo email."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_name(self, empresa_id, name: str) -> list[Usuario]:
+    def find_by_name(self, empresa_id, name: str) -> list[Usuario]:
         """
         Busca usuários da empresa logada que contenham o nome especificado
         (primeiro nome ou sobrenome).
@@ -62,31 +62,31 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
+    def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
         """Busca usuários por perfil."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def delete(self, usuario_id: str) -> bool:
+    def delete(self, usuario_id: str) -> bool:
         """Remove um usuário do banco de dados."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def update_profile(self, id: str, new_profile: str) -> Usuario | None:
+    def update_profile(self, id: str, new_profile: str) -> Usuario | None:
         """Atualiza o perfil de um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def update_photo(self, id: str, new_photo: str) -> Usuario | None:
+    def update_photo(self, id: str, new_photo: str) -> Usuario | None:
         """Atualiza a foto de um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def update_colors(self, id: str, new_colors: dict[str, str]) -> bool:
+    def update_colors(self, id: str, new_colors: dict[str, str]) -> bool:
         """Atualiza a cor preferida do um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
+    def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """Atualiza empresas do um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")

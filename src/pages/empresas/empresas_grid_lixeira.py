@@ -50,14 +50,14 @@ def emp_grid_lixeira(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    async def handle_action_click(e):
+    def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
 
         match action:
             case "RESTORE":
-                is_restore = await empresas_actions.restore_from_trash(page=page, empresa=empresa)
+                is_restore = empresas_actions.restore_from_trash(page=page, empresa=empresa)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
@@ -196,11 +196,11 @@ def emp_grid_lixeira(page: ft.Page):
             # Pode ser necessário refatorar handle_get_empresas para usar um driver de banco de dados async
             # ou executá-la em uma thread separada usando asyncio.to_thread (Python 3.9+)
             # Exemplo usando asyncio.to_thread se handle_get_empresas for sync:
-            # empresas_data = await asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
+            # empresas_data = asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
 
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
-                result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
+                result = empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
                 if result["status"] == "success":
                     empresas_data = result['data']['empresas']
                     empresas_inactivated = result['data']['inactivated']

@@ -893,7 +893,7 @@ def emp_form_principal(page: ft.Page):
     empresa_view.did_mount()
     form_container = empresa_view.build()
 
-    async def save_form_empresa(e):
+    def save_form_empresa(e):
         # Valida os dados do formulário
         if msg_warning := empresa_view.validate_form():
             message_snackbar(page=page, message=msg_warning,
@@ -928,7 +928,7 @@ def emp_form_principal(page: ft.Page):
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
         user = page.app_state.usuario # type: ignore
-        result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        result: dict = empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["status"] == "error":
             message_snackbar(
@@ -946,7 +946,7 @@ def emp_form_principal(page: ft.Page):
             user['empresa_id'] = empresa.id
 
         # Atualiza usuário no banco de dados
-        result = await usuarios_controllers.handle_update_empresas_usuarios(
+        result = usuarios_controllers.handle_update_empresas_usuarios(
             usuario_id=user['id'],
             empresas=user['empresas'],
             empresa_ativa_id=user['empresa_id'],

@@ -13,7 +13,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 
 logger = logging.getLogger(__name__)
 
-async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
+def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     """
     Manipula a operação de salvar Configuração do sistema.
 
@@ -49,10 +49,10 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
 
         if create_new:
             # Criar nova configuração
-            config_id = await settings_services.create(settings)
+            config_id = settings_services.create(settings)
         else:
             # Alterar configuração existente
-            config_id = await settings_services.update(settings)
+            config_id = settings_services.update(settings)
 
         response["status"] = "success"
         response["data"] = {"id": config_id, "message": f"Configuração {operation} com sucessso!"}
@@ -69,7 +69,7 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
     return response
 
 
-async def handle_get_config(config_id: str) -> dict:
+def handle_get_config(config_id: str) -> dict:
     """
     Manipula a operação de buscar uma configuração.
 
@@ -88,7 +88,7 @@ async def handle_get_config(config_id: str) -> dict:
 
     Exemplo:
         >>> id = "Abc123adfEDK"
-        >>> response = await handle_get_config(id)
+        >>> response = handle_get_config(id)
         >>> print(response)
     """
     response: dict = {}
@@ -101,7 +101,7 @@ async def handle_get_config(config_id: str) -> dict:
         app_config = None
 
         # Busca configuração do sistema pelo config_id
-        app_config = await settings_services.find_config_by_id(config_id)
+        app_config = settings_services.find_config_by_id(config_id)
 
         if app_config:
             response["status"] = "success"

@@ -186,7 +186,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
 
     async def _token_get(self) -> None:
         # Acessa o database para consultar informações do token, o id do documento é 'settings'
-        response: dict = await nf_controllers.handle_get_config("app_settings")
+        response: dict = nf_controllers.handle_get_config("app_settings")
 
         if response["status"] == "success":
             # Verifica se o token expirou
@@ -221,7 +221,7 @@ class NuvemFiscalDFeProvider(DFeProvider):
             self.settings.dfe_api_token_expires_in = date_expiration
 
             # Atualiza a nova configuração no database coleção app_config id: settings
-            response = await nf_controllers.handle_save_config(settings=self.settings, create_new=False)
+            response = nf_controllers.handle_save_config(settings=self.settings, create_new=False)
             if response["status"] == "error":
                 logger.error(
                     f"Erro ao salvar settings no db: Mensagem {response['message']}")

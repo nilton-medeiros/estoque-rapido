@@ -33,7 +33,7 @@ class AppConfigServices:
     def __init__(self, repository: AppConfigRepository):
         self.repository = repository
 
-    # async def create_config(self, config: AppConfig):
+    # def create_config(self, config: AppConfig):
     #     """Envia os dados da nova configuração para o repositório criar.
 
     #     Este método é responsável por enviar os dados da nova configuração para o repositório,
@@ -51,26 +51,26 @@ class AppConfigServices:
     #     Exemplo:
     #         >>> repository = FirebaseAppConfigRepository()
     #         >>> config_service = AppConfigService(repository)
-    #         >>> config_id = await config_service.create_config(config)
+    #         >>> config_id = config_service.create_config(config)
     #     """
 
-    #     existing_config = await self.repository.find_by_id(config.id)
+    #     existing_config = self.repository.find_by_id(config.id)
 
     #     if existing_config:
     #         raise ValueError("Já existe uma configuração com este ID")
 
     #     # Envia para o repositório selecionado em config_controllrer salvar
-    #     return await self.repository.save(config)
+    #     return self.repository.save(config)
 
 
-    async def create(self, config: AppConfig) -> str:
+    def create(self, config: AppConfig) -> str:
         # Gera por padrão um uuid raw (sem os hífens) com prefixo 'app_'
         config.id = 'app_' + get_uuid()
        # Envia para o repositório selecionado em app_config_controllrer salvar
-        return await self.repository.save(config)
+        return self.repository.save(config)
 
 
-    async def update(self, config: AppConfig) -> str:
+    def update(self, config: AppConfig) -> str:
         """Atualiza os dados de uma configuração existente.
 
         Este método atualiza os dados de uma configuração existente. Ele envia as informações
@@ -89,15 +89,15 @@ class AppConfigServices:
         Exemplo:
             >>> repository = FirebaseAppConfigRepository()
             >>> config_service = AppConfigService(repository)
-            >>> config_id = await config_service.update_config(config)
+            >>> config_id = config_service.update_config(config)
         """
 
         if not config.id:
             raise ValueError(
                 "ID da configuração é necessário para atualização")
-        return await self.repository.save(config)
+        return self.repository.save(config)
 
-    async def find_config_by_id(self, id: str) -> AppConfig|None:
+    def find_config_by_id(self, id: str) -> AppConfig|None:
         """Busca uma configuração no banco de dados utilizando o ID.
 
         Este método busca uma configuração no banco de dados utilizando o ID fornecido.
@@ -109,4 +109,4 @@ class AppConfigServices:
         Returns:
             Optional[AppConfig]: Configuração encontrada ou None se não existir
         """
-        return await self.repository.get(id)
+        return self.repository.get(id)

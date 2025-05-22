@@ -405,7 +405,7 @@ def emp_form_dados_fiscais(page: ft.Page):
     empresa_view.did_mount()
     form_container = empresa_view.build()
 
-    async def save_form_empresa(e):
+    def save_form_empresa(e):
         # Valida os dados do formulário
         if msg_warning := empresa_view.validate_form():
             message_snackbar(page=page, message=msg_warning,
@@ -421,7 +421,7 @@ def emp_form_dados_fiscais(page: ft.Page):
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
         user: dict = page.app_state.usuario # type: ignore
-        result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        result: dict = empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["status"] == "error":
             message_snackbar(

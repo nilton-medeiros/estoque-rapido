@@ -34,7 +34,7 @@ class EmpresasServices:
     def __init__(self, repository: EmpresasRepository):
         self.repository = repository
 
-    async def create(self, empresa: Empresa, user: dict) -> str:
+    def create(self, empresa: Empresa, user: dict) -> str:
         """Envia os dados da nova empresa para o repositório criar.
 
         Este método é responsável por enviar os dados da nova empresa para o repositório,
@@ -52,12 +52,12 @@ class EmpresasServices:
         Exemplo:
             >>> repository = FirebaseUserRepository(password)
             >>> empresas_services = EmpresasServices(repository)
-            >>> empresa_id = await empresas_services.create_empresa(empresa)
+            >>> empresa_id = empresas_services.create_empresa(empresa)
         """
 
         # Se CNPJ foi informado, verifica se exite para evitar duplicidade com o mesmo CNPJ
         if empresa.cnpj:
-            existing_empresa = await self.repository.find_by_cnpj(empresa.cnpj)
+            existing_empresa = self.repository.find_by_cnpj(empresa.cnpj)
             if existing_empresa:
                 raise ValueError("Já existe uma empresa com este CNPJ")
         if not user.get("id"):
@@ -72,9 +72,9 @@ class EmpresasServices:
         empresa.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
-        return await self.repository.save(empresa)
+        return self.repository.save(empresa)
 
-    async def update(self, empresa: Empresa, usuario: dict) -> str:
+    def update(self, empresa: Empresa, usuario: dict) -> str:
         """Atualiza os dados de uma empresa existente.
 
         Este método atualiza os dados de uma empresa existente. Ele envia as informações
@@ -93,7 +93,7 @@ class EmpresasServices:
         Exemplo:
             >>> repository = FirebaseUserRepository(password)
             >>> empresas_services = EmpresasServices(repository)
-            >>> empresa_id = await empresas_services.update_empresa(empresa)
+            >>> empresa_id = empresas_services.update_empresa(empresa)
         """
 
         if not empresa.id:
@@ -107,9 +107,9 @@ class EmpresasServices:
         user_name = usuario["name"]
         empresa.updated_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
-        return await self.repository.save(empresa=empresa)
+        return self.repository.save(empresa=empresa)
 
-    async def update_status(self, empresa: Empresa, usuario: dict, status: Status) -> bool:
+    def update_status(self, empresa: Empresa, usuario: dict, status: Status) -> bool:
         """Altera o status de uma empresa no banco de dados."""
         user_name: NomePessoa = usuario["name"]
 
@@ -129,11 +129,11 @@ class EmpresasServices:
             empresa.archived_by_id = usuario.get("id")
             empresa.archived_by_name = user_name.nome_completo
 
-        id = await self.repository.save(empresa)
+        id = self.repository.save(empresa)
         return True if id else False
 
 
-    async def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
+    def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
         """Busca uma empresa no banco de dados utilizando o CNPJ.
 
         Este método busca uma empresa no banco de dados utilizando o CNPJ fornecido.
@@ -145,9 +145,9 @@ class EmpresasServices:
         Returns:
             Empresa | None: Empresa encontrada ou None se não existir
         """
-        return await self.repository.find_by_cnpj(cnpj)
+        return self.repository.find_by_cnpj(cnpj)
 
-    async def find_by_id(self, empresa_id: str) -> Empresa | None:
+    def find_by_id(self, empresa_id: str) -> Empresa | None:
         """Busca uma empresa no banco de dados utilizando o ID.
 
         Este método busca uma empresa no banco de dados utilizando o ID fornecido.
@@ -159,8 +159,8 @@ class EmpresasServices:
         Returns:
             Empresa | None: Empresa encontrada ou None se não existir
         """
-        return await self.repository.find_by_id(empresa_id)
+        return self.repository.find_by_id(empresa_id)
 
-    async def find_all(self, ids_empresas: set[str]|list[str], status_active: bool = True) -> list[Empresa]:
+    def find_all(self, ids_empresas: set[str]|list[str], status_active: bool = True) -> list[Empresa]:
         """Busca todas as empresas do usuário logado."""
-        return await self.repository.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        return self.repository.find_all(ids_empresas=ids_empresas, status_active=status_active)

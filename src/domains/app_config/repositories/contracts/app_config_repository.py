@@ -7,12 +7,12 @@ class AppConfigRepository(ABC):
     """Classe base abstrata que define o contrato para operações de repositório de configurações de aplicativo."""
 
     @abstractmethod
-    async def get(self, config_id: str) -> AppConfig | None:
+    def get(self, config_id: str) -> AppConfig | None:
         """Retorna as configurações atuais do aplicativo."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    async def save(self, config: AppConfig) -> str:
+    def save(self, config: AppConfig) -> str:
         """Salva as configurações do aplicativo."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 

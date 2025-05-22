@@ -59,7 +59,7 @@ def cat_grid_lixeira(page: ft.Page):
 
         match action:
             case "RESTORE":
-                is_restore = await cat_actions.restore_from_trash(page=page, categoria=categoria)
+                is_restore = cat_actions.restore_from_trash(page=page, categoria=categoria)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de categorias na tela
                     page.run_task(load_data_and_update_ui)
@@ -189,7 +189,7 @@ def cat_grid_lixeira(page: ft.Page):
                 content_area.controls.append(empty_content_display)
                 return
 
-            result = await cat_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
+            result = cat_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
 
             if result["status"] == "error":
                 content_area.controls.append(empty_content_display)

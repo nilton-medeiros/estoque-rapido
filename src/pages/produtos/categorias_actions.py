@@ -20,7 +20,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
 
     status=ProdutoStatus.DELETED
 
-    async def send_to_trash_category_async(e_trash):
+    def send_to_trash_category_async(e_trash):
         # nonlocal status
         # Obter a página a partir do evento é mais seguro em callbacks
         page_ctx = e_trash.page
@@ -57,7 +57,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = await cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
+            result = cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -159,10 +159,10 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     return await operation_complete_future
 
 
-async def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
+def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
     user = page.app_state.usuario # type: ignore
-    result = await cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
+    result = cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

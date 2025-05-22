@@ -28,7 +28,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
         # self.transaction = self.db.transaction()
         self.collection = self.db.collection('produto_categorias')
 
-    async def save(self, categoria: ProdutoCategorias) -> str | None:
+    def save(self, categoria: ProdutoCategorias) -> str | None:
         """
         Salvar uma categoria no banco de dados Firestore.
 
@@ -133,7 +133,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
         return categoria.id
 
 
-    async def get_by_id(self, categoria_id: str) -> ProdutoCategorias | None:
+    def get_by_id(self, categoria_id: str) -> ProdutoCategorias | None:
         """Encontra uma categoria de produto pelo ID no repositório"""
         try:
             doc_ref = self.collection.document(categoria_id)
@@ -159,7 +159,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             raise
 
 
-    async def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[ProdutoCategorias], int]:
+    def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[ProdutoCategorias], int]:
         """
         Obtém todas as categorias de produtos de uma empresa no repositório.
 

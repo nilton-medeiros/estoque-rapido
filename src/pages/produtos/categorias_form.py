@@ -443,7 +443,7 @@ def form_categorias(page: ft.Page):
     categorias_view.did_mount()
     form_container = categorias_view.build()
 
-    async def save_form_categorias(e):
+    def save_form_categorias(e):
         # Valida os dados do formulário
         if msg := categorias_view.validate_form():
             message_snackbar(
@@ -473,7 +473,7 @@ def form_categorias(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        result = await categorias_controllers.handle_save(
+        result = categorias_controllers.handle_save(
             categoria=prod_categoria,
             usuario=page.app_state.usuario # type: ignore
         )

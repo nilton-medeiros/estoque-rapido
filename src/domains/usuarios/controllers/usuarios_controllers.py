@@ -17,14 +17,14 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-async def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
+def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
     response: dict[str, Any] = {}
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
-        user = await usuarios_services.authentication(email=email, password=password)
+        user = usuarios_services.authentication(email=email, password=password)
 
         response["status"] = "success"
         response["data"] = {
@@ -53,7 +53,7 @@ async def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
     return response
 
 
-async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
+def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
     """
     Manipula a operação de salvar usuário.
 
@@ -73,7 +73,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
 
     Exemplo:
         >>> usuario = Usuario(name="Luis Alberto", email="luis.a@mail.com")
-        >>> response = await handle_save_usuarios(usuario)
+        >>> response = handle_save_usuarios(usuario)
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -88,11 +88,11 @@ async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
 
         if usuario.id:
             # Alterar usuário existente
-            id = await usuarios_services.update(usuario)
+            id = usuarios_services.update(usuario)
         else:
             # Criar novo usuário
             operation = "criado"
-            id = await usuarios_services.create(usuario)
+            id = usuarios_services.create(usuario)
 
         response["status"] = "success"
         response["data"] = {"id": id, "message": f"Usuário {operation} com sucessso!"}
@@ -107,7 +107,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
     return response
 
 
-async def handle_get_usuarios(id: str | None = None, email: str | None = None) -> dict[str, Any]:
+def handle_get_usuarios(id: str | None = None, email: str | None = None) -> dict[str, Any]:
     """
     Manipula a operação de buscar usuário.
 
@@ -127,7 +127,7 @@ async def handle_get_usuarios(id: str | None = None, email: str | None = None) -
 
     Exemplo:
         >>> email = "angelina.jolie@gmail.com"
-        >>> response = await handle_get_usuarios(email)
+        >>> response = handle_get_usuarios(email)
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -147,9 +147,9 @@ async def handle_get_usuarios(id: str | None = None, email: str | None = None) -
         usuario = None
 
         if id:
-            usuario = await usuarios_services.find_by_id(id)
+            usuario = usuarios_services.find_by_id(id)
         elif email:
-            usuario = await usuarios_services.find_by_email(email)
+            usuario = usuarios_services.find_by_email(email)
 
         if usuario:
             response["status"] = "success"
@@ -170,7 +170,7 @@ async def handle_get_usuarios(id: str | None = None, email: str | None = None) -
     return response
 
 
-async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any]:
+def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any]:
     """
     Update no campo photo_url do usuário.
 
@@ -190,7 +190,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any
 
     Exemplo:
         >>> id = '12345678901234567890123456789012'
-        >>> response = await handle_update_field_usuarios(id, photo_url)
+        >>> response = handle_update_field_usuarios(id, photo_url)
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -201,7 +201,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any
         usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo photo_url no usuário
-        usuario = await usuarios_services.update_photo(id, photo_url)
+        usuario = usuarios_services.update_photo(id, photo_url)
 
         response["status"] = "success"
         response["data"] = {"usuario": usuario, "message": "Foto do Usuário atualizada com sucesso!"}
@@ -218,7 +218,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any
     return response
 
 
-async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, Any]:
+def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, Any]:
     """
     Update no campo colors do usuário.
 
@@ -238,7 +238,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict
 
     Exemplo:
         >>> id = '12345678901234567890123456789012'
-        >>> response = await handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
+        >>> response = handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -263,7 +263,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict
         usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo color no usuário
-        is_updated = await usuarios_services.update_colors(id, colors)
+        is_updated = usuarios_services.update_colors(id, colors)
 
         if is_updated:
             response["status"] = "success"
@@ -283,7 +283,7 @@ async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict
     return response
 
 
-async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
+def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
 
@@ -303,7 +303,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         >>> usuario_id = '12345678901234567890123456789012'
         >>> empresa_id = '12345678901234567890123456789012'
         >>> empresas = {'12345678901234567890123456789012', '12345678901234567890123456789012'}
-        >>> response = await handle_update_empresas_usuarios(usuario_id, empresa_id, empresas)
+        >>> response = handle_update_empresas_usuarios(usuario_id, empresa_id, empresas)
         >>> print(response)
     """
     response = {}
@@ -321,7 +321,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo color no usuário
-        is_updated = await usuarios_services.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_ativa_id)
+        is_updated = usuarios_services.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_ativa_id)
 
         if is_updated:
             response["status"] = "success"
@@ -343,7 +343,7 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
     return response
 
 
-async def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
+def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
     """Busca todos os usuário da empresa_id"""
     # Exemplo de tipagem profunda: dict[str, bool|str|list[Usuario|None]]. Esta é mais simples: dict[str, Any]
     response: dict[str, Any] = {}
@@ -360,7 +360,7 @@ async def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        usuarios = await usuarios_services.find_all(empresa_id)
+        usuarios = usuarios_services.find_all(empresa_id)
 
         if len(usuarios) > 0:
             # Retorna lista de usuários

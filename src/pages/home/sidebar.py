@@ -173,7 +173,7 @@ def sidebar_header(page: ft.Page):
                         return
 
                     # Agora que temos uma URL válida, atualizar o usuário
-                    result = await handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
+                    result = handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
 
                     if result["status"] == "error":
                         message_type = MessageType.ERROR
@@ -298,7 +298,7 @@ def sidebar_header(page: ft.Page):
                 )
             else:
                 if url_field.value and url_field.value.strip():
-                    result = await handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
+                    result = handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
                     if result["status"] == "success":
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:
@@ -593,14 +593,14 @@ class PopupColorItem(ft.PopupMenuItem):
         self.on_click = self.seed_color_changed
         self.data: str = color
 
-    async def seed_color_changed(self, e):
+    def seed_color_changed(self, e):
         self.page.theme = self.page.dark_theme = ft.Theme(  # type: ignore
             color_scheme_seed=self.data)  # type: ignore
         user = self.page.app_state.usuario  # type: ignore
         msg_error = None
         colors = get_app_colors(self.data)
         try:
-            result = await handle_update_colors_usuarios(id=user.get('id'), colors=colors)
+            result = handle_update_colors_usuarios(id=user.get('id'), colors=colors)
             if result["status"] == "error":
                 # Reverter a mudança de tema se a atualização falhar? Opcional.
                 # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))

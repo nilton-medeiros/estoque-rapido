@@ -45,7 +45,7 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
     page.update()
 
 
-async def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
+def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
     def close_banner(e):
         banner.open = False
         e.control.page.update()

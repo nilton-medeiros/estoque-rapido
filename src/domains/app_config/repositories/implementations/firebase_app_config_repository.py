@@ -29,7 +29,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
         self.db = firestore.client()
         self.collection = self.db.collection('app_config')
 
-    async def get(self, config_id: str) -> AppConfig | None:
+    def get(self, config_id: str) -> AppConfig | None:
         """
         Encontrar uma configuração do sistema (app_config) pelo seu identificador único.
 
@@ -52,7 +52,7 @@ class FirebaseAppConfigRepository(AppConfigRepository):
 
         return None
 
-    async def save(self, config: AppConfig) -> str:
+    def save(self, config: AppConfig) -> str:
         """
         Salvar um config no banco de dados Firestore.
 

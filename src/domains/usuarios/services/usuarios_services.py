@@ -30,12 +30,12 @@ class UsuariosServices:
     def __init__(self, repository: UsuariosRepository):
         self.repository = repository
 
-    async def authentication(self, email: str, password: str):
+    def authentication(self, email: str, password: str):
         # Simplesmente delega para o repositório e deixa as exceções se propagarem
         # Adicione lógica de negócios aqui, se necessário
-        return await self.repository.authentication(email, password)
+        return self.repository.authentication(email, password)
 
-    async def create(self, usuario: Usuario) -> str:
+    def create(self, usuario: Usuario) -> str:
         """
         Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
 
@@ -48,7 +48,7 @@ class UsuariosServices:
         if not usuario.password:
             raise ValueError("Password é necessário para criar usuário")
 
-        existing_usuario = await self.repository.exists_by_email(usuario.email)
+        existing_usuario = self.repository.exists_by_email(usuario.email)
 
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
@@ -57,14 +57,14 @@ class UsuariosServices:
         usuario.id = 'usu_' + get_uuid()
 
         # Envia para o repositório selecionado em usuarios_controllrer salvar
-        return await self.repository.save(usuario)
+        return self.repository.save(usuario)
 
-    async def update(self, usuario: Usuario) -> str:
+    def update(self, usuario: Usuario) -> str:
         if usuario.id is None:
             raise ValueError("ID do usuário é necessário para atualização")
-        return await self.repository.save(usuario)
+        return self.repository.save(usuario)
 
-    async def find_by_id(self, usuario_id: str) -> Optional[Usuario]:
+    def find_by_id(self, usuario_id: str) -> Optional[Usuario]:
         """
         Encontra um usuário pelo usuario_id usando o repositório.
 
@@ -74,9 +74,9 @@ class UsuariosServices:
         Retorna:
             Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.find_by_id(usuario_id)
+        return self.repository.find_by_id(usuario_id)
 
-    async def find_by_email(self, email: str) -> Optional[Usuario]:
+    def find_by_email(self, email: str) -> Optional[Usuario]:
         """
         Encontra um usuário pelo email usando o repositório.
 
@@ -86,9 +86,9 @@ class UsuariosServices:
         Retorna:
             Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.find_by_email(email)
+        return self.repository.find_by_email(email)
 
-    async def find_all(self, empresa_id: str) -> list[Usuario]:
+    def find_all(self, empresa_id: str) -> list[Usuario]:
         """
         Encontra todos os usuários pelo ID da empresa usando o repositório.
 
@@ -98,9 +98,9 @@ class UsuariosServices:
         Retorna:
             list[Usuario]: Lista de Usuario encontrado ou [] se não existir
         """
-        return await self.repository.find_all(empresa_id)
+        return self.repository.find_all(empresa_id)
 
-    async def update_photo(self, usuario_id: str, photo_url: str) -> Usuario | None:
+    def update_photo(self, usuario_id: str, photo_url: str) -> Usuario | None:
         """
         Atualiza a foto do usuário para o campo photo_url usando o repositório.
 
@@ -111,9 +111,9 @@ class UsuariosServices:
         Retorna:
             Optional[Usuario]: Usuário encontrado ou None se não existir
         """
-        return await self.repository.update_photo(usuario_id, photo_url)
+        return self.repository.update_photo(usuario_id, photo_url)
 
-    async def update_colors(self, usuario_id: str, colors: dict[str, str]) -> bool:
+    def update_colors(self, usuario_id: str, colors: dict[str, str]) -> bool:
         """
         Atualiza a cor favorita do usuário para o campo  usando o repositório.
 
@@ -124,9 +124,9 @@ class UsuariosServices:
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return await self.repository.update_colors(usuario_id, colors)
+        return self.repository.update_colors(usuario_id, colors)
 
-    async def update_empresas(self, usuario_id: str, empresas: set[str], empresa_id: str|None = None) -> bool:
+    def update_empresas(self, usuario_id: str, empresas: set[str], empresa_id: str|None = None) -> bool:
         """
         Atualiza a empresa selecionada e a lista de empresas do usuário para o campo  usando o repositório.
 
@@ -138,8 +138,8 @@ class UsuariosServices:
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return await self.repository.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_id)
+        return self.repository.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_id)
 
-    async def delete(self, usuario_id: str) -> bool:
+    def delete(self, usuario_id: str) -> bool:
         """Deleta um usuário pelo usuario_id usando o repositório."""
-        return await self.repository.delete(usuario_id)
+        return self.repository.delete(usuario_id)

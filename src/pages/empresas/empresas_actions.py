@@ -17,7 +17,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
     # Definir dlg_modal ANTES de usá-lo em delete_company
     # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
 
-    async def send_to_trash_company_async(e_trash):
+    def send_to_trash_company_async(e_trash):
         # Obter a página a partir do evento é mais seguro em callbacks
         page_ctx = e_trash.page
 
@@ -51,7 +51,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
             # Caso contrário, muda o status para ARCHIVED
             user = page_ctx.app_state.usuario
-            result = await empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
+            result = empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -163,9 +163,9 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
     return await operation_complete_future
 
 
-async def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
+def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     logger.info(f"Restaurando empresa ID: {empresa.id} da lixeira")
-    result = await empresas_controllers.handle_update_status_empresas(
+    result = empresas_controllers.handle_update_status_empresas(
         empresa=empresa,
         usuario=page.app_state.usuario, # type: ignore
         status=Status.ACTIVE)
@@ -178,8 +178,8 @@ async def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     return True
 
 
-async def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
-    return await usuarios_controllers.handle_update_empresas_usuarios(
+def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
+    return usuarios_controllers.handle_update_empresas_usuarios(
         usuario_id=usuario_id,
         empresas=empresas,
         empresa_ativa_id=empresa_id

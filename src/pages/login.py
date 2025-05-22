@@ -157,7 +157,7 @@ class LoginView:
 
         return None
 
-    async def handle_login(self, _):
+    def handle_login(self, _):
         # Desabilita o botão imediatamente para evitar múltiplos cliques
         self.login_button.disabled = True # type: ignore
         self.login_button.update()
@@ -178,7 +178,7 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = await usu_controllers.handle_login_usuarios(
+            result = usu_controllers.handle_login_usuarios(
                 email=self.email_input.value, password=self.password_input.value) # type: ignore
 
             if result["status"] == "error":
@@ -197,7 +197,7 @@ class LoginView:
                 return
 
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
-            result = await emp_controllers.handle_get_empresas_by_id(id=user.empresa_id)
+            result = emp_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["status"] == "error":
                 user.empresa_id = None

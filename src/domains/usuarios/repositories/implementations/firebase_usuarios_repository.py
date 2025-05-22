@@ -35,7 +35,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         self.db = firestore.client()
         self.collection = self.db.collection('usuarios')
 
-    async def authentication(self, email, password) -> Usuario | None:
+    def authentication(self, email, password) -> Usuario | None:
         """
         Autentica um usuário com o email e senha fornecidos.
 
@@ -52,8 +52,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Para outros erros inesperados.
         """
         try:
-            # Busca o usuário pelo email, await aqui é necessário
-            user = await self.find_by_email(email)
+            # Busca o usuário pelo email, aqui é necessário
+            user = self.find_by_email(email)
             if not user:
                 raise UserNotFoundException("Usuário não encontrado")
 
@@ -91,7 +91,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             translated_error = deepl_translator(str(e))
             raise AuthenticationException(f"Erro de autenticação: {translated_error}")
 
-    async def save(self, usuario: Usuario) -> str:
+    def save(self, usuario: Usuario) -> str:
         """
         Salvar um usuário no banco de dados Firestore.
 
@@ -133,7 +133,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao salvar usuário: {translated_error}")
 
-    async def count(self, empresa_id: str) -> int:
+    def count(self, empresa_id: str) -> int:
         """
         Conta o número de usuários que possuem um empresa_id específico no campo 'empresas'.
 
@@ -170,7 +170,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             logger.error(f"Erro inesperado ao contar usuários: {e}")
             raise e
 
-    async def find_by_id(self, id: str) -> Usuario | None:
+    def find_by_id(self, id: str) -> Usuario | None:
         """
         Busca um usuário pelo ID.
 
@@ -210,7 +210,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário com id '{id}': {e}")
             raise
 
-    async def exists_by_email(self, email: str) -> bool:
+    def exists_by_email(self, email: str) -> bool:
         """
         Verifica se existe um usuário com o email especificado.
 
@@ -248,7 +248,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    async def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
+    def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
         """
         Retorna uma lista paginada de usuários.
 
@@ -297,7 +297,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuários da empresa id '{empresa_id}': {e}")
             raise
 
-    async def find_by_email(self, email: str) -> Usuario | None:
+    def find_by_email(self, email: str) -> Usuario | None:
         """
         Encontrar um usuário pelo seu email.
 
@@ -344,7 +344,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    async def find_by_name(self, empresa_id, name: str) -> list[Usuario]:
+    def find_by_name(self, empresa_id, name: str) -> list[Usuario]:
         """
         Busca usuários da empresa logada que contenham o nome especificado.
 
@@ -392,7 +392,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo nome '{name}': {e}")
             raise
 
-    async def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
+    def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
         """
         Busca usuários por perfil.
 
@@ -440,7 +440,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo pefil do usuário '{profile}': {e}")
             raise
 
-    async def delete(self, usuario_id: str) -> bool:
+    def delete(self, usuario_id: str) -> bool:
         """
         Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
 
@@ -482,7 +482,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao deletar usuário com id '{usuario_id}': {str(e)}")
 
-    async def update_profile(self, id: str, new_profile: str) -> Usuario | None:
+    def update_profile(self, id: str, new_profile: str) -> Usuario | None:
         """
         Atualiza o perfil de um usuário.
 
@@ -537,7 +537,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar o perfil do usuário com ID '{id}': {str(e)}")
 
-    async def update_photo(self, id: str, new_photo: str) -> Usuario | None:
+    def update_photo(self, id: str, new_photo: str) -> Usuario | None:
         """
         Atualiza a foto de um usuário.
 
@@ -592,7 +592,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a foto do usuário com ID '{id}': {str(e)}")
 
-    async def update_colors(self, id: str, new_colors: dict) -> bool:
+    def update_colors(self, id: str, new_colors: dict) -> bool:
         """
         Atualiza cor preferencial de um usuário.
 
@@ -645,7 +645,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
 
-    async def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
+    def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """
         Atualiza campos empresa_id e empresas do usuário.
 

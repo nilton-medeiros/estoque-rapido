@@ -51,7 +51,7 @@ def emp_grid_view(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    async def handle_action_click(e):
+    def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
@@ -66,7 +66,7 @@ def emp_grid_view(page: ft.Page):
                 page.app_state.set_empresa(empresa.to_dict()) # type: ignore
                 usuario_id = page.app_state.usuario.get('id') # type: ignore
                 empresas = page.app_state.usuario.get('empresas') # type: ignore
-                result = await empresas_actions.user_update(usuario_id, empresa.id, empresas)
+                result = empresas_actions.user_update(usuario_id, empresa.id, empresas)
                 if result['is_error']:
                     logger.warning(result['message'])
                     message_snackbar(
@@ -81,17 +81,17 @@ def emp_grid_view(page: ft.Page):
                     page.app_state.set_form_data(empresa.to_dict()) # type: ignore
                     page.go('/home/empresas/form/dados-fiscais')
                 else:
-                    await show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
+                    show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
             case "DIGITAL_CERTIFICATE":
                 print(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
-                is_deleted = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
+                is_deleted = empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case "ARCHIVE":
-                is_archived = await empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
+                is_archived = empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
                 if is_archived:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
@@ -205,7 +205,7 @@ def emp_grid_view(page: ft.Page):
 
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
-                result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
+                result = empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
 
                 if result["status"] == "success":
                     empresas_data = result['data']['empresas']

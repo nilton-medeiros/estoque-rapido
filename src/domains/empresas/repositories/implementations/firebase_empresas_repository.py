@@ -37,7 +37,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
         # self.transaction = self.db.transaction()
         self.collection = self.db.collection('empresas')
 
-    async def save(self, empresa: Empresa) -> str|None:
+    def save(self, empresa: Empresa) -> str|None:
         """
         Salvar uma empresa no banco de dados Firestore.
 
@@ -143,7 +143,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             raise Exception(
                 f"Erro inesperado ao salvar empresa: {translated_error}")
 
-    async def find_by_id(self, id: str) -> Empresa | None:
+    def find_by_id(self, id: str) -> Empresa | None:
         """
         Encontrar uma empresa pelo seu identificador único.
         O fato do sistema estar de posse do ID, significa que não precisa filtrar empresa por status ativo
@@ -182,7 +182,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com id '{id}': {e}")
             raise
 
-    async def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
+    def find_by_cnpj(self, cnpj: CNPJ) -> Empresa | None:
         """
         Encontrar uma empresa pelo seu CNPJ.
         O módulo que solicitou a empresa pelo CNPJ deve tratar o status da empresa. (ATIVO, ARQUIVADO E DELETADO)
@@ -229,7 +229,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    async def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
+    def exists_by_cnpj(self, cnpj: CNPJ) -> bool:
         """
         Verificar se uma empresa existe com o CNPJ fornecido independente do status da empresa.
 
@@ -264,7 +264,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    async def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> tuple[list[Empresa], int]:
+    def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> tuple[list[Empresa], int]:
         """
         Faz uma busca de todas as empresas que estão na lista de ids_empresas e pelo seu status.
 
@@ -325,7 +325,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar lista de empresas do usuário logado: {e}")
             raise
 
-    async def count_inactivated(self, ids_empresas: set[str] | list[str]) -> int:
+    def count_inactivated(self, ids_empresas: set[str] | list[str]) -> int:
         """Conta as empresas inativas (deletadas ou arquivadas) dentro do conjunto ou lista de ids_empresas do usuário logado."""
         try:
             # Se o argumento ids_empresas for um conjunto (set), converte para lista

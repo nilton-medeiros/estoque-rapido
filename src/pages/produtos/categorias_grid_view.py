@@ -51,7 +51,7 @@ def cat_grid_view(page: ft.Page):
                 page.app_state.set_form_data(categoria.to_dict()) # type: ignore
                 page.go('/home/produtos/categorias/form')
             case "SOFT_DELETE":
-                is_deleted = await cat_actions.send_to_trash(page=page, categoria=categoria)
+                is_deleted = cat_actions.send_to_trash(page=page, categoria=categoria)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
@@ -264,7 +264,7 @@ def cat_grid_view(page: ft.Page):
                 pass
             else:
                 # Busca as categorias menos as de status 'DELETED' da empresa logada
-                result: dict = await cat_controllers.handle_get_all(empresa_id=empresa_id)
+                result: dict = cat_controllers.handle_get_all(empresa_id=empresa_id)
 
                 if result["status"] == "error":
                     logger.error(f"Erro ao buscar categorias: {result.get('message', 'Desconhecido')}")

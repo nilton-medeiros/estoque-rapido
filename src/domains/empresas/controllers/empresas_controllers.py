@@ -16,7 +16,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
+def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
     """
     Manipula a operação de salvar empresa.
 
@@ -37,7 +37,7 @@ async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
 
     Exemplo:
         >>> empresa = Empresa(corporate_name="Minha Empresa", cnpj=CNPJ("00.000.000/0000-00"))
-        >>> response = await handle_save_empresas(empresa, create_new=True)
+        >>> response = handle_save_empresas(empresa, create_new=True)
         >>> print(response)
     """
     response = {}
@@ -52,11 +52,11 @@ async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
 
         if empresa.id:
             # Alterar empresa existente
-            id = await empresas_services.update(empresa, usuario)
+            id = empresas_services.update(empresa, usuario)
         else:
             # Criar novo empresa
             operation = "criada"
-            id = await empresas_services.create(empresa, usuario)
+            id = empresas_services.create(empresa, usuario)
 
         response["status"] = "success"
         response["data"] = id
@@ -73,7 +73,7 @@ async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
     return response
 
 
-async def handle_get_empresas_by_id(id: str) -> dict:
+def handle_get_empresas_by_id(id: str) -> dict:
     """
     Manipula a operação de buscar empresa.
 
@@ -91,7 +91,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = await handle_get_empresas_by_id('abc123')
+        >>> response = handle_get_empresas_by_id('abc123')
         >>> print(response)
     """
     response = {}
@@ -105,7 +105,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
 
         if id:
             # Busca a empresa pelo ID
-            empresa = await empresas_services.find_by_id(id)
+            empresa = empresas_services.find_by_id(id)
         else:
             raise ValueError("Busca empresa por ID: O id deve ser informado")
 
@@ -129,7 +129,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
     return response
 
 
-async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
+def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     """
     Manipula a operação de buscar empresa.
 
@@ -149,7 +149,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
 
     Exemplo:
         >>> cnpj = CNPJ("00.000.000/0000-00")
-        >>> response = await handle_get_empresas_by_cnpj(cnpj)
+        >>> response = handle_get_empresas_by_cnpj(cnpj)
         >>> print(response)
     """
     response = {}
@@ -163,7 +163,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
 
         if cnpj:
             # Busca a empresa pelo CNPJ
-            empresa = await empresas_services.find_by_cnpj(cnpj)
+            empresa = empresas_services.find_by_cnpj(cnpj)
         else:
             raise ValueError("O CNPJ deve ser passado")
 
@@ -187,7 +187,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     return response
 
 
-async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> dict[str, Any]:
+def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> dict[str, Any]:
     """
     Busca todas as empresas do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
 
@@ -209,7 +209,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = await handle_get_empresas(['abc123', 'def456'])
+        >>> response = handle_get_empresas(['abc123', 'def456'])
         >>> print(response)
     """
 
@@ -222,7 +222,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
-        list_empresas, quantify = await empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        list_empresas, quantify = empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
 
         if not quantify:
             quantify = 0
@@ -243,7 +243,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
     return response
 
 
-async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Status) -> dict:
+def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Status) -> dict:
     """
     Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados.
     Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
@@ -260,7 +260,7 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = await handle_update_status_empresas(empresa, Status.DELETED)
+        >>> response = handle_update_status_empresas(empresa, Status.DELETED)
         >>> print(response)
     """
     response = {}
@@ -283,7 +283,7 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_updated = await empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
+        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
 
         if is_updated:
             response["status"] = "success"

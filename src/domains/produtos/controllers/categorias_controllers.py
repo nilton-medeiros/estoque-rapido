@@ -8,7 +8,7 @@ from src.domains.produtos.services import CategoriasServices
 logger = logging.getLogger(__name__)
 
 
-async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> dict[str, Any]:
+def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> dict[str, Any]:
     """Salva ou atualiza uma categoria de produto."""
     response = {}
 
@@ -19,9 +19,9 @@ async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> d
         operation = "atualizada"
 
         if categoria.id:
-            id = await categorias_services.update(categoria, usuario)
+            id = categorias_services.update(categoria, usuario)
         else:
-            id = await categorias_services.create(categoria, usuario)
+            id = categorias_services.create(categoria, usuario)
             operation = "criada"
 
         response["status"] = "success"
@@ -39,7 +39,7 @@ async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> d
     return response
 
 
-async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
+def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletada de uma categoria de produto."""
     response = {}
 
@@ -60,7 +60,7 @@ async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, stat
         repository = FirebaseCategoriasRepository()
         categorias_services = CategoriasServices(repository)
 
-        is_updated = await categorias_services.update_status(categoria, usuario, status)
+        is_updated = categorias_services.update_status(categoria, usuario, status)
 
         if is_updated:
             response["status"] = "success"
@@ -81,7 +81,7 @@ async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, stat
     return response
 
 
-async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:
+def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:
     """
     Busca todas as categorias do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
 
@@ -102,7 +102,7 @@ async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = await handle_get_empresas(['abc123', 'def456'])
+        >>> response = handle_get_empresas(['abc123', 'def456'])
         >>> print(response)
     """
 
@@ -115,7 +115,7 @@ async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        categorias_list, quantify = await categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+        categorias_list, quantify = categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
 
         if categorias_list:
             response["status"] = "success"

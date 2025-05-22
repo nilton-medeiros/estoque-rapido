@@ -44,7 +44,7 @@ não existe mais na versão atual do SDK Admin do Firebase para Pyhton.
                   const user = userCredential.user;
                   console.log('Login bem-sucedido:', user);
                   // Envie o token de ID para o Flet
-                  window.location.hash = JSON.stringify({ token: await user.getIdToken() });
+                  window.location.hash = JSON.stringify({ token: user.getIdToken() });
               })
               .catch((error) => {
                   // Erro no login

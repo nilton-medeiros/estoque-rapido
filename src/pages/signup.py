@@ -188,7 +188,7 @@ class SignupView:
         return None
 
     # Executa ação do botão Registrar
-    async def handle_signup(self, _):
+    def handle_signup(self, _):
         # Desabilita o botão imediatamente para evitar múltiplos cliques
         self.signup_button.disabled = True
         self.signup_button.update()
@@ -220,7 +220,7 @@ class SignupView:
                 profile='admin',
             )
 
-            result = await usuarios_controllers.handle_save_usuarios(usuario)
+            result = usuarios_controllers.handle_save_usuarios(usuario)
 
             if result["status"] == "error":
                 message_snackbar(
