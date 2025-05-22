@@ -145,11 +145,11 @@ def cat_grid_lixeira(page: ft.Page):
                     days_left = math.ceil(dias_restantes_float)
 
                 if days_left == 0:
-                    info_message = "Esta categoria está na lixeira. A exclusão permanente está prevista para hoje ou já pode ter ocorrido."
+                    info_message = "A exclusão permanente está prevista para hoje ou já pode ter ocorrido."
                 elif days_left == 1:
-                    info_message = f"Esta categoria está na lixeira. A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dia."
+                    info_message = f"A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dia."
                 else:
-                    info_message = f"Esta categoria está na lixeira. A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dias."
+                    info_message = f"A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dias."
             else:
                 # Caso deleted_at não esteja definido
                 info_message = "Esta categoria está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
