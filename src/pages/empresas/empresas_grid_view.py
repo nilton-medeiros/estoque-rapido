@@ -357,7 +357,6 @@ def emp_grid_view(page: ft.Page):
         finally:
             # --- Atualizar Visibilidade da UI ---
             current_trash_icon_filename = "recycle_full_1771.png" if empresas_inactivated else "recycle_empy_1771.png"
-
             if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
                 fab.content.src = f"icons/{current_trash_icon_filename}"
                 fab.tooltip = f"Empresas inativas: {empresas_inactivated}"
