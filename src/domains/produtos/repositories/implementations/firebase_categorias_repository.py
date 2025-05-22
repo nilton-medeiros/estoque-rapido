@@ -205,6 +205,9 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     categorias.append(ProdutoCategorias.from_dict(
                         categoria_data))  # type: ignore
 
+            # Ordena pelo nome da categoria
+            categorias.sort(key=lambda categoria: categoria.name)
+
             return categorias, quantify_deleted
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
