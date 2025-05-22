@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 def sidebar_header(page: ft.Page):
-    page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE  # type: ignore
-    page.user_name_text.visible = True  # type: ignore
-    page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM  # type: ignore
-    page.company_name_text_btn.visible = True  # type: ignore
+    page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE  # type: ignore [attr-defined]
+    page.user_name_text.visible = True  # type: ignore [attr-defined]
+    page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM  # type: ignore [attr-defined]
+    page.company_name_text_btn.visible = True  # type: ignore [attr-defined]
 
-    current_user = page.app_state.usuario  # type: ignore
+    current_user = page.app_state.usuario  # type: ignore [attr-defined]
     profile = ft.Text(
         value=current_user['profile'], theme_style=ft.TextThemeStyle.BODY_SMALL)
     user_photo = None
@@ -492,15 +492,15 @@ def sidebar_content(page: ft.Page):
     circle_praphs = ft.Row(
         controls=[
             Functionalities(title='Estoque', value=1),
-            Functionalities(title='Recebíveis', value=1),
-            Functionalities(title='Pagamentos', value=0.5),
+            Functionalities(title='Recebíveis', value=0.5),
+            Functionalities(title='Pagamentos', value=0),
         ]
     )
 
     line_graphics = ft.Column(
         controls=[
-            FiscalProgressBar(title='CADASTRO FISCAL', value=1),
-            FiscalProgressBar(title='CETIFICADO', value=1),
+            FiscalProgressBar(title='CADASTRO FISCAL', value=0),
+            FiscalProgressBar(title='CETIFICADO', value=0.5),
             FiscalProgressBar(title='NFC-e', value=1),
         ],
         alignment=ft.MainAxisAlignment.START,
