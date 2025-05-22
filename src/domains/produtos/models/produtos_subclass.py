@@ -3,5 +3,5 @@ from enum import Enum
 
 class ProdutoStatus(Enum):
     ACTIVE = "Ativo"
-    INACTIVE = "Obsoleto"
+    INACTIVE = "Descontinuado"
     DELETED = "Lixeira"
