@@ -8,38 +8,41 @@ import flet as ft
 
 class Functionalities(ft.Column):
     def __init__(self, title: str, value: float):
-        super().__init__()
-        self.title = title
-        self.value = value
-        self.expand = True
+        # Os parâmetros title e value são usados para construir os controles.
+        # self.title = title # Desnecessário se title for usado apenas aqui
+        # self.value = value # Desnecessário se value for usado apenas aqui
 
-    def build(self):
-        return ft.Column(
+        _controls = [
+            ft.Stack(
+                controls=[
+                    ft.PieChart(
+                        sections=[
+                            ft.PieChartSection(
+                                value=value, color=ft.Colors.PRIMARY, radius=5),
+                            ft.PieChartSection(
+                                value=1 - value, color=ft.Colors.BLACK26, radius=5),
+                        ],
+                        sections_space=0,
+                        height=50,
+                    ),
+                    ft.Container(
+                        content=ft.Text(
+                            value=f'{value:.0%}', theme_style=ft.TextThemeStyle.BODY_SMALL),
+                        alignment=ft.alignment.center,
+                        height=50,
+                    )
+                ]
+            ),
+            ft.Text(value=title,
+                    theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+        ]
+
+        super().__init__(
             controls=[
-                ft.Stack(
-                    controls=[
-                        ft.PieChart(
-                            sections=[
-                                ft.PieChartSection(
-                                    value=self.value, color=ft.Colors.PRIMARY, radius=5),
-                                ft.PieChartSection(
-                                    value=1 - self.value, color=ft.Colors.BLACK26, radius=5),
-                            ],
-                            sections_space=0,
-                            height=70,
-                        ),
-                        ft.Container(
-                            content=ft.Text(
-                                value=f'{self.value:.0%}', theme_style=ft.TextThemeStyle.BODY_LARGE),
-                            alignment=ft.alignment.center,
-                            height=70,
-                        )
-                    ]
-                ),
-                ft.Text(value=self.title,
-                        theme_style=ft.TextThemeStyle.BODY_LARGE),
+                *_controls
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True  # Aplica a expansão à própria instância de Functionalities
         )
 
 
