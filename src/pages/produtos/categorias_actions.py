@@ -62,7 +62,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
 
-            if result.get('is_error'):
+            if result["status"] == "error":
                 message_snackbar(
                     message=result['message'], message_type=MessageType.WARNING, page=page_ctx)
                 if not operation_complete_future.done():
@@ -164,7 +164,7 @@ async def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> boo
     user = page.app_state.usuario # type: ignore
     result = await cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
 
-    if result.get('is_error'):
+    if result["status"] == "error":
         message_snackbar(
             page=page, message=result["message"], message_type=MessageType.ERROR)
         return False

@@ -175,7 +175,7 @@ def sidebar_header(page: ft.Page):
                     # Agora que temos uma URL válida, atualizar o usuário
                     result = await handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
 
-                    if result["is_error"]:
+                    if result["status"] == "error":
                         message_type = MessageType.ERROR
                         msg_snack = result["message"]
                         is_success = False
@@ -187,7 +187,7 @@ def sidebar_header(page: ft.Page):
                             except Exception as e:
                                 logger.error(f"{e}")
                     else:
-                        user_updated = result["usuario"]
+                        user_updated = result["data"]["usuario"]
 
                 except ValueError as e:
                     logger.error(str(e))
@@ -243,9 +243,14 @@ def sidebar_header(page: ft.Page):
                             except Exception as e:
                                 logger.error(f"{e}")
 
-                color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
-                message_snackbar(
-                    page=page, message=result["message"], message_type=color)
+
+                color = MessageType.SUCCESS
+                msg = "Avatar carregado com sucesso!"
+                if result["status"] == "error":
+                    color = MessageType.ERROR
+                    msg = result["message"]
+
+                message_snackbar(page=page, message=msg, message_type=color)
 
                 page.close(dialog)
 
@@ -294,7 +299,7 @@ def sidebar_header(page: ft.Page):
             else:
                 if url_field.value and url_field.value.strip():
                     result = await handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
-                    if not result["is_error"]:
+                    if result["status"] == "success":
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:
                             # String completa
@@ -325,14 +330,18 @@ def sidebar_header(page: ft.Page):
 
                         user_avatar.content = user_photo
                         user_avatar.update()
-                        usuario = result["usuario"]
+                        usuario = result["data"]["usuario"]
 
                         page.app_state.set_usuario(  # type: ignore
                             usuario.to_dict())
 
-                    color = MessageType.ERROR if result["is_error"] else MessageType.SUCCESS
-                    message_snackbar(
-                        page=page, message=result["message"], message_type=color)
+                    color = MessageType.SUCCESS
+                    msg = "Avatar carregado com sucesso!"
+                    if result["status"] == "error":
+                        color = MessageType.ERROR
+                        msg = result["message"]
+
+                    message_snackbar(page=page, message=msg, message_type=color)
                     page.close(dialog)
 
         def close_dialog(e):
@@ -592,11 +601,11 @@ class PopupColorItem(ft.PopupMenuItem):
         colors = get_app_colors(self.data)
         try:
             result = await handle_update_colors_usuarios(id=user.get('id'), colors=colors)
-            if result["is_error"]:
-                msg_error = result["message"]
+            if result["status"] == "error":
                 # Reverter a mudança de tema se a atualização falhar? Opcional.
                 # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
                 # page.update()
+                msg_error = result["message"]
                 message_snackbar(page=self.page, message=msg_error,  # type: ignore
                                  message_type=MessageType.ERROR)
                 return  # Não continua se houve erro

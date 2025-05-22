@@ -40,11 +40,7 @@ async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
         >>> response = await handle_save_empresas(empresa, create_new=True)
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-        "id": None
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase! Para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -62,15 +58,15 @@ async def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
             operation = "criada"
             id = await empresas_services.create(empresa, usuario)
 
-        response["message"] = f"Empresa {operation} com sucesso!"
-        response["id"] = id
+        response["status"] = "success"
+        response["data"] = id
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_save_empresas ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 
@@ -98,11 +94,7 @@ async def handle_get_empresas_by_id(id: str) -> dict:
         >>> response = await handle_get_empresas_by_id('abc123')
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-        "empresa": None
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase para buscar a empresa
@@ -118,20 +110,20 @@ async def handle_get_empresas_by_id(id: str) -> dict:
             raise ValueError("Busca empresa por ID: O id deve ser informado")
 
         if empresa:
-            response["message"] = "Empresa encontrada com sucesso!"
-            response["empresa"] = empresa
+            response["status"] = "success"
+            response["data"] = empresa
         else:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui
-            response["is_error"] = True
+            response["status"] = "error"
             response["message"] = f"Empresa não encontrada id {id}"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_get_empresas_by_id ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -160,11 +152,7 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
         >>> response = await handle_get_empresas_by_cnpj(cnpj)
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-        "empresa": None
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase para buscar a empresa
@@ -180,20 +168,20 @@ async def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
             raise ValueError("O CNPJ deve ser passado")
 
         if empresa:
-            response["message"] = "Empresa encontrada com sucesso!"
-            response["empresa"] = empresa
+            response["status"] = "success"
+            response["data"] = empresa
         else:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui
-            response["is_error"] = True
-            response["message"] = "Empresa não encontrada"
+            response["status"] = "error"
+            response["message"] = f"Empresa não encontrada CNPJ {str(cnpj)}"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_get_empresas_by_cnpj ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -225,12 +213,7 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         >>> print(response)
     """
 
-    response = {
-        "is_error": False,
-        "message": "",
-        "data_list": [],
-        "inactivated": 0,
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase para buscar as empresas
@@ -240,19 +223,25 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
         list_empresas, quantify = await empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
-        response["inactivated"] = quantify if quantify else 0
+
+        if not quantify:
+            quantify = 0
 
         if list_empresas:
-            response["message"] = "Empresas encontradas com sucesso!"
-            response["data_list"] = list_empresas
+            response["status"] = "success"
+            response["data"] = {
+                "empresas": list_empresas,
+                "inactivated": quantify,
+                "message": "Empresas encontradas com sucesso!"
+            }
         else:
-            response["is_error"] = True
+            response["status"] = "error"
             response["message"] = "Nenhuma empresas encontrada!"
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_get_empresas ValueError: Erro de validação: {str(e)}"
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -278,11 +267,7 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
         >>> response = await handle_update_status_empresas(empresa, Status.DELETED)
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-        "status": None,
-    }
+    response = {}
 
     try:
         if not empresa:
@@ -305,20 +290,20 @@ async def handle_update_status_empresas(empresa: Empresa, usuario: dict, status:
         is_updated = await empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
 
         if is_updated:
-            response["status"] = status
-            response["message"] = f"Status da empresa alterado com sucesso! Status: {status.value}"
+            response["status"] = "success"
+            response["data"] = status
         else:
             # Improvável, pois se não encontrar a empresa, é retornado uma exceção
             # Mas, caso aconteça, é tratado aqui
-            response["is_error"] = True
+            response["status"] = "error"
             response["message"] = "Erro ao alterar o status da empresa"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_update_status_empresas().ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 

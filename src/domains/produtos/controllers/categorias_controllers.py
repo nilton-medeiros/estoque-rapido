@@ -2,7 +2,7 @@ import logging
 
 from typing import Any
 from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
-from src.domains.produtos.repositories import CategoriasRepository, FirebaseCategoriasRepository
+from src.domains.produtos.repositories import FirebaseCategoriasRepository
 from src.domains.produtos.services import CategoriasServices
 
 logger = logging.getLogger(__name__)
@@ -10,11 +10,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> dict[str, Any]:
     """Salva ou atualiza uma categoria de produto."""
-    response = {
-        "is_error": False,
-        "message": "",
-        "id": None,
-    }
+    response = {}
 
     try:
         repository = FirebaseCategoriasRepository()
@@ -23,19 +19,20 @@ async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> d
         operation = "atualizada"
 
         if categoria.id:
-            response["id"] = await categorias_services.update(categoria, usuario)
+            id = await categorias_services.update(categoria, usuario)
         else:
-            response["id"] = await categorias_services.create(categoria, usuario)
+            id = await categorias_services.create(categoria, usuario)
             operation = "criada"
 
-        response["message"] = f"Categoria {operation} com sucesso!"
+        response["status"] = "success"
+        response["data"] = id
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"handle_save ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 
@@ -44,11 +41,7 @@ async def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> d
 
 async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletada de uma categoria de produto."""
-    response = {
-        "is_error": False,
-        "message": "",
-        "status": None,
-    }
+    response = {}
 
     try:
         if not categoria.id:
@@ -70,18 +63,18 @@ async def handle_update_status(categoria: ProdutoCategorias, usuario: dict, stat
         is_updated = await categorias_services.update_status(categoria, usuario, status)
 
         if is_updated:
-            response["status"] = status
-            response["message"] = f"Status da categoria atualizado com sucesso! Status: {status.value}"
+            response["status"] = "success"
+            response["data"] = status
         else:
-            response["is_error"] = True
+            response["status"] = "error"
             response["message"] = f"Não foi possível atualizar o status da categoria para {status.value}"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error("cat_controllers.handle_update_status(ValueError). " + response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 
@@ -113,12 +106,7 @@ async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[
         >>> print(response)
     """
 
-    response = {
-        "is_error": False,
-        "message": "",
-        "data_list": [],
-        "deleted": 0,
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase para buscar as categorias
@@ -127,20 +115,22 @@ async def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        empresas_list, quantify = await categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
-        response["deleted"] = quantify if quantify else 0
+        categorias_list, quantify = await categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
 
-        if empresas_list:
-            response["message"] = "Empresas encontradas com sucesso!"
-            response["data_list"] = empresas_list
+        if categorias_list:
+            response["status"] = "success"
+            response["data"] = {
+                "categorias": categorias_list,
+                "deleted": quantify if quantify else 0,
+            }
         else:
-            response["is_error"] = True
+            response["status"] = "error"
             response["message"] = "Nenhuma categoria de produto encontrada!"
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"categorias_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response

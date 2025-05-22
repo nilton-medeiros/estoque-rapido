@@ -478,7 +478,7 @@ def form_categorias(page: ft.Page):
             usuario=page.app_state.usuario # type: ignore
         )
 
-        if result["is_error"]:
+        if result["status"] == "error":
             message_snackbar(
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return

@@ -185,16 +185,21 @@ def cat_grid_lixeira(page: ft.Page):
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_all seja async ***
-            if empresa_id:  # Só busca as categorias da empresa logada, se houver ID
-                result = await cat_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
-                categorias_data = result['data_list']
-                categorias_inactivated: int = result['deleted']
+            if not empresa_id:  # Só busca as categorias da empresa logada, se houver ID
+                content_area.controls.append(empty_content_display)
+                return
+
+            result = await cat_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
+
+            if result["status"] == "error":
+                content_area.controls.append(empty_content_display)
+                return
+
+            categorias_data = result['data']["categorias"]
+            categorias_inactivated: int = result['data']["deleted"]
 
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear()  # Limpar conteúdo anterior
-            if not categorias_data:  # Checa se a lista é vazia ou None
-                content_area.controls.append(empty_content_display)
-                return
 
             grid = ft.ResponsiveRow(
                 controls=[

@@ -222,12 +222,12 @@ class SignupView:
 
             result = await usuarios_controllers.handle_save_usuarios(usuario)
 
-            if result["is_error"]:
+            if result["status"] == "error":
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return
 
-            usuario.id = result["id"]
+            usuario.id = result["data"]["id"]
             # Atualiza o estado do app com o novo usuário antes da navegação
             self.page.app_state.set_usuario(usuario.to_dict()) # type: ignore
 
@@ -235,7 +235,7 @@ class SignupView:
             self.page.app_state.clear_empresa_data() # type: ignore
 
             message_snackbar(
-                page=self.page, message=result["message"], message_type=MessageType.SUCCESS)
+                page=self.page, message=result["data"]["message"], message_type=MessageType.SUCCESS)
             # Redireciona para a página home do usuário após o registro
             self.page.on_resized = None
             self.page.go('/home')

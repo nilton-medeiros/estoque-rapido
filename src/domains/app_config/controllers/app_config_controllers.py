@@ -37,11 +37,7 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
         >>> response = await handle_save_config(settings, create_new=True)
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-        "config_id": None
-    }
+    response = {}
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -58,15 +54,15 @@ async def handle_save_config(settings: AppConfig, create_new: bool) -> dict:
             # Alterar configuração existente
             config_id = await settings_services.update(settings)
 
-        response["message"] = f"Configuração {operation} com sucessso!"
-        response["config_id"] = config_id
+        response["status"] = "success"
+        response["data"] = {"id": config_id, "message": f"Configuração {operation} com sucessso!"}
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 
@@ -95,12 +91,7 @@ async def handle_get_config(config_id: str) -> dict:
         >>> response = await handle_get_config(id)
         >>> print(response)
     """
-    response: dict = {
-        "is_found": False,
-        "is_error": False,
-        "message": "",
-        "settings": None
-    }
+    response: dict = {}
 
     try:
         # Usa o repositório do Firebase para buscar a configuração
@@ -113,19 +104,19 @@ async def handle_get_config(config_id: str) -> dict:
         app_config = await settings_services.find_config_by_id(config_id)
 
         if app_config:
-            response["is_found"] = True
-            response["message"] = "Configuração encontrada com sucesso!"
-            response["settings"] = app_config
+            response["status"] = "success"
+            response["data"] = {"settings": app_config, "message": "Configuração encontrada com sucesso!"}
         else:
             # Configuração não encontrada, obtem um novo token e cria uma nova config
+            response["status"] = "error"
             response["message"] = "Configuração não encontrada"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 

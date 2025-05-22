@@ -206,10 +206,10 @@ def emp_grid_view(page: ft.Page):
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
                 result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
-                empresas_data = result.get('data_list')
-                empresas_inactivated = result.get('inactivated')
-            else:
-                empresas_data = []  # Se não há IDs, a lista está vazia
+
+                if result["status"] == "success":
+                    empresas_data = result['data']['empresas']
+                    empresas_inactivated = result['data']['inactivated']
 
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear()  # Limpar conteúdo anterior

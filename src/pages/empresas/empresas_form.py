@@ -930,7 +930,7 @@ def emp_form_principal(page: ft.Page):
         user = page.app_state.usuario # type: ignore
         result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
-        if result["is_error"]:
+        if result["status"] == "error":
             message_snackbar(
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return
@@ -952,7 +952,7 @@ def emp_form_principal(page: ft.Page):
             empresa_ativa_id=user['empresa_id'],
         )
 
-        if result["is_error"]:
+        if result["status"] == "error":
             message_snackbar(
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return

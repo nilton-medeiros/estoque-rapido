@@ -68,7 +68,8 @@ class CategoriasServices:
 
 
     async def get_by_id(self, categoria_id: str) -> ProdutoCategorias | None:
-        return None
+        """Busca uma categoria pelo ID"""
+        return await self.repository.get_by_id(categoria_id=categoria_id)
 
 
     async def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[ProdutoCategorias], int]:

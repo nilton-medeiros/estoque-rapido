@@ -181,13 +181,13 @@ class LoginView:
             result = await usu_controllers.handle_login_usuarios(
                 email=self.email_input.value, password=self.password_input.value) # type: ignore
 
-            if result["is_error"]:
+            if result["status"] == "error":
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return
 
             # Atualiza o estado do app com o novo usuário antes da navegação
-            user = result["authenticated_user"]
+            user = result["data"]["authenticated_user"]
             self.page.app_state.set_usuario(user.to_dict()) # type: ignore
 
             if user.empresa_id is None:
@@ -199,14 +199,14 @@ class LoginView:
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
             result = await emp_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
-            if result["is_error"]:
+            if result["status"] == "error":
                 user.empresa_id = None
                 self.page.app_state.clear_empresa_data() # type: ignore
                 self.page.on_resized = None
                 self.page.go('/home')
                 return
 
-            cia: Empresa = result["empresa"]
+            cia: Empresa = result["data"]
 
             # Adiciona o empresa_id no state e publíca-a
             if cia.status.name == 'ACTIVE':

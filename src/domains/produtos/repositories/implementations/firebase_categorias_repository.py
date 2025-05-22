@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, UTC
-from typing import Any
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
@@ -132,9 +131,33 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             raise Exception(f"Erro ao salvar categoria: {translated_error}")
 
         return categoria.id
+
+
     async def get_by_id(self, categoria_id: str) -> ProdutoCategorias | None:
         """Encontra uma categoria de produto pelo ID no repositório"""
-        pass
+        try:
+            doc_ref = self.collection.document(categoria_id)
+            doc_snapshot = doc_ref.get() # Chamada síncrona
+
+            if not doc_snapshot.exists:
+                logger.info(f"Categoria com ID {categoria_id} não encontrado.")
+                return None
+
+            categoria_data = doc_snapshot.to_dict()
+            if not categoria_data: # Verifica se o documento não está vazio
+                logger.warning(f"Documento {categoria_id} existe mas está vazio.")
+                return None
+
+            categoria_data['id'] = doc_snapshot.id # Inclui o ID no dicionário
+
+            return ProdutoCategorias.from_dict(categoria_data)
+        except exceptions.FirebaseError as e:
+            logger.error(f"Erro do Firebase ao buscar categoria por ID {categoria_id}: Código: {e.code}, Detalhes: {e}")
+            raise # Re-lança para tratamento em camadas superiores
+        except Exception as e:
+            logger.error(f"Erro inesperado ao buscar categoria por ID {categoria_id}: {e}")
+            raise
+
 
     async def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[ProdutoCategorias], int]:
         """

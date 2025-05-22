@@ -18,11 +18,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 
 
 async def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
-    response: dict[str, Any] = {
-        "is_error": False,
-        "authenticated_user": None,
-        "message": "",
-    }
+    response: dict[str, Any] = {}
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -30,24 +26,28 @@ async def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
         usuarios_services = UsuariosServices(repository)
         user = await usuarios_services.authentication(email=email, password=password)
 
-        response["authenticated_user"] = user
-        response["message"] = "Usuário autenticado com sucesso!"
+        response["status"] = "success"
+        response["data"] = {
+            "authenticated_user": user,
+            "message": "Usuário autenticado com sucesso!"
+        }
+
 
     except UserNotFoundException as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     except InvalidCredentialsException as e:
-        response["is_error"] = True
+        response["status"] = "error"
         # str(e) # Não deve ser exposto para o usuário, mensagem genérica
         response["message"] = "Credenciais inválidas"
 
     except AuthenticationException as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro interno do servidor: {str(e)}"
 
     return response
@@ -76,11 +76,7 @@ async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
         >>> response = await handle_save_usuarios(usuario)
         >>> print(response)
     """
-    response: dict[str, Any] = {
-        "is_error": False,
-        "message": "",
-        "id": None
-    }
+    response: dict[str, Any] = {}
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -98,14 +94,14 @@ async def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
             operation = "criado"
             id = await usuarios_services.create(usuario)
 
-        response["message"] = f"Usuário {operation} com sucessso!"
-        response["id"] = id
+        response["status"] = "success"
+        response["data"] = {"id": id, "message": f"Usuário {operation} com sucessso!"}
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -134,15 +130,11 @@ async def handle_get_usuarios(id: str | None = None, email: str | None = None) -
         >>> response = await handle_get_usuarios(email)
         >>> print(response)
     """
-    response: dict[str, Any] = {
-        "is_error": False,
-        "message": "",
-        "usuario": None
-    }
+    response: dict[str, Any] = {}
 
     # Verifica se o id ou email foram passados
     if not id and not email:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = "Um dos argumentos id ou email deve ser passado"
         logger.warning(response["message"])
         return response
@@ -160,19 +152,18 @@ async def handle_get_usuarios(id: str | None = None, email: str | None = None) -
             usuario = await usuarios_services.find_by_email(email)
 
         if usuario:
-            response["message"] = "Usuário encontrado com sucesso!"
-            response["usuario"] = usuario
+            response["status"] = "success"
+            response["data"] = {"usuario": usuario, "message": "Usuário encontrado com sucesso!"}
         else:
-            response["is_error"] = True
-            response[
-                "message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
+            response["status"] = "error"
+            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 
@@ -202,11 +193,7 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any
         >>> response = await handle_update_field_usuarios(id, photo_url)
         >>> print(response)
     """
-    response: dict[str, Any] = {
-        "is_error": False,
-        "message": "",
-        "usuario": None
-    }
+    response: dict[str, Any] = {}
 
     try:
         # Usa o repositório do Firebase, para outro banco, apenas troque o repositório abaixo pelo novo.
@@ -216,15 +203,16 @@ async def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any
         # Atualiza o campo photo_url no usuário
         usuario = await usuarios_services.update_photo(id, photo_url)
 
-        response["message"] = "Foto do Usuário atualizada com sucessso!"
-        response["usuario"] = usuario
+        response["status"] = "success"
+        response["data"] = {"usuario": usuario, "message": "Foto do Usuário atualizada com sucesso!"}
+
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -253,21 +241,18 @@ async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict
         >>> response = await handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
         >>> print(response)
     """
-    response: dict[str, Any] = {
-        "is_error": False,
-        "message": "",
-    }
+    response: dict[str, Any] = {}
 
     # Verifica se o id ou colors foram passados
     if not id or not colors:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = "Um dos argumentos id ou colors deve ser passado"
         logger.warning(response["message"])
         return response
 
     # Verifica se colors é um dicionário e contém os campos corretos
     if not all(key in colors for key in ['base_color', 'primary', 'container', 'accent']):
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = "O argumento color deve ser um dicionário com os campos 'base_color', 'primary', 'container' e 'accent'"
         logger.warning(response["message"])
         return response
@@ -279,19 +264,20 @@ async def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict
 
         # Atualiza o campo color no usuário
         is_updated = await usuarios_services.update_colors(id, colors)
-        response["is_error"] = not is_updated
 
         if is_updated:
-            response["message"] = "Cor preferncial do Usuário atualizada com sucessso!"
+            response["status"] = "success"
+            response["data"] = {"message": "Cor preferncial do Usuário atualizada com sucessso!"}
         else:
+            response["status"] = "error"
             response["message"] = "Falha ao atualizar a cor preferncial do Usuário!"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
 
     return response
@@ -320,14 +306,11 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         >>> response = await handle_update_empresas_usuarios(usuario_id, empresa_id, empresas)
         >>> print(response)
     """
-    response = {
-        "is_error": False,
-        "message": "",
-    }
+    response = {}
 
     # Verifica se o id e empresas foram passados
     if not usuario_id or empresas is None:
-        response["is_error"] = True
+        response["status"] = "error"
         msg = f"Os argumentos usuario_id e empresas devem ser passados. usuario_id: {usuario_id}, empresas: {empresas}"
         response["message"] = msg
         logger.error(msg)
@@ -341,14 +324,15 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
         is_updated = await usuarios_services.update_empresas(usuario_id=usuario_id, empresas=empresas, empresa_id=empresa_ativa_id)
 
         if is_updated:
-            response["message"] = "Empresa(s) do Usuário atualizada com sucessso!"
+            response["status"] = "success"
+            response["data"] = {"message": "Empresa(s) do Usuário atualizada com sucessso!"}
         else:
-            response["is_error"] = True
+            response["status"] = "error"
             response[
                 "message"] = f"Falha ao atualizar empresa(s) do Usuário: Usuário não encontrado com ID {usuario_id}"
             logger.error(response["message"])
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
@@ -362,15 +346,11 @@ async def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empres
 async def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
     """Busca todos os usuário da empresa_id"""
     # Exemplo de tipagem profunda: dict[str, bool|str|list[Usuario|None]]. Esta é mais simples: dict[str, Any]
-    response: dict[str, Any] = {
-        "is_error": False,
-        "message": "",
-        "usuarios": []
-    }
+    response: dict[str, Any] = {}
 
     # Verifica se o id da empresa foi passado.
     if not empresa_id:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = "O ID da empresa deve ser passado"
         logger.warning(response["message"])
         return response
@@ -384,18 +364,19 @@ async def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
 
         if len(usuarios) > 0:
             # Retorna lista de usuários
-            response["usuarios"] = usuarios
-            response["message"] = "Usuários encontrados com sucesso!"
+            response["status"] = "success"
+            response["data"] = {"usuarios": usuarios, "message": "Usuários encontrados com sucesso!"}
         else:
+            response["status"] = "error"
             response[
                 "message"] = f"Usuários não encontrados. Verifique o empresa_id: {empresa_id}"
 
     except ValueError as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
-        response["is_error"] = True
+        response["status"] = "error"
         response["message"] = str(e)
         logger.error(response["message"])
 

@@ -132,18 +132,21 @@ def cat_grid_view(page: ft.Page):
             # Exemplo usando asyncio.to_thread se handle_get_all for sync:
             # categorias_data = await asyncio.to_thread(handle_get_all, empresa_id=empresa_id)
 
-            if empresa_id:  # Só busca as categorias de empresa logada, se houver ID
-                # Busca as categorias menos as de status 'DELETED' da empresa logada
-                result: dict = await cat_controllers.handle_get_all(empresa_id=empresa_id)
-                categorias_data: list = result['data_list']
-                categorias_inactivated: int = result['deleted']
-
-            # --- Construir Conteúdo Baseado nos Dados ---
-            content_area.controls.clear()  # Limpar conteúdo anterior
-            if not categorias_data:  # Checa se a lista é vazia ou None
+            if not empresa_id:  # Só busca as categorias de empresa logada, se houver ID
                 # Mostra uma imagem de pasta vazia
                 content_area.controls.append(empty_content_display)
                 return
+
+            # Busca as categorias menos as de status 'DELETED' da empresa logada
+            result: dict = await cat_controllers.handle_get_all(empresa_id=empresa_id)
+
+            if result["status"] == "error":
+                content_area.controls.append(empty_content_display)
+                return
+
+            categorias_data = result['data']["categorias"]
+            categorias_inactivated: int = result['data']["deleted"]
+
 
             # Usar ResponsiveRow para um layout de grid responsivo
             # Ajuste colunas para diferentes tamanhos de tela

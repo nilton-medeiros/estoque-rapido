@@ -6,3 +6,4 @@ from .utils.gen_uuid import get_uuid
 from .utils.messages import message_snackbar, MessageType, show_banner
 from .utils.tools import get_first_and_last_name, initials
 from .utils.time_zone import format_datetime_to_utc_minus_3
+from .utils.money_numpy import Money

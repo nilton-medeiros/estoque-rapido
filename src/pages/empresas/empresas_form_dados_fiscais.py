@@ -423,7 +423,7 @@ def emp_form_dados_fiscais(page: ft.Page):
         user: dict = page.app_state.usuario # type: ignore
         result: dict = await empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
-        if result["is_error"]:
+        if result["status"] == "error":
             message_snackbar(
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return
@@ -434,7 +434,7 @@ def emp_form_dados_fiscais(page: ft.Page):
         # Limpa o formulário salvo e limpa a empresa do app state: form_data e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.app_state.clear_form_data() # type: ignore
-        message_snackbar(page=page, message=result["message"],
+        message_snackbar(page=page, message="Dados fiscais salvo com sucesso!",
                          message_type=MessageType.SUCCESS)
         page.go(page.data if page.data else '/home')
 

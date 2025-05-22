@@ -184,7 +184,7 @@ def emp_grid_lixeira(page: ft.Page):
     async def load_data_and_update_ui():
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get( # type: ignore 
+        set_empresas = page.app_state.usuario.get( # type: ignore
             'empresas', []) # Usar get com default
 
         empresas_data = []
@@ -201,10 +201,9 @@ def emp_grid_lixeira(page: ft.Page):
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
                 result = await empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
-                empresas_data = result['data_list']
-                empresas_inactivated = result['inactivated']
-            else:
-                empresas_data = []  # Se não há IDs, a lista está vazia
+                if result["status"] == "success":
+                    empresas_data = result['data']['empresas']
+                    empresas_inactivated = result['data']['inactivated']
 
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear()  # Limpar conteúdo anterior

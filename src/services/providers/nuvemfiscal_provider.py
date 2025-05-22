@@ -5,7 +5,7 @@ from typing import Any, Optional
 import aiohttp
 from datetime import datetime, timedelta, UTC
 
-import src.domains.app_config.controllers.app_config_controllers as controllers
+import src.domains.app_config.controllers.app_config_controllers as nf_controllers
 from src.domains.empresas import Environment
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.empresa_model import Empresa
@@ -186,11 +186,11 @@ class NuvemFiscalDFeProvider(DFeProvider):
 
     async def _token_get(self) -> None:
         # Acessa o database para consultar informações do token, o id do documento é 'settings'
-        response: dict = await controllers.handle_get_config("app_settings")
+        response: dict = await nf_controllers.handle_get_config("app_settings")
 
-        if response['is_found']:
+        if response["status"] == "success":
             # Verifica se o token expirou
-            self.settings = response['settings']
+            self.settings = response['data']['settings']
             self.token = self.settings.dfe_api_token
             self.token_expires_in = self.settings.dfe_api_token_expires_in
             self.settings.dfe_api_token = self.token
@@ -221,8 +221,8 @@ class NuvemFiscalDFeProvider(DFeProvider):
             self.settings.dfe_api_token_expires_in = date_expiration
 
             # Atualiza a nova configuração no database coleção app_config id: settings
-            response = await controllers.handle_save_config(settings=self.settings, create_new=False)
-            if response['is_error']:
+            response = await nf_controllers.handle_save_config(settings=self.settings, create_new=False)
+            if response["status"] == "error":
                 logger.error(
                     f"Erro ao salvar settings no db: Mensagem {response['message']}")
                 return None
