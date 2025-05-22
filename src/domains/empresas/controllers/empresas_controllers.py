@@ -227,16 +227,12 @@ async def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: b
         if not quantify:
             quantify = 0
 
-        if list_empresas:
-            response["status"] = "success"
-            response["data"] = {
-                "empresas": list_empresas,
-                "inactivated": quantify,
-                "message": "Empresas encontradas com sucesso!"
-            }
-        else:
-            response["status"] = "error"
-            response["message"] = "Nenhuma empresas encontrada!"
+        response["status"] = "success"
+        response["data"] = {
+            "empresas": list_empresas,
+            "inactivated": quantify,
+            "message": "Empresas encontradas com sucesso!" if list_empresas else "Nenhuma empresa encontrada!"
+        }
     except ValueError as e:
         response["status"] = "error"
         response["message"] = f"handle_get_empresas ValueError: Erro de validação: {str(e)}"
