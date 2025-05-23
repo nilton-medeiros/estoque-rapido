@@ -46,12 +46,12 @@ class Money:
         >>> # Operações aritméticas
         >>> result = balance - withdrawal + deposit
         >>> print(f"{balance} - {withdrawal} + {deposit} = {result}")
-        R$100.00 - R$42.37 + R$0.10 = R$57.73
+        R$100,00 - R$42,37 + R$0,10 = R$57,73
 
         >>> # Multiplicação e Divisão
         >>> total_price = Money.mint("15.50", "R$") * 3
         >>> print(f"Preço total de 3 itens: {total_price}")
-        Preço total de 3 itens: R$46.50
+        Preço total de 3 itens: R$46,50
 
         >>> half_value = Money.mint("50.00", "USD") / 2
         >>> print(f"Metade do valor: {half_value}")
@@ -66,7 +66,7 @@ class Money:
         ...     Money.mint("10", "R$") + Money.mint("5", "$")
         ... except ValueError as e:
         ...     print(e)
-        Cannot add money with different currencies: R$ vs $
+        Não é possível adicionar dinheiro com moedas diferentes: R$ vs $
     """
     amount_cents: int
     currency_symbol: str
@@ -79,7 +79,10 @@ class Money:
         return cls(int(amount * 100), currency_symbol)
 
     def __str__(self):
-        return f"{self.currency_symbol}{Decimal(self.amount_cents) / 100:.2f}"
+        formatted_amount = f"{Decimal(self.amount_cents) / 100:.2f}"
+        if self.currency_symbol in ("R$", "BRL"):
+            formatted_amount = formatted_amount.replace('.', ',')
+        return f"{self.currency_symbol} {formatted_amount}"
 
     def __add__(self, other: Self) -> Self:
         if not isinstance(other, Money):
@@ -87,7 +90,7 @@ class Money:
 
         if self.currency_symbol != other.currency_symbol:
             raise ValueError(
-                f"Cannot add money with different currencies: {self.currency_symbol} vs {other.currency_symbol}")
+                f"Não é possível adicionar dinheiro com moedas diferentes: {self.currency_symbol} vs {other.currency_symbol}")
 
         return self.__class__(self.amount_cents + other.amount_cents, self.currency_symbol)
 
@@ -97,7 +100,7 @@ class Money:
 
         if self.currency_symbol != other.currency_symbol:
             raise ValueError(
-                f"Cannot subtract money with different currencies: {self.currency_symbol} vs {other.currency_symbol}")
+                f"Não é possível subtrair dinheiro com moedas diferentes: {self.currency_symbol} vs {other.currency_symbol}")
 
         return self.__class__(self.amount_cents - other.amount_cents, self.currency_symbol)
 
@@ -110,7 +113,7 @@ class Money:
     def __truediv__(self, other: Union[int, Decimal]) -> Self:
         if isinstance(other, (int, Decimal)):
             if other == 0:
-                raise ZeroDivisionError("Cannot divide money by zero")
+                raise ZeroDivisionError("Não é possível dividir dinheiro por zero")
             temp_amount = Decimal(self.amount_cents) / other
             return self.__class__(int(temp_amount), self.currency_symbol)
         return NotImplemented
@@ -119,28 +122,28 @@ class Money:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency_symbol != other.currency_symbol:
-            raise ValueError("Cannot compare money with different currencies")
+            raise ValueError("Não é possível comparar dinheiro com moedas diferentes")
         return self.amount_cents < other.amount_cents
 
     def __le__(self, other: Self) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency_symbol != other.currency_symbol:
-            raise ValueError("Cannot compare money with different currencies")
+            raise ValueError("Não é possível comparar dinheiro com moedas diferentes")
         return self.amount_cents <= other.amount_cents
 
     def __gt__(self, other: Self) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency_symbol != other.currency_symbol:
-            raise ValueError("Cannot compare money with different currencies")
+            raise ValueError("Não é possível comparar dinheiro com moedas diferentes")
         return self.amount_cents > other.amount_cents
 
     def __ge__(self, other: Self) -> bool:
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency_symbol != other.currency_symbol:
-            raise ValueError("Cannot compare money with different currencies")
+            raise ValueError("Não é possível comparar dinheiro com moedas diferentes")
         return self.amount_cents >= other.amount_cents
 
     def __eq__(self, other: object) -> bool:
