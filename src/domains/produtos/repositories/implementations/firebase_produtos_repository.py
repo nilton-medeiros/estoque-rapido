@@ -4,7 +4,7 @@ from typing import Tuple, List # Usar List explicitamente para type hints
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.produtos.models import Produto
+from src.domains.produtos.models import Produto, ProdutoStatus
 from src.domains.produtos.repositories import ProdutosRepository
 from src.shared import deepl_translator
 from storage.data import get_firebase_app
@@ -159,24 +159,28 @@ class FirebaseProdutosRepository(ProdutosRepository):
 
     def get_all(self, status_deleted: bool = False) -> Tuple[List[Produto], int]:
         """
-        Obtém todos os produtos de uma empresa no repositório, com opção de filtrar por status.
+        Obtém todos os produtos de uma empresa no repositório, ordenados por nome da categoria
+        e depois por nome do produto, com opção de filtrar por status.
 
         Args:
             status_deleted (bool): Se True, apenas os produtos com status "DELETED" serão incluídos;
                                     caso contrário, todos os produtos, exceto os excluídos, serão retornados.
 
         Returns (tuple):
-            list[Produto]: Lista dos produtos que correspondem ao critério de filtro.
-            int: Quantidade total de produtos marcados como "DELETED" (para o tooltip da lixeira).
+            list[Produto]: Lista dos produtos que correspondem ao critério de filtro, ordenados.
+            int: Quantidade total de produtos marcados como "DELETED".
 
         Raises:
             ValueError: Se houver um erro de validação ao buscar produtos.
             Exception: Se ocorrer um erro inesperado durante a operação.
         """
         try:
-            # Obtém todos os documentos para permitir a contagem de deletados de forma eficiente
-            # e o filtro subsequente.
-            query_snapshot = self.products_collection_ref.get() # Chamada síncrona
+            # Modificação 1: Adicionar ordenação à consulta do Firestore
+            # Esta consulta buscará todos os produtos e os ordenará pelo nome da categoria
+            # e, em seguida, pelo nome do produto.
+            # Certifique-se de ter um índice composto (categoria_name ASC, name ASC) no Firestore.
+            query = self.products_collection_ref.order_by("categoria_name").order_by("name")
+            query_snapshot = query.get() # Chamada síncrona
 
             produtos_result: List[Produto] = []
             quantify_deleted = 0
@@ -185,40 +189,85 @@ class FirebaseProdutosRepository(ProdutosRepository):
                 product_data = doc.to_dict()
                 if product_data: # Garante que o documento não esteja vazio
                     product_data['id'] = doc.id
-
                     product_obj = Produto.from_dict(product_data)
 
+                    # Modificação 4: Corrigir comparação de status
                     # Conta todos os produtos deletados, independentemente do filtro principal
-                    if product_obj.status == "DELETED":
+                    if product_obj.status == ProdutoStatus.DELETED:
                         quantify_deleted += 1
 
                     # Adiciona o produto à lista de resultados com base no filtro 'status_deleted'
-                    if status_deleted and product_obj.status == "DELETED":
-                        produtos_result.append(product_obj)
-                    elif not status_deleted and product_obj.status != "DELETED":
-                        produtos_result.append(product_obj)
+                    if status_deleted: # Se o filtro é para mostrar deletados
+                        if product_obj.status == ProdutoStatus.DELETED:
+                            produtos_result.append(product_obj)
+                    else: # not status_deleted (mostrar não deletados)
+                        if product_obj.status != ProdutoStatus.DELETED:
+                            produtos_result.append(product_obj)
+
+            # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
+            # produtos_result.sort(key=lambda produto: produto.categoria_name) # REMOVIDO
 
             return produtos_result, quantify_deleted
 
         except exceptions.FirebaseError as e:
-            if e.code == 'permission-denied':
+            error_message_lower = str(e).lower()
+            # Condição para erro de índice ausente (Failed Precondition)
+            # O Firestore retorna uma mensagem específica com um link para criar o índice.
+            is_missing_index_error = (
+                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+            )
+
+            if is_missing_index_error:
+                logger.error(
+                    f"Erro de pré-condição ao consultar produtos (provavelmente índice ausente): {e}. "
+                    "O Firestore requer um índice para esta consulta. "
+                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+                )
+                # A mensagem 'e' já deve conter o link.
+                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
+                raise Exception(
+                    "Erro ao buscar produtos: Um índice necessário não foi encontrado no banco de dados. "
+                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                    f"Detalhe original: {str(e)}"
+                )
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.warning(
                     f"Permissão negada ao consultar lista de produtos da empresa logada: {e}"
                 )
-            elif e.code == 'unavailable':
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
                     f"Serviço do Firestore indisponível ao consultar lista de produtos da empresa logada: {e}"
                 )
                 raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível."
+                    "Serviço do Firestore temporariamente indisponível."
                 )
             else:
+                # Outros erros FirebaseError
                 logger.error(
                     f"Erro do Firebase ao consultar lista de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
                 )
-            raise # Re-lança para tratamento em camadas superiores
-        except Exception as e:
+            raise # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e: # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado ao consultar lista de produtos da empresa logada: {e}"
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de produtos da empresa logada: {e}"
             )
+            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
+            error_message_lower = str(e).lower()
+            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
+                 logger.error(
+                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
+                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
+                )
+                # Ainda assim, levanta uma exceção que o usuário possa entender
+                 raise Exception(
+                    "Erro crítico ao buscar produtos: Um índice pode ser necessário (detectado em exceção genérica). "
+                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
+                    f"Detalhe original: {str(e)}"
+                )
             raise

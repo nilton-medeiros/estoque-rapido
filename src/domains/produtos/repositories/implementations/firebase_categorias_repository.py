@@ -1,19 +1,21 @@
 import logging
 from datetime import datetime, UTC
+from typing import Any
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.produtos.models import ProdutoCategorias
+from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
 from src.domains.produtos.repositories import CategoriasRepository
 from src.shared import deepl_translator
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
 
-
 # O FirebaseCategoriasRepository immplementa a classe abstrata CategoriasRepository
+# Nota: Para "não igual a", o Firestore usa "!=" com FieldFilter.
+
 class FirebaseCategoriasRepository(CategoriasRepository):
     def __init__(self):
         """
@@ -186,44 +188,161 @@ class FirebaseCategoriasRepository(CategoriasRepository):
 
             if status_deleted:
                 # Somente os deletados da empresa_id
-                query = self.collection.where(filter=FieldFilter("empresa_id", "==", empresa_id)).where(
-                    filter=FieldFilter("status", "==", "DELETED"))
+                query = self.collection.where(
+                    filter=FieldFilter("empresa_id", "==", empresa_id)).where(
+                    filter=FieldFilter("status", "==", ProdutoStatus.DELETED.name)).order_by("name")
             else:
                 # Obtem todos da empresa_id
                 query = self.collection.where(
-                    filter=FieldFilter("empresa_id", "==", empresa_id))
+                    filter=FieldFilter("empresa_id", "==", empresa_id)).order_by("name")
 
             docs = query.get()
 
             for doc in docs:
-                categoria_data = doc.to_dict()
-                categoria_data['id'] = doc.id  # type: ignore
+                categoria_data_dict = doc.to_dict()
 
-                if categoria_data["status"] == "DELETED":  # type: ignore
+                if categoria_data_dict is None:
+                    logger.warning(
+                        f"Documento {doc.id} em 'produto_categorias' retornou None ao ser convertido para dicionário e será ignorado."
+                    )
+                    continue
+
+                # Adiciona o ID do documento ao dicionário
+                categoria_data_dict['id'] = doc.id
+
+                # Acessa o status de forma segura
+                status_value = categoria_data_dict.get("status")
+                if status_value is None:
+                    logger.warning(
+                        f"Documento {doc.id} (nome: {categoria_data_dict.get('name', '[sem nome]')}) "
+                        f"não possui a chave 'status' ou o valor é None. Categoria ignorada."
+                    )
+                    continue
+
+                if status_value == ProdutoStatus.DELETED.name:
                     quantify_deleted += 1
-                if status_deleted or (categoria_data['status'] != "DELETED"): # type: ignore
-                    categorias.append(ProdutoCategorias.from_dict(
-                        categoria_data))  # type: ignore
-
-            # Ordena pelo nome da categoria
-            categorias.sort(key=lambda categoria: categoria.name)
+                if status_deleted or (status_value != ProdutoStatus.DELETED.name):
+                    categorias.append(ProdutoCategorias.from_dict(categoria_data_dict))
 
             return categorias, quantify_deleted
         except exceptions.FirebaseError as e:
-            if e.code == 'permission-denied':
-                logger.warning(
-                    f"Permissão negada ao consultar lista de categorias da empresa logada: {e}")
-            elif e.code == 'unavailable':
+            error_message_lower = str(e).lower()
+            # Condição para erro de índice ausente (Failed Precondition)
+            # O Firestore retorna uma mensagem específica com um link para criar o índice.
+            is_missing_index_error = (
+                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+            )
+
+            if is_missing_index_error:
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar lista de categorias da empresa logada: {e}")
+                    f"Erro de pré-condição ao consultar categorias de produtos (provavelmente índice ausente): {e}. "
+                    "O Firestore requer um índice para esta consulta. "
+                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+                )
+                # A mensagem 'e' já deve conter o link.
+                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
                 raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
-            else:
+                    "Erro ao buscar categorias de produtos: Um índice necessário não foi encontrado no banco de dados. "
+                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                    f"Detalhe original: {str(e)}"
+                )
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de categorias de produtos da empresa logada: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de categorias da empresa logada: Código: {e.code}, Detalhes: {e}")
-            raise  # Re-lançar a exceção para tratamento em camadas superiores
-        except Exception as e:
-            # Captura outros erros inesperados (problemas de rede, etc.)
+                    f"Serviço do Firestore indisponível ao consultar lista de categorias de produtos da empresa logada: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de categorias de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                )
+            raise # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e: # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado ao consultar lista de categorias da empresa logada: {e}")
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categorias de produtos da empresa logada: {e}"
+            )
+            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
+            error_message_lower = str(e).lower()
+            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
+                 logger.error(
+                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
+                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
+                )
+                # Ainda assim, levanta uma exceção que o usuário possa entender
+                 raise Exception(
+                    "Erro crítico ao buscar categorias de produtos: Um índice pode ser necessário (detectado em exceção genérica). "
+                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
+                    f"Detalhe original: {str(e)}"
+                )
+            raise
+
+
+    def get_active_categorias_summary(self, empresa_id: str) -> list[dict[str, Any]]: 
+        """
+        Obtém um resumo (ID, nome, descrição) de todas as categorias ativas
+        de uma empresa, ordenadas por nome.
+
+        Somente as categorias com status "ACTIVE" são incluídas.
+
+        Args:
+            empresa_id (str): O ID da empresa para buscar as categorias.
+
+        Returns:
+            list[dict[str, Any]]: Uma lista de dicionários, onde cada dicionário
+                                  contém 'id', 'name', e 'description' da categoria.
+                                  Retorna uma lista vazia se nenhuma categoria for encontrada.
+
+        Raises:
+            ValueError: Se empresa_id for nulo ou vazio.
+            Exception: Para erros de Firebase ou outros erros inesperados (re-lançados).
+        """
+        if not empresa_id:
+            logger.error("ID da empresa não pode ser nulo ou vazio ao buscar resumo de categorias.")
+            raise ValueError("ID da empresa não pode ser nulo ou vazio")
+
+        try:
+            query = self.collection.where(
+                filter=FieldFilter("empresa_id", "==", empresa_id)
+            ).where(
+                filter=FieldFilter("status", "==", ProdutoStatus.ACTIVE.name)
+            ).select(
+                ("name", "description") # Campos a serem selecionados
+            ).order_by("name")
+
+            docs = query.get() # Alterado para .get()
+
+            categorias_summary_list: list[dict[str, Any]] = [] # Alterado para list nativo
+            for doc in docs:
+                data = doc.to_dict()
+                if data: # Boa prática verificar se data não é None
+                    categorias_summary_list.append({
+                        "id": doc.id,
+                        "name": data.get("name"),
+                        "description": data.get("description")
+                    })
+
+            return categorias_summary_list
+
+        except exceptions.FirebaseError as e:
+            logger.error(f"Erro do Firebase ao buscar resumo de categorias ativas para empresa {empresa_id}: {getattr(e, 'code', 'N/A')} - {e}")
+            # Considere traduzir e re-lançar se essa for a sua política de tratamento de erros
+            # translated_error = deepl_translator(str(e))
+            # raise Exception(f"Erro do Firebase ao buscar resumo de categorias: {translated_error}")
+            raise # Re-lança a exceção original do Firebase para ser tratada em uma camada superior
+        except ValueError as ve: # Captura o ValueError levantado explicitamente
+            raise ve
+        except Exception as e:
+            logger.error(f"Erro inesperado ao buscar resumo de categorias ativas para empresa {empresa_id}: {e}")
             raise
