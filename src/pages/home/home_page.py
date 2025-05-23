@@ -1,7 +1,7 @@
 import flet as ft
 
 from src.pages.home import main_content
-from src.pages.home.sidebar import sidebar_container
+from src.pages.home.sidebar_page import sidebar_container
 
 
 def dashboard(page: ft.Page):

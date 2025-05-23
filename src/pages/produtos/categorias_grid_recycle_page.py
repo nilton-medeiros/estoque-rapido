@@ -6,7 +6,7 @@ import math # Adicionado para a função ceil (arredondar para cima)
 import flet as ft
 
 import src.domains.produtos.controllers.categorias_controllers as cat_controllers
-import src.pages.produtos.categorias_actions as cat_actions
+import src.pages.produtos.categorias_actions_page as cat_actions
 
 from src.shared import format_datetime_to_utc_minus_3
 

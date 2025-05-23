@@ -1,2 +1,2 @@
-from .content import main_content
+from .content_page import main_content
 from .home_page import dashboard

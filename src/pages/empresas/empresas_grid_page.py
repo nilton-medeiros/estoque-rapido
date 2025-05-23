@@ -5,7 +5,7 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
 from src.domains.empresas.models.empresa_subclass import Status
-import src.pages.empresas.empresas_actions as empresas_actions
+import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.shared import MessageType, message_snackbar, show_banner
 # Rota: /home/empresas/grid
 
@@ -66,7 +66,7 @@ def emp_grid_view(page: ft.Page):
                 page.app_state.set_empresa(empresa.to_dict()) # type: ignore
                 usuario_id = page.app_state.usuario.get('id') # type: ignore
                 empresas = page.app_state.usuario.get('empresas') # type: ignore
-                result = empresas_actions.user_update(usuario_id, empresa.id, empresas)
+                result = empresas_actions_page.user_update(usuario_id, empresa.id, empresas)
                 if result['is_error']:
                     logger.warning(result['message'])
                     message_snackbar(
@@ -85,13 +85,13 @@ def emp_grid_view(page: ft.Page):
             case "DIGITAL_CERTIFICATE":
                 print(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
-                is_deleted = empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
+                is_deleted = empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case "ARCHIVE":
-                is_archived = empresas_actions.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
+                is_archived = empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
                 if is_archived:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)

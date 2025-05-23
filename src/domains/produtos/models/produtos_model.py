@@ -15,6 +15,7 @@ class Produto:
     empresa_id: str  # ID da empresa pai
     name: str
     categoria_id: str  # ID da categoria (da coleção 'produto_categorias')
+    categoria_name: str # Nome da categoria (desnormalizado para ordenação)
 
     # --- Campos Essenciais do Produto ---
     sale_price: Money  # Preço de venda
@@ -75,6 +76,8 @@ class Produto:
             self.brand = self.brand.strip().capitalize()
         if self.unit_of_measure:
             self.unit_of_measure = self.unit_of_measure.strip().lower()
+        if self.categoria_name: # Normaliza o nome da categoria
+            self.categoria_name = self.categoria_name.strip().capitalize()
         if not isinstance(self.cost_price, Money):
             self.cost_price = Money.mint("0.00")
 
@@ -92,6 +95,7 @@ class Produto:
             "empresa_id": self.empresa_id,
             "name": self.name,
             "categoria_id": self.categoria_id,
+            "categoria_name": self.categoria_name,
             "description": self.description,
             "internal_code": self.internal_code,
             "ean_code": self.ean_code,
@@ -132,6 +136,7 @@ class Produto:
             "empresa_id": self.empresa_id,
             "name": self.name,
             "categoria_id": self.categoria_id,
+            "categoria_name": self.categoria_name,
             "description": self.description,
             "internal_code": self.internal_code,
             "ean_code": self.ean_code,
@@ -219,6 +224,7 @@ class Produto:
             empresa_id=data["empresa_id"],
             name=data["name"],
             categoria_id=data["categoria_id"],
+            categoria_name=data["categoria_name"], # Adicionado
             description=data.get("description"),
             internal_code=data.get("internal_code"),
             ean_code=data.get("ean_code"),

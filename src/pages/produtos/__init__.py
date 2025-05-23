@@ -1,3 +1,4 @@
-from .categorias_grid_view import cat_grid_view
-from .categorias_form import form_categorias
-from .categorias_grid_lixeira import cat_grid_lixeira
+from .categorias_grid_page import cat_grid_view
+from .categorias_form_page import form_categorias
+from .categorias_grid_recycle_page import cat_grid_lixeira
+from .produtos_grid_page import pro_grid_view

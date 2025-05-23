@@ -5,7 +5,7 @@ import math  # Adicionado para a função ceil (arredondar para cima)
 import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
-import src.pages.empresas.empresas_actions as empresas_actions
+import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.shared import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ def emp_grid_lixeira(page: ft.Page):
 
         match action:
             case "RESTORE":
-                is_restore = empresas_actions.restore_from_trash(page=page, empresa=empresa)
+                is_restore = empresas_actions_page.restore_from_trash(page=page, empresa=empresa)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
