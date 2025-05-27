@@ -3,12 +3,14 @@ import traceback
 
 import flet as ft
 
+from src.domains.produtos.models import ProdutoStatus
 import src.pages.produtos.produtos_actions_page as pro_actions
+import src.domains.produtos.controllers.produtos_controllers as product_controllers
 
 logger = logging.getLogger(__name__)
 
 
-def pro_grid_view(page: ft.Page):
+def show_products_grid(page: ft.Page):
     """Página de exibição dos produtos da empresa logada"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/produtos/grid"
@@ -22,7 +24,7 @@ def pro_grid_view(page: ft.Page):
     )
 
     _all_produtos_data = []
-    _categorias_inactivated_count = 0
+    _produtos_inactivated_count = 0
 
     # --- Área para o Conteúdo Real (Grid ou Imagem Vazia) ---
     # Usando uma Coluna para conter a imagem vazia ou o grid posteriormente
@@ -118,7 +120,7 @@ def pro_grid_view(page: ft.Page):
 
     def _get_filtered_produtos() -> list:
         """Filtra _all_produtos_data com base no valor de rg_filter."""
-        nonlocal _all_produtos_data # Acessa a variável do escopo de pro_grid_view
+        nonlocal _all_produtos_data # Acessa a variável do escopo de show_products_grid
         current_filter = rg_filter.value
 
         if current_filter == "all":
@@ -150,7 +152,7 @@ def pro_grid_view(page: ft.Page):
                                             width=100,
                                             height=100,
                                             border_radius=ft.border_radius.all(10),
-                                            border=ft.border.all(1, ft.colors.OUTLINE) if not produto.image_url else None,
+                                            border=ft.border.all(1, ft.Colors.OUTLINE) if not produto.image_url else None,
                                             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
                                             alignment=ft.alignment.center,
                                             content=ft.Image(
@@ -159,8 +161,8 @@ def pro_grid_view(page: ft.Page):
                                                 width=100,
                                                 height=100,
                                                 border_radius=ft.border_radius.all(10),
-                                                error_content=ft.Icon(ft.icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.colors.ERROR)
-                                            ) if produto.image_url else ft.Icon(ft.icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
+                                                error_content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.Colors.ERROR)
+                                            ) if produto.image_url else ft.Icon(ft.Icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
                                         ),
                                         ft.Container(
                                             content=ft.PopupMenuButton(
@@ -186,14 +188,14 @@ def pro_grid_view(page: ft.Page):
                                 ),
                                 ft.Text(f"{produto.categoria_name}", weight=ft.FontWeight.BOLD, theme_style=ft.TextThemeStyle.BODY_LARGE),
                                 ft.Text(f"{produto.name}", weight=ft.FontWeight.BOLD, theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                ft.Text(f"{produto.description}", theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                                ft.Text(f"{produto.sale_price}", theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                ft.Text(f"{produto.description}", theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                ft.Text(f"{produto.sale_price}", theme_style=ft.TextThemeStyle.BODY_SMALL),
                                 ft.Row(
                                     controls=[
                                         ft.Text(
                                             value=f"Status: {produto.status.value}", # Ex: "Ativo", "Descontinuado"
                                             theme_style=ft.TextThemeStyle.BODY_SMALL,
-                                            color=ft.Colors.GREEN if produto.status.name == 'ACTIVE' else ft.Colors.RED,
+                                            color=ft.Colors.GREEN if produto.status == ProdutoStatus.ACTIVE else ft.Colors.RED,
                                         ),
                                     ],
                                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -211,8 +213,8 @@ def pro_grid_view(page: ft.Page):
     async def radiogroup_changed(e):
         """Chamado quando o valor do RadioGroup muda. Filtra e renderiza o grid."""
         nonlocal page # Acessa page para update
-        filtered_categorias = _get_filtered_categorias()
-        _render_grid(filtered_categorias)
+        filtered_produtos = _get_filtered_produtos()
+        _render_grid(filtered_produtos)
         if page.client_storage:
             page.update()
 
@@ -222,7 +224,7 @@ def pro_grid_view(page: ft.Page):
             controls=[
                 ft.Radio(value="all", label="Todos"),
                 ft.Radio(value="active", label="Ativos"),
-                ft.Radio(value="inactive", label="Descontinuado"),
+                ft.Radio(value="inactive", label="Descontinuados"),
             ]
         ),
         on_change=radiogroup_changed, # Conecta a função handler
@@ -232,7 +234,7 @@ def pro_grid_view(page: ft.Page):
 
     async def load_data_and_update_ui():
         """Carrega todos os dados do banco, armazena, filtra e atualiza a UI."""
-        nonlocal _all_produtos_data, _categorias_inactivated_count, loading_container, content_area, page, fab
+        nonlocal _all_produtos_data, _produtos_inactivated_count, loading_container, content_area, page, fab
 
         loading_container.visible = True
         content_area.visible = False
@@ -241,10 +243,10 @@ def pro_grid_view(page: ft.Page):
 
         # Limpa os dados armazenados antes de buscar novos
         _all_produtos_data = []
-        _categorias_inactivated_count = 0
+        _produtos_inactivated_count = 0
 
         # empresa_id: ID da empresa logada para buscar as produtos desta empresa
-        empresa_id = page.app_state.empresa['id'] # type: ignore
+        empresa_id = page.app_state.empresa['id'] # type: ignore [attr-defined]
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***
@@ -252,7 +254,7 @@ def pro_grid_view(page: ft.Page):
             # Pode ser necessário refatorar handle_get_all para usar um driver de banco de dados async
             # ou executá-la em uma thread separada usando asyncio.to_thread (Python 3.9+)
             # Exemplo usando asyncio.to_thread se handle_get_all for sync:
-            # categorias_data = await asyncio.to_thread(handle_get_all, empresa_id=empresa_id)
+            # produtos_data = await asyncio.to_thread(handle_get_all, empresa_id=empresa_id)
 
             if not empresa_id:  # Só busca as produtos de empresa logada, se houver ID
 
@@ -262,33 +264,33 @@ def pro_grid_view(page: ft.Page):
                 pass
             else:
                 # Busca as produtos menos as de status 'DELETED' da empresa logada
-                result: dict = cat_controllers.handle_get_all(empresa_id=empresa_id)
+                result: dict = product_controllers.handle_get_all(empresa_id=empresa_id)
 
                 if result["status"] == "error":
-                    logger.error(f"Erro ao buscar produtos: {result.get('message', 'Desconhecido')}")
+                    logger.error(f"Error: produtos_grid_page()/load_data_and_update_ui(): {result['message']}")
                     # _all_produtos_data permanece vazio, _render_grid mostrará empty_content_display
                     # Ou podemos exibir uma mensagem de erro específica aqui:
                     content_area.controls.clear()
                     content_area.controls.append(
                         ft.Container(
-                            content=ft.Text(f"Erro ao carregar dados: {result.get('message', 'Tente novamente mais tarde.')}", color=ft.colors.ERROR),
+                            content=ft.Text(f"Erro ao carregar dados: {result.get('message', 'Tente novamente mais tarde.')}", color=ft.Colors.ERROR),
                             alignment=ft.alignment.center,
                             margin=ft.margin.only(top=50)
                         )
                     )
                 else:
                     _all_produtos_data = result['data']["produtos"]
-                    _categorias_inactivated_count = result['data']["deleted"]
+                    _produtos_inactivated_count = result['data']["deleted"]
 
             # Atualiza o ícone e tooltip do FAB
-            current_trash_icon_filename = "recycle_full_1771.png" if _categorias_inactivated_count else "recycle_empy_1771.png"
+            current_trash_icon_filename = "recycle_full_1771.png" if _produtos_inactivated_count else "recycle_empy_1771.png"
             if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
                 fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Categorias inativas: {_categorias_inactivated_count}"
+                fab.tooltip = f"Produtos inativos: {_produtos_inactivated_count}"
 
             # Filtra os dados carregados (ou vazios) e renderiza o grid
-            filtered_categorias = _get_filtered_categorias()
-            _render_grid(filtered_categorias)
+            filtered_produtos = _get_filtered_produtos()
+            _render_grid(filtered_produtos)
 
         except Exception as e:
             # Mostrar uma mensagem de erro para o usuário
@@ -297,7 +299,7 @@ def pro_grid_view(page: ft.Page):
 
             content_area.controls.clear()
             _all_produtos_data = [] # Limpa dados em caso de erro geral
-            _categorias_inactivated_count = 0
+            _produtos_inactivated_count = 0
             content_area.controls.append(
                 ft.Container(
                     content=ft.Column([
@@ -328,9 +330,7 @@ def pro_grid_view(page: ft.Page):
     page.run_task(load_data_and_update_ui)
 
     fab = ft.FloatingActionButton(
-        # icon=ft.Icons.FOLDER_DELETE_OUTLINED,
         content=ft.Image(
-            # src="icons/recycle_empty_delete_trash_1771.png",
             src=f"icons/recycle_empy_1771.png",
             width=48,
             height=36,
@@ -338,7 +338,7 @@ def pro_grid_view(page: ft.Page):
             error_content=ft.Text("Erro"),
         ),
         on_click=lambda _: page.go("/home/produtos/grid/lixeira"),
-        tooltip="Categorias inativas: 0",
+        tooltip="Produtos inativos: 0",
         bgcolor=ft.Colors.TRANSPARENT,
     )
 

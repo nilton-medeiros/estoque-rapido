@@ -5,7 +5,7 @@ import asyncio
 from src.domains.produtos.models import Produto, ProdutoStatus
 from src.shared import MessageType, message_snackbar
 
-import src.domains.produtos.controllers.produtos_controllers as pro_controllers
+import src.domains.produtos.controllers.produtos_controllers as product_controllers
 
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
             # Se não há pedido, produtos ou estoque vinculado a esta produto, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = pro_controllers.handle_update_status(produto=produto, usuario=user, status=ProdutoStatus.DELETED)
+            result = product_controllers.handle_update_status(produto=produto, usuario=user, status=ProdutoStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -161,7 +161,7 @@ async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
 def restore_from_trash(page: ft.Page, produto: Produto) -> bool:
     logger.info(f"Restaurando produto ID: {produto.id} da lixeira")
     user = page.app_state.usuario # type: ignore  [attr-defined]
-    result = pro_controllers.handle_update_status(produto=produto, usuario=user, status=ProdutoStatus.ACTIVE)
+    result = product_controllers.handle_update_status(produto=produto, usuario=user, status=ProdutoStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(
