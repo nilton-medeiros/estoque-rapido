@@ -1,7 +1,7 @@
 import flet as ft
 from typing import Optional
 
-import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios import Usuario
 
 from src.domains.shared import NomePessoa, Password, PhoneNumber
@@ -220,7 +220,7 @@ class SignupView:
                 profile='admin',
             )
 
-            result = usuarios_controllers.handle_save_usuarios(usuario)
+            result = user_controllers.handle_save_usuarios(usuario)
 
             if result["status"] == "error":
                 message_snackbar(
@@ -301,7 +301,7 @@ class SignupView:
         return self.form
 
 
-def render_signup(page: ft.Page):
+def show_signup_page(page: ft.Page):
     '''
     Cria uma página Container de formulário de registro para novos usuários.
 

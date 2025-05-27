@@ -23,7 +23,6 @@ def build_input_field(page_width: int|float, app_colors: dict[str, str], col: di
         border_color=app_colors["primary"],
         focused_border_color=app_colors["container"],
         prefix=prefix,
-        text_align=ft.TextAlign.LEFT,
         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
         label_style=ft.TextStyle(
             color=app_colors["primary"], # type: ignore # Cor do label igual à borda

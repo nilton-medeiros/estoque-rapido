@@ -84,6 +84,12 @@ class Money:
             formatted_amount = formatted_amount.replace('.', ',')
         return f"{self.currency_symbol} {formatted_amount}"
 
+    def get_decimal(self):
+        return Decimal(self.amount_cents) / 100
+
+    def get_int(self):
+        return self.amount_cents
+
     def __add__(self, other: Self) -> Self:
         if not isinstance(other, Money):
             return NotImplemented
@@ -163,4 +169,5 @@ class Money:
         """Cria uma instância de Money a partir de um dicionário do Firestore."""
         # Podemos usar o construtor direto já que amount_cents e currency_symbol
         # são os campos que serão lidos do Firestore.
-        return cls(amount_cents=data["amount_cents"], currency_symbol=data["currency_symbol"])
+        amount: int = data["amount_cents"]  # No Firestore o amount_cents é armazenado como inteiro (15.75 => 1575)
+        return cls(amount_cents=amount, currency_symbol=data.get("currency_symbol", "R$"))

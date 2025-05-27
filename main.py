@@ -8,11 +8,10 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from dotenv import load_dotenv
 
-from src.pages import render_signup, render_landing_page, render_login
-from src.pages.empresas import emp_grid_view, emp_form_principal, emp_form_dados_fiscais, emp_grid_lixeira
-from src.pages.home import dashboard
-from src.pages.produtos import cat_grid_view, cat_grid_lixeira, form_categorias, pro_grid_view
-
+from src.pages import show_signup_page, show_landing_page, show_login_page
+from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
+from src.pages.home import show_home_page
+from src.pages.produtos import show_categories_grid, show_categories_grid_trash, show_category_form, show_products_grid, show_products_grid_trash, show_product_form
 from src.services import AppStateManager
 
 from src.shared import get_app_colors
@@ -21,12 +20,14 @@ logger = logging.getLogger(__name__)
 
 # Carrega a chave do Flet para assinar URLs temporárias de upload
 load_dotenv()
-flet_key: str|None = os.getenv('FLET_SECRET_KEY')
+flet_key: str | None = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
 if flet_key:
     os.environ["FLET_SECRET_KEY"] = flet_key
 
 # Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
+
+
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
@@ -55,43 +56,46 @@ def reconfigure_logging():
         logger.addHandler(file_handler)
         logger.propagate = False
 
+
 def main(page: ft.Page):
     # Força a limpeza do cache no início da aplicação
     page.clean()
-    page.user_name_text: ft.Text = ft.Text("Nenhum Usuário logado") # type: ignore
-    page.company_name_text_btn: ft.TextButton = ft.TextButton( # type: ignore
+    page.user_name_text: ft.Text = ft.Text( # type: ignore  [attr-defined]
+        "Nenhum Usuário logado")  # type: ignore  [attr-defined]
+    page.company_name_text_btn: ft.TextButton = ft.TextButton(  # type: ignore  [attr-defined]
         text="NENHUMA EMPRESA SELECIONADA",
         style=ft.ButtonStyle(
-            alignment=ft.alignment.center, # type: ignore
+            alignment=ft.alignment.center,  # type: ignore  [attr-defined]
             # mouse_cursor="pointer",
-            text_style=ft.TextStyle(
-                color=ft.Colors.WHITE,
-                size=14,
-                weight=ft.FontWeight.NORMAL,
-            )
+            text_style=ft.TextStyle(  # type: ignore  [attr-defined]
+                color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.NORMAL) # type: ignore  [attr-defined]
         ),
         tooltip="Clique aqui e preencha os dados da empresa"
     )
 
     # Configurar cores padrão imediatamente para evitar erros
-    page.session.set("user_colors", get_app_colors('yellow'))  # Garante que há sempre uma cor padrão
+    # Garante que há sempre uma cor padrão
+    page.session.set("user_colors", get_app_colors('yellow'))
 
     # Inicialize o estado da aplicação
     app_state = AppStateManager(page)
-    page.app_state = app_state  # type: ignore # Torna o app_state acessível globalmente
+    # Torna o app_state acessível globalmente
+    page.app_state = app_state # type: ignore  [attr-defined]
 
     # Registrar o evento para mudanças
     def handle_pubsub(message):
         match message:
             case "usuario_updated":
-                if page.app_state.usuario.get('name'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem do usuário
                     update_usuario_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
             case "empresa_updated":
-                if page.app_state.empresa.get('corporate_name'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
                 else:
@@ -101,26 +105,28 @@ def main(page: ft.Page):
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = page.app_state.usuario['name'].nome_completo # type: ignore
+            # type: ignore  [attr-defined]
+            page.user_name_text.value = page.app_state.usuario['name'].nome_completo # type: ignore  [attr-defined]
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.user_name_text.update()
 
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = page.app_state.empresa.get( # type: ignore
+            page.company_name_text_btn.text = page.app_state.empresa.get(  # type: ignore  [attr-defined]
                 'trade_name', 'corporate_name')
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.company_name_text_btn.update()
 
     def clear_usuario_ui():
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = "" # type: ignore
+            page.user_name_text.value = ""  # type: ignore  [attr-defined]
             # page.user_name_text.update()
 
     def clear_empresa_ui():
         if hasattr(page, 'company_name_text_btn'):
-            page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA" # type: ignore
+            # type: ignore  [attr-defined]
+            page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA" # type: ignore  [attr-defined]
             # page.company_name_text_btn.update()
 
     # Registra o handler do PubSub
@@ -139,7 +145,8 @@ def main(page: ft.Page):
 
     def handle_icon_hover(e):
         """Muda o bgcolor do container no hover"""
-        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.bgcolor = ft.Colors.with_opacity(
+            0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
     # Rotas
@@ -151,7 +158,7 @@ def main(page: ft.Page):
             case '/':    # Raiz: Landing Page
                 pg_view = ft.View(
                     route='/',
-                    controls=[render_landing_page(page)],
+                    controls=[show_landing_page(page)],
                     appbar=page.appbar,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -159,19 +166,20 @@ def main(page: ft.Page):
             case '/login':
                 pg_view = ft.View(
                     route='/login',
-                    controls=[render_login(page)],
+                    controls=[show_login_page(page)],
                     bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             case '/logout':
-                page.app_state.clear_states() # type: ignore
+                page.app_state.clear_states()  # type: ignore  [attr-defined]
                 page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    home_container = dashboard(page)
+                    home_container = show_home_page(page)
                     pg_view = ft.View(
                         route='/home',
                         appbar=home_container.data,
@@ -184,22 +192,25 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined] [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    pg_view = emp_grid_view(page)
+                    pg_view = show_companies_grid(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/grid/lixeira':
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    pg_view = emp_grid_lixeira(page)
+                    pg_view = show_companies_grid_trash(page)
                 else:
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/principal':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    form = emp_form_principal(page)
+                    form = show_company_main_form(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/principal',
                         appbar=form.data,
@@ -213,9 +224,10 @@ def main(page: ft.Page):
                     page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/empresas/form/dados-fiscais':
                 # Verifica se usuário está logado
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    form = emp_form_dados_fiscais(page)
+                    form = show_company_tax_form(page)
                     pg_view = ft.View(
                         route='/home/empresas/form/dados-fiscais',
                         appbar=form.data,
@@ -227,28 +239,55 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')
-            case 'Não é possível comparar dinheiro com moedas diferentes':
-                if page.app_state.usuario.get('id'): # type: ignore
+            case '/home/produtos/grid':
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    pg_view = pro_grid_view(page)
+                    pg_view = show_products_grid(page)
                 else:
                     page.go('/login')
-            case '/home/produtos/categorias/grid':
-                if page.app_state.usuario.get('id'): # type: ignore
+            case '/home/produtos/grid/lixeira':
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    pg_view = cat_grid_view(page)
+                    pg_view = show_products_grid_trash(page)
+                else:
+                    page.go('/login')
+            case '/home/produtos/form':
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    form = show_product_form(page)
+                    pg_view = ft.View(
+                        route='home/produtos/form',
+                        appbar=form.data,
+                        controls=[form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/produtos/categorias/grid':
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    pg_view = show_categories_grid(page)
                 else:
                     page.go('/login')
             case '/home/produtos/categorias/grid/lixeira':
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    pg_view = cat_grid_lixeira(page)
+                    pg_view = show_categories_grid_trash(page)
                 else:
                     page.go('/login')
             case '/home/produtos/categorias/form':
-                if page.app_state.usuario.get('id'): # type: ignore
+                # type: ignore  [attr-defined]
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
                     page.on_resized = None
-                    form = form_categorias(page)
+                    form = show_category_form(page)
                     pg_view = ft.View(
                         route='home/produtos/categorias/form',
                         appbar=form.data,
@@ -263,7 +302,7 @@ def main(page: ft.Page):
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
-                    controls=[render_signup(page)],
+                    controls=[show_signup_page(page)],
                     bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -277,12 +316,15 @@ def main(page: ft.Page):
                             leading=ft.Container(
                                 width=40,
                                 height=40,
-                                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
-                                ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                                # Metade da largura/altura para ser círculo
+                                border_radius=ft.border_radius.all(20),
+                                # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
+                                ink=True,
                                 bgcolor=ft.Colors.TRANSPARENT,
                                 alignment=ft.alignment.center,
                                 on_hover=handle_icon_hover,
-                                content=ft.Icon(name=ft.Icons.INVENTORY_OUTLINED, color=ft.Colors.WHITE),
+                                content=ft.Icon(
+                                    name=ft.Icons.INVENTORY_OUTLINED, color=ft.Colors.WHITE),
                             ),
                             title=ft.Text(
                                 "ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças", color=ft.Colors.WHITE),
@@ -306,7 +348,7 @@ def main(page: ft.Page):
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()
         top_view = page.views[-1]
-        page.go(top_view.route) # type: ignore
+        page.go(top_view.route)  # type: ignore
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop

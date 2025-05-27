@@ -15,10 +15,10 @@ class UploadDialog(ft.AlertDialog):
         self.page.overlay.append(self.pick_files_dialog)
         self.content = ft.Container(
             width=400,
-            bgcolor=ft.colors.WHITE,
+            bgcolor=ft.Colors.WHITE,
             padding=ft.padding.all(30),
             border_radius=ft.border_radius.all(15),
-            shadow=ft.BoxShadow(blur_radius=20, color=ft.colors.INDIGO_800),
+            shadow=ft.BoxShadow(blur_radius=20, color=ft.Colors.INDIGO_800),
             content=ft.Column(
                 controls=[
                     ft.Text(
@@ -27,14 +27,14 @@ class UploadDialog(ft.AlertDialog):
                         weight=ft.FontWeight.BOLD
                     ),
                     ft.Container(
-                        bgcolor=ft.colors.GREY_50,
+                        bgcolor=ft.Colors.GREY_50,
                         padding=ft.padding.all(20),
                         border_radius=ft.border_radius.all(10),
-                        border=ft.border.all(width=2, color=ft.colors.GREY_200),
+                        border=ft.border.all(width=2, color=ft.Colors.GREY_200),
                         content=ft.Row(
                             alignment=ft.MainAxisAlignment.CENTER,
                             controls=[
-                                ft.Icon(name=ft.icons.CLOUD_UPLOAD),
+                                ft.Icon(name=ft.Icons.CLOUD_UPLOAD),
                                 ft.Text(value='Selecionar arquivos'),
                             ]
                         ),
@@ -53,13 +53,13 @@ class UploadDialog(ft.AlertDialog):
             progress_bar = ft.ListTile(
                 title=ft.Text(value=e.file_name),
                 subtitle=ft.ProgressBar(value=e.progress),
-                trailing=ft.Icon(name=ft.icons.CANCEL)
+                trailing=ft.Icon(name=ft.Icons.CANCEL)
             )
             self.files_progress.controls.append(progress_bar)
             self.uploads.update({e.file_name: progress_bar})
         else:
             on_upload.subtitle.value = e.progress
-            on_upload.trailing.name = ft.icons.VERIFIED if e.progress == 1 else ft.icons.CANCEL
+            on_upload.trailing.name = ft.Icons.VERIFIED if e.progress == 1 else ft.Icons.CANCEL
 
         self.files_progress.update()
 
@@ -84,14 +84,14 @@ class UploadDialog(ft.AlertDialog):
                 abs_path = Path(__file__).parent
                 shutil.copy(file.path, os.path.join(abs_path, 'uploads'))
                 self.files_progress.controls.append(
-                    ft.ListTile(title=ft.Text(value=file.name), trailing=ft.Icon(name=ft.icons.VERIFIED))
+                    ft.ListTile(title=ft.Text(value=file.name), trailing=ft.Icon(name=ft.Icons.VERIFIED))
                 )
                 self.files_progress.update()
 
 
 
 def main(page: ft.Page):
-    page.bgcolor  = ft.colors.INDIGO
+    page.bgcolor  = ft.Colors.INDIGO
     page.theme_mode = ft.ThemeMode.LIGHT
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -105,13 +105,13 @@ def main(page: ft.Page):
             progress_bar = ft.ListTile(
                 title=ft.Text(value=e.file_name),
                 subtitle=ft.ProgressBar(value=e.progress),
-                trailing=ft.Icon(name=ft.icons.CANCEL)
+                trailing=ft.Icon(name=ft.Icons.CANCEL)
             )
             files_progress.controls.append(progress_bar)
             uploads.update({e.file_name: progress_bar})
         else:
             on_upload.subtitle.value = e.progress
-            on_upload.trailing.name = ft.icons.VERIFIED if e.progress == 1 else ft.icons.CANCEL
+            on_upload.trailing.name = ft.Icons.VERIFIED if e.progress == 1 else ft.Icons.CANCEL
 
         files_progress.update()
 
@@ -136,7 +136,7 @@ def main(page: ft.Page):
                 abs_path = Path(__file__).parent
                 shutil.copy(file.path, os.path.join(abs_path, 'uploads'))
                 files_progress.controls.append(
-                    ft.ListTile(title=ft.Text(value=file.name), trailing=ft.Icon(name=ft.icons.VERIFIED))
+                    ft.ListTile(title=ft.Text(value=file.name), trailing=ft.Icon(name=ft.Icons.VERIFIED))
                 )
                 files_progress.update()
 
@@ -147,10 +147,10 @@ def main(page: ft.Page):
 
     layout = ft.Container(
         width=400,
-        bgcolor=ft.colors.WHITE,
+        bgcolor=ft.Colors.WHITE,
         padding=ft.padding.all(30),
         border_radius=ft.border_radius.all(15),
-        shadow=ft.BoxShadow(blur_radius=20, color=ft.colors.INDIGO_800),
+        shadow=ft.BoxShadow(blur_radius=20, color=ft.Colors.INDIGO_800),
         content=ft.Column(
             controls=[
                 ft.Text(
@@ -159,14 +159,14 @@ def main(page: ft.Page):
                     weight=ft.FontWeight.BOLD
                 ),
                 ft.Container(
-                    bgcolor=ft.colors.GREY_50,
+                    bgcolor=ft.Colors.GREY_50,
                     padding=ft.padding.all(20),
                     border_radius=ft.border_radius.all(10),
-                    border=ft.border.all(width=2, color=ft.colors.GREY_200),
+                    border=ft.border.all(width=2, color=ft.Colors.GREY_200),
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[
-                            ft.Icon(name=ft.icons.CLOUD_UPLOAD),
+                            ft.Icon(name=ft.Icons.CLOUD_UPLOAD),
                             ft.Text(value='Selecionar arquivos'),
                         ]
                     ),

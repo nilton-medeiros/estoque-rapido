@@ -4,7 +4,7 @@ import math  # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
-import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.shared import format_datetime_to_utc_minus_3
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 # Rota: /home/empresas/grid/lixeira
-def emp_grid_lixeira(page: ft.Page):
+def show_companies_grid_trash(page: ft.Page):
     """Página de exibição das empresas do usuário logado que estão inativas ('DELETED') e arquivadas ('ARCHIVED') em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -200,7 +200,7 @@ def emp_grid_lixeira(page: ft.Page):
 
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
-                result = empresas_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
+                result = company_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
                 if result["status"] == "success":
                     empresas_data = result['data']['empresas']
                     empresas_inactivated = result['data']['inactivated']
@@ -343,13 +343,13 @@ def emp_grid_lixeira(page: ft.Page):
             content_area.controls.append(
                 ft.Container(
                     content=ft.Column([
-                        ft.Icon(ft.icons.ERROR_OUTLINE,
-                                color=ft.colors.RED, size=50),
+                        ft.Icon(ft.Icons.ERROR_OUTLINE,
+                                color=ft.Colors.RED, size=50),
                         ft.Text(
-                            f"Ocorreu um erro ao carregar as empresas inativas.", color=ft.colors.RED),
+                            f"Ocorreu um erro ao carregar as empresas inativas.", color=ft.Colors.RED),
                         # Cuidado ao expor detalhes de erro
                         ft.Text(f"Detalhes: {e}",
-                                color=ft.colors.RED, size=10),
+                                color=ft.Colors.RED, size=10),
                     ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                     alignment=ft.alignment.center,
                     margin=ft.margin.only(top=50),

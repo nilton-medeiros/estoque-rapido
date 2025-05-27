@@ -1,4 +1,4 @@
-def get_app_colors(color_name: str) -> dict:
+def get_app_colors(color_name: str) -> dict[str, str]:
     app_colors = {
         'deeppurple': {'base_color': 'deeppurple','primary': '#673AB7', 'container': '#B39DDB', 'accent': '#7C4DFF', 'appbar': '#512DA8'},
         'purple': {'base_color': 'purple','primary': '#9C27B0', 'container': '#CE93D8', 'accent': '#E040FB', 'appbar': '#7B1FA2'},

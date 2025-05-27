@@ -2,10 +2,10 @@ import logging
 import flet as ft
 import asyncio
 
-import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
-import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
 
 from src.shared import MessageType, message_snackbar
 
@@ -51,7 +51,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
             # Caso contrário, muda o status para ARCHIVED
             user = page_ctx.app_state.usuario
-            result = empresas_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
+            result = company_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -165,7 +165,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
 
 def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     logger.info(f"Restaurando empresa ID: {empresa.id} da lixeira")
-    result = empresas_controllers.handle_update_status_empresas(
+    result = company_controllers.handle_update_status_empresas(
         empresa=empresa,
         usuario=page.app_state.usuario, # type: ignore
         status=Status.ACTIVE)
@@ -179,7 +179,7 @@ def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
 
 
 def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
-    return usuarios_controllers.handle_update_empresas_usuarios(
+    return user_controllers.handle_update_empresas_usuarios(
         usuario_id=usuario_id,
         empresas=empresas,
         empresa_ativa_id=empresa_id

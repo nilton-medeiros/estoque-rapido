@@ -3,7 +3,7 @@ import logging
 import flet as ft
 # import asyncio  # Importar asyncio se precisar simular delays ou usar recursos async
 
-import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
 from src.domains.empresas.models.empresa_subclass import Status
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.shared import MessageType, message_snackbar, show_banner
@@ -12,7 +12,7 @@ from src.shared import MessageType, message_snackbar, show_banner
 logger = logging.getLogger(__name__)
 
 
-def emp_grid_view(page: ft.Page):
+def show_companies_grid(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/empresas/grid"
@@ -205,7 +205,7 @@ def emp_grid_view(page: ft.Page):
 
             if set_empresas:  # Só busca se houver IDs
                 # Busca as empresas do usuário e por default somente as empresas ativas
-                result = empresas_controllers.handle_get_empresas(ids_empresas=set_empresas)
+                result = company_controllers.handle_get_empresas(ids_empresas=set_empresas)
 
                 if result["status"] == "success":
                     empresas_data = result['data']['empresas']
@@ -341,13 +341,13 @@ def emp_grid_view(page: ft.Page):
             content_area.controls.append(
                 ft.Container(
                     content=ft.Column([
-                        ft.Icon(ft.icons.ERROR_OUTLINE,
-                                color=ft.colors.RED, size=50),
+                        ft.Icon(ft.Icons.ERROR_OUTLINE,
+                                color=ft.Colors.RED, size=50),
                         ft.Text(
-                            f"Ocorreu um erro ao carregar as empresas.", color=ft.colors.RED),
+                            f"Ocorreu um erro ao carregar as empresas.", color=ft.Colors.RED),
                         # Cuidado ao expor detalhes de erro
                         ft.Text(f"Detalhes: {e}",
-                                color=ft.colors.RED, size=10),
+                                color=ft.Colors.RED, size=10),
                     ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                     alignment=ft.alignment.center,
                     margin=ft.margin.only(top=50),
@@ -419,7 +419,7 @@ def emp_grid_view(page: ft.Page):
     # )
 
 # Nota: Garanta que a função `handle_get_empresas` localizada em
-# `src.domains.empresas.controllers.empresas_controllers` esteja definida como uma função `async def`
+# `src.domains.empresas.controllers.company_controllers` esteja definida como uma função `async def`
 # para que esta abordagem de indicador de carregamento funcione sem congelar a UI durante a chamada ao banco de dados.
 # Se for uma função síncrona, você precisará adaptá-la usando técnicas como
 # `asyncio.to_thread` conforme mostrado nos comentários dentro de `load_data_and_update_ui`.

@@ -10,11 +10,11 @@ from enum import Enum  # Certifique-se de importar o módulo 'Enum'
 from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
-import src.domains.empresas.controllers.empresas_controllers as empresas_controllers
-from src.domains.empresas.models.cnpj import CNPJ
-import src.domains.usuarios.controllers.usuarios_controllers as usuarios_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 import src.shared.utils.tools as tools
 
+from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas import EmpresaSize
 from src.domains.empresas.models.empresa_model import Empresa
 
@@ -96,9 +96,9 @@ class EmpresaView:
             col={'xs': 2, 'md': 2, 'lg': 1},
             icon=ft.Icons.SEARCH,
             icon_size=self.icon_size,
-            selected_icon_color=self.app_colors["container"],
+            # selected_icon_color=self.app_colors["container"],
             tooltip="Consultar CNPJ",
-            hover_color=self.app_colors["container"],
+            # hover_color=self.app_colors["container"],
             disabled=True,
             on_click=self._consult_cnpj
         )
@@ -396,7 +396,11 @@ class EmpresaView:
             logo_container.border = ft.border.all(
                 color=self.app_colors["primary"], width=1)
             icon_container.content.color = self.app_colors["primary"] # type: ignore
-
+        if e:
+            e.control.update()
+            cnpj_button.update()
+            logo_container.update()
+            icon_container.update()
 
     async def _consult_cnpj(self, e):
         """Consulta o CNPJ na API da Receita"""
@@ -496,15 +500,20 @@ class EmpresaView:
         build_content = ft.Column(
             controls=[
                 ft.Text("Dados da Empresa", size=16),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(
                     controls=[self.cnpj, self.consult_cnpj_button, self.corporate_name]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(
                     controls=[self.trade_name, self.store_name, self.ie, self.im]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(controls=[self.email, self.phone]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 ft.Divider(height=5),
                 ft.Text("Endereço", size=16),
                 responsive_row(
                     controls=[self.street, self.number, self.complement]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(
                     controls=[self.neighborhood, self.city, self.state, self.postal_code]),
                 ft.Divider(height=5),
@@ -845,7 +854,7 @@ class EmpresaView:
         self.data = {}
 
 # Rota: /home/empresas/form/principal
-def emp_form_principal(page: ft.Page):
+def show_company_main_form(page: ft.Page):
     """Página de cadastro de empresas"""
     # if colors := page.app_state.usuario.get('user_colors'):
     #     page.theme.color_scheme.primary = colors.get('primary')
@@ -928,7 +937,7 @@ def emp_form_principal(page: ft.Page):
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
         user = page.app_state.usuario # type: ignore
-        result: dict = empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        result: dict = company_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["status"] == "error":
             message_snackbar(
@@ -946,7 +955,7 @@ def emp_form_principal(page: ft.Page):
             user['empresa_id'] = empresa.id
 
         # Atualiza usuário no banco de dados
-        result = usuarios_controllers.handle_update_empresas_usuarios(
+        result = user_controllers.handle_update_empresas_usuarios(
             usuario_id=user['id'],
             empresas=user['empresas'],
             empresa_ativa_id=user['empresa_id'],

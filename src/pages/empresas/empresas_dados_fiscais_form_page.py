@@ -7,7 +7,8 @@ from typing import Optional
 
 import flet as ft
 
-from src.domains.empresas.controllers import empresas_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
+
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import CodigoRegimeTributario, EmpresaSize, Environment
 from src.domains.usuarios.models.usuario_model import Usuario
@@ -355,7 +356,7 @@ class EmpresaViewDadosFiscais:
 
 
 # Rota: /home/empresas/form/dados-fiscais
-def emp_form_dados_fiscais(page: ft.Page):
+def show_company_tax_form(page: ft.Page):
     """Página de cadstro dos dados fiscais da empresa"""
 
     route_title = "home/empresas/form/dados-fiscais"
@@ -421,7 +422,7 @@ def emp_form_dados_fiscais(page: ft.Page):
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
         user: dict = page.app_state.usuario # type: ignore
-        result: dict = empresas_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        result: dict = company_controllers.handle_save_empresas(empresa=empresa, usuario=user)
 
         if result["status"] == "error":
             message_snackbar(

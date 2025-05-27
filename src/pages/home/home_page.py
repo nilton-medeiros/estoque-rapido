@@ -4,7 +4,7 @@ from src.pages.home import main_content
 from src.pages.home.sidebar_page import sidebar_container
 
 
-def dashboard(page: ft.Page):
+def show_home_page(page: ft.Page):
     """Página Home do usuário logado"""
     # page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK

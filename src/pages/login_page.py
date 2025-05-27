@@ -7,8 +7,8 @@ from src.pages.partials import get_responsive_sizes, build_input_field
 
 from src.shared import MessageType, message_snackbar, validate_email
 
-import src.domains.empresas as emp_controllers
-import src.domains.usuarios as usu_controllers
+import src.domains.empresas.controllers.empresas_controllers as company_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 
 from src.domains.empresas.models.empresa_model import Empresa
 
@@ -178,7 +178,7 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = usu_controllers.handle_login_usuarios(
+            result = user_controllers.handle_login_usuarios(
                 email=self.email_input.value, password=self.password_input.value) # type: ignore
 
             if result["status"] == "error":
@@ -197,7 +197,7 @@ class LoginView:
                 return
 
             # Usuário tem empresa(s) registrada(s), obtem os dados da última empresa utilizada
-            result = emp_controllers.handle_get_empresas_by_id(id=user.empresa_id)
+            result = company_controllers.handle_get_empresas_by_id(id=user.empresa_id)
 
             if result["status"] == "error":
                 user.empresa_id = None
@@ -271,7 +271,7 @@ class LoginView:
         return self.form
 
 
-def render_login(page: ft.Page):
+def show_login_page(page: ft.Page):
     '''
     Cria uma página Container de formulário de login de usuários.
 

@@ -4,10 +4,9 @@ import os
 import flet as ft
 
 import src.controllers.bucket_controllers as bucket_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 
-from src.domains.usuarios.models.usuario_model import Usuario
 from src.presentation.components import FiscalProgressBar, Functionalities
-from src.domains.usuarios import handle_update_photo_usuarios, handle_update_colors_usuarios
 from src.shared import get_uuid, MessageType, message_snackbar, get_app_colors
 
 logger = logging.getLogger(__name__)
@@ -173,7 +172,7 @@ def sidebar_header(page: ft.Page):
                         return
 
                     # Agora que temos uma URL válida, atualizar o usuário
-                    result = handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
+                    result = user_controllers.handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
 
                     if result["status"] == "error":
                         message_type = MessageType.ERROR
@@ -298,7 +297,7 @@ def sidebar_header(page: ft.Page):
                 )
             else:
                 if url_field.value and url_field.value.strip():
-                    result = handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
+                    result = user_controllers.handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
                     if result["status"] == "success":
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:
@@ -600,7 +599,7 @@ class PopupColorItem(ft.PopupMenuItem):
         msg_error = None
         colors = get_app_colors(self.data)
         try:
-            result = handle_update_colors_usuarios(id=user.get('id'), colors=colors)
+            result = user_controllers.handle_update_colors_usuarios(id=user.get('id'), colors=colors)
             if result["status"] == "error":
                 # Reverter a mudança de tema se a atualização falhar? Opcional.
                 # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
@@ -706,7 +705,8 @@ def sidebar_footer(page: ft.Page):
                     content=ft.Icon(ft.Icons.SHOPPING_BAG_OUTLINED,
                                     color="white", size=22),
                     tooltip="Produtos",
-                    # on_click=, # Adicione o handler de clique aqui quando tiver
+                    on_click=lambda _: page.go(
+                        '/home/produtos/grid'),
                 ),
                 # --- Ícone de Estoque ---
                 ft.Container(

@@ -8,10 +8,9 @@ from enum import Enum
 import flet as ft
 
 import src.controllers.bucket_controllers as bucket_controllers
-import src.domains.produtos.controllers.categorias_controllers as categorias_controllers
+import src.domains.produtos.controllers.categorias_controllers as category_controllers
 
-from src.domains.produtos.models.categorias_model import ProdutoCategorias
-from src.domains.produtos.models.produtos_subclass import ProdutoStatus
+from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
 from src.pages.partials import build_input_field
 from src.services import UploadFile
 from src.shared import message_snackbar, MessageType, get_uuid
@@ -20,7 +19,7 @@ from src.shared.utils.find_project_path import find_project_root
 logger = logging.getLogger(__name__)
 
 
-class ProdutoCategoriaView:
+class ProdutoCategoriaForm:
     def __init__(self, page: ft.Page):
         self.page = page
         self.empresa_logada = page.app_state.empresa # type: ignore
@@ -44,7 +43,7 @@ class ProdutoCategoriaView:
 
     def on_change_status(self, e):
         status = e.control
-        status.label = "Produto Ativo" if e.data == "true" else "Produto Inativo (Obsoleto)"
+        status.label = "Categoria Ativo" if e.data == "true" else "Categoria Inativo (Descontinuado)"
         status.update()
 
     def _create_form_fields(self):
@@ -58,7 +57,7 @@ class ProdutoCategoriaView:
         )
         # Switch Ativo/Inativo
         self.status = ft.Switch(
-            label="Produto Ativo",
+            label="Categoria Ativo",
             value=True,
             on_change=self.on_change_status,
             col={'xs': 12, 'md': 12, 'lg': 4})
@@ -96,7 +95,6 @@ class ProdutoCategoriaView:
             on_hover=on_hover_image,
             tooltip="Clique aqui para adicionar uma imagem da categoria",
         )
-        # Campo Logo do emitente de NFCe
         self.camera_icon = ft.Container(
             content=ft.Icon(
                 name=ft.Icons.ADD_A_PHOTO_OUTLINED,
@@ -208,7 +206,7 @@ class ProdutoCategoriaView:
 
         build_content = ft.Column(
             controls=[
-                ft.Text("Imagem dos Produtos da Categoria", size=16),
+                ft.Text("Imagem da categoria de produtos", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(controls=[self.image_section]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT), # Cria uma linha (espaço vazio) para efeito visual
@@ -249,10 +247,10 @@ class ProdutoCategoriaView:
 
         if status.name == "ACTIVE":
             self.status.value = True
-            self.status.label = "Produto Ativo"
+            self.status.label = "Categoria Ativo"
         else:
             self.status.value = False
-            self.status.label = "Produto Inativo (Obsoleto)"
+            self.status.label = "Categoria Inativo (Descontinuado)"
 
         self.description.value = self.data.get('description', '')
 
@@ -401,7 +399,7 @@ class ProdutoCategoriaView:
         self.data = {}
 
 # Rota: /home/produtos/categorias/form
-def form_categorias(page: ft.Page):
+def show_category_form(page: ft.Page):
     """Página de cadastro de categorias de produtos."""
     route_title = "home/produtos/categorias/form"
     categoria_data = page.app_state.form_data # type: ignore
@@ -439,7 +437,7 @@ def form_categorias(page: ft.Page):
         adaptive=True,
     )
 
-    categorias_view = ProdutoCategoriaView(page=page)
+    categorias_view = ProdutoCategoriaForm(page=page)
     categorias_view.did_mount()
     form_container = categorias_view.build()
 
@@ -473,7 +471,7 @@ def form_categorias(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        result = categorias_controllers.handle_save(
+        result = category_controllers.handle_save(
             categoria=prod_categoria,
             usuario=page.app_state.usuario # type: ignore
         )

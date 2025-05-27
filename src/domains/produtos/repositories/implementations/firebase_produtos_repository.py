@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, List # Usar List explicitamente para type hints
+from typing import Any, Tuple, List # Usar List explicitamente para type hints
 
 from firebase_admin import firestore
 from firebase_admin import exceptions
@@ -157,7 +157,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             logger.error(f"Erro inesperado ao buscar produto por ID {produto_id}: {e}")
             raise
 
-    def get_all(self, status_deleted: bool = False) -> Tuple[List[Produto], int]:
+    def get_all(self, status_deleted: bool = False) ->  tuple[list[Produto], int]:
         """
         Obtém todos os produtos de uma empresa no repositório, ordenados por nome da categoria
         e depois por nome do produto, com opção de filtrar por status.

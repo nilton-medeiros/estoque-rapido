@@ -8,7 +8,7 @@ from src.domains.produtos.services import CategoriasServices
 logger = logging.getLogger(__name__)
 
 
-def handle_save(categoria: ProdutoCategorias, usuario: dict[str,Any]) -> dict[str, Any]:
+def handle_save(categoria: ProdutoCategorias, usuario: dict[str, Any]) -> dict[str, Any]:
     """Salva ou atualiza uma categoria de produto."""
     response = {}
 
@@ -60,19 +60,22 @@ def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: Pr
         repository = FirebaseCategoriasRepository()
         categorias_services = CategoriasServices(repository)
 
-        is_updated = categorias_services.update_status(categoria, usuario, status)
+        is_updated = categorias_services.update_status(
+            categoria, usuario, status)
 
         if is_updated:
             response["status"] = "success"
             response["data"] = status
         else:
             response["status"] = "error"
-            response["message"] = f"Não foi possível atualizar o status da categoria para {status.value}"
+            response[
+                "message"] = f"Não foi possível atualizar o status da categoria para {status.value}"
 
     except ValueError as e:
         response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
-        logger.error("cat_controllers.handle_update_status(ValueError). " + response["message"])
+        logger.error(
+            "categorias_controllers.handle_update_status(ValueError). " + response["message"])
     except Exception as e:
         response["status"] = "error"
         response["message"] = str(e)
@@ -115,7 +118,8 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        categorias_list, quantify = categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+        categorias_list, quantify = categorias_services.get_all(
+            empresa_id=empresa_id, status_deleted=status_deleted)
 
         if categorias_list:
             response["status"] = "success"
@@ -128,7 +132,48 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
             response["message"] = "Nenhuma categoria de produto encontrada!"
     except ValueError as e:
         response["status"] = "error"
-        response["message"] = f"categorias_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
+        response[
+            "message"] = f"categorias_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+
+    return response
+
+
+def handle_get_active_categorias_summary(empresa_id: str) -> dict[str, Any]:
+    """
+    Obtém um resumo (ID, nome, descrição) de todas as categorias ativas
+        de uma empresa, ordenadas por nome.
+
+    Args:
+        empresa_id (str): O ID da empresa para buscar as categorias.
+
+    return (dict): response:
+     sucesso: {"status": "success", "data": [summary_list]}
+     erro: {"status": "error", "message": "mensagem de erro"}
+    """
+    response = {}
+
+    try:
+        # Usa o repositório do Firebase para buscar as categorias
+        repository = FirebaseCategoriasRepository()
+        categorias_services = CategoriasServices(repository)
+
+        if not empresa_id:
+            raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+        summary_list = categorias_services.get_summary(empresa_id)
+
+        if summary_list:
+            response["status"] = "success"
+            response["data"] = summary_list
+        else:
+            response["status"] = "error"
+            response["message"] = "Nenhuma categoria de produto encontrada!"
+    except ValueError as e:
+        response["status"] = "error"
+        response[
+            "message"] = f"categorias_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
     except Exception as e:
         response["status"] = "error"
         response["message"] = str(e)

@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 # Supondo que ProdutoStatus esteja no mesmo local ou acessível
@@ -31,9 +32,8 @@ class Produto:
     brand: str | None = None          # Marca do produto
 
     # --- Campos de Estoque ---
-    quantity_on_hand: int = 0
-    # Unidade de medida (ex: "un", "L", "kg", "pacote")
-    unit_of_measure: str | None = None
+    quantity_on_hand: int = 0  # Quantidade disponível
+    unit_of_measure: str | None = None  # Unidade de medida (ex: "un", "L", "kg", "pacote")
     minimum_stock_level: int | None = None
     maximum_stock_level: int | None = None
 
@@ -75,9 +75,11 @@ class Produto:
         if self.brand:
             self.brand = self.brand.strip().capitalize()
         if self.unit_of_measure:
-            self.unit_of_measure = self.unit_of_measure.strip().lower()
+            self.unit_of_measure = self.unit_of_measure.strip().upper()
         if self.categoria_name: # Normaliza o nome da categoria
             self.categoria_name = self.categoria_name.strip().capitalize()
+        if not isinstance(self.sale_price, Money):
+            self.sale_price = Money.mint("0.00")
         if not isinstance(self.cost_price, Money):
             self.cost_price = Money.mint("0.00")
 
@@ -100,8 +102,8 @@ class Produto:
             "internal_code": self.internal_code,
             "ean_code": self.ean_code,
             "brand": self.brand,
-            "sale_price": self.sale_price,  # Converte Money para dicionário
-            "cost_price": self.cost_price,
+            "sale_price": self.sale_price,  # Mantem como uma instância de Money
+            "cost_price": self.cost_price,  # Mantem como uma instância de Money
             "quantity_on_hand": self.quantity_on_hand,
             "unit_of_measure": self.unit_of_measure,
             "minimum_stock_level": self.minimum_stock_level,
@@ -173,6 +175,7 @@ class Produto:
         """Cria uma instância de Produto a partir de um dicionário (ex: do Firestore)."""
         status_data = data.get("status")
         status = ProdutoStatus.ACTIVE  # Padrão
+
         if status_data:
             if isinstance(status_data, ProdutoStatus):
                 status = status_data
@@ -210,13 +213,18 @@ class Produto:
             deleted_at = deleted_at.to_datetime() if hasattr(
                 deleted_at, 'to_datetime') else None
 
-        sale_price_data = data.get("sale_price")
-        cost_price_data = data.get("cost_price")
+        sale_price_data: dict = data["sale_price"]
+        cost_price_data: dict = data["cost_price"]
 
-        sale_price = Money.from_dict(
-            sale_price_data) if sale_price_data else Money.mint("0.00")
-        cost_price = Money.from_dict(
-            cost_price_data) if cost_price_data else Money.mint("0.00")
+        # Preço de venda
+        amount_cents: int = sale_price_data["amount_cents"]  # Valor monetário retornado do banco já vem armazenado como inteiro
+        currency_symbol: str = sale_price_data["currency_symbol"]
+        sale_price: Money = Money.from_dict({"amount_cents": amount_cents, "currency_symbol": currency_symbol})
+
+        # Preço de custo
+        amount_cents: int = cost_price_data["amount_cents"]  # Valor monetário retornado do banco já vem armazenado como inteiro
+        currency_symbol: str = cost_price_data["currency_symbol"]
+        cost_price: Money = Money.from_dict({"amount_cents": amount_cents, "currency_symbol": currency_symbol})
 
         return cls(
             # Usa doc_id se fornecido (ID do documento Firestore)

@@ -4,13 +4,13 @@ import traceback
 import flet as ft
 
 import src.pages.produtos.categorias_actions_page as cat_actions
-import src.domains.produtos.controllers.categorias_controllers as cat_controllers
+import src.domains.produtos.controllers.categorias_controllers as category_controllers
 
 
 logger = logging.getLogger(__name__)
 
 
-def cat_grid_view(page: ft.Page):
+def show_categories_grid(page: ft.Page):
     """Página de exibição das categorias de produtos da empresa logada"""
     page.theme_mode = ft.ThemeMode.DARK
     page.data = "/home/produtos/categorias/grid"
@@ -121,7 +121,7 @@ def cat_grid_view(page: ft.Page):
 
     def _get_filtered_categorias() -> list:
         """Filtra _all_categorias_data com base no valor de rg_filter."""
-        nonlocal _all_categorias_data # Acessa a variável do escopo de cat_grid_view
+        nonlocal _all_categorias_data # Acessa a variável do escopo de show_categories_grid
         current_filter = rg_filter.value
 
         if current_filter == "all":
@@ -153,7 +153,7 @@ def cat_grid_view(page: ft.Page):
                                             width=100,
                                             height=100,
                                             border_radius=ft.border_radius.all(10),
-                                            border=ft.border.all(1, ft.colors.OUTLINE) if not categoria.image_url else None,
+                                            border=ft.border.all(1, ft.Colors.OUTLINE) if not categoria.image_url else None,
                                             clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
                                             alignment=ft.alignment.center,
                                             content=ft.Image(
@@ -162,8 +162,8 @@ def cat_grid_view(page: ft.Page):
                                                 width=100,
                                                 height=100,
                                                 border_radius=ft.border_radius.all(10),
-                                                error_content=ft.Icon(ft.icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.colors.ERROR)
-                                            ) if categoria.image_url else ft.Icon(ft.icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
+                                                error_content=ft.Icon(ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.Colors.ERROR)
+                                            ) if categoria.image_url else ft.Icon(ft.Icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
                                         ),
                                         ft.Container(
                                             content=ft.PopupMenuButton(
@@ -224,7 +224,7 @@ def cat_grid_view(page: ft.Page):
             controls=[
                 ft.Radio(value="all", label="Todos"),
                 ft.Radio(value="active", label="Ativos"),
-                ft.Radio(value="inactive", label="Descontinuado"),
+                ft.Radio(value="inactive", label="Descontinuados"),
             ]
         ),
         on_change=radiogroup_changed, # Conecta a função handler
@@ -264,7 +264,7 @@ def cat_grid_view(page: ft.Page):
                 pass
             else:
                 # Busca as categorias menos as de status 'DELETED' da empresa logada
-                result: dict = cat_controllers.handle_get_all(empresa_id=empresa_id)
+                result: dict = category_controllers.handle_get_all(empresa_id=empresa_id)
 
                 if result["status"] == "error":
                     logger.error(f"Erro ao buscar categorias: {result.get('message', 'Desconhecido')}")
@@ -273,7 +273,7 @@ def cat_grid_view(page: ft.Page):
                     content_area.controls.clear()
                     content_area.controls.append(
                         ft.Container(
-                            content=ft.Text(f"Erro ao carregar dados: {result.get('message', 'Tente novamente mais tarde.')}", color=ft.colors.ERROR),
+                            content=ft.Text(f"Erro ao carregar dados: {result.get('message', 'Tente novamente mais tarde.')}", color=ft.Colors.ERROR),
                             alignment=ft.alignment.center,
                             margin=ft.margin.only(top=50)
                         )

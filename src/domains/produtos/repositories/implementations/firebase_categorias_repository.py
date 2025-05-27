@@ -289,7 +289,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             raise
 
 
-    def get_active_categorias_summary(self, empresa_id: str) -> list[dict[str, Any]]: 
+    def get_active_categorias_summary(self, empresa_id: str) -> list[dict[str, Any]]:
         """
         Obtém um resumo (ID, nome, descrição) de todas as categorias ativas
         de uma empresa, ordenadas por nome.
@@ -336,13 +336,64 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             return categorias_summary_list
 
         except exceptions.FirebaseError as e:
-            logger.error(f"Erro do Firebase ao buscar resumo de categorias ativas para empresa {empresa_id}: {getattr(e, 'code', 'N/A')} - {e}")
-            # Considere traduzir e re-lançar se essa for a sua política de tratamento de erros
-            # translated_error = deepl_translator(str(e))
-            # raise Exception(f"Erro do Firebase ao buscar resumo de categorias: {translated_error}")
-            raise # Re-lança a exceção original do Firebase para ser tratada em uma camada superior
-        except ValueError as ve: # Captura o ValueError levantado explicitamente
-            raise ve
-        except Exception as e:
-            logger.error(f"Erro inesperado ao buscar resumo de categorias ativas para empresa {empresa_id}: {e}")
+            error_message_lower = str(e).lower()
+            # Condição para erro de índice ausente (Failed Precondition)
+            # O Firestore retorna uma mensagem específica com um link para criar o índice.
+            is_missing_index_error = (
+                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+            )
+
+            if is_missing_index_error:
+                logger.error(
+                    f"Erro de pré-condição ao consultar categorias de produtos (provavelmente índice ausente): {e}. "
+                    "O Firestore requer um índice para esta consulta. "
+                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+                )
+                # A mensagem 'e' já deve conter o link.
+                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
+                raise Exception(
+                    "Erro ao buscar categorias de produtos: Um índice necessário não foi encontrado no banco de dados. "
+                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                    f"Detalhe original: {str(e)}"
+                )
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de categorias de produtos da empresa logada: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
+                logger.error(
+                    f"Serviço do Firestore indisponível ao consultar lista de categorias de produtos da empresa logada: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de categorias de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                )
+            raise # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e: # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
+            logger.error(
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categorias de produtos da empresa logada: {e}"
+            )
+            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
+            error_message_lower = str(e).lower()
+            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
+                 logger.error(
+                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
+                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
+                )
+                # Ainda assim, levanta uma exceção que o usuário possa entender
+                 raise Exception(
+                    "Erro crítico ao buscar categorias de produtos: Um índice pode ser necessário (detectado em exceção genérica). "
+                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
+                    f"Detalhe original: {str(e)}"
+                )
             raise

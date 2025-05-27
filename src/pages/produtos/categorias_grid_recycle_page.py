@@ -5,8 +5,8 @@ import math # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
-import src.domains.produtos.controllers.categorias_controllers as cat_controllers
-import src.pages.produtos.categorias_actions_page as cat_actions
+import src.domains.produtos.controllers.categorias_controllers as category_controllers
+import src.pages.produtos.categorias_actions_page as category_actions
 
 from src.shared import format_datetime_to_utc_minus_3
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # Rota: /home/produtos/categorias/grid/lixeira
-def cat_grid_lixeira(page: ft.Page):
+def show_categories_grid_trash(page: ft.Page):
     """Página de exibição das categorias da empresa logada que estão inativas ('DELETED')em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -59,7 +59,7 @@ def cat_grid_lixeira(page: ft.Page):
 
         match action:
             case "RESTORE":
-                is_restore = cat_actions.restore_from_trash(page=page, categoria=categoria)
+                is_restore = category_actions.restore_from_trash(page=page, categoria=categoria)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de categorias na tela
                     page.run_task(load_data_and_update_ui)
@@ -189,7 +189,7 @@ def cat_grid_lixeira(page: ft.Page):
                 content_area.controls.append(empty_content_display)
                 return
 
-            result = cat_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
+            result = category_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
 
             if result["status"] == "error":
                 content_area.controls.append(empty_content_display)

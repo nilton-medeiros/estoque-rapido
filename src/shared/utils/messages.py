@@ -57,7 +57,7 @@ def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
         content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
         actions=[ft.ElevatedButton(
             text=btn_text,
-            icon=ft.icons.CLOSE,
+            icon=ft.Icons.CLOSE,
             style=ft.ButtonStyle(
                 color=ft.Colors.ON_PRIMARY_CONTAINER,
                 bgcolor=ft.Colors.PRIMARY_CONTAINER,

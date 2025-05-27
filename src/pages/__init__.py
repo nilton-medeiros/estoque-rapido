@@ -1,3 +1,3 @@
-from .landing_page import render_landing_page
-from .login_page import render_login
-from .signup_page import render_signup
+from .landing_page import show_landing_page
+from .login_page import show_login_page
+from .signup_page import show_signup_page

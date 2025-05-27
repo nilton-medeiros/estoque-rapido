@@ -6,8 +6,7 @@ from src.domains.produtos.models.categorias_model import ProdutoCategorias
 from src.domains.produtos.models.produtos_subclass import ProdutoStatus
 from src.shared import MessageType, message_snackbar
 
-import src.domains.produtos.controllers.categorias_controllers as cat_controllers
-
+import src.domains.produtos.controllers.categorias_controllers as category_controllers
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
+            result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -162,7 +161,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
 def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
     user = page.app_state.usuario # type: ignore
-    result = cat_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
+    result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

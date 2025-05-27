@@ -72,6 +72,6 @@ class ProdutosServices:
         return self.repository.get_by_id(produto_id=produto_id)
 
 
-    def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[Produto], int]:
+    def get_all(self, status_deleted: bool = False) -> tuple[list[Produto], int]:
         """Busca todas as produtos da empresa logada que sejam ativa ou não, dependendo do status_deleted True/False."""
-        return self.repository.get_all(empresa_id, status_deleted)
+        return self.repository.get_all(status_deleted)
