@@ -2,9 +2,13 @@ import logging
 import os
 import base64
 import mimetypes
+
+from datetime import datetime, UTC, timedelta
 from typing import Any
 
 import flet as ft
+
+import src.shared.config.globals as app_globals
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.produtos.controllers.categorias_controllers as category_controllers
@@ -12,10 +16,11 @@ import src.domains.produtos.controllers.produtos_controllers as product_controll
 
 from src.domains.produtos.models import Produto, ProdutoStatus
 from src.pages.partials import build_input_field
-from src.services import UploadFile
-from src.shared import message_snackbar, MessageType, get_uuid, get_app_colors
+from src.services import UploadFile, fetch_product_info_by_ean
+from src.shared import  show_banner, message_snackbar, MessageType, get_uuid, get_app_colors, format_datetime_to_utc_minus_3
 from src.shared.utils.find_project_path import find_project_root
 from src.pages.partials.monetary_field import MonetaryTextField
+from src.shared.utils.money_numpy import Money
 
 logger = logging.getLogger(__name__)
 
@@ -79,15 +84,128 @@ class ProdutoForm:
             self.selected_category_name = None
         dropdown.update()
 
+    def _consult_product(self, e):
+        if not self.ean_code.value:
+            return
+
+        # Variaveis globais são compartilhadas entre todas sessões de usuários logado
+        blocked = app_globals.ean_gtin_api["blocked"]
+
+        if blocked:
+            expires_at = app_globals.ean_gtin_api["blocked_until"]
+            if datetime.now(UTC) > expires_at:
+                # Desbloqueia: Consulta liberada!
+                app_globals.ean_gtin_api.update({"blocked_until": None, "blocked": False})
+                blocked = False
+
+        if blocked:
+            show_banner(
+                page=self.page,
+                message=f"Limite de consultas excedido! Tente novamente após {format_datetime_to_utc_minus_3(expires_at)}"
+            )
+            return
+
+        result = fetch_product_info_by_ean(self.ean_code.value)
+
+        if not result:
+            show_banner(
+                page=self.page,
+                message=f"Não foi possível obter dados para o EAN {self.ean_code.value}."
+            )
+            return
+        if result["status_code"] == 429:
+            expires_at = datetime.now(UTC) + timedelta(hours=24)
+            app_globals.ean_gtin_api.update({"blocked_until": expires_at, "blocked": True})
+            show_banner(
+                page=self.page,
+                message=f"Limite de consultas excedido! Tente novamente após {format_datetime_to_utc_minus_3(expires_at)}"
+            )
+            return
+
+        product_data = result["data"]
+        self.name.value = product_data["description"]
+        thumbnail = product_data.get("thumbnail")
+
+        if thumbnail and thumbnail.startswith("http"):
+            self.image_url = product_data.get("thumbnail")
+            categoria_img = ft.Image(
+                src=self.image_url,
+                error_content=ft.Text("Erro!"),
+                repeat=ft.ImageRepeat.NO_REPEAT,
+                fit=ft.ImageFit.CONTAIN,
+                border_radius=ft.border_radius.all(20),
+            )
+            self.image_frame.content = categoria_img
+
+        if product_data.get("brand"):
+            self.brand.value = product_data["brand"]["name"]
+
+        if ncm := product_data.get("ncm"):
+            self.ncm_code.value = ncm.get("code", "")
+            self.ncm_description.value = ncm.get("description", "")
+            self.ncm_full_description.value = ncm.get("full_description", "")
+
+        if category := product_data.get("category"):
+            id = category_controllers.handle_get_active_id(empresa_id=self.empresa_logada["id"], nome=category["description"])
+            if id:
+                self.categoria.value = id
+            else:
+                self.description.value = f"Categoria: {category['description']}"
+
+        if product_data.get("price"):
+            if description := self.description.value:
+                description = description.strip() + "\n" + f"(Preço: {product_data['price']})"
+            else:
+                description = f"(Preço: {product_data['price']})"
+            self.description.value = description
+
+        if product_data.get("avg_price"):
+            self.sale_price.set(product_data["avg_price"])
+
+        if gtins := product_data.get("gtins"):
+            if isinstance(gtins, list) and len(gtins) > 0:
+                gtin = gtins[0]
+                if unit := gtin.get("commercial_unit", {}).get("type_packaging", "UN"):
+                    self.unit_of_measure.value = unit.strip().upper()
+
+        self.page.update()
+
+
     def _create_form_fields(self):
         """Cria os campos do formulário de Produto"""
         #--------------------------------------------------------------------------------------
+        # Código EAN
+        self.ean_code = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 6, 'lg': 5},
+            label="Código EAN (código de barras)",
+            icon=ft.Icons.BARCODE_READER,
+        )
+        self.consult_product_button = ft.IconButton(
+            col={'xs': 12, 'md': 1, 'lg': 2},
+            icon=ft.Icons.SEARCH,
+            icon_size=self.icon_size,
+            tooltip="Consultar Produto",
+            on_click=self._consult_product
+        )
+        # Código interno/SKU
+        self.internal_code = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 5, 'lg': 5},
+            label="Código interno/SKU",
+            icon=ft.Icons.BARCODE_READER,
+        )
+
+        #------------------------------------------------------------------------------------------
         # Nome do Produto
         self.name = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 7, 'lg': 7},
             label="Nome do Produto",
+            capitalization=ft.TextCapitalization.SENTENCES,
             icon=ft.Icons.ASSIGNMENT_OUTLINED,
         )
         # Dropdown para seleção da Categoria do Produto.
@@ -117,19 +235,6 @@ class ProdutoForm:
         )
 
         #--------------------------------------------------------------------------------------
-        # Descrição do produto
-        self.description = build_input_field(
-            page_width=self.page.width,  # type: ignore
-            app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 12},
-            label="Descrição (opcional)",
-            icon=ft.Icons.ASSIGNMENT_LATE_OUTLINED,
-            multiline=True,
-            max_lines=5,
-            shift_enter=True,
-        )
-
-        #--------------------------------------------------------------------------------------
         # Marca do produto
         self.brand = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
@@ -147,37 +252,31 @@ class ProdutoForm:
             col={'xs': 12, 'md': 4, 'lg': 4})
 
         #--------------------------------------------------------------------------------------
+        # Descrição do produto
+        self.description = build_input_field(
+            page_width=self.page.width,  # type: ignore
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 12, 'lg': 12},
+            label="Descrição (opcional)",
+            capitalization=ft.TextCapitalization.SENTENCES,
+            icon=ft.Icons.ASSIGNMENT_LATE_OUTLINED,
+            multiline=True,
+            max_lines=5,
+            shift_enter=True,
+        )
+
+        #--------------------------------------------------------------------------------------
         # Preço de venda
-        # self.sale_price = build_input_field(
-        #     page_width=self.page.width,  # type: ignore
-        #     app_colors=self.app_colors,
-        #     col={'xs': 12, 'md': 4, 'lg': 4},
-        #     label="Preço de Venda",
-        #     text_align=ft.TextAlign.RIGHT,
-        #     keyboard_type=ft.KeyboardType.NUMBER,
-        #     # rtl=True,
-        #     icon=ft.Icons.PRICE_CHANGE_OUTLINED,
-        # )
         self.sale_price = MonetaryTextField(
             label="Preço de Venda",
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 3, 'lg': 3},
             page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
         )
         # Preço de custo
-        # self.cost_price = build_input_field(
-        #     page_width=self.page.width,  # type: ignore
-        #     app_colors=self.app_colors,
-        #     col={'xs': 12, 'md': 4, 'lg': 4},
-        #     label="Preço de Custo",
-        #     keyboard_type=ft.KeyboardType.NUMBER,
-        #     text_align=ft.TextAlign.RIGHT,
-        #     # rtl=True,  # Digitação: Da direita para a esquerda
-        #     icon=ft.Icons.PRICE_CHANGE_OUTLINED,
-        # )
         self.cost_price = MonetaryTextField(
             label="Preço de Custo",
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 3, 'lg': 3},
             page_width=self.page.width, # type: ignore
             app_colors=self.app_colors,
         )
@@ -185,7 +284,7 @@ class ProdutoForm:
         self.unit_of_measure = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 6, 'lg': 6},
             label='Unidade de medida (ex: "UN", "L", "KG", "PACOTE", etc)',
             capitalization=ft.TextCapitalization.CHARACTERS,
             icon=ft.Icons.ARCHIVE_OUTLINED,
@@ -196,7 +295,7 @@ class ProdutoForm:
         self.quantity_on_hand: ft.TextField = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 3, 'lg': 3},
             label="Quantidade disponível",
             keyboard_type=ft.KeyboardType.NUMBER,
             text_align=ft.TextAlign.RIGHT,
@@ -206,7 +305,7 @@ class ProdutoForm:
         self.minimum_stock_level = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 3, 'lg': 3},
             label='Quantidade mínima para reposição',
             keyboard_type=ft.KeyboardType.NUMBER,
             text_align=ft.TextAlign.RIGHT,
@@ -216,7 +315,7 @@ class ProdutoForm:
         self.maximum_stock_level = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 6, 'lg': 6},
             label='Quantidade máxima para reposição',
             keyboard_type=ft.KeyboardType.NUMBER,
             text_align=ft.TextAlign.RIGHT,
@@ -224,24 +323,35 @@ class ProdutoForm:
         )
 
         #--------------------------------------------------------------------------------------
-        # Código interno/SKU
-        self.internal_code = build_input_field(
+        # Código NCM
+        self.ncm_code = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
-            label="Código interno/SKU",
-            icon=ft.Icons.BARCODE_READER,
+            label="Código da NCM",
+            icon=ft.Icons.CODE_OUTLINED,
         )
-
-        # Código EAN
-        self.ean_code = build_input_field(
+        # Descrição NCM
+        self.ncm_description = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 6},
-            label="Código EAN (código de barras)",
-            icon=ft.Icons.BARCODE_READER,
+            label="Descrição da NCM",
+            icon=ft.Icons.ASSIGNMENT_OUTLINED,
+        )
+        #--------------------------------------------------------------------------------------
+        # Detalhes NCM
+        self.ncm_full_description = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 12, 'lg': 12},
+            label="Detalhes da NCM",
+            icon=ft.Icons.ASSIGNMENT_OUTLINED,
+            multiline=True,
+            max_lines=5,
         )
 
+        # Imagem do Produto -------------------------------------------------------------------------------
         def on_hover_image(e):
             color: str = self.app_colors["container"] if e.data == "true" else self.app_colors["primary"]
             icon_container = self.camera_icon.content
@@ -261,7 +371,7 @@ class ProdutoForm:
             height=250,
             border=ft.border.all(color=ft.Colors.GREY_400, width=1),
             border_radius=ft.border_radius.all(20),
-            on_click=self._show_image_dialog,  # Também
+            on_click=self._show_image_dialog,
             on_hover=on_hover_image,
             tooltip="Clique aqui para adicionar uma imagem do produto",
         )
@@ -274,7 +384,6 @@ class ProdutoForm:
             margin=ft.margin.only(top=-5),
             ink=True,
             on_hover=on_hover_image,
-            on_click=self._show_image_dialog,
             border_radius=ft.border_radius.all(100),
             padding=8,
         )
@@ -382,21 +491,20 @@ class ProdutoForm:
             controls=[
                 ft.Text("Identificação do Produto", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-
                 responsive_row(
                     controls=[
-                        self.image_section,
                         ft.Column(
                             controls=[
                                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                                responsive_row(controls=[self.name, self.categoria]),
+                                responsive_row(controls=[self.ean_code, self.consult_product_button, self.internal_code]),
                                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                                responsive_row(controls=[self.description]),
+                                responsive_row(controls=[self.name, self.categoria]),
                                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                                 responsive_row(controls=[self.brand, self.status]),
                             ],
                             col={'xs': 12, 'md': 8, 'lg': 8},
-                        )
+                        ),
+                        self.image_section,
                     ]
                 ),
 
@@ -406,11 +514,17 @@ class ProdutoForm:
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 ft.Text("Informação do Produto", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.description]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(controls=[self.sale_price.text_field, self.cost_price.text_field, self.unit_of_measure]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 responsive_row(controls=[self.quantity_on_hand, self.minimum_stock_level, self.maximum_stock_level]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(controls=[self.internal_code, self.ean_code]),
+                ft.Text("NCM - Nomenclatura Comum do Mercosul", size=16),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.ncm_code, self.ncm_description]),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.ncm_full_description]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
@@ -434,17 +548,17 @@ class ProdutoForm:
     def populate_form_fields(self):
         """Preenche os campos do formulário com os dados do produto"""
 
+        self.ean_code.value = self.data.get("ean_code", "")
+        self.internal_code.value = self.data.get("internal_code", "")
         self.name.value = self.data["name"]
         self.categoria.value = self.data["categoria_id"]
 
-        sale_price = self.data['sale_price']
+        sale_price: Money = self.data['sale_price']
+        # MonetaryTextField
         self.sale_price.set(sale_price.get_decimal(), sale_price.currency_symbol)
-
-        cost_price = self.data["cost_price"]
+        cost_price: Money = self.data["cost_price"]
+        # MonetaryTextField
         self.cost_price.set(cost_price.get_decimal(), cost_price.currency_symbol)
-
-        self.internal_code.value = self.data.get("internal_code", "")
-        self.ean_code.value = self.data.get("ean_code", "")
         self.description.value = self.data.get("description", "")
         self.brand.value = self.data.get("brand", "")
         self.quantity_on_hand.value = self.data.get("quantity_on_hand", "")
@@ -453,6 +567,11 @@ class ProdutoForm:
             "minimum_stock_level", "")
         self.maximum_stock_level.value = self.data.get(
             "maximum_stock_level", "")
+
+        if ncm := self.data.get("ncm"):
+            self.ncm_code.value = ncm.get("code", "")
+            self.ncm_description.value = ncm.get("description", "")
+            self.ncm_full_description.value = ncm.get("full_description", "")
 
         status = self.data.get("status", "ACTIVE")
 
@@ -524,16 +643,19 @@ class ProdutoForm:
         """
         Atualiza self.data com os dados do formulário e o retorna atualizado.
         """
+        self.data["ean_code"] = self.ean_code.value
+        self.data["internal_code"] = self.internal_code.value
         self.data['name'] = self.name.value
         self.data["categoria_id"] = self.categoria.value
         self.data["categoria_name"] = self.selected_category_name
-
         self.data["sale_price"] = {"amount_cents": self.sale_price.get_value_as_int(), "currency_symbol": self.sale_price.prefix_text}
-        self.data["cost_price"] = {"amount_cents": self.cost_price.get_value_as_int(), "currency_symbol": self.sale_price.prefix_text}
-
-        self.data["internal_code"] = self.internal_code.value
-        self.data["ean_code"] = self.ean_code.value
+        self.data["cost_price"] = {"amount_cents": self.cost_price.get_value_as_int(), "currency_symbol": self.cost_price.prefix_text}
         self.data['description'] = self.description.value
+        self.data['ncm'] = {
+            "code": self.ncm_code.value,
+            "description": self.ncm_description.value,
+            "full_description": self.ncm_full_description.value
+        }
 
         if self.image_url:
             self.data['image_url'] = self.image_url

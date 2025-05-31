@@ -397,3 +397,99 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     f"Detalhe original: {str(e)}"
                 )
             raise
+
+    def get_active_id_by_name(self, company_id: str, name: str) -> str | None:
+        """
+        Obtém o ID de uma categoria ativa com base em seu nome (case-insensitive), de uma empresa.
+
+        Somente as categorias com status "ACTIVE" são incluídas.
+
+        Args:
+            company_id (str): O ID da empresa para buscar as categorias.
+            name (str): O nome da categoria (já em minúsculas) a ser encontrada.
+
+        Returns:
+            str | None: O ID da categoria ativa encontrada, ou None se não for encontrada.
+
+        Raises:
+            ValueError: Se company_id ou name forem nulos ou vazios.
+            Exception: Para erros de Firebase ou outros erros inesperados (re-lançados).
+        """
+        if not company_id:
+            logger.error("ID da empresa não pode ser nulo ou vazio ao buscar ID da categoria por nome.")
+            raise ValueError("ID da empresa não pode ser nulo ou vazio")
+        if not name:
+            logger.error("Nome da categoria não pode ser nulo ou vazio ao buscar ID da categoria.")
+            raise ValueError("Nome da categoria não pode ser nulo ou vazio")
+
+        try:
+            query = self.collection.where(
+                filter=FieldFilter("empresa_id", "==", company_id)
+            ).where(
+                filter=FieldFilter("name_lowercase", "==", name)
+            ).where(
+                filter=FieldFilter("status", "==", ProdutoStatus.ACTIVE.name)
+            ).limit(1) # Garante que pegamos apenas um, caso haja duplicidade (o que não deveria ocorrer)
+
+            docs = query.get() # Retorna uma lista de DocumentSnapshot
+
+            if docs: # Verifica se a lista não está vazia
+                doc_snapshot = docs[0] # Pega o primeiro (e único, devido ao limit(1)) documento
+                return doc_snapshot.id # Retorna o ID do documento
+            else:
+                logger.info(f"Nenhuma categoria ativa encontrada com o nome '{name}' para a empresa ID '{company_id}'.")
+                return None
+
+        except exceptions.FirebaseError as e:
+            error_message_lower = str(e).lower()
+            # Condição para erro de índice ausente (Failed Precondition)
+            # O Firestore retorna uma mensagem específica com um link para criar o índice.
+            is_missing_index_error = (
+                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+            )
+
+            if is_missing_index_error:
+                logger.error(
+                    f"Erro de pré-condição ao buscar ID da categoria por nome (provavelmente índice ausente): {e}. "
+                    "O Firestore requer um índice para esta consulta. "
+                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+                )
+                raise Exception(
+                    "Erro ao buscar ID da categoria: Um índice necessário não foi encontrado no banco de dados. "
+                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                    f"Detalhe original: {str(e)}"
+                )
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao buscar ID da categoria por nome para empresa {company_id}: {e}"
+                )
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
+                logger.error(
+                    f"Serviço do Firestore indisponível ao buscar ID da categoria por nome para empresa {company_id}: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                logger.error(
+                    f"Erro do Firebase ao buscar ID da categoria por nome para empresa {company_id}: Código: {e.code if hasattr(e, 'code') else 'N/A'}, Detalhes: {e}"
+                )
+            raise
+
+        except Exception as e: # Captura exceções que não são FirebaseError
+            logger.error(
+                f"Erro inesperado (Tipo: {type(e)}) ao buscar ID da categoria por nome para empresa {company_id} e nome '{name}': {e}"
+            )
+            error_message_lower = str(e).lower()
+            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
+                 logger.error(
+                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception' ao buscar ID da categoria: {e}. "
+                )
+                 raise Exception(
+                    "Erro crítico ao buscar ID da categoria: Um índice pode ser necessário (detectado em exceção genérica). "
+                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
+                    f"Detalhe original: {str(e)}"
+                )
+            raise

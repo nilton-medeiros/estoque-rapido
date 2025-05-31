@@ -15,12 +15,15 @@ class Produto:
     """
     empresa_id: str  # ID da empresa pai
     name: str
+    name_lowercase: str
     categoria_id: str  # ID da categoria (da coleção 'produto_categorias')
     categoria_name: str # Nome da categoria (desnormalizado para ordenação)
+    ncm: dict
 
     # --- Campos Essenciais do Produto ---
     sale_price: Money  # Preço de venda
     cost_price: Money = Money.mint("0.00")    # Preço de custo, default 0
+    # Nomenclatura Comum do Mercosul: Necessário para emissão de nota fiscal
 
     # --- Campos de Identificação e Códigos ---
     internal_code: str | None = None  # Código interno/SKU
@@ -64,6 +67,11 @@ class Produto:
 
     def __post_init__(self):
         self.name = self.name.strip().capitalize()
+        if self.name_lowercase:
+            self.name_lowercase = self.name_lowercase.strip().lower()
+        else:
+            self.name_lowercase = self.name.lower()
+
         if self.description:
             self.description = self.description.strip()
         if self.image_url:
@@ -89,6 +97,9 @@ class Produto:
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
 
+        if not self.ncm or not isinstance(self.ncm, dict) or self.ncm.get("code") is None:
+            self.ncm = {"code": None, "description": None, "full_description": None}
+
     def to_dict(self) -> dict[str, Any]:
         """Retorna um dicionário representando o objeto Produto."""
         # Converte Money para dicionário
@@ -96,6 +107,7 @@ class Produto:
             "id": self.id,
             "empresa_id": self.empresa_id,
             "name": self.name,
+            "name_lowercase": self.name_lowercase,
             "categoria_id": self.categoria_id,
             "categoria_name": self.categoria_name,
             "description": self.description,
@@ -108,6 +120,7 @@ class Produto:
             "unit_of_measure": self.unit_of_measure,
             "minimum_stock_level": self.minimum_stock_level,
             "maximum_stock_level": self.maximum_stock_level,
+            "ncm": self.ncm,  # Nomenclatura Comum do Mercosul
             "status": self.status.name,  # Armazena o nome do enum
             "image_url": self.image_url,
             "created_at": self.created_at,
@@ -137,6 +150,7 @@ class Produto:
         dict_db = {
             "empresa_id": self.empresa_id,
             "name": self.name,
+            "name_lowercase": self.name_lowercase,
             "categoria_id": self.categoria_id,
             "categoria_name": self.categoria_name,
             "description": self.description,
@@ -150,6 +164,7 @@ class Produto:
             "minimum_stock_level": self.minimum_stock_level,
             "maximum_stock_level": self.maximum_stock_level,
             "status": self.status.name,  # Salva o nome do enum no DB
+            "ncm": self.ncm,  # Nomenclatura Comum do Mercosul
             "image_url": self.image_url,
             "created_at": self.created_at if self.created_at else datetime.utcnow(),
             "created_by_id": self.created_by_id,
@@ -231,6 +246,7 @@ class Produto:
             id=doc_id or data.get("id"),
             empresa_id=data["empresa_id"],
             name=data["name"],
+            name_lowercase=data.get("name_lowercase", data["name"]),
             categoria_id=data["categoria_id"],
             categoria_name=data["categoria_name"], # Adicionado
             description=data.get("description"),
@@ -243,6 +259,7 @@ class Produto:
             unit_of_measure=data.get("unit_of_measure"),
             minimum_stock_level=data.get("minimum_stock_level"),
             maximum_stock_level=data.get("maximum_stock_level"),
+            ncm=data.get("ncm", {"code": None, "description": None, "full_description": None}),
             status=status,
             image_url=data.get("image_url"),
             created_at=created_at,

@@ -57,7 +57,7 @@ class EmpresasServices:
 
         # Se CNPJ foi informado, verifica se exite para evitar duplicidade com o mesmo CNPJ
         if empresa.cnpj:
-            existing_empresa = self.repository.find_by_cnpj(empresa.cnpj)
+            existing_empresa = self.repository.exists_by_cnpj(empresa.cnpj)
             if existing_empresa:
                 raise ValueError("Já existe uma empresa com este CNPJ")
         if not user.get("id"):

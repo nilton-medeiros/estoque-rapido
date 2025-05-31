@@ -199,6 +199,9 @@ def show_products_grid_trash(page: ft.Page):
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear()  # Limpar conteúdo anterior
 
+            if not produtos_data:
+                content_area.controls.append(empty_content_display)
+
             grid = ft.ResponsiveRow(
                 controls=[
                     # O componente Card() está sendo iterado em loop para um ou mais produtos.

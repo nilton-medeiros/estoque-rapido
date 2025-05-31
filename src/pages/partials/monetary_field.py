@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP # Importe ROUND_HALF_UP
 import flet as ft
 
 from .responsive_sizes import get_responsive_sizes
@@ -121,8 +121,19 @@ class MonetaryTextField:
         except ValueError:
             return 0
 
-    def set(self, value: Decimal, prefix_text: str = "R$ "):
+    def set(self, value: Decimal | float | int, prefix_text: str = "R$ "): # Aceita Decimal, float ou int
         """Define o valor do campo"""
         self.prefix_text = prefix_text
-        self.text_field.value = str(value).replace('.', ',')
-        # self.text_field.update() if value else ""
+
+        # Garante que o valor seja Decimal antes de quantizar
+        if isinstance(value, float):
+            value = Decimal(str(value)) # Converte float para Decimal através de string para precisão
+        elif isinstance(value, int):
+            value = Decimal(value) # Converte int para Decimal
+
+        # Arredonda para duas casas decimais
+        # ROUND_HALF_UP arredonda para o vizinho mais próximo, com empates arredondados para longe de zero.
+        quantizer = Decimal("0.01")
+        # Agora 'value' é garantidamente um Decimal, então Pylance não deve reclamar.
+        rounded_value = value.quantize(quantizer, rounding=ROUND_HALF_UP)
+        self.text_field.value = str(rounded_value).replace('.', ',')

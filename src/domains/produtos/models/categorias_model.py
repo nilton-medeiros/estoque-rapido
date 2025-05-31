@@ -9,6 +9,7 @@ from src.domains.produtos.models.produtos_subclass import ProdutoStatus
 class ProdutoCategorias:
     """    Categorias de produtos    """
     name: str
+    name_lowercase: str
     empresa_id: str
     status: ProdutoStatus = ProdutoStatus.ACTIVE
     id: str | None = None
@@ -32,6 +33,7 @@ class ProdutoCategorias:
 
     def __post_init__(self):
         self.name = self.name.strip().capitalize()
+        self.name_lowercase = self.name_lowercase.strip().lower()  # Para buscas case insensitive
         self.description = self.description.strip() if self.description else None
         self.image_url = self.image_url.strip() if self.image_url else None
 
@@ -40,6 +42,7 @@ class ProdutoCategorias:
             "id": self.id,
             "empresa_id": self.empresa_id,
             "name": self.name,
+            "name_lowercase": self.name_lowercase,
             "description": self.description,
             "status": self.status,
             "image_url": self.image_url,
@@ -61,6 +64,7 @@ class ProdutoCategorias:
         dict_db: dict[str, Any] = {
             "empresa_id": self.empresa_id,
             "name": self.name,
+            "name_lowercase": self.name_lowercase,
             "description": self.description,
             "status": self.status.name,
             "image_url": self.image_url,
@@ -93,6 +97,7 @@ class ProdutoCategorias:
             id=data.get("id"),
             empresa_id=data["empresa_id"],
             name=data["name"],
+            name_lowercase=data.get("name_lowercase", data["name"]),
             description=data.get("description"),
             status=status,
             image_url=data.get("image_url"),

@@ -155,8 +155,7 @@ def show_companies_grid_trash(page: ft.Page):
                 # Caso deleted_at não esteja definido
                 info_message = "Esta empresa está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
         elif empresa.status.name == 'ARCHIVED':
-            info_message = "Esta empresa está arquivada. Empresas arquivadas não são removidas automaticamente e \
-                podem estar vinculadas a outros registros como pedidos ou produtos."
+            info_message = "Esta empresa está arquivada!\nEmpresas arquivadas não são removidas automaticamente\ne podem estar vinculadas a outros registros como pedidos ou produtos."
         else:
             info_message = "Status desconhecido."
 

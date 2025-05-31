@@ -52,3 +52,23 @@ class CategoriasRepository(ABC):
         """
         raise NotImplementedError(
         "Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    def get_active_id_by_name(self, company_id: str, name: str) -> str | None:
+        """
+        Obtém o ID de uma categoria ativa com base em seu nome, de uma empresa.
+
+        Somente as categorias com status "ACTIVE" são incluídas.
+
+        Args:
+            empresa_id (str): O ID da empresa para buscar as categorias.
+            name (str): O nome da categoria a ser encontrada.
+
+        Returns:
+            str | None: O ID da categoria ativa encontrada, ou None se não for encontrada.
+
+        Raises:
+            ValueError: Se empresa_id for nulo ou vazio.
+            Exception: Para erros de Firebase ou outros erros inesperados (re-lançados).
+        """
+        raise NotImplementedError("Este método deve ser implementado pela subclasse")

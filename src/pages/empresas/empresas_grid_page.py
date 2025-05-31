@@ -125,23 +125,6 @@ def show_companies_grid(page: ft.Page):
         title=ft.Text(f"Empresas", size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
-        actions=[
-            ft.Container(
-                width=43,
-                height=43,
-                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE, size=30),
-                tooltip="Adicionar nova empresa",
-                data={'action': 'INSERT', 'data': None},
-                on_click=handle_action_click,
-                margin=ft.margin.only(right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
-            ),
-        ],
     )
 
     def handle_info_click(e):
@@ -357,9 +340,9 @@ def show_companies_grid(page: ft.Page):
         finally:
             # --- Atualizar Visibilidade da UI ---
             current_trash_icon_filename = "recycle_full_1771.png" if empresas_inactivated else "recycle_empy_1771.png"
-            if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
-                fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Empresas inativas: {empresas_inactivated}"
+            if fab_trash.content and isinstance(fab_trash.content, ft.Image): # Garante que fab_trash.content é uma Image
+                fab_trash.content.src = f"icons/{current_trash_icon_filename}"
+                fab_trash.tooltip = f"Empresas inativas: {empresas_inactivated}"
 
             loading_container.visible = False
             content_area.visible = True
@@ -375,20 +358,21 @@ def show_companies_grid(page: ft.Page):
     # Executa a função async em background. A UI mostrará o spinner primeiro.
     page.run_task(load_data_and_update_ui)
 
-    # trash_icon = "recycle_full_55510.png" if empresas_inactivated else "recycle_empy_55510.png"
+    fab_add = ft.FloatingActionButton(
+        tooltip="Adicionar empresa",
+        icon=ft.Icons.ADD,
+        data={'action': 'INSERT', 'data': None},
+        on_click=handle_action_click
+    )
 
-    fab = ft.FloatingActionButton(
-        # icon=ft.Icons.FOLDER_DELETE_OUTLINED,
+    fab_trash = ft.FloatingActionButton(
         content=ft.Image(
-            # src="icons/recycle_empty_delete_trash_1771.png",
             src=f"icons/recycle_empy_1771.png",
-            width=48,
-            height=36,
             fit=ft.ImageFit.CONTAIN,
             error_content=ft.Text("Erro"),
         ),
         on_click=lambda _: page.go("/home/empresas/grid/lixeira"),
-        tooltip="Empresas inativas",
+        tooltip="Empresas inativas: 0",
         bgcolor=ft.Colors.TRANSPARENT,
     )
 
@@ -405,7 +389,10 @@ def show_companies_grid(page: ft.Page):
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
-        floating_action_button=fab,
+        floating_action_button=ft.Column(  # type: ignore [attr-defined]
+            controls=[fab_add, fab_trash],
+            alignment=ft.MainAxisAlignment.END,
+        ),
         vertical_alignment=ft.MainAxisAlignment.START,  # Alinha conteúdo ao topo
         # Deixa o conteúdo esticar horizontalmente
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,

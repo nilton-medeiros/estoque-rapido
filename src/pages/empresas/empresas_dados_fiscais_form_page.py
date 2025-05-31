@@ -236,7 +236,7 @@ class EmpresaViewDadosFiscais:
         self.store_name.value = self.data.get('store_name', '')
 
         if size_enum := self.data.get('size'):
-            self.size_cia.value = size_enum.name
+            self.size_cia.value = size_enum
         else:
             self.size_cia.value = ''
 

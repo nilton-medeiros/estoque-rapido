@@ -100,3 +100,8 @@ class CategoriasServices:
             Exception: Para erros de Firebase ou outros erros inesperados (re-lançados).
         """
         return self.repository.get_active_categorias_summary(empresa_id)
+
+    def get_active_id(self, company_id: str, name: str) -> str | None:
+        """Obtem o ID da categoria pelo nome da categoria"""
+        name = name.strip().lower()
+        return self.repository.get_active_id_by_name(company_id=company_id, name=name)

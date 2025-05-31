@@ -85,23 +85,7 @@ def show_categories_grid(page: ft.Page):
         title=ft.Text(f"Categorias de Produtos", size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
-        actions=[
-            ft.Container(
-                width=43,
-                height=43,
-                border_radius=ft.border_radius.all(20), # Metade da largura/altura para ser círculo
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE, size=30),
-                tooltip="Adicionar nova categoria",
-                data={'action': 'INSERT', 'data': None},
-                on_click=handle_action_click,
-                margin=ft.margin.only(left=10, right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Boa prática adicionar aqui também
-            ),
-        ],
+        actions=[],
     )
 
     # --- Conteúdo Padrão Vazio (definido uma vez) ---
@@ -230,11 +214,18 @@ def show_categories_grid(page: ft.Page):
         on_change=radiogroup_changed, # Conecta a função handler
     )
     # Adiciona o rg_filter às ações do AppBar agora que radiogroup_changed está definida
-    appbar.actions.insert(0, rg_filter)  # type: ignore [attr-defined]
+    appbar.actions.insert(0, ft.Container(  # type: ignore [attr-defined]
+            bgcolor=ft.Colors.TRANSPARENT,
+            alignment=ft.alignment.center,
+            content=rg_filter,
+            margin=ft.margin.only(left=10, right=10),
+            clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+        )
+    )
 
     async def load_data_and_update_ui():
         """Carrega todos os dados do banco, armazena, filtra e atualiza a UI."""
-        nonlocal _all_categorias_data, _categorias_inactivated_count, loading_container, content_area, page, fab
+        nonlocal _all_categorias_data, _categorias_inactivated_count, loading_container, content_area, page, fab_trash
 
         loading_container.visible = True
         content_area.visible = False
@@ -284,9 +275,9 @@ def show_categories_grid(page: ft.Page):
 
             # Atualiza o ícone e tooltip do FAB
             current_trash_icon_filename = "recycle_full_1771.png" if _categorias_inactivated_count else "recycle_empy_1771.png"
-            if fab.content and isinstance(fab.content, ft.Image): # Garante que fab.content é uma Image
-                fab.content.src = f"icons/{current_trash_icon_filename}"
-                fab.tooltip = f"Categorias inativas: {_categorias_inactivated_count}"
+            if fab_trash.content and isinstance(fab_trash.content, ft.Image): # Garante que fab_trash.content é uma Image
+                fab_trash.content.src = f"icons/{current_trash_icon_filename}"
+                fab_trash.tooltip = f"Categorias inativas: {_categorias_inactivated_count}"
 
             # Filtra os dados carregados (ou vazios) e renderiza o grid
             filtered_categorias = _get_filtered_categorias()
@@ -329,13 +320,16 @@ def show_categories_grid(page: ft.Page):
     # Executa a função async em background. A UI mostrará o spinner primeiro.
     page.run_task(load_data_and_update_ui)
 
-    fab = ft.FloatingActionButton(
-        # icon=ft.Icons.FOLDER_DELETE_OUTLINED,
+    fab_add = ft.FloatingActionButton(
+        tooltip="Adicionar produto",
+        icon=ft.Icons.ADD,
+        data={'action': 'INSERT', 'data': None},
+        on_click=handle_action_click
+    )
+
+    fab_trash = ft.FloatingActionButton(
         content=ft.Image(
-            # src="icons/recycle_empty_delete_trash_1771.png",
             src=f"icons/recycle_empy_1771.png",
-            width=48,
-            height=36,
             fit=ft.ImageFit.CONTAIN,
             error_content=ft.Text("Erro"),
         ),
@@ -357,7 +351,10 @@ def show_categories_grid(page: ft.Page):
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
-        floating_action_button=fab,
+        floating_action_button=ft.Column(  # type: ignore [attr-defined]
+            controls=[fab_add, fab_trash],
+            alignment=ft.MainAxisAlignment.END,
+        ),
         vertical_alignment=ft.MainAxisAlignment.START,  # Alinha conteúdo ao topo
         # Deixa o conteúdo esticar horizontalmente
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,

@@ -118,18 +118,14 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        categorias_list, quantify = categorias_services.get_all(
-            empresa_id=empresa_id, status_deleted=status_deleted)
 
-        if categorias_list:
-            response["status"] = "success"
-            response["data"] = {
-                "categorias": categorias_list,
-                "deleted": quantify if quantify else 0,
-            }
-        else:
-            response["status"] = "error"
-            response["message"] = "Nenhuma categoria de produto encontrada!"
+        categorias_list, quantify = categorias_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+
+        response["status"] = "success"
+        response["data"] = {
+            "categorias": categorias_list if categorias_list else [],
+            "deleted": quantify if quantify else 0,
+        }
     except ValueError as e:
         response["status"] = "error"
         response[
@@ -179,3 +175,22 @@ def handle_get_active_categorias_summary(empresa_id: str) -> dict[str, Any]:
         response["message"] = str(e)
 
     return response
+
+def handle_get_active_id(empresa_id: str, nome: str) -> str | None:
+    """Obtem o ID da categoria pelo nome da categoria"""
+    try:
+        repository = FirebaseCategoriasRepository()
+        categorias_services = CategoriasServices(repository)
+
+        if not nome:
+            raise ValueError("Nome da categoria não pode ser nulo ou vazio")
+        if not empresa_id:
+            raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+
+        categoria_id = categorias_services.get_active_id(company_id=empresa_id, name=nome)
+
+        return categoria_id
+    except ValueError as e:
+        raise ValueError(f"categorias_controllers.handle_get_active_id ValueError: Erro de validação: {str(e)}")
+    except Exception as e:
+        raise Exception(str(e))

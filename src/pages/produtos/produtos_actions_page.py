@@ -102,9 +102,9 @@ async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
             operation_complete_future.set_result(False)  # Usuário cancelou
 
     text = (
-        "Aviso: Este registro será excluído permanentemente após 90 dias. "
+        "Aviso: Este produto será excluído permanentemente após 90 dias. "
         "Caso exista pedidos vinculados a esta produto, "
-        "ficará com o status 'Descontinuado' (INATIVO/OBSOLETO) e não poderá ser excluída definitivamente."
+        "ficará com o status 'Descontinuado' (INATIVO/OBSOLETO) e não poderá ser excluído definitivamente."
     )
 
     warning_text = ft.Text(

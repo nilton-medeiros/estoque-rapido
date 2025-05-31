@@ -23,3 +23,36 @@ def initials(name: str) -> str:
     iniciais = [palavra[0]
                 for palavra in palavras if palavra not in palavras_ignoradas]
     return ''.join(iniciais)
+
+
+def capitalize_first_word_of_sentence(text: str) -> str:
+    """
+    Capitaliza a primeira palavra de uma frase. As demais palavras permanecem inalteradas.
+    Preserva os espaços iniciais e finais da string original.
+
+    Args:
+        text (str): A frase ou palavra a ser processada.
+
+    Returns:
+        str: O texto com a primeira palavra capitalizada.
+             Retorna a string original se ela for vazia ou contiver apenas espaços.
+
+    Exemplo:
+        >>> capitalize_first_word_of_sentence("lava roupa em pó Karina Multi ação")
+        'Lava roupa em pó Karina Multi ação'
+        >>> capitalize_first_word_of_sentence("palavra")
+        'Palavra'
+        >>> capitalize_first_word_of_sentence("")
+        ''
+        >>> capitalize_first_word_of_sentence("  teste com espaços  ")
+        '  Teste com espaços  '
+        >>> capitalize_first_word_of_sentence("   ") # Apenas espaços
+        '   '
+        >>> capitalize_first_word_of_sentence("primeira")
+        'Primeira'
+    """
+    if not text.strip(): # Retorna original se for vazia ou só espaços
+        return text
+    parts = text.split(' ', 1)
+    parts[0] = parts[0].capitalize()
+    return ' '.join(parts)

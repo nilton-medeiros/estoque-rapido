@@ -1,4 +1,5 @@
 from .apis.cnpj_api import consult_cnpj_api
+from .apis.cosmos_api import fetch_product_info_by_ean
 from .aws.s3_file_manager import S3FileManager
 from .buckets.bucket_services import BucketServices
 from .gateways.asaas_payment_gateway import AsaasPaymentGateway

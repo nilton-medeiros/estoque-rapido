@@ -16,17 +16,31 @@ def main(page: ft.Page):
 
     page.add(img, images)
 
-    images.controls.append(
-        ft.Image(
-            src=f"https://picsum.photos/200/200?{10}",
-            width=200,
-            height=200,
-            fit=ft.ImageFit.NONE,
-            repeat=ft.ImageRepeat.NO_REPEAT,
-            border_radius=ft.border_radius.all(10),
-            error_content=ft.Text("Image 1"),
-        )
+    image_url = f"https://cdn-cosmos.bluesoft.com.br/products/7500435156547"
+
+    img_contanier = ft.Container(  # Container para a imagem da produto
+        width=100,
+        height=100,
+        border_radius=ft.border_radius.all(
+            10),
+        border=ft.border.all(
+            1, ft.Colors.OUTLINE) if not image_url else None,
+        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+        alignment=ft.alignment.center,
+        content=ft.Image(
+            src=f"{image_url}",
+            fit=ft.ImageFit.COVER,
+            width=100,
+            height=100,
+            border_radius=ft.border_radius.all(
+                10),
+            error_content=ft.Icon(
+                ft.Icons.IMAGE_NOT_SUPPORTED_OUTLINED, size=30, color=ft.Colors.ERROR)
+        ) if image_url else ft.Icon(ft.Icons.CATEGORY_OUTLINED, size=40, opacity=0.5)
     )
+
+
+    images.controls.append(img_contanier)
 
     images.controls.append(
         ft.Image(
@@ -90,4 +104,4 @@ def main(page: ft.Page):
 
     page.update()
 
-ft.app(main)
+ft.app(target=main, view=ft.AppView.WEB_BROWSER)
