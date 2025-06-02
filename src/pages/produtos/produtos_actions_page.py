@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em send_to_trash_product_async
-    # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
 
     status=ProdutoStatus.DELETED
 
