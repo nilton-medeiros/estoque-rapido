@@ -21,7 +21,7 @@ import globals
 globals.user = {"uid": "123", "email": "usuario@exemplo.com"}
 
 # Em outra página
-import globals
-if globals.user:
-    print(f"Usuário logado: {globals.user['email']}")
+>>> import globals
+>>> if globals.user:
+>>>     print(f"Usuário logado: {globals.user['email']}")
 """

@@ -28,10 +28,10 @@ class CodigoRegimeTributario(Enum):
 
     Exemplo de uso (Enum com Tupla):
       crt: CodigoRegimeTributario = CodigoRegimeTributario.SIMPLES_NACIONAL_MEI
-      print(crt.name)  # Retorna: SIMPLES_NACIONAL_MEI
-      print(crt.value)  # Retorna: (4, "Microempreendedor Individual (MEI)")
-      print(crt.value[0])  # Retorna: 4
-      print(crt.value[1])  # Retorna: Microempreendedor Individual (MEI)
+      >>> print(crt.name)  # Retorna: SIMPLES_NACIONAL_MEI
+      >>> print(crt.value)  # Retorna: (4, "Microempreendedor Individual (MEI)")
+      >>> print(crt.value[0])  # Retorna: 4
+      >>> print(crt.value[1])  # Retorna: Microempreendedor Individual (MEI)
     """
     SIMPLES_NACIONAL = (1, "Simples Nacional")
     SIMPLES_NACIONAL_EXCESSO_SUB = (2, "Simples Nacional Excesso Sublimite")

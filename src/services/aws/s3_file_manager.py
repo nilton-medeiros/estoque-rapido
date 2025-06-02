@@ -135,7 +135,7 @@ class S3FileManager:
         Example:
             >>> s3_manager = S3FileManager()
             >>> if s3_manager.exists('pasta/arquivo.txt'):
-            ...     print("Arquivo existe")
+            >>>     print("Arquivo existe")
         """
         full_key = self._get_full_key(key)
         try:
@@ -157,9 +157,9 @@ if __name__ == "__main__":
     s3_manager.upload('arquivo_local.txt', 'documentos/arquivo.txt')
 
     # Verificação de existência
-    if s3_manager.exists('documentos/arquivo.txt'):
-        print("Arquivo existe no S3")
+    >>> if s3_manager.exists('documentos/arquivo.txt'):
+    >>>     print("Arquivo existe no S3")
 
-    # Deleção de arquivo
-    s3_manager.delete('documentos/arquivo.txt')
+    >>> # Deleção de arquivo
+    >>> s3_manager.delete('documentos/arquivo.txt')
 """

@@ -7,13 +7,12 @@ class CNPJ:
             cnpj (str): Número bruto do CNPJ.
 
         # Exemplo de uso
-        if __name__ == "__main__":
-
-            try:
-                cnpj = CNPJ("12345678000195")
-                print(cnpj)  # Imprime CNPJ formatado
-            except ValueError as e:
-                print(e)
+        >>> if __name__ == "__main__":
+        >>>     try:
+        >>>         cnpj = CNPJ("12345678000195")
+        >>>         print(cnpj)  # Imprime CNPJ formatado
+        >>>     except ValueError as e:
+        >>>         print(e)
 
         """
         self.raw_cnpj = ''.join(filter(str.isdigit, cnpj))

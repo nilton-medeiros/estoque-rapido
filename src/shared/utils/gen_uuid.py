@@ -11,10 +11,10 @@ def get_uuid(raw: bool = True) -> str:
         str: UUID em string no formato solicitado
 
     Nota: Para gerar um token, usar secrets
-          import secrets
-          tamanho = 30  # Tamanho do token a ser gerado
-          chave = secrets.token_hex(30)
-          print(chave)
+         >>> import secrets
+         >>> tamanho = 30  # Tamanho do token a ser gerado
+         >>> chave = secrets.token_hex(30)
+         >>> print(chave)
     """
     uuid_value = str(uuid.uuid4())
     return uuid_value.replace('-', '') if raw else uuid_value

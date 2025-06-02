@@ -21,6 +21,4 @@ def get_firebase_app():
             # print("INTERFACE: Firebase inicializado com sucesso!")
         except FileNotFoundError:
             logger.error(f"INTERFACE: Erro: Arquivo de credenciais não encontrado em {CREDENTIALS_PATH}")
-            print(
-                f"INTERFACE: Erro: Arquivo de credenciais não encontrado em {CREDENTIALS_PATH}")
     return firebase_admin.get_app()

@@ -182,6 +182,7 @@ def main_content():
     )
 
     def on_click_registrar(e):
+        # Registrar venda
         print(f"on_click_registrar {e.control}")
 
     def on_click_status(e):

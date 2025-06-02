@@ -45,7 +45,6 @@ async def prepare_the_user_session(page: ft.Page) -> None:
         page.session.set("user_colors", get_app_colors('yellow'))
     except Exception as e:
         logger.error(f"Erro inesperado ao buscar {f"{PREFIX}user-settings"} do client_storage: {e}")
-        print(f"Erro inesperado ao buscar {f"{PREFIX}user-settings"} do client_storage: {e}")
         # Assume cor padrão
         page.session.set("user_colors", get_app_colors('yellow'))
 
@@ -67,11 +66,9 @@ async def refresh_the_user_session(page: ft.Page, colors: dict) -> None:
         logger.debug("Sessão do usuário atualizada com sucesso")
     except asyncio.TimeoutError:
         logger.error(f"Timeout ao atualizar {f"{PREFIX}user-settings"} do client_storage")
-        print(f"Timeout ao atualizar {f"{PREFIX}user-settings"} do client_storage")
         # Assume cor padrão
         page.session.set("user_colors", get_app_colors('yellow'))
     except Exception as e:
         logger.error(f"Erro inesperado ao atualizar {f"{PREFIX}user-settings"} do client_storage: {e}")
-        print(f"Erro inesperado ao atualizar {f"{PREFIX}user-settings"} do client_storage: {e}")
         # Assume cor padrão
         page.session.set("user_colors", get_app_colors('yellow'))

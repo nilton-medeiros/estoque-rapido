@@ -360,7 +360,6 @@ def show_products_grid_trash(page: ft.Page):
                 page.update()
             else:
                 logger.info("Contexto da página perdido, não foi possível atualizar.")
-                print("Contexto da página perdido, não foi possível atualizar.")
 
     # --- Disparar Carregamento dos Dados ---
     # Executa a função async em background. A UI mostrará o spinner primeiro.

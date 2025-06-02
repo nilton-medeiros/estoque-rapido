@@ -166,14 +166,14 @@ try:
     phone3 = PhoneNumber("11999999999")
 
     # Diferentes formatos de saída
-    print(phone1.get_national())        # (11) 99999-9999
-    print(phone1.get_digits_only())     # 5511999999999
-    print(phone1.get_e164())           # +5511999999999
-    print(phone1.get_international())   # +55 (11) 99999-9999
+    >>> print(phone1.get_national())        # (11) 99999-9999
+    >>> print(phone1.get_digits_only())     # 5511999999999
+    >>> print(phone1.get_e164())           # +5511999999999
+    >>> print(phone1.get_international())   # +55 (11) 99999-9999
 
     # Validação
-    print(PhoneNumber.is_valid_number("+5511999999999"))  # True
-    print(PhoneNumber.is_valid_number("+1234567890"))     # False
+    >>> print(PhoneNumber.is_valid_number("+5511999999999"))  # True
+    >>> print(PhoneNumber.is_valid_number("+1234567890"))     # False
 except ValueError as e:
-    print("Erro:", e)
+    >>> print("Erro:", e)
 '''

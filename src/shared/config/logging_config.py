@@ -95,5 +95,5 @@ logger.error("Esta mensagem é de erro e vai para o arquivo.")
 logger.critical("Esta mensagem é crítica e vai para o arquivo.")
 
 console_logger.critical("Esta mensagem não vai para o arquivo, pois é do console_logger")
-print("Esta mensagem é um print e vai para o console.")
+>>> print("Esta mensagem é um print e vai para o console.")
 """

@@ -90,7 +90,7 @@ def fetch_product_info_by_ean(ean: str) -> dict | None:
 #     # Em uma aplicação real, isso seria carregado de um .env
 #     if not COSMOS_API_TOKEN:
 #         # Esta mensagem agora só aparecerá se o .env não tiver a variável ou não for carregado corretamente
-#         print("AVISO: COSMOS_API_TOKEN não foi encontrado após tentar carregar o .env. Verifique seu arquivo .env ou defina a variável manualmente para teste.")
+#        >>> print("AVISO: COSMOS_API_TOKEN não foi encontrado após tentar carregar o .env. Verifique seu arquivo .env ou defina a variável manualmente para teste.")
 #         # Exemplo: COSMOS_API_TOKEN = "SEU_TOKEN_AQUI" # Apenas para teste local, não commitar!
 #         # Se não definir e a função for chamada, retornará None e logará um erro.
 
@@ -98,8 +98,8 @@ def fetch_product_info_by_ean(ean: str) -> dict | None:
 #     test_ean = "7896089500233" # EAN de exemplo
 #     product_data = fetch_product_info_by_ean(test_ean)
 
-#     if product_data:
-#         print("\nDados do Produto:")
-#         print(json.dumps(product_data, indent=4, ensure_ascii=False))
-#     else:
-#         print(f"\nNão foi possível obter dados para o EAN {test_ean}.")
+#    >>> if product_data:
+#    >>>     print("\nDados do Produto:")
+#    >>>     print(json.dumps(product_data, indent=4, ensure_ascii=False))
+#    >>> else:
+#    >>>     print(f"\nNão foi possível obter dados para o EAN {test_ean}.")

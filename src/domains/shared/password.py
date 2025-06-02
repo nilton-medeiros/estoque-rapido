@@ -118,11 +118,11 @@ class Password:
 
 """
 # Exemplo de uso
-if __name__ == "__main__":
-    # Supondo que FERNET_KEY está definida no .env
-    pwd = Password("minha_senha_secreta")
-    print(pwd)  # [Encrypted Password]
-    print(pwd.decrypted)  # minha_senha_secreta
-    pwd2 = Password("minha_senha_secreta")
-    print(pwd == pwd2)  # True
+>>> if __name__ == "__main__":
+>>>     # Supondo que FERNET_KEY está definida no .env
+>>>     pwd = Password("minha_senha_secreta")
+>>>     print(pwd)  # [Encrypted Password]
+>>>     print(pwd.decrypted)  # minha_senha_secreta
+>>>     pwd2 = Password("minha_senha_secreta")
+>>>     print(pwd == pwd2)  # True
 """

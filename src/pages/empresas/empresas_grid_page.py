@@ -83,7 +83,7 @@ def show_companies_grid(page: ft.Page):
                 else:
                     show_banner(page=page, message="É preciso definir o CNPJ da empresa em Dados Principais antes de definir os dados fiscais")
             case "DIGITAL_CERTIFICATE":
-                print(f"Aguardando implementação: Certificado digital {empresa.id}")
+                logger.info(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
                 is_deleted = await empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
                 if is_deleted:
@@ -352,7 +352,6 @@ def show_companies_grid(page: ft.Page):
                 page.update()
             else:
                 logger.info("Contexto da página perdido, não foi possível atualizar.")
-                print("Contexto da página perdido, não foi possível atualizar.")
 
     # --- Disparar Carregamento dos Dados ---
     # Executa a função async em background. A UI mostrará o spinner primeiro.

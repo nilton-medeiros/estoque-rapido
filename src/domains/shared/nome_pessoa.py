@@ -99,13 +99,13 @@ class NomePessoa:
 '''
 try:
     pessoa = NomePessoa("João", "Silva")
-    print("Primeiro nome:", pessoa.first_name)
-    print("Último nome:", pessoa.last_name)
-    print("Nome completo:", pessoa.nome_completo)
-    print("Nome completo em maiúsculo:", pessoa.nome_completo_maiusculo)
+    >>> print("Primeiro nome:", pessoa.first_name)
+    >>> print("Último nome:", pessoa.last_name)
+    >>> print("Nome completo:", pessoa.nome_completo)
+    >>> print("Nome completo em maiúsculo:", pessoa.nome_completo_maiusculo)
 
     # Testando com nome vazio
-    pessoa_invalida = NomePessoa("", "Silva")
-except ValueError as e:
-    print("Erro:", e)
+>>>     pessoa_invalida = NomePessoa("", "Silva")
+>>> except ValueError as e:
+>>>     print("Erro:", e)
 '''
