@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status.DELETED) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em delete_company
-    # Renomear 'e' para evitar conflito com o 'e' de handle_action_click
 
     def send_to_trash_company_async(e_trash):
         # Obter a página a partir do evento é mais seguro em callbacks
