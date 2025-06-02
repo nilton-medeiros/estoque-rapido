@@ -170,10 +170,10 @@ def main_content():
         content=ft.ResponsiveRow(
             columns=12,
             controls=[
-                news_text('4 ', 'Produtos para reabastecer'),
-                news_text('7 ', 'Encomendas pendentes'),
-                news_text('3 ', 'Pagamentos'),
-                news_text('5 ', 'Recebimentos'),
+                news_text('0 ', 'Produtos para repor'),
+                news_text('0 ', 'Encomendas'),
+                news_text('0 ', 'Pagamentos'),
+                news_text('0 ', 'Recebimentos'),
             ]
         ),
         bgcolor="#111418",
