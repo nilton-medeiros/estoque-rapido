@@ -51,7 +51,7 @@ def show_companies_grid(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    def handle_action_click(e):
+    async def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
         action = e.control.data.get('action')
         empresa = e.control.data.get('data')
@@ -85,13 +85,13 @@ def show_companies_grid(page: ft.Page):
             case "DIGITAL_CERTIFICATE":
                 print(f"Aguardando implementação: Certificado digital {empresa.id}")
             case "SOFT_DELETE":
-                is_deleted = empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
+                is_deleted = await empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.DELETED)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case "ARCHIVE":
-                is_archived = empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
+                is_archived = await empresas_actions_page.send_to_trash(page=page, empresa=empresa, status=Status.ARCHIVED)
                 if is_archived:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)

@@ -51,7 +51,7 @@ def show_categories_grid(page: ft.Page):
                 page.app_state.set_form_data(categoria.to_dict()) # type: ignore
                 page.go('/home/produtos/categorias/form')
             case "SOFT_DELETE":
-                is_deleted = cat_actions.send_to_trash(page=page, categoria=categoria)
+                is_deleted = await cat_actions.send_to_trash(page=page, categoria=categoria)
                 if is_deleted:
                     # Reexecuta o carregamento. Atualizar a lista de empresas na tela
                     page.run_task(load_data_and_update_ui)
