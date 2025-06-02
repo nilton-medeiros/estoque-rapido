@@ -106,16 +106,55 @@ def show_products_grid(page: ft.Page):
     def _get_filtered_produtos() -> list:
         """Filtra _all_produtos_data com base no valor de rg_filter."""
         nonlocal _all_produtos_data  # Acessa a variável do escopo de show_products_grid
+
         current_filter = rg_filter.value
+        # Valor original do campo de busca
+        original_search_value = textfield_search.value if textfield_search.value else ""
+        # Texto de busca processado para o filtro
+        search_text_for_filtering = original_search_value.strip()
+        product_filter = []
 
         if current_filter == "all":
-            return _all_produtos_data
+            if search_text_for_filtering:
+                product_filter = [pro for pro in _all_produtos_data if search_text_for_filtering.lower() in pro.name.lower()]
+            else:
+                product_filter = _all_produtos_data
         elif current_filter == "active":
             # Assumindo que produto.status.name pode ser 'ACTIVE', 'INACTIVE', etc.
-            return [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE']
+            if search_text_for_filtering:
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE' and search_text_for_filtering.lower() in pro.name.lower()]
+            else:
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE']
         elif current_filter == "inactive":  # "Descontinuado"
-            return [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE']
-        return []
+            if search_text_for_filtering:
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE' and search_text_for_filtering.lower() in pro.name.lower()]
+            else:
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE']
+
+        # Atualiza os elementos da UI (cor do TextField e ícone do Suffix)
+        suffix_control = textfield_search.suffix
+        if isinstance(suffix_control, ft.IconButton): # Verifica se o sufixo é um IconButton
+            if original_search_value.strip():  # Verifica se havia algum texto de busca (após remover espaços)
+                if product_filter:  # E se foram encontrados resultados
+                    textfield_search.color = ft.Colors.GREEN
+                    suffix_control.icon = ft.Icons.FILTER_ALT_OFF
+                    suffix_control.icon_color = ft.Colors.GREEN
+                else:  # Texto de busca presente, mas sem resultados
+                    textfield_search.color = ft.Colors.RED
+                    suffix_control.icon = ft.Icons.FILTER_ALT_OFF_OUTLINED
+                    suffix_control.icon_color = ft.Colors.RED
+            else:  # Nenhum texto de busca (ou apenas espaços em branco)
+                textfield_search.color = ft.Colors.WHITE # Cor padrão/neutra
+                suffix_control.icon = ft.Icons.FILTER_ALT_OUTLINED
+                suffix_control.icon_color = ft.Colors.PRIMARY
+
+            suffix_control.update() # Atualiza o IconButton para refletir a mudança de ícone
+
+        # Mantém o valor original (com espaços, se houver) no TextField para a UI, mas filtra com o valor sem espaços
+        textfield_search.value = original_search_value
+        textfield_search.update() # Atualiza o TextField para refletir a mudança de cor e valor
+
+        return product_filter
 
     def _render_grid(produtos_to_display: list):
         """Constrói e exibe o grid de produtos ou a mensagem de vazio."""
@@ -236,6 +275,42 @@ def show_products_grid(page: ft.Page):
         clip_behavior=ft.ClipBehavior.ANTI_ALIAS
     )
     )
+
+    def ft_search_click(e):
+        nonlocal page  # Acessa page para update
+        icon_control = e.control
+        if textfield_search.value:
+            # Se foi digitado algo no campo e a busca já foi feita, limpa o filtro
+            if icon_control.icon == ft.Icons.FILTER_ALT_OFF or icon_control.icon == ft.Icons.FILTER_ALT_OFF_OUTLINED:
+                textfield_search.value = ""
+        filtered_produtos = _get_filtered_produtos()
+        _render_grid(filtered_produtos)
+        if page.client_storage:
+            page.update()
+
+    textfield_search = ft.TextField(
+        label="Busca pelo nome do produto",
+        width=300,
+        height=40,
+        text_size=13,
+        label_style=ft.TextStyle(size=10),
+        hint_style=ft.TextStyle(size=10),
+        suffix=ft.IconButton(
+            icon=ft.Icons.FILTER_ALT_OUTLINED,
+            icon_color=ft.Colors.PRIMARY,
+            on_click=ft_search_click,
+        ),
+        bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.BLACK),
+    )
+
+    # Adiciona o textfield_search às ações do AppBar
+    appbar.actions.insert(1, ft.Container(  # type: ignore [attr-defined]
+        bgcolor=ft.Colors.TRANSPARENT,
+        alignment=ft.alignment.center,
+        content=textfield_search,
+        margin=ft.margin.only(left=10, right=10),
+        clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+    ))
 
     async def load_data_and_update_ui():
         """Carrega todos os dados do banco, armazena, filtra e atualiza a UI."""

@@ -1,10 +1,11 @@
 import logging
+from typing import Any
 import aiohttp
 
 logger = logging.getLogger(__name__)
 
 
-async def consult_cnpj_api(cnpj):
+async def consult_cnpj_api(cnpj) -> dict[str, Any]:
 
     # Remove caracteres especiais do CNPJ
     cnpj_clean = ''.join(filter(str.isdigit, cnpj))
