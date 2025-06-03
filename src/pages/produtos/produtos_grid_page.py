@@ -222,8 +222,9 @@ def show_products_grid(page: ft.Page):
                                 ),
                                 ft.Text(f"{produto.name}", weight=ft.FontWeight.BOLD,
                                         theme_style=ft.TextThemeStyle.BODY_MEDIUM, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                                ft.Text(f"{produto.description.replace('\n', ' ')}",
-                                        theme_style=ft.TextThemeStyle.BODY_SMALL, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                                ft.Text(
+                                    f"{produto.description.replace(chr(10), ' ')}",  # chr(10) is newline
+                                    theme_style=ft.TextThemeStyle.BODY_SMALL, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                                 ft.Text(f"{produto.sale_price}",
                                         theme_style=ft.TextThemeStyle.BODY_SMALL),
                                 ft.Row(
