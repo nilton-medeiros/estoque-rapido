@@ -15,6 +15,7 @@ from src.pages.produtos import show_categories_grid, show_categories_grid_trash,
 from src.services import AppStateManager
 
 from src.shared import get_app_colors
+from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,8 @@ if flet_key:
 def reconfigure_logging():
     time.sleep(1)  # Espere o Flet inicializar
 
-    # Configuração de arquivo
-    log_dir = Path(__file__).parent.parent.parent.parent / 'logs'
+    log_dir = find_project_root(__file__) / 'logs'
+
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, "app.log")
 
@@ -44,7 +45,7 @@ def reconfigure_logging():
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
 
     # Configure os loggers do uvicorn
     for logger_name in ["flet_web.fastapi", "uvicorn", "uvicorn.access", "uvicorn.error"]:
