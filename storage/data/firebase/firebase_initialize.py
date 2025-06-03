@@ -11,8 +11,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CREDENTIALS_PATH = find_project_root(__file__) / 'serviceAccountKey.json'
 CREDENTIALS_PATH = os.path.normpath(CREDENTIALS_PATH)
 
-print(f"Debug  -> {CREDENTIALS_PATH}")
-
 logger = logging.getLogger(__name__)
 
 
