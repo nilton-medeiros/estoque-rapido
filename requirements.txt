@@ -9,7 +9,7 @@ uvicorn==0.34.2
 websockets==15.0.1
 boto3==1.37.31
 deepl==1.21.0
-aiohttp==3.11.13
+aiohttp==3.12.7
 cryptography==44.0.1
 pytz==2025.2
 requests==2.32.3
