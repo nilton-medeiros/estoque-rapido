@@ -73,10 +73,6 @@ class LoginView:
         self.error_text: ft.Text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
 
-        # Debug: Dados Fakes como hardcord, remover isto em produção
-        self.email_input.value = 'ajolie@gmail.com'
-        self.password_input.value = 'Aj#45678'
-
         self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
         self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso
 
