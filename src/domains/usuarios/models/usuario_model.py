@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.password import Password
+from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.shared import get_app_colors
 
 
@@ -47,6 +48,9 @@ class Usuario:
     empresas: Set[str] = field(default_factory=set)
     photo_url: str | None = field(default=None)
     user_colors: dict | None = field(default_factory=dict)
+
+    # --- Campos de Status e Auditoria
+    status: UsuarioStatus = UsuarioStatus.ACTIVE
 
     # Lista de perfis permitidos
     ALLOWED_PROFILES = {"admin", "cobrança",
