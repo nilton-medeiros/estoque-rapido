@@ -86,6 +86,16 @@ class NomePessoa:
         return self.nome_completo.upper()
 
     @property
+    def nome_completo_minusculo(self) -> str:
+        """
+        Retorna o nome completo do usuário em minúsculo.
+
+        Returns:
+            str: Nome completo do usuário em minúsculo.
+        """
+        return self.nome_completo.lower()
+
+    @property
     def iniciais(self) -> str:
         """Retorna as iniciais do nome completo"""
         palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
