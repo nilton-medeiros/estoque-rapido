@@ -37,8 +37,8 @@ class Produto:
     # --- Campos de Estoque ---
     quantity_on_hand: int = 0  # Quantidade disponível
     unit_of_measure: str | None = None  # Unidade de medida (ex: "un", "L", "kg", "pacote")
-    minimum_stock_level: int | None = None
-    maximum_stock_level: int | None = None
+    minimum_stock_level: int = 0
+    maximum_stock_level: int = 0
 
     # --- Campos de Status e Auditoria ---
     status: ProdutoStatus = ProdutoStatus.ACTIVE
@@ -86,10 +86,32 @@ class Produto:
             self.unit_of_measure = self.unit_of_measure.strip().upper()
         if self.categoria_name: # Normaliza o nome da categoria
             self.categoria_name = self.categoria_name.strip().capitalize()
+
         if not isinstance(self.sale_price, Money):
             self.sale_price = Money.mint("0.00")
         if not isinstance(self.cost_price, Money):
             self.cost_price = Money.mint("0.00")
+
+        # Garantir que os níveis de estoque sejam inteiros, tratando None e possíveis strings
+        try:
+            self.quantity_on_hand = int(self.quantity_on_hand) if self.quantity_on_hand is not None else 0
+        except (ValueError, TypeError):
+            self.quantity_on_hand = 0 # Default to 0 if conversion fails
+        try:
+            self.minimum_stock_level = int(self.minimum_stock_level) if self.minimum_stock_level is not None else 0
+        except (ValueError, TypeError):
+            self.minimum_stock_level = 0 # Default to 0 if conversion fails
+        try:
+            self.maximum_stock_level = int(self.maximum_stock_level) if self.maximum_stock_level is not None else 0
+        except (ValueError, TypeError):
+            self.maximum_stock_level = 0 # Default to 0 if conversion fails
+
+        if self.quantity_on_hand is None:
+            self.quantity_on_hand = 0
+        if self.minimum_stock_level is None:
+            self.minimum_stock_level = 0
+        if self.maximum_stock_level is None:
+            self.maximum_stock_level = 0
 
         # Se o produto está sendo criado como ACTIVE e não tem activated_at, define-o
         if self.status == ProdutoStatus.ACTIVE and self.created_at and not self.activated_at:
@@ -257,8 +279,8 @@ class Produto:
             cost_price=cost_price,
             quantity_on_hand=data.get("quantity_on_hand", 0),
             unit_of_measure=data.get("unit_of_measure"),
-            minimum_stock_level=data.get("minimum_stock_level"),
-            maximum_stock_level=data.get("maximum_stock_level"),
+            minimum_stock_level=data.get("minimum_stock_level", 0),
+            maximum_stock_level=data.get("maximum_stock_level", 0),
             ncm=data.get("ncm", {"code": None, "description": None, "full_description": None}),
             status=status,
             image_url=data.get("image_url"),
