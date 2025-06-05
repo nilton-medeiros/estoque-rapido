@@ -397,7 +397,7 @@ def show_company_tax_form(page: ft.Page):
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
             ),
         ),
-        title=ft.Text(route_title, size=18),
+        title=ft.Text(route_title, size=18, selectable=True),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER), # Exemplo com opacidade
         adaptive=True,
     )
