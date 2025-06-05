@@ -561,12 +561,12 @@ class ProdutoForm:
         self.cost_price.set(cost_price.get_decimal(), cost_price.currency_symbol)
         self.description.value = self.data.get("description", "")
         self.brand.value = self.data.get("brand", "")
-        self.quantity_on_hand.value = self.data.get("quantity_on_hand", "")
+        self.quantity_on_hand.value = self.data.get("quantity_on_hand", 0)
         self.unit_of_measure.value = self.data.get("unit_of_measure", "")
         self.minimum_stock_level.value = self.data.get(
-            "minimum_stock_level", "")
+            "minimum_stock_level", 0)
         self.maximum_stock_level.value = self.data.get(
-            "maximum_stock_level", "")
+            "maximum_stock_level", 0)
 
         if ncm := self.data.get("ncm"):
             self.ncm_code.value = ncm.get("code", "")
@@ -612,6 +612,13 @@ class ProdutoForm:
             return "Por favor, preencha o preço de venda do produto."
         if not self.cost_price.get_numeric_value():
             return "Por favor, preencha o preço de custo do produto."
+        if not self.quantity_on_hand.value:
+            self.quantity_on_hand.value = "0"
+        if not self.minimum_stock_level.value:
+            self.minimum_stock_level.value = "0"
+        if not self.maximum_stock_level.value:
+            self.maximum_stock_level.value = "0"
+
         return None
 
     def _page_resize(self, e):
@@ -660,11 +667,22 @@ class ProdutoForm:
         if self.image_url:
             self.data['image_url'] = self.image_url
 
+        # Converte os níveis de estoque para int, tratando valores vazios como 0
+        try:
+            self.data["quantity_on_hand"] = int(self.quantity_on_hand.value) if self.quantity_on_hand.value else 0
+        except ValueError:
+            self.data["quantity_on_hand"] = 0 # Deve ser numérico devido ao keyboard_type, mas garante
+        try:
+            self.data["minimum_stock_level"] = int(self.minimum_stock_level.value) if self.minimum_stock_level.value else 0
+        except ValueError:
+            self.data["minimum_stock_level"] = 0
+        try:
+            self.data["maximum_stock_level"] = int(self.maximum_stock_level.value) if self.maximum_stock_level.value else 0
+        except ValueError:
+            self.data["maximum_stock_level"] = 0
+
         self.data["brand"] = self.brand.value
-        self.data["quantity_on_hand"] = self.quantity_on_hand.value
         self.data["unit_of_measure"] = self.unit_of_measure.value
-        self.data["minimum_stock_level"] = self.minimum_stock_level.value
-        self.data["maximum_stock_level"] = self.maximum_stock_level.value
         self.data['status'] = ProdutoStatus.ACTIVE if self.status.value else ProdutoStatus.INACTIVE
 
         if not self.data.get('empresa_id'):
@@ -785,7 +803,7 @@ def show_product_form(page: ft.Page):
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
             ),
         ),
-        title=ft.Text(route_title, size=18),
+        title=ft.Text(route_title, size=18, selectable=True),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
     )

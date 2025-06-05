@@ -60,16 +60,40 @@ def show_products_grid(page: ft.Page):
             case _:
                 pass
 
-    def filtrar_produtos():
-        filtered_produtos = _get_filtered_produtos()
+    def handle_icon_hover(e):
+        """Muda o bgcolor do container no hover."""
+        e.control.bgcolor = ft.Colors.with_opacity(
+            0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
+        e.control.update()
+
+    def handle_icon_on_click(e) -> None:
+        page = e.page
+        page.open(drawer_filters)
+
+    icon_menu = ft.IconButton(icon=ft.Icons.MENU, visible=False, on_click=handle_icon_on_click)
+
+    def radiogroup_changed(e):
+        """Chamado quando o valor do RadioGroup muda. Filtra e renderiza o grid."""
+        nonlocal page  # Acessa page para update
+
+        if e.data == "app_filer":
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=appbar_radiogroup_filter,
+                textfield_filter=appbar_textfield_filter,
+                dropdwn_filter=appbar_dropdown_filter
+            )
+        else:
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=drawer_radiogroup_filter,
+                textfield_filter=drawer_textfield_filter,
+                dropdwn_filter=drawer_dropdown_filter
+            )
+
         _render_grid(filtered_produtos)
         if page.client_storage:
             page.update()
 
-    def radiogroup_changed(e):
-        filtrar_produtos()
-
-    filter_radio_appbar = ft.RadioGroup(
+    appbar_radiogroup_filter = ft.RadioGroup(
         value="all",  # Valor inicial do filtro
         content=ft.Row(
             controls=[
@@ -78,21 +102,100 @@ def show_products_grid(page: ft.Page):
                 ft.Radio(value="inactive", label="Descontinuados"),
             ]
         ),
-        on_change=radiogroup_changed,
+        on_change=radiogroup_changed,  # Conecta a função handler
+        data="appbar",
     )
 
     def textfield_filter_clicked(e):
         nonlocal page  # Acessa page para update
         icon_control = e.control
 
-        if filter_textfield_appbar.value:
+        text_field = appbar_textfield_filter if e.data == "appbar" else drawer_textfield_filter
+
+        if text_field.value:
             # Se foi digitado algo no campo e a busca já foi feita, limpa o filtro
             if icon_control.icon == ft.Icons.FILTER_ALT_OFF or icon_control.icon == ft.Icons.FILTER_ALT_OFF_OUTLINED:
-                filter_textfield_appbar.value = ""
+                text_field.value = ""
 
-        filtrar_produtos()
+        if e.data == "appbar":
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=appbar_radiogroup_filter,
+                textfield_filter=appbar_textfield_filter,
+                dropdwn_filter=appbar_dropdown_filter
+            )
+        else:
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=drawer_radiogroup_filter,
+                textfield_filter=drawer_textfield_filter,
+                dropdwn_filter=drawer_dropdown_filter
+            )
 
-    filter_textfield_appbar = ft.TextField(
+        _render_grid(filtered_produtos)
+        if page.client_storage:
+            page.update()
+
+    appbar_textfield_filter = ft.TextField(
+        label="Busca pelo nome do produto",
+        width=300,
+        height=40,
+        text_size=13,
+        label_style=ft.TextStyle(size=10),
+        hint_style=ft.TextStyle(size=10),
+        suffix=ft.IconButton(
+            icon=ft.Icons.FILTER_ALT_OUTLINED,
+            icon_color=ft.Colors.PRIMARY,
+            on_click=textfield_filter_clicked,
+            data="appbar",
+        ),
+        bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.BLACK),
+    )
+
+    def dropdown_filter_changed(e):
+        nonlocal page  # Acessa page para update
+
+        if e.data == "appbar":
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=appbar_radiogroup_filter,
+                textfield_filter=appbar_textfield_filter,
+                dropdwn_filter=appbar_dropdown_filter
+            )
+        else:
+            filtered_produtos = _get_filtered_produtos(
+                radiogroup_filter=drawer_radiogroup_filter,
+                textfield_filter=drawer_textfield_filter,
+                dropdwn_filter=drawer_dropdown_filter
+            )
+
+        _render_grid(filtered_produtos)
+        if page.client_storage:
+            page.update()
+
+    appbar_dropdown_filter = ft.Dropdown(
+        label="Estoque",
+        text_size=13,
+        options=[
+            ft.dropdown.Option(key="all", text="Todos", text_style=ft.TextStyle(color=ft.Colors.WHITE)),
+            ft.dropdown.Option(key="normal", text="Normal", text_style=ft.TextStyle(color=ft.Colors.GREEN)),
+            ft.dropdown.Option(key="excellent", text="Excelente", text_style=ft.TextStyle(color=ft.Colors.BLUE)),
+            ft.dropdown.Option(key="replace", text="Repor", text_style=ft.TextStyle(color=ft.Colors.RED)),
+        ],
+        on_change=dropdown_filter_changed,
+        data="appbar",
+    )
+
+    drawer_radiogroup_filter = ft.RadioGroup(
+        value="all",  # Valor inicial do filtro
+        content=ft.Column(
+            controls=[
+                ft.Radio(value="all", label="Todos"),
+                ft.Radio(value="active", label="Ativos"),
+                ft.Radio(value="inactive", label="Descontinuados"),
+            ]
+        ),
+        on_change=radiogroup_changed,  # Conecta a função handler
+    )
+
+    drawer_textfield_filter = ft.TextField(
         label="Busca pelo nome do produto",
         width=300,
         height=40,
@@ -107,72 +210,82 @@ def show_products_grid(page: ft.Page):
         bgcolor=ft.Colors.with_opacity(0.2, ft.Colors.BLACK),
     )
 
-    def dropdown_filter_changed(e):
-        filtrar_produtos()
-
-    filter_dropdown_appbar = ft.Dropdown(
+    drawer_dropdown_filter = ft.Dropdown(
         label="Estoque",
         text_size=13,
         options=[
-            ft.DropdownOption(key="all", text= "Todos", content=ft.Text("Todos", size=13, color=ft.Colors.WHITE)),
-            ft.DropdownOption(key="normal", text= "Normal", content=ft.Text("Normal", size=13, color=ft.Colors.GREEN)),
-            ft.DropdownOption(key="excellent", text= "Excelente", content=ft.Text("Excelente", size=13, color=ft.Colors.BLUE)),
-            ft.DropdownOption(key="replace", text="Repor", content=ft.Text("Repor", size=13, color=ft.Colors.RED)),
+            ft.dropdown.Option(key="all", text="Todos", text_style=ft.TextStyle(color=ft.Colors.WHITE)),
+            ft.dropdown.Option(key="normal", text="Normal", text_style=ft.TextStyle(color=ft.Colors.GREEN)),
+            ft.dropdown.Option(key="excellent", text="Excelente", text_style=ft.TextStyle(color=ft.Colors.BLUE)),
+            ft.dropdown.Option(key="replace", text="Repor", text_style=ft.TextStyle(color=ft.Colors.RED)),
         ],
         on_change=dropdown_filter_changed,
     )
 
-    # def handle_icon_hover(e):
-    #     """Muda o bgcolor do container no hover."""
-    #     e.control.bgcolor = ft.Colors.with_opacity(
-    #         0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
-    #     e.control.update()
+    def build_app_bar(width):
+        controls = []
 
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(20),
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                # on_hover=handle_icon_hover,
-                content=ft.Icon(
-                    ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home"), tooltip="Voltar",
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+        # Atualiza visibilidade do menu ícone conforme a largura
+        icon_menu.visible = width <= 1024
+        appbar_radiogroup_filter.visible = width > 1024
+        appbar_textfield_filter.visible = width > 1024
+        appbar_dropdown_filter.visible = width > 1024
+
+        if width > 1024:
+            controls.extend([
+                ft.Container(
+                    bgcolor=ft.Colors.TRANSPARENT,
+                    alignment=ft.alignment.center,
+                    content=appbar_radiogroup_filter,
+                    margin=ft.margin.only(left=10, right=10),
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                ),
+                ft.Container(
+                    bgcolor=ft.Colors.TRANSPARENT,
+                    alignment=ft.alignment.center,
+                    content=appbar_textfield_filter,
+                    margin=ft.margin.only(left=10, right=10),
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                ),
+                ft.Container(
+                    bgcolor=ft.Colors.TRANSPARENT,
+                    alignment=ft.alignment.center,
+                    content=appbar_dropdown_filter,
+                    margin=ft.margin.only(left=10, right=10),
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                )
+            ])
+
+        return ft.AppBar(
+            leading=ft.Row(
+                controls=[
+                    icon_menu,
+                    ft.Container(
+                        alignment=ft.alignment.center_left,
+                        padding=ft.padding.only(left=10),
+                        content=ft.Container(
+                            width=40,
+                            height=40,
+                            border_radius=ft.border_radius.all(20),
+                            ink=True,
+                            bgcolor=ft.Colors.TRANSPARENT,
+                            alignment=ft.alignment.center,
+                            on_hover=handle_icon_hover,
+                            content=ft.Icon(ft.Icons.ARROW_BACK),
+                            on_click=lambda _: page.go("/home"),
+                            tooltip="Voltar",
+                            clip_behavior=ft.ClipBehavior.ANTI_ALIAS
+                        ),
+                    ),
+                ],
             ),
-        ),
-        title=ft.Text(f"Produtos", size=18),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
-        actions=[
-            ft.Container(
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                content=filter_radio_appbar,
-                margin=ft.margin.only(left=10, right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            ),
-            ft.Container(
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                content=filter_textfield_appbar,
-                margin=ft.margin.only(left=10, right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            ),
-            ft.Container(
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                content=filter_dropdown_appbar,
-                margin=ft.margin.only(left=10, right=10),
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-            ),
-        ],
-    )
+            title=ft.Text(f"Produtos", size=18, selectable=True),
+            bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
+            adaptive=True,
+            actions=controls
+        )
+
+    appbar = build_app_bar(page.width if page.width else 0)
 
     # --- Conteúdo Padrão Vazio (definido uma vez) ---
     empty_content_display = ft.Container(
@@ -188,65 +301,66 @@ def show_products_grid(page: ft.Page):
         alignment=ft.alignment.center,
     )
 
-    def stock_filter(prod: Produto) -> bool:
-        if not filter_dropdown_appbar.value or filter_dropdown_appbar.value == "all":    # Todos os estoques
+    def stock_filter(prod: Produto, stk_dropdown_filter: ft.Dropdown) -> bool:
+        if not stk_dropdown_filter.value or stk_dropdown_filter.value == "all":    # Todos os estoques
             return True
-        elif filter_dropdown_appbar.value == "normal":   # Estoque entre o mínimo e o máximo
+        elif stk_dropdown_filter.value == "normal":   # Estoque entre o mínimo e o máximo
             return prod.minimum_stock_level <= prod.quantity_on_hand < prod.maximum_stock_level
-        elif filter_dropdown_appbar.value == "excellent":    # Estoque acima do esperado ou igual ao máximo
+        elif stk_dropdown_filter.value == "excellent":    # Estoque acima do esperado ou igual ao máximo
             return prod.maximum_stock_level <= prod.quantity_on_hand
         else:   # Estoque abaixo do esperado ou igual ao mínimo
             return prod.quantity_on_hand < prod.minimum_stock_level
 
-    def _get_filtered_produtos() -> list:
-        """Filtra _all_produtos_data com base no valor de filter_radio_appbar."""
+    def _get_filtered_produtos(radiogroup_filter: ft.RadioGroup, textfield_filter: ft.TextField, dropdwn_filter: ft.Dropdown) -> list:
+        """Filtra _all_produtos_data com base no valor de radiogroup_filter."""
         nonlocal _all_produtos_data  # Acessa a variável do escopo de show_products_grid
 
-        current_filter = filter_radio_appbar.value
+        current_filter = radiogroup_filter.value
         # Valor original do campo de busca
-        original_search_value = filter_textfield_appbar.value if filter_textfield_appbar.value else ""
+        original_search_value = textfield_filter.value if textfield_filter.value else ""
         # Texto de busca processado para o filtro
         search_text_for_filtering = original_search_value.strip()
         product_filter = []
 
         if current_filter == "all":
             if search_text_for_filtering:
-                product_filter = [pro for pro in _all_produtos_data if search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro, dropdwn_filter)]
             else:
-                product_filter = [pro for pro in _all_produtos_data if stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if stock_filter(pro, dropdwn_filter)]
         elif current_filter == "active":
             # Assumindo que produto.status.name pode ser 'ACTIVE', 'INACTIVE', etc.
             if search_text_for_filtering:
-                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE' and search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE' and search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro, dropdwn_filter)]
             else:
-                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE' and stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'ACTIVE' and stock_filter(pro, dropdwn_filter)]
         elif current_filter == "inactive":  # "Descontinuado"
             if search_text_for_filtering:
-                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE' and search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE' and search_text_for_filtering.lower() in pro.name.lower() and stock_filter(pro, dropdwn_filter)]
             else:
-                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE' and stock_filter(pro)]
+                product_filter = [pro for pro in _all_produtos_data if pro.status.name == 'INACTIVE' and stock_filter(pro, dropdwn_filter)]
 
         # Atualiza os elementos da UI (cor do TextField e ícone do Suffix)
-        suffix_control = filter_textfield_appbar.suffix
+        suffix_control = textfield_filter.suffix
         if isinstance(suffix_control, ft.IconButton): # Verifica se o sufixo é um IconButton
             if original_search_value.strip():  # Verifica se havia algum texto de busca (após remover espaços)
                 if product_filter:  # E se foram encontrados resultados
-                    filter_textfield_appbar.color = ft.Colors.GREEN
+                    textfield_filter.color = ft.Colors.GREEN
                     suffix_control.icon = ft.Icons.FILTER_ALT_OFF
                     suffix_control.icon_color = ft.Colors.GREEN
                 else:  # Texto de busca presente, mas sem resultados
-                    filter_textfield_appbar.color = ft.Colors.RED
+                    textfield_filter.color = ft.Colors.RED
                     suffix_control.icon = ft.Icons.FILTER_ALT_OFF_OUTLINED
                     suffix_control.icon_color = ft.Colors.RED
             else:  # Nenhum texto de busca (ou apenas espaços em branco)
-                filter_textfield_appbar.color = ft.Colors.WHITE # Cor padrão/neutra
+                textfield_filter.color = ft.Colors.WHITE # Cor padrão/neutra
                 suffix_control.icon = ft.Icons.FILTER_ALT_OUTLINED
                 suffix_control.icon_color = ft.Colors.PRIMARY
 
+            suffix_control.update() # Atualiza o IconButton para refletir a mudança de ícone
+
         # Mantém o valor original (com espaços, se houver) no TextField para a UI, mas filtra com o valor sem espaços
-        filter_textfield_appbar.value = original_search_value
-        # As atualizações de filter_textfield_appbar (como color) e suffix_control (icon, icon_color)
-        # serão tratadas pelo page.update() chamado posteriormente em filtrar_produtos() ou load_data_and_update_ui().
+        textfield_filter.value = original_search_value
+        textfield_filter.update() # Atualiza o TextField para refletir a mudança de cor e valor
 
         return product_filter
 
@@ -374,6 +488,15 @@ def show_products_grid(page: ft.Page):
             )
             content_area.controls.append(grid)
 
+    drawer_filters = ft.NavigationDrawer(
+        controls=[
+            drawer_radiogroup_filter,
+            drawer_textfield_filter,
+            drawer_dropdown_filter,
+        ],
+
+    )
+
     async def load_data_and_update_ui():
         """Carrega todos os dados do banco, armazena, filtra e atualiza a UI."""
         nonlocal _all_produtos_data, _produtos_inactivated_count, loading_container, content_area, page, fab_trash
@@ -435,7 +558,19 @@ def show_products_grid(page: ft.Page):
                 fab_trash.tooltip = f"Produtos inativos: {_produtos_inactivated_count}"
 
             # Filtra os dados carregados (ou vazios) e renderiza o grid
-            filtered_produtos = _get_filtered_produtos()
+            width = page.width if page.width else 0
+            if width < 1024:
+                filtered_produtos = _get_filtered_produtos(
+                    radiogroup_filter=appbar_radiogroup_filter,
+                    textfield_filter=appbar_textfield_filter,
+                    dropdwn_filter=appbar_dropdown_filter
+                )
+            else:
+                filtered_produtos = _get_filtered_produtos(
+                    radiogroup_filter=drawer_radiogroup_filter,
+                    textfield_filter=drawer_textfield_filter,
+                    dropdwn_filter=drawer_dropdown_filter
+                )
 
             _render_grid(filtered_produtos)
 
@@ -494,6 +629,14 @@ def show_products_grid(page: ft.Page):
         bgcolor=ft.Colors.TRANSPARENT,
     )
 
+    def handle_page_resize(e):
+        width = e.page.width if e.page.width else 0
+        e.page.appbar = build_app_bar(width)
+        e.page.update()
+        print(f"page.width: {width}")
+
+    page.on_resized = handle_page_resize
+
     return ft.View(
         route="/home/produtos/grid",  # A rota que esta view corresponde
         controls=[
@@ -501,6 +644,7 @@ def show_products_grid(page: ft.Page):
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
+        drawer=drawer_filters,
         floating_action_button=ft.Column(  # type: ignore [attr-defined]
             controls=[fab_add, fab_trash],
             alignment=ft.MainAxisAlignment.END,
