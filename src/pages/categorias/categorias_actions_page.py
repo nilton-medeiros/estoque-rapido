@@ -2,11 +2,11 @@ import logging
 import flet as ft
 import asyncio
 
-from src.domains.produtos.models.categorias_model import ProdutoCategorias
+from src.domains.categorias.models.categorias_model import ProdutoCategorias
 from src.domains.produtos.models.produtos_subclass import ProdutoStatus
 from src.shared import MessageType, message_snackbar
 
-import src.domains.produtos.controllers.categorias_controllers as category_controllers
+import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
 logger = logging.getLogger(__name__)
 

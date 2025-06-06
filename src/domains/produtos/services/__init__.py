@@ -1,2 +1,1 @@
-from .categorias_services import CategoriasServices
 from .produtos_services import ProdutosServices

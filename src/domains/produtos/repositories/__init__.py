@@ -1,4 +1,2 @@
-from .contracts.categorias_repository import CategoriasRepository
 from .contracts.produtos_repository import ProdutosRepository
-from .implementations.firebase_categorias_repository import FirebaseCategoriasRepository
 from .implementations.firebase_produtos_repository import FirebaseProdutosRepository

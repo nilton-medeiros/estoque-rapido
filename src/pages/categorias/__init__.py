@@ -1,0 +1,3 @@
+from .categorias_grid_page import show_categories_grid
+from .categorias_form_page import show_category_form
+from .categorias_grid_recycle_page import show_categories_grid_trash

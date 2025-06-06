@@ -11,7 +11,7 @@ import flet as ft
 import src.shared.config.globals as app_globals
 
 import src.controllers.bucket_controllers as bucket_controllers
-import src.domains.produtos.controllers.categorias_controllers as category_controllers
+import src.domains.categorias.controllers.categorias_controllers as category_controllers
 import src.domains.produtos.controllers.produtos_controllers as product_controllers
 
 from src.domains.produtos.models import Produto, ProdutoStatus

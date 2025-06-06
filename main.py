@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 from src.pages import show_signup_page, show_landing_page, show_login_page
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
-from src.pages.produtos import show_categories_grid, show_categories_grid_trash, show_category_form, show_products_grid, show_products_grid_trash, show_product_form
+from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
+from src.pages.categorias import show_categories_grid, show_categories_grid_trash, show_category_form
 from src.services import AppStateManager
 
 from src.shared import get_app_colors

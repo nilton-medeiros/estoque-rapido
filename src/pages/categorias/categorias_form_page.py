@@ -8,7 +8,7 @@ from enum import Enum
 import flet as ft
 
 import src.controllers.bucket_controllers as bucket_controllers
-import src.domains.produtos.controllers.categorias_controllers as category_controllers
+import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
 from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
 from src.pages.partials import build_input_field

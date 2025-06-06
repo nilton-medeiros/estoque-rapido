@@ -2,8 +2,8 @@ import logging
 
 from typing import Any
 from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
-from src.domains.produtos.repositories import FirebaseCategoriasRepository
-from src.domains.produtos.services import CategoriasServices
+from src.domains.categorias.repositories import FirebaseCategoriasRepository
+from src.domains.categorias.services import CategoriasServices
 
 logger = logging.getLogger(__name__)
 

@@ -178,7 +178,6 @@ class LoginView:
                 email=self.email_input.value, password=self.password_input.value) # type: ignore
 
             if result["status"] == "error":
-                print(result["message"])
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return

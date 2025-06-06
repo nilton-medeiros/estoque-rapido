@@ -1,6 +1,6 @@
 from typing import Any
 from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
-from src.domains.produtos.repositories import CategoriasRepository
+from src.domains.categorias.repositories import CategoriasRepository
 from src.domains.shared import NomePessoa
 from src.shared import get_uuid
 

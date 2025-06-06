@@ -1,15 +1,17 @@
+# Estrutura de Diretórios - Estoque Rápido
+
+```
 estoquerapido/
-├── .venv/
 ├── .env
-├── .git
-├── .gitignore
 ├── .vscode/
 │   ├── leia-me.txt
 │   └── settings.json
 ├── assets/
-│   ├── audios/
 │   ├── aula-icones-pwa.txt
 │   ├── favicon.png
+│   ├── ibge_code.json
+│   ├── icon.png
+│   ├── manifest.json
 │   ├── fonts/
 │   │   ├── LICENSE.txt
 │   │   ├── Poppins-ThinItalic.ttf
@@ -22,19 +24,18 @@ estoquerapido/
 │   │   ├── Roboto-LightItalic.ttf
 │   │   ├── Roboto-Medium.ttf
 │   │   ├── Roboto-MediumItalic.ttf
-│   │   ├── RobotoMono-VariableFont_wght.ttf
 │   │   ├── Roboto-Regular.ttf
-│   │   ├── RobotoSlab[wght].ttf
 │   │   ├── Roboto-Thin.ttf
-│   │   └── Roboto-ThinItalic.ttf
-│   ├── ibge_code.json
+│   │   ├── Roboto-ThinItalic.ttf
+│   │   ├── RobotoMono-VariableFont_wght.ttf
+│   │   └── RobotoSlab[wght].ttf
 │   ├── icons/
 │   │   ├── apple-touch-icon-192.png
 │   │   ├── icon-192.png
 │   │   ├── icon-512.png
-│   │   ├── ICONE_SISTROM-TRANSPARENTE.png
 │   │   ├── icon-maskable-192.png
 │   │   ├── icon-maskable-512.png
+│   │   ├── ICONE_SISTROM-TRANSPARENTE.png
 │   │   ├── loading-animation.png
 │   │   ├── Recycle_Bin_Full_icon-icons.com_55511.ico
 │   │   ├── Recycle_Bin_icon-icons.com_55510.ico
@@ -44,47 +45,47 @@ estoquerapido/
 │   │   ├── recycle_full_1772.png
 │   │   ├── recycle_recyclebin_full_delete_trash_1772.ico
 │   │   └── recycling_recyclebin_empty_delete_trash_1771.ico
-│   ├── icon.png
-│   ├── images/
-│   │   ├── avatars/
-│   │   │   ├── Angelina Jolie.jpg
-│   │   │   ├── Angelina_Jolie-123e4567e89b12d3a456426655440000.jpg
-│   │   │   ├── avatar_default_123e4567e89b12d3a456426655440000.jpg
-│   │   │   └── user_17b8c9059f03419b9e31f8e4d7a40f60-fundo-transp.png
-│   │   ├── bg.jpg
-│   │   ├── empty_folder.png
-│   │   ├── estoquerapido.svg
-│   │   └── nao_utilizadas/
-│   │   │   ├── DALLE 2025-01-11 14.29.53 - Estoque Rpido.webp
-│   │   │   └── estoque_rapido_logo.png
-│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000.jpg
-│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000.svg
-│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000-b.svg
-│   │   ├── estoquerapido_logo.png
-│   │   ├── estoquerapido_logo_1024x724.png
-│   │   ├── face-1.jpg
-│   │   ├── face-2.png
-│   │   ├── logo_sistrom.png
-│   │   └── steel_cabinets_documents_empty.png
-│   └── manifest.json
+│   └── images/
+│       ├── bg.jpg
+│       ├── empty_folder.png
+│       ├── estoquerapido.svg
+│       ├── estoquerapido_img_123e4567e89b12d3a456426614174000.jpg
+│       ├── estoquerapido_img_123e4567e89b12d3a456426614174000.svg
+│       ├── estoquerapido_img_123e4567e89b12d3a456426614174000-b.svg
+│       ├── estoquerapido_logo.png
+│       ├── estoquerapido_logo_1024x724.png
+│       ├── face-1.jpg
+│       ├── face-2.png
+│       ├── logo_sistrom.png
+│       ├── steel_cabinets_documents_empty.png
+│       ├── avatars/
+│       │   ├── Angelina Jolie.jpg
+│       │   ├── Angelina_Jolie-123e4567e89b12d3a456426655440000.jpg
+│       │   ├── avatar_default_123e4567e89b12d3a456426655440000.jpg
+│       │   └── user_17b8c9059f03419b9e31f8e4d7a40f60-fundo-transp.png
+│       └── nao_utilizadas/
+│           ├── DALL·E 2025-01-11 14.29.53 - Estoque Rápido.webp
+│           └── estoque_rapido_logo.png
 ├── env-SAMPLE
-├── estrutura de diretórios.txt
+├── estrutura-de-diretorios.txt
 ├── general_info/
-│   ├── DOCUMENTO AUXILIAR DA NOTA FISCAL DE CONSUMIDOR ELETRNICA.pdf
+│   ├── DOCUMENTO AUXILIAR DA NOTA FISCAL DE CONSUMIDOR ELETRÔNICA.pdf
 │   ├── nuvem_fiscal.txt
-│   └── response_get_cnpj.json
+│   ├── response_get_cnpj.json
+│   └── Termos de Uso do Estoque Rápido.docx
+├── libs_instaladas.txt
 ├── LICENSE
+├── lista_de_diretorios_atual.txt
 ├── logs/
 │   ├── app.log
 │   ├── app.log.1
-│   ├── app.log.2
-│   ├── app.log.3
-│   ├── app.log.4
 │   └── app.log.5
 ├── main.py
 ├── README.md
 ├── requirements.temp
 ├── requirements.txt
+├── serviceAccountKey.json
+├── serviceAccountKey-SAMPLE.json
 ├── src/
 │   ├── __init__.py
 │   ├── controllers/
@@ -112,6 +113,25 @@ estoquerapido/
 │   │   │   └── services/
 │   │   │       ├── __init__.py
 │   │   │       └── app_config_services.py
+│   │   ├── categorias/
+│   │   │   ├── __init__.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── categorias_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── categorias_model.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── categorias_repository.py
+│   │   │   │   └── implementations/
+│   │   │   │       ├── __init__.py
+│   │   │   │       └── firebase_categorias_repository.py
+│   │   │   └── services/
+│   │   │       ├── __init__.py
+│   │   │       └── categorias_services.py
 │   │   ├── empresas/
 │   │   │   ├── __init__.py
 │   │   │   ├── controllers/
@@ -138,29 +158,32 @@ estoquerapido/
 │   │   │       └── empresas_services.py
 │   │   ├── produtos/
 │   │   │   ├── __init__.py
+│   │   │   ├── components/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── filter_components.py
+│   │   │   │   └── product_card.py
 │   │   │   ├── controllers/
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── categorias_controllers.py
+│   │   │   │   ├── grid_controller.py
 │   │   │   │   └── produtos_controllers.py
 │   │   │   ├── models/
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── categorias_model.py
+│   │   │   │   ├── grid_models.py
 │   │   │   │   ├── produtos_model.py
 │   │   │   │   └── produtos_subclass.py
 │   │   │   ├── repositories/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── contracts/
 │   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── categorias_repository.py
 │   │   │   │   │   └── produtos_repository.py
-│   │   │   │   ├── implementations/
-│   │   │   │   │   ├── __init__.py
-│   │   │   │   │   ├── firebase_categorias_repository.py
-│   │   │   │   │   └── firebase_produtos_repository.py
+│   │   │   │   └── implementations/
+│   │   │   │       └── firebase_produtos_repository.py
 │   │   │   ├── services/
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── categorias_services.py
 │   │   │   │   └── produtos_services.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       └── produtos_grid_ui.py
 │   │   ├── shared/
 │   │   │   ├── __init__.py
 │   │   │   ├── domain_exceptions.py
@@ -171,11 +194,12 @@ estoquerapido/
 │   │       ├── __init__.py
 │   │       ├── controllers/
 │   │       │   ├── __init__.py
-│   │       │   ├── usuarios_controllers gAuth.py.old
-│   │       │   └── usuarios_controllers.py
+│   │       │   ├── usuarios_controllers.py
+│   │       │   └── usuarios_controllers gAuth.py.old
 │   │       ├── models/
 │   │       │   ├── __init__.py
-│   │       │   └── usuario_model.py
+│   │       │   ├── usuario_model.py
+│   │       │   └── usuario_subclass.py
 │   │       ├── repositories/
 │   │       │   ├── __init__.py
 │   │       │   ├── contracts/
@@ -183,56 +207,71 @@ estoquerapido/
 │   │       │   │   └── usuarios_repository.py
 │   │       │   └── implementations/
 │   │       │       ├── __init__.py
-│   │       │       ├── firebase_usuarios_repository_gAuth.py.old
-│   │       │       └── firebase_usuarios_repository.py
+│   │       │       ├── firebase_usuarios_repository.py
+│   │       │       └── firebase_usuarios_repository_gAuth.py.old
 │   │       └── services/
 │   │           ├── __init__.py
 │   │           └── usuarios_services.py
 │   ├── pages/
 │   │   ├── __init__.py
-│   │   ├── empresas/
-│   │   │   ├── __init__.py
-│   │   │   ├── empresas_actions.py
-│   │   │   ├── empresas_data_table.py
-│   │   │   ├── empresas_form.py
-│   │   │   ├── empresas_form_certificado_a1.py
-│   │   │   ├── empresas_form_dados_fiscais.py
-│   │   │   ├── empresas_grid_lixeira.py
-│   │   │   └── empresas_grid_view.py
-│   │   ├── home/
-│   │   │   ├── __init__.py
-│   │   │   ├── content.py
-│   │   │   ├── home_page.py
-│   │   │   └── sidebar.py
 │   │   ├── landing_page.py
 │   │   ├── login.html
-│   │   ├── login.py
+│   │   ├── login_page.py
+│   │   ├── signup_page.py
+│   │   ├── categorias/
+│   │   │   ├── __init__.py
+│   │   │   ├── categorias_actions_page.py
+│   │   │   ├── categorias_form_page.py
+│   │   │   ├── categorias_grid_page.py
+│   │   │   └── categorias_grid_recycle_page.py
+│   │   ├── empresas/
+│   │   │   ├── __init__.py
+│   │   │   ├── empresas_actions_page.py
+│   │   │   ├── empresas_certificado_a1_form_page.py
+│   │   │   ├── empresas_dados_fiscais_form_page.py
+│   │   │   ├── empresas_form_page.py
+│   │   │   ├── empresas_grid_page.py
+│   │   │   └── empresas_grid_recycle_page.py
+│   │   ├── home/
+│   │   │   ├── __init__.py
+│   │   │   ├── content_page.py
+│   │   │   ├── home_page.py
+│   │   │   └── sidebar_page.py
 │   │   ├── partials/
 │   │   │   ├── __init__.py
 │   │   │   ├── build_input_responsive.py
 │   │   │   ├── login_button.py
+│   │   │   ├── monetary_field.py
 │   │   │   └── responsive_sizes.py
 │   │   ├── produtos/
 │   │   │   ├── __init__.py
-│   │   │   ├── categorias_actions.py
-│   │   │   ├── categorias_form.py
-│   │   │   ├── categorias_grid_lixeira.py
-│   │   │   └── categorias_grid_view.py
-│   │   └── signup.py
+│   │   │   ├── produtos_actions_page.py
+│   │   │   ├── produtos_form_page.py
+│   │   │   ├── produtos_grid_page.py
+│   │   │   ├── produtos_grid_page-old.py
+│   │   │   └── produtos_grid_recycle_page.py
+│   │   └── usuarios/
+│   │       ├── __init__.py
+│   │       ├── usuarios_actions_page.py
+│   │       ├── usuarios_form_page.py
+│   │       ├── usuarios_grid_page.py
+│   │       └── usuarios_grid_recycle_page.py
 │   ├── presentation/
 │   │   └── components/
 │   │       ├── __init__.py
 │   │       ├── carousel.py
 │   │       └── functionality_graphics.py
 │   ├── services/
+│   │   ├── __init__.py
 │   │   ├── .keys/
 │   │   │   ├── estoquerapido-s3_accessKeys.csv
 │   │   │   ├── firebaseAdminSDK_fbsvc_13b6b05ac2.json
+│   │   │   ├── logins.txt
 │   │   │   └── serviceAccountKey.json
-│   │   ├── __init__.py
 │   │   ├── apis/
 │   │   │   ├── __init__.py
 │   │   │   ├── cnpj_api.py
+│   │   │   ├── cosmos_api.py
 │   │   │   ├── dfe_services.py
 │   │   │   └── response_api_brasilapi.json
 │   │   ├── aws/
@@ -264,7 +303,7 @@ estoquerapido/
 │   │   │   ├── __init__.py
 │   │   │   ├── app_theme.py
 │   │   │   ├── get_app_colors.py
-│   │   │   ├── globals.old.py
+│   │   │   ├── globals.py
 │   │   │   ├── logging_config.py
 │   │   │   └── user_session.py
 │   │   └── utils/
@@ -277,24 +316,26 @@ estoquerapido/
 │   │       ├── money_numpy.py
 │   │       ├── time_zone.py
 │   │       └── tools.py
-│   ├── tests/
-│   │   ├── alertdialog_empresa.py
-│   │   ├── consult_cnpj.py
-│   │   ├── estoquerapido.svg
-│   │   ├── main_client_storage.py
-│   │   ├── main_images.py
-│   │   ├── main_janela_flutuante.py
-│   │   ├── main_save_selected_file.py
-│   │   ├── main_uploads.py
-│   │   ├── main_user_agent.py
-│   │   ├── storage/
-│   │   │   ├── data/
-│   │   │   └── temp/
-│   │   ├── test.py
-│   │   └── uploads/
-│   │       ├── 1209_221858.jpg
-│   │       ├── Nilton e Amanda.png
-│   │       └── nilton.jpg
+│   └── tests/
+│       ├── alertdialog_empresa.py
+│       ├── consult_cnpj.py
+│       ├── dropdown_fail.py
+│       ├── estoquerapido.svg
+│       ├── main_client_storage.py
+│       ├── main_images.py
+│       ├── main_janela_flutuante.py
+│       ├── main_save_selected_file.py
+│       ├── main_uploads.py
+│       ├── main_user_agent.py
+│       ├── monetary_fieldtext.py
+│       ├── test.py
+│       ├── storage/
+│       │   ├── data/
+│       │   └── temp/
+│       └── uploads/
+│           ├── 1209_221858.jpg
+│           ├── Nilton e Amanda.png
+│           └── nilton.jpg
 ├── storage/
 │   ├── __init__.py
 │   ├── buckets/
@@ -313,5 +354,29 @@ estoquerapido/
 │   └── temp/
 ├── STYLE_GUIDE.md
 ├── tamanhos de tela (xs,sm,md,lg,xl e xxl).txt
-├── temp/
 └── uploads/
+```
+
+## Observações sobre a Arquitetura MVP/MVC
+
+Sua estrutura segue perfeitamente os princípios que discutimos:
+
+### **Domain-Driven Design (DDD)**
+- Cada domínio (`app_config`, `categorias`, `empresas`, `produtos`, `usuarios`) tem sua própria estrutura completa
+- Separação clara entre `models`, `controllers`, `repositories`, `services`
+- Padrão Repository com contratos (`contracts`) e implementações (`implementations`)
+
+### **Separação de Responsabilidades**
+- **Models**: Entidades de domínio puras
+- **Controllers**: Lógica de coordenação (MVP Presenter)
+- **Services**: Regras de negócio
+- **Repositories**: Acesso a dados
+- **Pages**: Interface do usuário (MVP View)
+
+### **Estrutura Limpa**
+- `shared/`: Utilitários e configurações globais
+- `services/`: Integrações externas (APIs, AWS, Firebase)
+- `storage/`: Persistência de dados
+- `presentation/`: Componentes reutilizáveis de UI
+
+Essa organização permite trabalhar em paralelo no frontend (`pages/`) e backend (`domains/`) mantendo baixo acoplamento!

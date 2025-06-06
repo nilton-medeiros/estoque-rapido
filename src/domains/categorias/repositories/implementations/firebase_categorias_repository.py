@@ -7,7 +7,7 @@ from firebase_admin import firestore
 from firebase_admin import exceptions
 
 from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
-from src.domains.produtos.repositories import CategoriasRepository
+from src.domains.categorias.repositories import CategoriasRepository
 from src.shared import deepl_translator
 from storage.data import get_firebase_app
 

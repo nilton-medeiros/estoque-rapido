@@ -3,8 +3,8 @@ import traceback
 
 import flet as ft
 
-import src.pages.produtos.categorias_actions_page as cat_actions
-import src.domains.produtos.controllers.categorias_controllers as category_controllers
+import src.pages.categorias.categorias_actions_page as cat_actions
+import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
 
 logger = logging.getLogger(__name__)
