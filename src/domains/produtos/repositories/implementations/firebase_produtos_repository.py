@@ -6,7 +6,7 @@ from firebase_admin import exceptions
 
 from src.domains.produtos.models import Produto, ProdutoStatus
 from src.domains.produtos.repositories import ProdutosRepository
-from src.shared import deepl_translator
+from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)

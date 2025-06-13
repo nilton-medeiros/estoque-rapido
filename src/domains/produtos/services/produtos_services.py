@@ -1,7 +1,7 @@
 from src.domains.produtos.models import Produto, ProdutoStatus
 from src.domains.produtos.repositories import ProdutosRepository
 from src.domains.shared import NomePessoa
-from src.shared import get_uuid
+from src.shared.utils import get_uuid
 
 
 class ProdutosServices:

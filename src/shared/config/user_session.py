@@ -2,7 +2,7 @@ import asyncio
 import flet as ft
 import logging
 
-from src.shared import get_app_colors
+from src.shared.config import get_app_colors
 
 import flet as ft
 

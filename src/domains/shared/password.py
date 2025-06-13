@@ -1,3 +1,4 @@
+from typing import Any
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import os
@@ -72,7 +73,7 @@ class Password:
             raise ValueError(f"Erro ao descriptografar a senha: {e}")
 
     @classmethod
-    def from_dict(cls, data: bytes|dict|str) -> 'Password':
+    def from_dict(cls, data: bytes | dict[str, Any] | str) -> 'Password':
         """
         Cria uma instância de Password a partir de um valor (dicionário ou bytes).
         """

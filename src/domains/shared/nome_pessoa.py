@@ -16,7 +16,7 @@ class NomePessoa:
         >>> print(pessoa.nome_completo)  # Imprime: João Silva
     """
 
-    def __init__(self, first_name: str, last_name: str|None = None):
+    def __init__(self, first_name: str | None = None, last_name: str | None = None):
         """
         Inicializa a instância de NomePessoa com validação e formatação.
 
@@ -30,18 +30,28 @@ class NomePessoa:
         if not first_name and not last_name:
             raise ValueError("Os nomes não podem ser vazios.")
 
+        palavras_excecoes = {'da', 'das', 'de', 'do', 'dos'}
+
         self.first_name = None
         self.last_name = ''
 
         if first_name:
             # Se o primeiro nome no args first_name não é vazio ""
-            self.first_name = first_name.strip().capitalize()
+            self.first_name = ' '.join(
+                name.lower() if name.lower() in palavras_excecoes else name.capitalize()
+                for name in first_name.split()
+            )
             if last_name:
-                self.last_name = last_name.strip().capitalize()
+                self.last_name = ' '.join(
+                    name.lower() if name.lower() in palavras_excecoes else name.capitalize()
+                    for name in last_name.split()
+                )
         elif last_name:
             # Se o primeiro nome no args first_name é vazio ""
-            self.first_name = last_name.strip().capitalize()
-
+            self.first_name = ' '.join(
+                name.lower() if name.lower() in palavras_excecoes else name.capitalize()
+                for name in last_name.split()
+            )
     @classmethod
     def from_dict(cls, data: dict) -> 'NomePessoa':
         """
@@ -68,7 +78,7 @@ class NomePessoa:
     @property
     def nome_completo(self) -> str:
         """
-        Retorna o nome completo do usuário.
+        Retorna o nome completo do usuário capitalizado em cada palavra.
 
         Returns:
             str: Nome completo do usuário.
@@ -99,7 +109,7 @@ class NomePessoa:
     def iniciais(self) -> str:
         """Retorna as iniciais do nome completo"""
         palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
-        palavras = self.nome_completo.split()
+        palavras = self.nome_completo
         iniciais = [palavra[0]
                     for palavra in palavras if palavra not in palavras_ignoradas]
         return ''.join(iniciais)

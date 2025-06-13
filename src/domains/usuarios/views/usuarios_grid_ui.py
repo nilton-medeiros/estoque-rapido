@@ -1,19 +1,19 @@
 # ==========================================
-# src/domains/produtos/views/produtos_grid_ui.py
+# src/domains/usuarios/views/usuarios_grid_ui.py
 # ==========================================
 from typing import TYPE_CHECKING
 import flet as ft
-from src.domains.produtos.models.produtos_model import Produto
-from src.domains.produtos.models.grid_models import FilterType, StockLevel
-from src.domains.produtos.components.product_card import ProductCard
-from src.domains.produtos.components.filter_components import FilterComponents
+from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.grid_models import FilterType
+from src.domains.usuarios.components.user_card import UserCard
+from src.domains.usuarios.components.filter_components import FilterComponents
 
 if TYPE_CHECKING:
-    from src.domains.produtos.controllers.grid_controller import ProdutoGridController
-class ProdutoGridUI:
-    """Componente UI principal do grid de produtos"""
+    from src.domains.usuarios.controllers.grid_controller import UsuarioGridController
+class UsuarioGridUI:
+    """Componente UI principal do grid de usuarios"""
 
-    def __init__(self, controller: 'ProdutoGridController'):
+    def __init__(self, controller: 'UsuarioGridController'):
         self.controller = controller
         self.controller.ui_components = self
 
@@ -45,17 +45,15 @@ class ProdutoGridUI:
         """Cria a AppBar com filtros"""
         self.filter_radio = FilterComponents.create_radio_filter(self._on_radio_changed)
         self.search_field = FilterComponents.create_search_field(self._on_search_clicked)
-        self.stock_dropdown = FilterComponents.create_stock_dropdown(self._on_stock_filter_changed)
 
         return ft.AppBar(
             leading=self._create_back_button(),
-            title=ft.Text("Produtos", size=18),
+            title=ft.Text("Usuarios", size=18),
             bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
             adaptive=True,
             actions=[
                 ft.Container(content=self.filter_radio, margin=ft.margin.only(left=10, right=10)),
                 ft.Container(content=self.search_field, margin=ft.margin.only(left=10, right=10)),
-                ft.Container(content=self.stock_dropdown, margin=ft.margin.only(left=10, right=10)),
             ],
         )
 
@@ -74,7 +72,7 @@ class ProdutoGridUI:
 
     def _create_fab_buttons(self) -> ft.Column:
         self.fab_add = ft.FloatingActionButton(
-            tooltip="Adicionar produto",
+            tooltip="Adicionar usuario",
             icon=ft.Icons.ADD,
             on_click=self._on_add_clicked
         )
@@ -85,8 +83,8 @@ class ProdutoGridUI:
                 fit=ft.ImageFit.CONTAIN,
                 error_content=ft.Text("Erro"),
             ),
-            on_click=lambda _: self.controller.page.go("/home/produtos/grid/lixeira"),
-            tooltip="Produtos inativos: 0",
+            on_click=lambda _: self.controller.page.go("/home/usuarios/grid/lixeira"),
+            tooltip="Usuarios inativos: 0",
             bgcolor=ft.Colors.TRANSPARENT,
         )
 
@@ -102,14 +100,14 @@ class ProdutoGridUI:
         if self.controller.page.client_storage:
             self.controller.page.update()
 
-    def render_grid(self, produtos: list[Produto]):
-        """Renderiza o grid com os produtos filtrados"""
+    def render_grid(self, usuarios: list[Usuario]):
+        """Renderiza o grid com os usuarios filtrados"""
         self.content_area.controls.clear()
 
-        if not produtos:
+        if not usuarios:
             self.content_area.controls.append(self._create_empty_content())
         else:
-            grid = self._create_products_grid(produtos)
+            grid = self._create_users_grid(usuarios)
             self.content_area.controls.append(grid)
 
         self._update_fab_trash_state()
@@ -121,7 +119,7 @@ class ProdutoGridUI:
         return ft.Container(
             content=ft.Image(
                 src="images/empty_folder.png",
-                error_content=ft.Text("Nenhum produto cadastrado"),
+                error_content=ft.Text("Nenhum usuario cadastrado"),
                 width=300, height=300,
                 fit=ft.ImageFit.CONTAIN,
             ),
@@ -129,11 +127,12 @@ class ProdutoGridUI:
             alignment=ft.alignment.center,
         )
 
-    def _create_products_grid(self, produtos: list[Produto]) -> ft.ResponsiveRow:
-        """Cria o grid responsivo de produtos"""
+    def _create_users_grid(self, usuarios: list[Usuario]) -> ft.ResponsiveRow:
+        """Cria o grid responsivo de usuarios"""
         cards = []
-        for produto in produtos:
-            card = ProductCard.create(produto, self.controller.execute_action_async)
+        for usuario in usuarios:
+            # Passar o novo método do controller que lida com page.run_task
+            card = UserCard.create(usuario, self.controller.execute_action_async)
             cards.append(card)
 
         return ft.ResponsiveRow(
@@ -149,7 +148,7 @@ class ProdutoGridUI:
 
         if isinstance(self.fab_trash.content, ft.Image):
             self.fab_trash.content.src = f"icons/{icon_filename}"
-            self.fab_trash.tooltip = f"Produtos inativos: {self.controller.state.inactive_count}"
+            self.fab_trash.tooltip = f"Usuarios inativos: {self.controller.state.inactive_count}"
 
     # Event Handlers
     def _on_radio_changed(self, e):
@@ -162,24 +161,20 @@ class ProdutoGridUI:
                 self.search_field.value = ""
         self._apply_filters()
 
-    def _on_stock_filter_changed(self, e):
-        self.controller.state.stock_filter = StockLevel(e.control.value)
-        self._apply_filters()
-
     def _on_add_clicked(self, e):
         self.controller.execute_action_async("INSERT", None)
 
     def _apply_filters(self):
         """Aplica filtros e atualiza a UI"""
         self.controller.state.search_text = self.search_field.value or ""
-        filtered_produtos = self.controller.filter_produtos()
+        filtered_usuarios = self.controller.filter_usuarios()
 
         # Atualiza visual do campo de busca
-        self._update_search_field_visual(filtered_produtos)
+        self._update_search_field_visual(filtered_usuarios)
 
-        self.render_grid(filtered_produtos)
+        self.render_grid(filtered_usuarios)
 
-    def _update_search_field_visual(self, filtered_produtos: list[Produto]):
+    def _update_search_field_visual(self, filtered_usuarios: list[Usuario]):
         """Atualiza o visual do campo de busca baseado nos resultados"""
         suffix = self.search_field.suffix
         if not isinstance(suffix, ft.IconButton):
@@ -188,7 +183,7 @@ class ProdutoGridUI:
         search_text = self.controller.state.search_text.strip()
 
         if search_text:
-            if filtered_produtos:
+            if filtered_usuarios:
                 self.search_field.color = ft.Colors.GREEN
                 suffix.icon = ft.Icons.FILTER_ALT_OFF
                 suffix.icon_color = ft.Colors.GREEN

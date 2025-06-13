@@ -1,10 +1,11 @@
+from datetime import datetime, UTC
 from typing import Set
 from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.password import Password
-from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
-from src.shared import get_app_colors
+from src.domains.usuarios.models.usuario_subclass import UsuarioProfile, UsuarioStatus
+from src.shared.config import get_app_colors
 
 
 @dataclass
@@ -20,7 +21,7 @@ class Usuario:
         password (Password): Objeto Senha.
         name (NomePessoa): Nome do usuário.
         phone_number (PhoneNumber): Número de telefone do usuário.
-        profile (str): Perfil do usuário.
+        profile (UsuarioProfile): Perfil do usuário.
         id (str | None): ID opcional do usuário.
         empresa_id (str | None): ID da última empresa logada.
         empresas (Set[str]): Conjunto de IDs de empresas associadas ao usuário.
@@ -34,7 +35,7 @@ class Usuario:
         >>> from src.domain.models.phone_number import PhoneNumber
         >>> name = NomePessoa("João", "Silva")
         >>> phone = PhoneNumber("+5511999999999")
-        >>> user = Usuario(email="joao.silva@example.com", name=name, phone_number=phone, profile="admin")
+        >>> user = Usuario(email="joao.silva@example.com", name=name, phone_number=phone, profile=UsuarioProfile.ADMIN)
         >>> print(user)
     """
 
@@ -42,19 +43,36 @@ class Usuario:
     password: Password
     name: NomePessoa
     phone_number: PhoneNumber
-    profile: str
-    id: str | None = field(default=None)
-    empresa_id: str | None = field(default=None)
+    id: str | None = None
+    empresa_id: str | None = None
+    temp_password: bool | None = False
     empresas: Set[str] = field(default_factory=set)
-    photo_url: str | None = field(default=None)
+    photo_url: str | None = None
     user_colors: dict | None = field(default_factory=dict)
+    profile: UsuarioProfile = UsuarioProfile.UNDEFINED
 
     # --- Campos de Status e Auditoria
     status: UsuarioStatus = UsuarioStatus.ACTIVE
+    created_at: datetime | None = field(
+        default_factory=lambda: datetime.now(UTC))
+    created_by_id: str | None = None
+    created_by_name: str | None = None
 
-    # Lista de perfis permitidos
-    ALLOWED_PROFILES = {"admin", "cobrança",
-                        "contabil", "financeiro", "pagamento", "vendas"}
+    updated_at: datetime | None = None
+    updated_by_id: str | None = None
+    updated_by_name: str | None = None
+
+    activated_at: datetime | None = None  # Se o status mudar para ACTIVE
+    activated_by_id: str | None = None
+    activated_by_name: str | None = None
+
+    inactivated_at: datetime | None = None  # Se o status mudar para INACTIVE
+    inactivated_by_id: str | None = None
+    inactivated_by_name: str | None = None
+
+    deleted_at: datetime | None = None  # Para soft delete
+    deleted_by_id: str | None = None
+    deleted_by_name: str | None = None
 
     def __post_init__(self):
         """
@@ -75,11 +93,6 @@ class Usuario:
         if not self.phone_number:
             raise ValueError("O campo 'phone_number' é obrigatório.")
 
-        # Validação do campo 'profile'
-        if self.profile not in self.ALLOWED_PROFILES:
-            raise ValueError(
-                f"O perfil '{self.profile}' não é permitido. Perfis permitidos: {', '.join(self.ALLOWED_PROFILES)}.")
-
         # Garante que empresas seja sempre um conjunto
         if self.empresas is None:
             self.empresas = set()
@@ -88,8 +101,17 @@ class Usuario:
 
         self.photo_url = self.photo_url.strip() if self.photo_url else None
 
-        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color','primary', 'container', 'accent', 'appbar']):
+        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color', 'primary', 'container', 'accent', 'appbar']):
             self.user_colors = get_app_colors('blue')
+
+        # Se o usuário está sendo criado como ACTIVE e não tem activated_at, define-o
+        if self.status == UsuarioStatus.ACTIVE and self.created_at and not self.activated_at:
+            self.activated_at = self.created_at
+            self.activated_by_id = self.created_by_id
+            self.activated_by_name = self.created_by_name
+
+        if not isinstance(self.temp_password, bool):
+            self.temp_password = False
 
     def adicionar_empresa(self, empresa_id: str) -> None:
         """
@@ -125,14 +147,30 @@ class Usuario:
             "name": self.name,
             "email": self.email,
             "password": self.password,
+            "temp_password": self.temp_password,
             "phone_number": self.phone_number,
-            "profile": self.profile,
+            "profile": self.profile.name,
             "empresa_id": self.empresa_id,
             # Converte conjunto para lista ao salvar
             "empresas": self.empresas,
             "photo_url": self.photo_url,
             "user_colors": self.user_colors,
-            "is_admin": self.is_admin(),
+            "status": self.status.name,  # Armazena o nome do enum
+            "created_at": self.created_at,
+            "created_by_id": self.created_by_id,
+            "created_by_name": self.created_by_name,
+            "updated_at": self.updated_at,
+            "updated_by_id": self.updated_by_id,
+            "updated_by_name": self.updated_by_name,
+            "activated_at": self.activated_at,
+            "activated_by_id": self.activated_by_id,
+            "activated_by_name": self.activated_by_name,
+            "inactivated_at": self.inactivated_at,
+            "inactivated_by_id": self.inactivated_by_id,
+            "inactivated_by_name": self.inactivated_by_name,
+            "deleted_at": self.deleted_at,
+            "deleted_by_id": self.deleted_by_id,
+            "deleted_by_name": self.deleted_by_name,
         }
 
     def to_dict_db(self) -> dict:
@@ -152,13 +190,30 @@ class Usuario:
             },
             "email": self.email,
             "password": self.password.value,
+            "temp_password": self.temp_password,
             "phone_number": self.phone_number.get_e164(),
-            "profile": self.profile,
+            "profile": self.profile.name,
             "empresa_id": self.empresa_id,
-            "empresas": list(self.empresas),  # Converte conjunto empresas para lista ao salvar
+            # Converte conjunto empresas para lista ao salvar
+            "empresas": list(self.empresas),
             "photo_url": self.photo_url,
             "user_colors": self.user_colors,
-            "is_admin": self.is_admin(),
+            "status": self.status.name,  # Salva o nome do enum no DB
+            "created_at": self.created_at if self.created_at else datetime.now(UTC),
+            "created_by_id": self.created_by_id,
+            "created_by_name": self.created_by_name,
+            "updated_at": self.updated_at,
+            "updated_by_id": self.updated_by_id,
+            "updated_by_name": self.updated_by_name,
+            "activated_at": self.activated_at,
+            "activated_by_id": self.activated_by_id,
+            "activated_by_name": self.activated_by_name,
+            "inactivated_at": self.inactivated_at,
+            "inactivated_by_id": self.inactivated_by_id,
+            "inactivated_by_name": self.inactivated_by_name,
+            "deleted_at": self.deleted_at,
+            "deleted_by_id": self.deleted_by_id,
+            "deleted_by_name": self.deleted_by_name,
         }
 
         # Remove campos desnecessários para o banco de dados
@@ -186,19 +241,97 @@ class Usuario:
         # Converte as empresas de lista para conjunto
         empresas_set = set(data.get("empresas", []))
 
+        status_data = data.get("status")
+        status = UsuarioStatus.ACTIVE  # Padrão
+
+        if status_data:
+            if isinstance(status_data, UsuarioStatus):
+                status = status_data
+            else:
+                try:
+                    status = UsuarioStatus[status_data]
+                except KeyError:
+                    # Lidar com status inválido, talvez logar um aviso ou usar um padrão
+                    status = UsuarioStatus.INACTIVE
+
+        profile_data = data.get("profile")
+        profile = UsuarioProfile.UNDEFINED  # Padrão
+
+        if profile_data:
+            if isinstance(profile_data, UsuarioProfile):
+                profile = profile_data
+            else:
+                try:
+                    profile = UsuarioProfile[profile_data]
+                except KeyError:
+                    # Lidar com profile inválido, talvez logar um aviso ou usar um padrão
+                    profile = UsuarioProfile.UNDEFINED
+
+        # Database retorna Timestamps, que precisam ser convertidos para datetime
+        created_at = data.get("created_at")
+        if created_at and not isinstance(created_at, datetime):
+            created_at = created_at.to_datetime() if hasattr(
+                # Compatibilidade com Timestamp do Database
+                created_at, 'to_datetime') else None
+
+        updated_at = data.get("updated_at")
+        if updated_at and not isinstance(updated_at, datetime):
+            updated_at = updated_at.to_datetime() if hasattr(
+                updated_at, 'to_datetime') else None
+
+        activated_at = data.get("activated_at")
+        if activated_at and not isinstance(activated_at, datetime):
+            activated_at = activated_at.to_datetime() if hasattr(
+                activated_at, 'to_datetime') else None
+
+        inactivated_at = data.get("inactivated_at")
+        if inactivated_at and not isinstance(inactivated_at, datetime):
+            inactivated_at = inactivated_at.to_datetime() if hasattr(
+                inactivated_at, 'to_datetime') else None
+
+        deleted_at = data.get("deleted_at")
+        if deleted_at and not isinstance(deleted_at, datetime):
+            deleted_at = deleted_at.to_datetime() if hasattr(
+                deleted_at, 'to_datetime') else None
+
+        if password := data.get("password"):
+           if isinstance(password, bytes) or isinstance(password, str):
+                password_ok = password
+           elif isinstance(password, Password):
+                password_ok = password.value
+
+        if not password_ok:
+            raise ValueError("Password não encontrada!")
+
+        temp_password = data.get("temp_password", False)
+
         # Assumindo que NomePessoa, PhoneNumber e Password têm métodos from_dict
         return cls(
             id=data.get("id"),
             email=data.get("email", ""),
             name=NomePessoa.from_dict(data["name"]) if isinstance(data.get("name"), dict) else data["name"],
-            password=Password.from_dict(data["password"]) if isinstance(data["password"], bytes) else data["password"],
+            password=Password.from_dict(password_ok),
+            temp_password=temp_password,
             phone_number=PhoneNumber.from_dict(data["phone_number"]) if isinstance(data["phone_number"], str) else data["phone_number"],
-            profile=data.get("profile", ""),
+            profile=profile,
             empresa_id=data.get("empresa_id"),
             empresas=empresas_set,
             photo_url=data.get("photo_url"),
-            user_colors=data.get("user_colors", {})
+            user_colors=data.get("user_colors", {}),
+            status=status,
+            created_at=created_at,
+            created_by_id=data.get("created_by_id"),
+            created_by_name=data.get("created_by_name"),
+            updated_at=updated_at,
+            updated_by_id=data.get("updated_by_id"),
+            updated_by_name=data.get("updated_by_name"),
+            activated_at=activated_at,
+            activated_by_id=data.get("activated_by_id"),
+            activated_by_name=data.get("activated_by_name"),
+            inactivated_at=inactivated_at,
+            inactivated_by_id=data.get("inactivated_by_id"),
+            inactivated_by_name=data.get("inactivated_by_name"),
+            deleted_at=deleted_at,
+            deleted_by_id=data.get("deleted_by_id"),
+            deleted_by_name=data.get("deleted_by_name"),
         )
-
-    def is_admin(self):
-        return self.profile == 'admin'

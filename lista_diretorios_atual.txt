@@ -1,3 +1,6 @@
+Comando usado para gerar esta lista antes de enviar para IA gerar arquivo com formatação de árvore:
+Terminal do windows: dir *.* /o:n /b /s | findstr /v "\.venv" | findstr /v "^\." | findstr /v "__pycache__" | findstr /v ".git" > lista_de_diretorios_atual.txt
+
 estoquerapido\.env
 estoquerapido\.vscode
 estoquerapido\assets

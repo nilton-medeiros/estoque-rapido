@@ -1,11 +1,16 @@
 import logging
+import os
 from typing import Any
+from dotenv import load_dotenv
 
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.domains.usuarios.services.usuarios_services import UsuariosServices
+from src.services.emails.send_email import EmailAuthenticationError, EmailConnectionError, EmailMessage, EmailRecipientError, \
+    EmailSendError, EmailValidationError, ModernEmailSender, create_email_config_from_env
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +22,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
+def handle_login(email: str, password: str) -> dict[str, Any]:
     response: dict[str, Any] = {}
 
     try:
@@ -53,7 +58,7 @@ def handle_login_usuarios(email: str, password: str) -> dict[str, Any]:
     return response
 
 
-def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
+def handle_save(usuario: Usuario) -> dict[str, Any]:
     """
     Manipula a operação de salvar usuário.
 
@@ -73,7 +78,7 @@ def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
 
     Exemplo:
         >>> usuario = Usuario(name="Luis Alberto", email="luis.a@mail.com")
-        >>> response = handle_save_usuarios(usuario)
+        >>> response = handle_save(usuario)
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -107,70 +112,7 @@ def handle_save_usuarios(usuario: Usuario) -> dict[str, Any]:
     return response
 
 
-def handle_get_usuarios(id: str | None = None, email: str | None = None) -> dict[str, Any]:
-    """
-    Manipula a operação de buscar usuário.
-
-    Esta função manipula a operação de buscar um usuário no banco de dados utilizando o email fornecido.
-    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
-
-    Args:
-        id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
-        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por id
-
-    Returns:
-        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
-
-    Raises:
-        ValueError: Se houver um erro de validação ao buscar o usuário.
-        Exception: Se ocorrer um erro inesperado durante a operação.
-
-    Exemplo:
-        >>> email = "angelina.jolie@gmail.com"
-        >>> response = handle_get_usuarios(email)
-        >>> print(response)
-    """
-    response: dict[str, Any] = {}
-
-    # Verifica se o id ou email foram passados
-    if not id and not email:
-        response["status"] = "error"
-        response["message"] = "Um dos argumentos id ou email deve ser passado"
-        logger.warning(response["message"])
-        return response
-
-    try:
-        # Usa o repositório do Firebase para buscar o usuário
-        repository = FirebaseUsuariosRepository()
-        usuarios_services = UsuariosServices(repository)
-
-        usuario = None
-
-        if id:
-            usuario = usuarios_services.find_by_id(id)
-        elif email:
-            usuario = usuarios_services.find_by_email(email)
-
-        if usuario:
-            response["status"] = "success"
-            response["data"] = {"usuario": usuario, "message": "Usuário encontrado com sucesso!"}
-        else:
-            response["status"] = "error"
-            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
-
-    except ValueError as e:
-        response["status"] = "error"
-        response["message"] = f"Erro de validação: {str(e)}"
-        logger.error(response["message"])
-    except Exception as e:
-        response["status"] = "error"
-        response["message"] = str(e)
-        logger.error(response["message"])
-
-    return response
-
-
-def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any]:
+def handle_update_photo(id: str, photo_url: str) -> dict[str, Any]:
     """
     Update no campo photo_url do usuário.
 
@@ -218,7 +160,7 @@ def handle_update_photo_usuarios(id: str, photo_url: str) -> dict[str, Any]:
     return response
 
 
-def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, Any]:
+def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]:
     """
     Update no campo colors do usuário.
 
@@ -238,7 +180,7 @@ def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, 
 
     Exemplo:
         >>> id = '12345678901234567890123456789012'
-        >>> response = handle_update_colors_usuarios(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
+        >>> response = handle_update_user_colors(id, {'base_color': 'deeporange', 'primary': '#FF5722', 'container': '#FFAB91', 'accent': '#FF6E40'})
         >>> print(response)
     """
     response: dict[str, Any] = {}
@@ -283,7 +225,7 @@ def handle_update_colors_usuarios(id: str, colors: dict[str, str]) -> dict[str, 
     return response
 
 
-def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
+def handle_update_user_companies(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
 
@@ -303,7 +245,7 @@ def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativ
         >>> usuario_id = '12345678901234567890123456789012'
         >>> empresa_id = '12345678901234567890123456789012'
         >>> empresas = {'12345678901234567890123456789012', '12345678901234567890123456789012'}
-        >>> response = handle_update_empresas_usuarios(usuario_id, empresa_id, empresas)
+        >>> response = handle_update_user_companies(usuario_id, empresa_id, empresas)
         >>> print(response)
     """
     response = {}
@@ -343,15 +285,35 @@ def handle_update_empresas_usuarios(usuario_id: str, empresas: set, empresa_ativ
     return response
 
 
-def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
-    """Busca todos os usuário da empresa_id"""
-    # Exemplo de tipagem profunda: dict[str, bool|str|list[Usuario|None]]. Esta é mais simples: dict[str, Any]
+def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[str, Any]:
+    """
+    Manipula a operação de buscar usuário.
+
+    Esta função manipula a operação de buscar um usuário no banco de dados utilizando o email fornecido.
+    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
+
+    Args:
+        id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
+        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por id
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar o usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> email = "angelina.jolie@gmail.com"
+        >>> response = get_by_id_or_email(email)
+        >>> print(response)
+    """
     response: dict[str, Any] = {}
 
-    # Verifica se o id da empresa foi passado.
-    if not empresa_id:
+    # Verifica se o id ou email foram passados
+    if not id and not email:
         response["status"] = "error"
-        response["message"] = "O ID da empresa deve ser passado"
+        response["message"] = "Um dos argumentos id ou email deve ser passado"
         logger.warning(response["message"])
         return response
 
@@ -360,16 +322,19 @@ def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        usuarios = usuarios_services.find_all(empresa_id)
+        usuario = None
 
-        if len(usuarios) > 0:
-            # Retorna lista de usuários
+        if id:
+            usuario = usuarios_services.find_by_id(id)
+        elif email:
+            usuario = usuarios_services.find_by_email(email)
+
+        if usuario:
             response["status"] = "success"
-            response["data"] = {"usuarios": usuarios, "message": "Usuários encontrados com sucesso!"}
+            response["data"] = {"usuario": usuario, "message": "Usuário encontrado com sucesso!"}
         else:
             response["status"] = "error"
-            response[
-                "message"] = f"Usuários não encontrados. Verifique o empresa_id: {empresa_id}"
+            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
 
     except ValueError as e:
         response["status"] = "error"
@@ -381,3 +346,177 @@ def handle_find_all_usuarios(empresa_id: str) -> dict[str, Any]:
         logger.error(response["message"])
 
     return response
+
+
+def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:
+    """
+    Busca todos os usuários da empresa logada que sejam ativa ou não, dependendo do status_active desejado.
+
+    Esta função retorna todos os usuários da empresa logada, se não houver usuários, retorna uma lista vazia.
+    Ela utiliza um repositório específico para realizar a busca e retorna a lista de usuários, se encontrada.
+
+    Args:
+        empresa_id (str): O ID da empresa para buscar os usuários.
+        status_deleted (bool): True para usuários ativos e inativos, False para somente usuários deletados
+
+    Returns (dict):
+        is_error (bool): True se houve erro na operação, False caso contrário.
+        message (str): Uma mensagem de sucesso ou erro.
+        data (list): Uma lista de usuários da empresa logada ou [].
+        deleted (int): Quantidade de usuários deletados (para o tooltip da lixeira).
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar usuários.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> response = handle_get_all(['abc123', 'def456'])
+        >>> print(response)
+    """
+
+    response = {}
+
+    try:
+        # Usa o repositório do Firebase para buscar os usuarios
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+
+        if not empresa_id:
+            raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+        usuarios_list, quantify = usuarios_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+
+        response["status"] = "success"
+        response["data"] = {
+            "usuarios": usuarios_list if usuarios_list else [],
+            "deleted": quantify if quantify else 0,
+        }
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"usuarios_controllers.handle_get_all ValueError: Erro de validação: {str(e)}"
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+
+    return response
+
+def handle_update_status(usuario: Usuario, logged_user: dict, status: UsuarioStatus) -> dict[str, Any]:
+    """Manipula o status para ativo, inativo ou deletado de um usuário."""
+    response = {}
+
+    try:
+        if not usuario:
+            raise ValueError("Usuário não pode ser nulo ou vazio")
+        if not isinstance(usuario, Usuario):
+            raise ValueError("Usuario não é do tipo Usuario")
+        if not usuario.id:
+            raise ValueError("ID da usuario não pode ser nulo ou vazio")
+        if not status:
+            raise ValueError("Status não pode ser nulo ou vazio")
+        if not isinstance(status, UsuarioStatus):
+            raise ValueError("Status não é do tipo UsuarioStatus")
+
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+
+        is_updated = usuarios_services.update_status(usuario, logged_user, status)
+
+        if is_updated:
+            response["status"] = "success"
+            response["data"] = status
+        else:
+            response["status"] = "error"
+            response["message"] = f"Não foi possível atualizar o status da usuario para {status.value}"
+
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error("usuarios_controllers.handle_update_status(ValueError). " + response["message"])
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+def send_mail_password(usuario: Usuario) -> dict[str, Any]:
+    load_dotenv()
+    URL_LOGIN = os.environ.get("URL_LOGIN", "")
+
+    try:
+        if not usuario:
+            raise ValueError("Usuário não pode ser nulo ou vazio")
+        if not isinstance(usuario, Usuario):
+            raise ValueError("Usuario não é do tipo Usuario")
+        if not usuario.id:
+            raise ValueError("ID da usuario não pode ser nulo ou vazio")
+
+        print(f"Debug  -> usuario: {usuario}")
+
+        config = create_email_config_from_env()
+        email_sender = ModernEmailSender(config)
+        senha_temp = usuario.password.decrypted # Acessa a property diretamente
+
+        # 1. Enviar email de forma síncrona
+        mensagem = EmailMessage(
+            subject="🔑 Sua senha temporária - Ação Necessária",
+            recipients=[usuario.email],
+            body_html=f"""
+            <h2>Bem-vindo ao sistema Estoque Rápido!</h2>
+            <p>Sua senha temporária é: <strong>{senha_temp}</strong></p>
+            <p><strong>⚠️ IMPORTANTE:</strong> Troque sua senha no primeiro login!</p>
+            <a href="{URL_LOGIN}">Fazer Login Agora</a>
+            """
+        )
+
+        print(f"Debug  -> Chamando send_email_sync(mensagem)...")
+
+        resultado = email_sender.send_email_sync_direct(mensagem)
+
+        if resultado['success']:
+            # 2. Só marca como "email enviado" se confirmou envio
+            # ToDo: marcar_usuario_email_enviado(usuario.id)
+            return {"success": True, "message": "Usuário criado e email enviado"}
+        else:
+            # 3. Se email falhou, pode reverter ou tentar novamente
+            return {"success": False, "error": "Usuário criado mas email falhou"}
+
+    except EmailValidationError as e:
+        # Erros de validação - dados incorretos
+        print(f"❌ Erro de validação: {e}")
+        if e.field == "email_format":
+            return {"success": False, "error": "Email inválido", "user_message": "Verifique o email digitado"}
+        elif e.field == "subject":
+            return {"success": False, "error": "Assunto inválido", "user_message": "Erro interno, tente novamente"}
+        else:
+            return {"success": False, "error": str(e), "user_message": "Dados inválidos"}
+
+    except EmailAuthenticationError as e:
+        # Problema de configuração do servidor
+        print(f"🔐 Erro de autenticação: {e}")
+        return {"success": False, "error": "Erro de configuração", "user_message": "Falha temporária, tente novamente"}
+
+    except EmailConnectionError as e:
+        # Problema de rede/servidor
+        print(f"🌐 Erro de conexão: {e}")
+        return {"success": False, "error": "Erro de conexão", "user_message": "Servidor indisponível, tente novamente"}
+
+    except EmailRecipientError as e:
+        # Email do destinatário rejeitado
+        print(f"📧 Erro de destinatário: {e}")
+        return {"success": False, "error": "Email rejeitado", "user_message": f"Email inválido: {', '.join(e.invalid_emails)}"}
+
+    except EmailSendError as e:
+        # Outros erros de envio
+        print(f"📤 Erro de envio: {e}")
+
+        if e.error_type == "QUOTA_EXCEEDED":
+            return {"success": False, "error": "Cota excedida", "user_message": "Limite de emails atingido, tente mais tarde"}
+        elif e.error_type == "SPAM_REJECTED":
+            return {"success": False, "error": "Spam detectado", "user_message": "Email rejeitado, entre em contato conosco"}
+        else:
+            return {"success": False, "error": str(e), "user_message": "Falha no envio, tente novamente"}
+
+    except Exception as e:
+        # Qualquer outro erro não previsto
+        print(f"💥 Erro inesperado: {e}")
+        return {"success": False, "error": "Erro inesperado", "user_message": "Erro interno, entre em contato com suporte"}

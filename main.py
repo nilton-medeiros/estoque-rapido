@@ -13,9 +13,12 @@ from src.pages.empresas import show_companies_grid, show_company_main_form, show
 from src.pages.home import show_home_page
 from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
 from src.pages.categorias import show_categories_grid, show_categories_grid_trash, show_category_form
+from src.pages.usuarios.usuarios_form_page import show_user_form
+from src.pages.usuarios.usuarios_grid_page import show_users_grid
+from src.pages.usuarios.usuarios_grid_recycle_page import show_users_grid_trash
 from src.services import AppStateManager
 
-from src.shared import get_app_colors
+from src.shared.config import get_app_colors
 from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
@@ -241,6 +244,33 @@ def main(page: ft.Page):
                     )
                 else:
                     page.go('/login')
+            case '/home/usuarios/grid':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    pg_view = show_users_grid(page)
+                else:
+                    page.go('/login')
+            case '/home/usuarios/grid/lixeira':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    pg_view = show_users_grid_trash(page)
+                else:
+                    page.go('/login')
+            case '/home/usuarios/form':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    form = show_user_form(page)
+                    pg_view = ft.View(
+                        route='home/usuarios/form',
+                        appbar=form.data,
+                        controls=[form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
             case '/home/produtos/grid':
                 # type: ignore  [attr-defined]
                 if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]

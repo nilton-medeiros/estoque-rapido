@@ -7,7 +7,8 @@ import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 
 from src.presentation.components import FiscalProgressBar, Functionalities
-from src.shared import get_uuid, MessageType, message_snackbar, get_app_colors
+from src.shared.utils import get_uuid, MessageType, message_snackbar
+from src.shared.config import get_app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ def sidebar_header(page: ft.Page):
                 # Criamos uma Promise para aguardar a conclusão do upload
                 upload_complete = False
 
-                def on_upload_completed(e):
+                def on_upload_completed(e: ft.FilePickerUploadEvent):
                     nonlocal upload_complete
                     if e.progress == 1:
                         upload_complete = True
@@ -125,17 +126,12 @@ def sidebar_header(page: ft.Page):
                     await asyncio.sleep(0.1)
 
                 # Agora que o upload está concluído, podemos prosseguir com o upload para S3
-                prefix = current_user.get("id")
-
-                if cnpj := current_company.get("cnpj"):
-                    prefix = cnpj.raw_cnpj
-
                 file_uid = get_uuid()
-
                 _, dot_extension = os.path.splitext(file_name)
                 dot_extension = dot_extension.lower()
 
-                file_name_bucket = f"{prefix}/user_img_{file_uid}{dot_extension}"
+                prefix = "usuarios"
+                file_name_bucket = f"{prefix}/{current_user['id']}_img_{file_uid}{dot_extension}"
                 local_file = f"uploads/{file_name}"
 
                 # Adiciona uma verificação extra para garantir que o arquivo existe
@@ -172,7 +168,7 @@ def sidebar_header(page: ft.Page):
                         return
 
                     # Agora que temos uma URL válida, atualizar o usuário
-                    result = user_controllers.handle_update_photo_usuarios(id=current_user.get("id"), photo_url=avatar_url)
+                    result = user_controllers.handle_update_photo(id=current_user.get("id"), photo_url=avatar_url)
 
                     if result["status"] == "error":
                         message_type = MessageType.ERROR
@@ -297,7 +293,7 @@ def sidebar_header(page: ft.Page):
                 )
             else:
                 if url_field.value and url_field.value.strip():
-                    result = user_controllers.handle_update_photo_usuarios(id=current_user["id"], photo_url=url_field.value)
+                    result = user_controllers.handle_update_photo(id=current_user["id"], photo_url=url_field.value)
                     if result["status"] == "success":
                         # Nova foto salva no database, remover a antiga do s3 se existir
                         if previous_user_photo:
@@ -599,7 +595,7 @@ class PopupColorItem(ft.PopupMenuItem):
         msg_error = None
         colors = get_app_colors(self.data)
         try:
-            result = user_controllers.handle_update_colors_usuarios(id=user.get('id'), colors=colors)
+            result = user_controllers.handle_update_user_colors(id=user.get('id'), colors=colors)
             if result["status"] == "error":
                 # Reverter a mudança de tema se a atualização falhar? Opcional.
                 # page.theme = page.dark_theme = ft.Theme(color_scheme_seed=user.get('user_colors', {}).get('primary', 'blue'))
@@ -685,7 +681,7 @@ def sidebar_footer(page: ft.Page):
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.GROUPS, color="white", size=22),
                     tooltip="Usuários",
-                    # on_click=, # Adicione o handler de clique aqui quando tiver
+                    on_click=lambda _: page.go('/home/usuarios/grid'),
                 ),
                 # --- Ícone Categorias de Produtos ---
                 ft.Container(
@@ -694,8 +690,7 @@ def sidebar_footer(page: ft.Page):
                                     color="white", size=22),
                     tooltip="Categorias de produtos" if page.app_state.empresa.get(  # type: ignore
                         'id') else "Categorias de produtos indisponíveis: Selecione uma empresa primeiro.",
-                    on_click=lambda _: page.go(
-                        '/home/produtos/categorias/grid'),
+                    on_click=lambda _: page.go('/home/produtos/categorias/grid'),
                     disabled=False if page.app_state.empresa.get(  # type: ignore
                         'id') else True,
                 ),

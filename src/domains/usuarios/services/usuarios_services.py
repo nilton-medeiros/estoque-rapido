@@ -1,8 +1,10 @@
 from typing import Optional
 
+from src.domains.shared.nome_pessoa import NomePessoa
 from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
-from src.shared import get_uuid
+from src.shared.utils import get_uuid
 
 
 class UsuariosServices:
@@ -49,7 +51,7 @@ class UsuariosServices:
             raise ValueError("Password é necessário para criar usuário")
 
         existing_usuario = self.repository.exists_by_email(usuario.email)
-
+        print(f"Debug  ->  {existing_usuario}")
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
@@ -88,17 +90,18 @@ class UsuariosServices:
         """
         return self.repository.find_by_email(email)
 
-    def find_all(self, empresa_id: str) -> list[Usuario]:
+    def get_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[Usuario], int]:
         """
-        Encontra todos os usuários pelo ID da empresa usando o repositório.
+        Encontra todos os usuários pelo ID da empresa loagado usando o repositório.
 
         Parâmetros:
             empresa_id (str): ID da empresa a ser encontrado
+            status_deleted (bool): True para usuários ativos e inativos, False para somente usuários deletados
 
         Retorna:
-            list[Usuario]: Lista de Usuario encontrado ou [] se não existir
+            tuple[list[Usuario], int]: Lista de Usuario encontrado ou [] se não existir e quantidade de usuários deletados
         """
-        return self.repository.find_all(empresa_id)
+        return self.repository.find_all(empresa_id, status_deleted)
 
     def update_photo(self, usuario_id: str, photo_url: str) -> Usuario | None:
         """
@@ -143,3 +146,25 @@ class UsuariosServices:
     def delete(self, usuario_id: str) -> bool:
         """Deleta um usuário pelo usuario_id usando o repositório."""
         return self.repository.delete(usuario_id)
+
+    def update_status(self, usuario: Usuario, logged_user: dict, status: UsuarioStatus) -> bool:
+        """Atualiza o status de uma usuário existente"""
+        user_name: NomePessoa = logged_user["name"]
+        usuario.status = status
+
+        match status:
+            case UsuarioStatus.ACTIVE:
+                usuario.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                usuario.activated_by_id = logged_user["id"]
+                usuario.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+            case UsuarioStatus.INACTIVE:
+                usuario.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                usuario.inactivated_by_id = logged_user["id"]
+                usuario.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+            case UsuarioStatus.DELETED:
+                usuario.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                usuario.deleted_by_id = logged_user["id"]
+                usuario.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+
+        id = self.repository.save(usuario)
+        return id is not None

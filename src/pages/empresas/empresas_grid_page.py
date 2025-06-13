@@ -6,7 +6,7 @@ import flet as ft
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 from src.domains.empresas.models.empresa_subclass import Status
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
-from src.shared import MessageType, message_snackbar, show_banner
+from src.shared.utils import MessageType, message_snackbar, show_banner
 # Rota: /home/empresas/grid
 
 logger = logging.getLogger(__name__)

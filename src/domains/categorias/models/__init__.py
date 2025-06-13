@@ -1,0 +1,1 @@
+from .categorias_model import ProdutoCategorias

@@ -6,9 +6,10 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
+from src.domains.produtos.models import ProdutoStatus
+from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import CategoriasRepository
-from src.shared import deepl_translator
+from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)

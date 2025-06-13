@@ -1,7 +1,8 @@
 import logging
 
 from typing import Any
-from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
+from src.domains.produtos.models import ProdutoStatus
+from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import FirebaseCategoriasRepository
 from src.domains.categorias.services import CategoriasServices
 

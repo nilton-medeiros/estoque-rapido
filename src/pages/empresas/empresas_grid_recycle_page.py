@@ -6,7 +6,7 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
-from src.shared import format_datetime_to_utc_minus_3
+from src.shared.utils import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
 
-from src.shared import MessageType, message_snackbar
+from src.shared.utils import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,7 @@ def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
 
 
 def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
-    return user_controllers.handle_update_empresas_usuarios(
+    return user_controllers.handle_update_user_companies(
         usuario_id=usuario_id,
         empresas=empresas,
         empresa_ativa_id=empresa_id

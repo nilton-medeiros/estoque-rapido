@@ -123,11 +123,12 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
     Args:
         empresa_id (str): O ID da empresa para buscar os produtos.
+        status_deleted (bool): True para produtos ativos e inativos, False para somente produtos deletados
 
     Returns (dict):
         is_error (bool): True se houve erro na operação, False caso contrário.
         message (str): Uma mensagem de sucesso ou erro.
-        data_list (list): Uma lista de produtos da empresa logada ou [].
+        data (list): Uma lista de produtos da empresa logada ou [].
         deleted (int): Quantidade de produtos deletados (para o tooltip da lixeira).
 
     Raises:
@@ -135,7 +136,7 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = handle_get_allhandle_update_status_empresas(['abc123', 'def456'])
+        >>> response = handle_get_all(['abc123', 'def456'])
         >>> print(response)
     """
 

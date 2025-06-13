@@ -1,6 +1,6 @@
 from src.domains.app_config.models.app_config_model import AppConfig
 from src.domains.app_config.repositories.contracts.app_config_repository import AppConfigRepository
-from src.shared import get_uuid
+from src.shared.utils import get_uuid
 
 
 

@@ -13,7 +13,7 @@ from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import CodigoRegimeTributario, EmpresaSize, Environment
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.pages.partials.build_input_responsive import build_input_field
-from src.shared import MessageType, message_snackbar
+from src.shared.utils import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 

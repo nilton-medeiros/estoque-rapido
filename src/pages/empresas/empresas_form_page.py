@@ -19,7 +19,7 @@ from src.domains.empresas import EmpresaSize
 from src.domains.empresas.models.empresa_model import Empresa
 
 from src.pages.partials import build_input_field
-from src.shared import validate_email, get_uuid, MessageType, message_snackbar
+from src.shared.utils import validate_email, get_uuid, MessageType, message_snackbar
 from src.shared.utils.find_project_path import find_project_root
 
 from src.services import UploadFile, consult_cnpj_api
@@ -955,7 +955,7 @@ def show_company_main_form(page: ft.Page):
             user['empresa_id'] = empresa.id
 
         # Atualiza usuário no banco de dados
-        result = user_controllers.handle_update_empresas_usuarios(
+        result = user_controllers.handle_update_user_companies(
             usuario_id=user['id'],
             empresas=user['empresas'],
             empresa_ativa_id=user['empresa_id'],

@@ -5,17 +5,18 @@ import math # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
-import src.domains.categorias.controllers.categorias_controllers as category_controllers
-import src.pages.categorias.categorias_actions_page as category_actions
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
+from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
+import src.pages.usuarios.usuarios_actions_page as users_actions
 
-from src.shared import format_datetime_to_utc_minus_3
+from src.shared.utils import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
 
 
-# Rota: /home/produtos/categorias/grid/lixeira
+# Rota: /home/usuarios/grid/lixeira
 def show_users_grid_trash(page: ft.Page):
-    """Página de exibição das categorias da empresa logada que estão inativas ('DELETED')em formato Cards"""
+    """Página de exibição dos usuários da empresa logada que estão 'DELETED' em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
 
     # --- Indicador de Carregamento (Spinner) ---
@@ -55,13 +56,13 @@ def show_users_grid_trash(page: ft.Page):
     async def handle_action_click(e):
         """Função para lidar com cliques nas ações do menu ou botões."""
         action = e.control.data.get('action')
-        categoria = e.control.data.get('data')
+        usuario = e.control.data.get('data')
 
         match action:
             case "RESTORE":
-                is_restore = category_actions.restore_from_trash(page=page, categoria=categoria)
+                is_restore = users_actions.restore_from_trash(page=page, usuario=usuario)
                 if is_restore:
-                    # Reexecuta o carregamento. Atualizar a lista de categorias na tela
+                    # Reexecuta o carregamento. Atualizar a lista de usuários na tela
                     page.run_task(load_data_and_update_ui)
                     # Não precisa de page.update() aqui, pois run_task já fará isso
             case "outro case":
@@ -94,11 +95,11 @@ def show_users_grid_trash(page: ft.Page):
                 on_hover=handle_icon_hover,
                 content=ft.Icon(
                     ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home/produtos/categorias/grid"), tooltip="Voltar",
+                on_click=lambda _: page.go("/home/usuarios/grid"), tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
             ),
         ),
-        title=ft.Text(f"Categorias excluídas", size=18),
+        title=ft.Text(f"Usuários excluídos", size=18),
         bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
         adaptive=True,
         actions=[
@@ -117,16 +118,16 @@ def show_users_grid_trash(page: ft.Page):
     )
 
     def handle_info_click(e):
-        categoria = e.control.data.get('data')
+        usuario = e.control.data.get('data')
         page_ctx = e.control.page # Obter a página do contexto do controle
 
-        info_title = "Informação da Categoria"
+        info_title = "Informação do Usuário"
         info_message = ""
 
-        if categoria.status.name == 'DELETED':
-            if categoria.deleted_at:  # Verifica se a data de exclusão está definida
+        if usuario.status.name == 'DELETED':
+            if usuario.deleted_at:  # Verifica se a data de exclusão está definida
                 # Data em que o item foi movido para a lixeira (presumivelmente UTC)
-                data_movido_lixeira = categoria.deleted_at
+                data_movido_lixeira = usuario.deleted_at
 
                 # Data final para exclusão permanente (90 dias após mover para lixeira)
                 data_exclusao_permanente = data_movido_lixeira + datetime.timedelta(days=90)
@@ -152,7 +153,7 @@ def show_users_grid_trash(page: ft.Page):
                     info_message = f"A exclusão automática e permanente do banco de dados ocorrerá em {days_left} dias."
             else:
                 # Caso deleted_at não esteja definido
-                info_message = "Esta categoria está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
+                info_message = "Este usuário está na lixeira, mas a data de início da contagem para exclusão não foi registrada."
         else:
             info_message = "Status desconhecido."
 
@@ -168,7 +169,7 @@ def show_users_grid_trash(page: ft.Page):
                 ft.TextButton("Entendi", on_click=close_dialog)
             ],
             actions_alignment=ft.MainAxisAlignment.END,
-            on_dismiss=lambda _: logger.info(f"Dialog de informação para {categoria.id} dispensado.")
+            on_dismiss=lambda _: logger.info(f"Dialog de informação para {usuario.id} dispensado.")
         )
 
         page_ctx.overlay.append(info_dialog)
@@ -177,36 +178,36 @@ def show_users_grid_trash(page: ft.Page):
 
     # --- Função Assíncrona para Carregar Dados e Atualizar a UI ---
     async def load_data_and_update_ui():
-        categorias_data = []
-        categorias_inactivated = 0
+        usuarios_data = []
+        usuarios_inactivated = 0
 
         # ID da empresa logada
         empresa_id = page.app_state.empresa["id"] # type: ignore
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_all seja async ***
-            if not empresa_id:  # Só busca as categorias da empresa logada, se houver ID
+            if not empresa_id:  # Só busca as usuários da empresa logada, se houver ID
                 content_area.controls.append(empty_content_display)
                 return
 
-            result = category_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
+            result = user_controllers.handle_get_all(empresa_id=empresa_id, status_deleted=True)
 
             if result["status"] == "error":
                 content_area.controls.append(empty_content_display)
                 return
 
-            categorias_data = result['data']["categorias"]
-            categorias_inactivated: int = result['data']["deleted"]
+            usuarios_data = result['data']["usuarios"]
+            usuarios_inactivated: int = result['data']["deleted"]
 
             # --- Construir Conteúdo Baseado nos Dados ---
             content_area.controls.clear()  # Limpar conteúdo anterior
 
-            if not categorias_data:
+            if not usuarios_data:
                 content_area.controls.append(empty_content_display)
 
             grid = ft.ResponsiveRow(
                 controls=[
-                    # O componente Card() está sendo iterado em loop para uma ou mais categorias.
+                    # O componente Card() está sendo iterado em loop para uma ou mais usuarios.
                     # Por isso, não é possível movê-lo para uma variável para reduzir o nível de aninhamento.
                         ft.Card(
                         content=ft.Container(
@@ -215,11 +216,11 @@ def show_users_grid_trash(page: ft.Page):
                                 ft.Row(
                                     controls=[
                                         ft.Container(
-                                            image=ft.DecorationImage(src=categoria.image_url),
+                                            image=ft.DecorationImage(src=usuario.photo_url),
                                             width=100,
                                             height=100,
                                             border_radius=ft.border_radius.all(10),
-                                            border=ft.border.all(width=1) if not categoria.image_url else None,
+                                            border=ft.border.all(width=1) if not usuario.photo_url else None,
                                         ),
                                         # Container do PopMenuButton para não deixar colado com a margem direita de Column
                                         ft.Container(expand=True),
@@ -235,10 +236,10 @@ def show_users_grid_trash(page: ft.Page):
                                                 items=[
                                                     ft.PopupMenuItem(
                                                         text="Restaurar",
-                                                        tooltip="Restaurar categoria da lixeira",
+                                                        tooltip="Restaurar usuário da lixeira",
                                                         icon=ft.Icons.RESTORE,
                                                         data={
-                                                            'action': 'RESTORE', 'data': categoria},
+                                                            'action': 'RESTORE', 'data': usuario},
                                                         on_click=handle_action_click
                                                     ),
                                                     ft.PopupMenuItem(
@@ -246,7 +247,7 @@ def show_users_grid_trash(page: ft.Page):
                                                         tooltip="Informações sobre o status",
                                                         icon=ft.Icons.INFO_OUTLINED,
                                                         data={
-                                                            'action': 'INFO', 'data': categoria},
+                                                            'action': 'INFO', 'data': usuario},
                                                         on_click=handle_info_click
                                                     ),
                                                 ],
@@ -256,13 +257,19 @@ def show_users_grid_trash(page: ft.Page):
                                     alignment=ft.MainAxisAlignment.START,
                                 ),
                                 ft.Text(
-                                    f"{categoria.name}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
-                                ft.Text(f"{categoria.description if categoria.description else '<Sem descrição>'}",
-                                        theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                    f"{usuario.name.nome_completo}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
+                                ft.Text(f"{usuario.email}",theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                                ft.Row(
+                                    controls=[
+                                        ft.Text(f"Perfil: {usuario.profile.value}",theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                        ft.Text(f"Fone: {usuario.phone_number}",theme_style=ft.TextThemeStyle.BODY_SMALL),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                                ),
                                 ft.Row(
                                     controls=[
                                         ft.Text(
-                                            value=f"Excluído em: {format_datetime_to_utc_minus_3(categoria.deleted_at)}",
+                                            value=f"Excluído em: {format_datetime_to_utc_minus_3(usuario.deleted_at)}",
                                             color=ft.Colors.RED,
                                             theme_style=ft.TextThemeStyle.BODY_SMALL,
                                         ),
@@ -277,7 +284,7 @@ def show_users_grid_trash(page: ft.Page):
                                                         right=5),
                                                     tooltip="Restaurar",
                                                     data={
-                                                        'action': 'RESTORE', 'data': categoria},
+                                                        'action': 'RESTORE', 'data': usuario},
                                                     on_hover=handle_icon_hover,
                                                     on_click=handle_action_click,
                                                     border_radius=ft.border_radius.all(
@@ -296,7 +303,7 @@ def show_users_grid_trash(page: ft.Page):
                                                         right=10),
                                                     tooltip="Informações sobre o status",
                                                     data={
-                                                        'action': 'INFO', 'data': categoria},
+                                                        'action': 'INFO', 'data': usuario},
                                                     on_hover=handle_icon_hover,
                                                     on_click=handle_info_click,
                                                     border_radius=ft.border_radius.all(
@@ -317,8 +324,8 @@ def show_users_grid_trash(page: ft.Page):
                         # Configuração responsiva para cada card
                         # Cada card com sua própria configuração de colunas
                         col={"xs": 12, "sm": 6, "md": 4, "lg": 3},
-                        tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if categoria.status.name == 'DELETED' else 'categoria arquivada não será removida do banco de dados! Pode estar vinculada a pedidos ou produtos.'}",
-                    ) for categoria in categorias_data  # Criar um card para cada empresa
+                        tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if usuario.status == UsuarioStatus.DELETED else 'usuario arquivado não será removido do banco de dados! Pode estar vinculado a pedidos, estoque, etc.'}",
+                    ) for usuario in usuarios_data  # Criar um card para cada empresa
                 ],
                 columns=12,  # Total de colunas no sistema de grid
                 spacing=10,  # Espaço horizontal entre os cards
@@ -331,7 +338,7 @@ def show_users_grid_trash(page: ft.Page):
         except Exception as e:
             # Mostrar uma mensagem de erro para o usuário
             tb_str = traceback.format_exc()
-            logger.error(f"Ocorreu um erro ao carregar as categorias deletadas. Tipo: {type(e).__name__}, Erro: {e}\nTraceback:\n{tb_str}")
+            logger.error(f"Ocorreu um erro ao carregar os usuários deletados. Tipo: {type(e).__name__}, Erro: {e}\nTraceback:\n{tb_str}")
 
             content_area.controls.clear()
             content_area.controls.append(
@@ -340,7 +347,7 @@ def show_users_grid_trash(page: ft.Page):
                         ft.Icon(ft.Icons.ERROR_OUTLINE,
                                 color=ft.Colors.RED, size=50),
                         ft.Text(
-                            f"Ocorreu um erro ao carregar as categorias deletadas.", color=ft.Colors.RED),
+                            f"Ocorreu um erro ao carregar os usuários deletados.", color=ft.Colors.RED),
                         # Mensagem de erro mais informativa na UI
                         ft.Text(f"Detalhes: Erro do tipo '{type(e).__name__}'. Mensagem: '{str(e)}'. Consulte os logs para mais informações.",
                                 color=ft.Colors.RED, size=10, selectable=True),
@@ -351,7 +358,7 @@ def show_users_grid_trash(page: ft.Page):
                 )
             )
         finally:
-            current_trash_icon_filename = "recycle_full_1771.png" if categorias_inactivated else "recycle_empy_1771.png"
+            current_trash_icon_filename = "recycle_full_1771.png" if usuarios_inactivated else "recycle_empy_1771.png"
             # Garante que ft_image é uma Image
             if ft_image and isinstance(ft_image, ft.Image):
                 ft_image.src = f"icons/{current_trash_icon_filename}"
@@ -370,7 +377,7 @@ def show_users_grid_trash(page: ft.Page):
     # --- Retornar Estrutura Inicial da Página como ft.View ---
     # A View inclui a AppBar e a área de conteúdo principal (que inicialmente mostra o spinner)
     return ft.View(
-        route="/home/produtos/categorias/grid/lixeira",  # A rota que esta view corresponde
+        route="/home/usuarios/grid/lixeira",  # A rota que esta view corresponde
         controls=[
             loading_container,  # Mostra o spinner inicialmente
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui

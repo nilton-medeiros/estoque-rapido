@@ -44,7 +44,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
+    def find_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[Usuario], int]:
         """Retorna uma lista paginada de usuários."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 

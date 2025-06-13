@@ -10,7 +10,7 @@ from src.domains.empresas.models.cnpj import CNPJ  # Importação direta
 from src.domains.empresas.models.empresa_model import Empresa  # Importação direta
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
-from src.shared import deepl_translator
+from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)

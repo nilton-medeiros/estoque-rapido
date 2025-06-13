@@ -5,7 +5,7 @@ import flet as ft
 from src.domains.shared import NomePessoa, Password
 from src.pages.partials import get_responsive_sizes, build_input_field
 
-from src.shared import MessageType, message_snackbar, validate_email
+from src.shared.utils import MessageType, message_snackbar, validate_email
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
@@ -174,10 +174,12 @@ class LoginView:
             self.error_text.visible = False
             self.error_text.update()
 
-            result = user_controllers.handle_login_usuarios(
+            result = user_controllers.handle_login(
                 email=self.email_input.value, password=self.password_input.value) # type: ignore
 
             if result["status"] == "error":
+                print(f"Erro ao fazer login: {result['message']}")
+                logger.error(f"Erro ao fazer login: {result['message']}")
                 message_snackbar(
                     page=self.page, message=result["message"], message_type=MessageType.ERROR)
                 return

@@ -20,6 +20,11 @@ class ProdutoGridController:
         self.on_action = on_action
         self.ui_components: Optional['ProdutoGridUI'] = None
 
+    def execute_action_async(self, action: str, produto: Optional[Produto]):
+        """Executa a ação de forma assíncrona usando page.run_task."""
+        if self.on_action: # self.on_action é o handle_action async
+            self.page.run_task(self.on_action, action, produto)
+
     def filter_produtos(self) -> list[Produto]:
         """Aplica todos os filtros aos produtos"""
         filtered = self.state.produtos if self.state.produtos else []

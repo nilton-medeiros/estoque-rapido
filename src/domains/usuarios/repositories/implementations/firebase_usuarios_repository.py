@@ -7,8 +7,9 @@ from firebase_admin import exceptions, firestore
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
-from src.shared import deepl_translator
+from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # Valida a senha descriptografada
             if user.password.decrypted == password:
                 return user
-
+            print(f"Debug  ->  {user.password.decrypted} != {password}")
             raise InvalidCredentialsException("Senha incorreta")
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -91,7 +92,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             translated_error = deepl_translator(str(e))
             raise AuthenticationException(f"Erro de autenticação: {translated_error}")
 
-    def save(self, usuario: Usuario) -> str:
+    def save(self, usuario: Usuario) -> str | None:
         """
         Salvar um usuário no banco de dados Firestore.
 
@@ -109,10 +110,63 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception("Erro ao salvar usuário: ID não informado")
 
         try:
-            # Insere ou Atualiza na coleção usuarios, merge=True para não sobrescrever (remover) os campos não mencionados no usuario_dict
-            self.collection.document(usuario.id).set(
-                usuario.to_dict_db(), merge=True)
-            return usuario.id
+            data_to_save = usuario.to_dict_db()
+
+            # Define created_at apenas na criação inicial
+            if not data_to_save.get("created_at"):
+                data_to_save['created_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            # updated_at é sempre definido/atualizado com o timestamp do servidor
+            data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
+            if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
+                data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
+                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            if data_to_save.get("status") == 'INACTIVE' and not data_to_save.get("inactivated_at"):
+                data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            doc_ref = self.collection.document(usuario.id)
+            doc_ref.set(data_to_save, merge=True) # Chamada síncrona
+
+            # Após salvar, lê o documento de volta para obter os timestamps resolvidos
+            try:
+                doc_snapshot = doc_ref.get() # Chamada síncrona
+
+                if not doc_snapshot.exists:
+                    logger.warning(
+                        f"Documento {usuario.id} não encontrado imediatamente após o set para releitura dos timestamps."
+                    )
+                    return None # Retorna None, pois o usuario não foi confirmado ou não pôde ser relido.
+
+                # Re-hidrata o objeto 'usuario' em memória com os dados do DB (que incluem os timestamps reais)
+                user_data_from_db = doc_snapshot.to_dict()
+
+                # Garante que o ID esteja presente no dicionário antes de passar para from_dict
+                user_data_from_db['id'] = doc_snapshot.id
+
+                # Cria um novo objeto Usuario a partir dos dados do DB
+                # e transfere os timestamps reais para o objeto 'usuario' original
+                # que foi passado para o método 'save'.
+                updated_usuario_obj = Usuario.from_dict(user_data_from_db)
+
+                usuario.created_at = updated_usuario_obj.created_at
+                usuario.updated_at = updated_usuario_obj.updated_at
+                usuario.activated_at = updated_usuario_obj.activated_at
+                usuario.deleted_at = updated_usuario_obj.deleted_at
+                usuario.inactivated_at = updated_usuario_obj.inactivated_at
+
+            except Exception as e_read:
+                logger.error(
+                    f"Erro ao reler o documento {usuario.id} para atualizar timestamps no objeto em memória: {str(e_read)}"
+                )
+                # A operação de save principal foi bem-sucedida, mas a releitura falhou.
+                # O objeto 'usuario' em memória não terá os timestamps reais, mas o registro no DB está correto.
+                return usuario.id # Ainda retorna o ID, pois o save no DB foi OK.
+
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
                 logger.error("Argumento inválido fornecido.")
@@ -128,10 +182,11 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(f"Erro ao salvar usuário: {translated_error}")
         except Exception as e:
             # Captura erros inesperados
-            logger.error(f"Erro inesperado ao salvar usuário: {str(e)}")
             translated_error = deepl_translator(str(e))
-            raise Exception(
-                f"Erro inesperado ao salvar usuário: {translated_error}")
+            logger.error(f"Erro inesperado ao salvar usuário: {translated_error} [{str(e)}]")
+            raise
+
+        return usuario.id
 
     def count(self, empresa_id: str) -> int:
         """
@@ -227,6 +282,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             query = self.collection.where(
                 filter=FieldFilter("email", "==", email)).limit(1)
             docs = query.get()
+            print(f"Debug  ->  len(docs) = {len(docs)}")
             return len(docs) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
@@ -248,53 +304,119 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo email '{email}': {e}")
             raise
 
-    def find_all(self, empresa_id: str, limit: int = 100, offset: int = 0) -> list[Usuario]:
+    def find_all(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[Usuario], int]:
         """
         Retorna uma lista paginada de usuários.
 
         Args:
             empresa_id (str): ID da empresa a ser buscada.
+            status_deleted (bool): Se True, somente usuários deletados serão retornados.
             limit (int): Número máximo de registros a retornar.
             offset (int): Número de registros a pular.
 
         Returns:
             list[Usuario]: Lista de usuários encontrados.
+            int: Número total de usuários encontrados.
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).offset(
-                offset).limit(limit)
-            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).offset(offset).limit(limit)
+            query = self.collection.where(
+                filter=FieldFilter("empresas", "array_contains", empresa_id)
+            ).order_by("name.first_name").order_by("name.last_name")
 
-            docs = query.stream()
-            usuarios: list[Usuario] = []
+            docs = query.get()
+
+            usuarios_result: list[Usuario] = []
+            quantify_deleted = 0
 
             for doc in docs:
-                usuario_data = doc.to_dict()
-                usuario_data['id'] = doc.id
-                usuarios.append(Usuario.from_dict(usuario_data))
+                user_data = doc.to_dict()
+                if user_data: # Garante que o documento não esteja vazio
+                    user_data['id'] = doc.id
+                    user_obj = Usuario.from_dict(user_data)
 
-            return usuarios
+                    # Modificação 4: Corrigir comparação de status
+                    # Conta todos os usuarios deletados, independentemente do filtro principal
+                    if user_obj.status == UsuarioStatus.DELETED:
+                        quantify_deleted += 1
+
+                    # Adiciona o usuário à lista de resultados com base no filtro 'status_deleted'
+                    if status_deleted: # Se o filtro é para mostrar deletados
+                        if user_obj.status == UsuarioStatus.DELETED:
+                            usuarios_result.append(user_obj)
+                    else: # not status_deleted (mostrar não deletados)
+                        if user_obj.status != UsuarioStatus.DELETED:
+                            usuarios_result.append(user_obj)
+
+            # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
+            # usuarios_result.sort(key=lambda usuario: usuario.categoria_name) # REMOVIDO
+
+            return usuarios_result, quantify_deleted
+
         except exceptions.FirebaseError as e:
-            if e.code == 'permission-denied':
-                logger.warning(
-                    f"Permissão negada ao consultar usuários da empresa id '{empresa_id}': {e}")
-            elif e.code == 'unavailable':
+            error_message_lower = str(e).lower()
+            # Condição para erro de índice ausente (Failed Precondition)
+            # O Firestore retorna uma mensagem específica com um link para criar o índice.
+            is_missing_index_error = (
+                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+            )
+
+            if is_missing_index_error:
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar usuários da empresa id '{empresa_id}': {e}")
-                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
+                    f"Erro de pré-condição ao consultar usuários (provavelmente índice ausente): {e}. "
+                    "O Firestore requer um índice para esta consulta. "
+                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+                )
+                # A mensagem 'e' já deve conter o link.
+                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
                 raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
-            else:
+                    "Erro ao buscar usuários: Um índice necessário não foi encontrado no banco de dados. "
+                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                    f"Detalhe original: {str(e)}"
+                )
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de usuários da empresa logada: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Erro do Firebase ao consultar usuários da empresa id '{empresa_id}': Código: {e.code}, Detalhes: {e}")
-            raise  # Re-lançar a exceção para tratamento em camadas superiores
-        except Exception as e:
-            # Captura outros erros inesperados (problemas de rede, etc.)
+                    f"Serviço do Firestore indisponível ao consultar lista de usuários da empresa logada: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de usuários da empresa logada: Código: {e.code}, Detalhes: {e}"
+                )
+            raise # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e: # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado ao consultar usuários da empresa id '{empresa_id}': {e}")
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de usuários da empresa logada: {e}"
+            )
+            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
+            error_message_lower = str(e).lower()
+            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
+                 logger.error(
+                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
+                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
+                 )
+                #  print(f"Link de criação do índice: {str(e)}")
+                 # Ainda assim, levanta uma exceção que o usuário possa entender
+                 raise Exception(
+                    "Erro crítico ao buscar usuários: Um índice pode ser necessário (detectado em exceção genérica). "
+                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
+                    f"Detalhe original: {str(e)}"
+                 )
             raise
 
     def find_by_email(self, email: str) -> Usuario | None:

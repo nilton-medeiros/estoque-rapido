@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.domains.produtos.models import ProdutoCategorias
+from src.domains.categorias.models import ProdutoCategorias
 
 
 class CategoriasRepository(ABC):

@@ -10,10 +10,12 @@ import flet as ft
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
-from src.domains.produtos.models import ProdutoCategorias, ProdutoStatus
+from src.domains.produtos.models import ProdutoStatus
+from src.domains.categorias.models import ProdutoCategorias
+
 from src.pages.partials import build_input_field
 from src.services import UploadFile
-from src.shared import message_snackbar, MessageType, get_uuid
+from src.shared.utils import message_snackbar, MessageType, get_uuid
 from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)

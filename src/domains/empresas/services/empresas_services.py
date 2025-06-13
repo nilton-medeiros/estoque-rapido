@@ -4,7 +4,7 @@ from src.domains.empresas.models.empresa_model import Empresa
 from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.domains.shared.nome_pessoa import NomePessoa
-from src.shared import get_uuid
+from src.shared.utils import get_uuid
 
 """
 Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,

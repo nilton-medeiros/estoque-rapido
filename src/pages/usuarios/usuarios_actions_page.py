@@ -2,23 +2,23 @@ import logging
 import flet as ft
 import asyncio
 
-from src.domains.categorias.models.categorias_model import ProdutoCategorias
-from src.domains.produtos.models.produtos_subclass import ProdutoStatus
-from src.shared import MessageType, message_snackbar
+from src.domains.usuarios.models import Usuario, UsuarioStatus
+from src.shared.utils import MessageType, message_snackbar
 
-import src.domains.categorias.controllers.categorias_controllers as category_controllers
+import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
+
 
 logger = logging.getLogger(__name__)
 
-# ToDo: Refatorar este módulo: Não permitir enviar para lixeira categorias vinculadas a produtos, retornar False e msg_error
+# ToDo: Refatorar este módulo: Não permitir enviar para lixeira usuários vinculados a pedidos, movimento de estoque, etc, retornar False e msg_error
 
 async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
     operation_complete_future = asyncio.Future()
-    # Definir dlg_modal ANTES de usá-lo em send_to_trash_category_async
+    # Definir dlg_modal ANTES de usá-lo em send_to_trash_user_async
 
-    status=ProdutoStatus.DELETED
+    status=UsuarioStatus.DELETED
 
-    def send_to_trash_category_async(e_trash):
+    def send_to_trash_user_async(e_trash):
         # nonlocal status
         # Obter a página a partir do evento é mais seguro em callbacks
         page_ctx = e_trash.page
@@ -37,25 +37,25 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             # Atualizar a página (ou o diálogo) para mostrar a mudança
             page_ctx.update()
 
-            # OPERAÇÃO SOFT DELETE: Muda o status para excluído a categoria pelo ID
-            # ToDo: Verificar se há produtos para esta categoria_id, se houver, alterar para INACTIVE
+            # OPERAÇÃO SOFT DELETE: Muda o status para excluído o usuario pelo ID
+            # ToDo: Verificar se há pedidos ou estoque para este produto_id, se houver, alterar para INACTIVE
             """
-            Aviso: Se houver produtos vinculados, o status será definido como ProdutoStatus.INACTIVE. (Obsoleto)
-            Caso contrário, o registro poderá ter o status ProdutoStatus.DELETED.
+            Aviso: Se houver pedidos vinculados, o status será definido como UsuarioStatus.INACTIVE. (Obsoleto)
+            Caso contrário, o registro poderá ter o status UsuarioStatus.DELETED.
             Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
-            A exclusão definitiva ocorrerá após 90 dias da mudança para ProdutoStatus.DELETED, realizada periodicamente por uma Cloud Function.
+            A exclusão definitiva ocorrerá após 90 dias da mudança para UsuarioStatus.DELETED, realizada periodicamente por uma Cloud Function.
             if is_linked:
-                status = ProdutoStatus.INACTIVE
+                status = UsuarioStatus.INACTIVE
             """
 
             logger.info(
-                f"Iniciando operação 'DELETED' para categoria ID: {categoria.id}")
-            # Implemente aqui a lógica para buscar produtos, pedidos e estoque vinculados.
+                f"Iniciando operação 'DELETED' para usuário ID: {usuario.id}")
+            # Implemente aqui a lógica para buscar usuarios, pedidos e estoque vinculados.
             # ...
-            # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
+            # Se não há pedido, usuarios ou estoque vinculado a esta usuario, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.DELETED)
+            result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=UsuarioStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -68,14 +68,14 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
                 return
 
             logger.info(
-                f"Operação '{status.name}' para categoria ID: {categoria.id} concluída com sucesso.")
+                f"Operação '{status.name}' para usuario ID: {usuario.id} concluída com sucesso.")
             if not operation_complete_future.done():
                 operation_complete_future.set_result(True)
 
         except IndexError as ie:  # Deveria ser menos provável com referência direta
             # type: ignore
             logger.error(
-                f"IndexError em send_to_trash_category_async: {ie}.\
+                f"IndexError em send_to_trash_user_async: {ie}.\
                 Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")  # type: ignore
             # Ainda assim, fechar o diálogo em caso de erro interno
             if dlg_modal:
@@ -101,9 +101,9 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             operation_complete_future.set_result(False)  # Usuário cancelou
 
     text = (
-        "Aviso: Este registro será excluído permanentemente após 90 dias. "
-        "Caso exista produtos vinculados a esta categoria, "
-        "ficará com o status 'Obsoleto' (INATIVO) e não poderá ser excluída definitivamente."
+        "Aviso: Este usuario será excluído permanentemente após 90 dias. "
+        "Caso exista pedidos vinculados a esta usuario, "
+        "ficará com o status 'Descontinuado' (INATIVO/OBSOLETO) e não poderá ser excluído definitivamente."
     )
 
     warning_text = ft.Text(
@@ -123,9 +123,9 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
         title=ft.Text(action_title),
         content=ft.Column(
             [
-                ft.Text(categoria.name,
+                ft.Text(usuario.name.nome_completo,
                         weight=ft.FontWeight.BOLD, selectable=True),
-                ft.Text(f"ID: {categoria.id}", selectable=True),
+                ft.Text(f"ID: {usuario.id}", selectable=True),
                 ft.Row([ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED), warning_text]),
                 status_processing_text,  # Controle referenciado
             ],
@@ -138,13 +138,13 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
         actions=[
             # Passa a função delete_company como callback
             ft.ElevatedButton("Sim", icon=ft.Icons.CHECK_CIRCLE_OUTLINE,
-                              on_click=send_to_trash_category_async),
+                              on_click=send_to_trash_user_async),
             ft.OutlinedButton("Não", icon=ft.Icons.CLOSE, on_click=close_dlg),
         ],
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e_dismiss: (
             logger.info(
-                f"Modal dialog para categoria {categoria.id} ({status.name}) foi descartado."),
+                f"Modal dialog para usuario {usuario.id} ({status.name}) foi descartado."),
             # Garante que a future seja resolvida se descartado
             close_dlg(e_dismiss)
         )
@@ -157,14 +157,14 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
     return await operation_complete_future
 
 
-def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
-    logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
-    user = page.app_state.usuario # type: ignore
-    result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProdutoStatus.ACTIVE)
+def restore_from_trash(page: ft.Page, usuario: Usuario) -> bool:
+    logger.info(f"Restaurando usuario ID: {usuario.id} da lixeira")
+    user = page.app_state.usuario # type: ignore  [attr-defined]
+    result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=UsuarioStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(
             page=page, message=result["message"], message_type=MessageType.ERROR)
         return False
-    message_snackbar(page=page, message="Categoria restaurada com sucesso!")
+    message_snackbar(page=page, message="Usuário restaurado com sucesso!")
     return True

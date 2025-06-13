@@ -2,9 +2,9 @@ import logging
 import flet as ft
 import asyncio
 
-from src.domains.categorias.models.categorias_model import ProdutoCategorias
-from src.domains.produtos.models.produtos_subclass import ProdutoStatus
-from src.shared import MessageType, message_snackbar
+from src.domains.categorias.models import ProdutoCategorias
+from src.domains.produtos.models import ProdutoStatus
+from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 

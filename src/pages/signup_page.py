@@ -5,7 +5,8 @@ import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios import Usuario
 
 from src.domains.shared import NomePessoa, Password, PhoneNumber
-from src.shared import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
+from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
+from src.shared.utils import message_snackbar, MessageType, validate_password_strength, get_first_and_last_name, validate_email, validate_phone
 
 import flet as ft
 
@@ -217,10 +218,10 @@ class SignupView:
                 password=Password(self.password_input.value), # type: ignore
                 name=NomePessoa(first_name, last_name),
                 phone_number=PhoneNumber(self.phone_input.value), # type: ignore
-                profile='admin',
+                profile=UsuarioProfile.ADMIN,
             )
 
-            result = user_controllers.handle_save_usuarios(usuario)
+            result = user_controllers.handle_save(usuario)
 
             if result["status"] == "error":
                 message_snackbar(

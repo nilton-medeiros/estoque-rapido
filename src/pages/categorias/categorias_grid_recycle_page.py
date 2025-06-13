@@ -8,7 +8,7 @@ import flet as ft
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 import src.pages.categorias.categorias_actions_page as category_actions
 
-from src.shared import format_datetime_to_utc_minus_3
+from src.shared.utils import format_datetime_to_utc_minus_3
 
 logger = logging.getLogger(__name__)
 

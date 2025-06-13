@@ -3,7 +3,7 @@ import flet as ft
 import asyncio
 
 from src.domains.produtos.models import Produto, ProdutoStatus
-from src.shared import MessageType, message_snackbar
+from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.produtos.controllers.produtos_controllers as product_controllers
 

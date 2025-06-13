@@ -56,3 +56,7 @@ def capitalize_first_word_of_sentence(text: str) -> str:
     parts = text.split(' ', 1)
     parts[0] = parts[0].capitalize()
     return ' '.join(parts)
+
+
+def capitalize_words(text: str) -> str:
+    return ' '.join(word.capitalize() for word in text.split())

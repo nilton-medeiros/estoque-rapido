@@ -1,11 +1,10 @@
-from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal
+from dataclasses import dataclass
+from datetime import datetime, UTC
 from typing import Any
 
 # Supondo que ProdutoStatus esteja no mesmo local ou acessível
 from src.domains.produtos.models.produtos_subclass import ProdutoStatus
-from src.shared import Money
+from src.shared.utils import Money
 
 
 @dataclass
@@ -45,7 +44,7 @@ class Produto:
     # ID do documento no Firestore (gerado automaticamente)
     id: str | None = None
 
-    created_at: datetime | None = field(default_factory=datetime.utcnow)
+    created_at: datetime | None = datetime.now(UTC)
     created_by_id: str | None = None
     created_by_name: str | None = None
 
@@ -188,7 +187,7 @@ class Produto:
             "status": self.status.name,  # Salva o nome do enum no DB
             "ncm": self.ncm,  # Nomenclatura Comum do Mercosul
             "image_url": self.image_url,
-            "created_at": self.created_at if self.created_at else datetime.utcnow(),
+            "created_at": self.created_at if self.created_at else datetime.now(UTC),
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
             "updated_at": self.updated_at,

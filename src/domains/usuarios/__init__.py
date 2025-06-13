@@ -1,6 +1,5 @@
-from .controllers.usuarios_controllers import handle_login_usuarios, handle_save_usuarios, \
-    handle_get_usuarios, handle_update_photo_usuarios, handle_update_colors_usuarios, \
-        handle_update_empresas_usuarios, handle_find_all_usuarios
+from .controllers.usuarios_controllers import handle_login, handle_save, handle_update_photo, handle_update_user_colors, \
+    handle_update_user_companies, get_by_id_or_email, handle_get_all, handle_update_status
 
 from .models.usuario_model import Usuario
 

@@ -222,6 +222,7 @@ def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = 
 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
+
         list_empresas, quantify = empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
 
         if not quantify:
