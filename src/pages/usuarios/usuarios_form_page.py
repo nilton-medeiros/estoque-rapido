@@ -776,23 +776,25 @@ def show_user_form(page: ft.Page):
                 save_btn.disabled = False
                 return
 
-            # Terceira etapa: Enviando email
-            progress_msg.update_progress(f"Enviando credenciais para {usuario.email}...")
+            if usuario.temp_password:
+                # Terceira etapa: Enviando email
+                progress_msg.update_progress(f"Enviando credenciais para {usuario.email}...")
 
-            print(f"Enviando email/credenciais para {usuario.email}...")
-            # Envia email para usuário com senha temporária
-            result = user_controllers.send_mail_password(usuario=usuario)
+                print(f"Enviando email/credenciais para {usuario.email}...")
+                # Envia email para usuário com senha temporária
+                result = user_controllers.send_mail_password(usuario=usuario)
 
-            # Mensagem final de sucesso
-            if result.get("success") is True: # Verifica a chave "success"
-                # Mensagem de sucesso principal já inclui o status do email
-                progress_msg.show_success(result.get("message", f"Usuário salvo e email enviado para {usuario.email}!"))
-            else:
-                # Houve sucesso no salvamento do usuário, mas o envio do email falhou.
-                # A mensagem de erro do email já está em result['user_message'] ou result['error']
-                error_message = result.get("user_message", result.get("error", "Falha no envio do email."))
-                progress_msg.show_warning(f"Usuário salvo com sucesso, mas: {error_message}")
-            # Limpa o formulário salvo e volta para a página anterior que a invocou
+                # Mensagem final de sucesso
+                if result.get("success") is True: # Verifica a chave "success"
+                    # Mensagem de sucesso principal já inclui o status do email
+                    progress_msg.show_success(result.get("message", f"Usuário salvo e email enviado para {usuario.email}!"))
+                else:
+                    # Houve sucesso no salvamento do usuário, mas o envio do email falhou.
+                    # A mensagem de erro do email já está em result['user_message'] ou result['error']
+                    error_message = result.get("user_message", result.get("error", "Falha no envio do email."))
+                    progress_msg.show_warning(f"Usuário salvo com sucesso, mas: {error_message}")
+                # Limpa o formulário salvo e volta para a página anterior que a invocou
+
             usuarios_view.clear_form()
             page.app_state.clear_form_data() # type: ignore [attr-defined]
             page.go(page.data if page.data else '/home')

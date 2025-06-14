@@ -9,13 +9,13 @@ class UserCard:
     """Componente reutilizável para card de usuario"""
 
     @staticmethod
-    def create(usuario: Usuario, on_action_callback) -> ft.Card:
+    def create(usuario: Usuario, logged_user_id: str, on_action_callback) -> ft.Card:
         """Cria um card individual do usuario"""
         return ft.Card(
             content=ft.Container(
                 padding=15,
                 content=ft.Column([
-                    UserCard._create_card_header(usuario, on_action_callback),
+                    UserCard._create_card_header(usuario, logged_user_id, on_action_callback),
                     ft.Text(usuario.email,
                            theme_style=ft.TextThemeStyle.BODY_MEDIUM,
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
@@ -34,14 +34,18 @@ class UserCard:
         )
 
     @staticmethod
-    def _create_card_header(usuario: Usuario, on_action_callback) -> ft.Row:
+    def _create_card_header(usuario: Usuario, logged_user_id: str, on_action_callback) -> ft.Row:
         """Cria o cabeçalho do card com imagem e menu"""
         return ft.Row([
             UserCard._create_user_image(usuario),
-            ft.Text(usuario.name.nome_completo, weight=ft.FontWeight.BOLD,
-                   theme_style=ft.TextThemeStyle.BODY_LARGE),
+            ft.Text(
+                usuario.name.nome_completo,
+                weight=ft.FontWeight.BOLD,
+                theme_style=ft.TextThemeStyle.BODY_LARGE,
+                no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS
+            ),
             ft.Container(expand=True),  # Spacer
-            UserCard._create_action_menu(usuario, on_action_callback),
+            UserCard._create_action_menu(usuario, logged_user_id, on_action_callback),
         ], alignment=ft.MainAxisAlignment.START)
 
     @staticmethod
@@ -69,7 +73,7 @@ class UserCard:
         )
 
     @staticmethod
-    def _create_action_menu(usuario: Usuario, on_action_callback) -> ft.Container:
+    def _create_action_menu(usuario: Usuario, logged_user_id: str, on_action_callback) -> ft.Container:
         """Cria o menu de ações do usuario"""
         return ft.Container(
             content=ft.PopupMenuButton(
@@ -80,6 +84,12 @@ class UserCard:
                         text="Editar usuário",
                         icon=ft.Icons.EDIT_NOTE_OUTLINED,
                         on_click=lambda e: on_action_callback("EDIT", usuario)
+                    ),
+                    ft.PopupMenuItem(
+                        text="Trocar senha",
+                        icon=ft.Icons.PASSWORD,
+                        on_click=lambda e: on_action_callback("CHANGE_PASSWORD", usuario),
+                        disabled=logged_user_id != usuario.id
                     ),
                     ft.PopupMenuItem(
                         text="Excluir usuário",

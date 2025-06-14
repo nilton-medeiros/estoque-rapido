@@ -132,7 +132,8 @@ class UsuarioGridUI:
         cards = []
         for usuario in usuarios:
             # Passar o novo método do controller que lida com page.run_task
-            card = UserCard.create(usuario, self.controller.execute_action_async)
+            logged_user_id = self.controller.page.app_state.usuario.get('id') # type: ignore [attr-defined]
+            card = UserCard.create(usuario, logged_user_id, self.controller.execute_action_async)
             cards.append(card)
 
         return ft.ResponsiveRow(

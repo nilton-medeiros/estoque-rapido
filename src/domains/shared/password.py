@@ -9,10 +9,16 @@ logger = logging.getLogger(__name__)
 
 
 class Password:
+    """
+    Classe para criptografar e descriptografar senhas.
+
+    Args:
+        value (str): Senha a ser criptografada.
+    """
     def __init__(self, value: str):
         self.error: bool = False
         self.error_message: str | None = None
-        self.value: bytes | None = None
+        self.value: bytes
 
         load_dotenv()
         key = os.getenv("FERNET_KEY")
@@ -27,14 +33,15 @@ class Password:
             raise ValueError(f"Chave Fernet inválida: {e}")
 
         if not isinstance(value, str):
-            logger.error("A senha deve ser uma string.")
-            raise TypeError("A senha deve ser uma string.")
+            self.error = True
+            self.error_message = "A senha deve ser uma string."
+            return
 
         if len(value) < 8:
-            logger.warning("A senha deve ter pelo menos 8 caracteres.")
             self.error = True
-            self.error_message = "A senha deve ter:\n• pelo menos 8 caracteres"
+            self.error_message = "A senha deve ter pelo menos 8 caracteres."
             return
+
         self.value = self._encrypt(value)
 
     def __eq__(self, other):
@@ -126,4 +133,5 @@ class Password:
 >>>     print(pwd.decrypted)  # minha_senha_secreta
 >>>     pwd2 = Password("minha_senha_secreta")
 >>>     print(pwd == pwd2)  # True
+>>>     print(pwd.value)  # Valor criptografado da senha (bytes)
 """

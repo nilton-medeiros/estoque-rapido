@@ -146,11 +146,10 @@ class LoginView:
         self.email_input.value = email # type: ignore
 
         # A classe Password lida com senhas inválidas
-        password = Password(self.password_input.value) # type: ignore
-
-        if password.error:
-            return password.error_message
-
+        if self.password_input.value:
+            password = Password(self.password_input.value)
+            if password.error:
+                return password.error_message
         return None
 
     def handle_login(self, _):
