@@ -604,6 +604,60 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao deletar usuário com id '{usuario_id}': {str(e)}")
 
+    def change_password(self, id: str, new_password: bytes) -> bool:
+        """
+        Troca a senha do usuário.
+
+        Args:
+            id (str): ID do usuário
+            new_password (bytes): Nova senha encriptada
+
+        Returns:
+            bool: True se a senha foi alterada com sucesso, False caso contrário
+
+        Raises:
+            Exception: Em caso de erro na operação de banco de dados
+        """
+        try:
+            if not new_password:
+                raise ValueError("A nova senha não pode ser vazio")
+            if not isinstance(new_password, bytes):
+                raise ValueError("A nova senha tem que estar criptografada")
+
+            doc_ref = self.collection.document(id)
+            doc = doc_ref.get()
+
+            if not doc.exists:
+                return False
+
+            doc_ref.update({"password": new_password, "temp_password": False})
+            return True
+        except exceptions.FirebaseError as e:
+            if e.code == 'not-found':
+                logger.error(f"Documento com ID '{id}' não encontrado.")
+            elif e.code == 'permission-denied':
+                logger.error(
+                    f"Permissão negada para atualizar a senha do usuário com ID '{id}'.")
+            elif e.code == 'resource-exhausted':
+                logger.error(
+                    "Cota do Firebase excedida ao tentar atualizar a senha.")
+            elif e.code == 'unavailable':
+                logger.error("Serviço do Firestore indisponível no momento.")
+            elif e.code == 'deadline-exceeded':
+                logger.error(
+                    "Tempo limite para a operação de atualização excedido.")
+            else:
+                logger.error(
+                    f"Erro desconhecido do Firebase ao atualizar a senha: {e.code}")
+            translated_error = deepl_translator(str(e))
+            raise Exception(
+                f"Erro ao atualizar a senha do usuário com ID '{id}': {translated_error}")
+        except Exception as e:
+            logger.error(
+                f"Erro inesperado ao atualizar a senha do usuário com ID '{id}': {str(e)}")
+            raise Exception(
+                f"Erro inesperado ao atualizar a senha do usuário com ID '{id}': {str(e)}")
+
     def update_profile(self, id: str, new_profile: str) -> Usuario | None:
         """
         Atualiza o perfil de um usuário.

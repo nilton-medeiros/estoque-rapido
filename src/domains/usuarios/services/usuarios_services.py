@@ -1,6 +1,7 @@
 from typing import Optional
 
 from src.domains.shared.nome_pessoa import NomePessoa
+from src.domains.shared.password import Password
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
@@ -168,3 +169,10 @@ class UsuariosServices:
 
         id = self.repository.save(usuario)
         return id is not None
+
+    def change_password(self, usuario_id: str, new_password: str) -> bool:
+        """Atualiza a senha de uma usuário existente"""
+        pwd_encrypted = Password(new_password)
+        if pwd_encrypted.error:
+            raise ValueError(pwd_encrypted.error_message)
+        return self.repository.change_password(usuario_id, pwd_encrypted.value)

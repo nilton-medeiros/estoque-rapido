@@ -90,3 +90,19 @@ class UsuariosRepository(ABC):
     def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """Atualiza empresas do um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
+
+    def change_password(self, id: str, new_password: bytes) -> bool:
+            """
+            Troca a senha do usuário.
+
+            Args:
+                id (str): ID do usuário
+                new_password (bytes): Nova senha encricriptada
+
+            Returns:
+                bool: True se a senha foi alterada com sucesso, False caso contrário
+
+            Raises:
+                Exception: Em caso de erro na operação de banco de dados
+            """
+            raise NotImplementedError("Este método deve ser implementado pela subclasse")

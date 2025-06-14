@@ -14,13 +14,11 @@ from src.services.emails.send_email import EmailAuthenticationError, EmailConnec
 
 logger = logging.getLogger(__name__)
 
-
 """
 Essa estrutura garante um controle claro de responsabilidades, onde usuarios_controller atua organizando
 e redirecionando os dados ao repositório de dados.
 Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
 """
-
 
 def handle_login(email: str, password: str) -> dict[str, Any]:
     response: dict[str, Any] = {}
@@ -54,6 +52,37 @@ def handle_login(email: str, password: str) -> dict[str, Any]:
     except Exception as e:
         response["status"] = "error"
         response["message"] = f"Erro interno do servidor: {str(e)}"
+
+    return response
+
+def handle_change_password(user_id: str, new_password: str) -> dict[str, Any]:
+
+    response: dict[str, Any] = {}
+
+    try:
+        repository = FirebaseUsuariosRepository()
+        user_services = UsuariosServices(repository)
+
+        if not user_id:
+            raise ValueError("Usuário não pode ser nulo ou vazio")
+        if not new_password:
+            raise ValueError("Nova senha não pode ser nulo ou vazia")
+
+        updated_pwd = user_services.change_password(user_id, new_password)
+
+        if updated_pwd:
+            response["status"] = "success"
+            response["data"] = {"message": "Senha atualizada com sucesso!"}
+        else:
+            response["status"] = "error"
+            response["message"] = "Falha ao atualizar senha"
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
 
     return response
 
@@ -111,7 +140,6 @@ def handle_save(usuario: Usuario) -> dict[str, Any]:
 
     return response
 
-
 def handle_update_photo(id: str, photo_url: str) -> dict[str, Any]:
     """
     Update no campo photo_url do usuário.
@@ -147,8 +175,6 @@ def handle_update_photo(id: str, photo_url: str) -> dict[str, Any]:
 
         response["status"] = "success"
         response["data"] = {"usuario": usuario, "message": "Foto do Usuário atualizada com sucesso!"}
-
-
     except ValueError as e:
         response["status"] = "error"
         response["message"] = f"Erro de validação: {str(e)}"
@@ -158,7 +184,6 @@ def handle_update_photo(id: str, photo_url: str) -> dict[str, Any]:
         response["message"] = str(e)
 
     return response
-
 
 def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]:
     """
@@ -224,7 +249,6 @@ def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]
 
     return response
 
-
 def handle_update_user_companies(usuario_id: str, empresas: set, empresa_ativa_id: str|None = None) -> dict:
     """
     Update nos campos empresa_id e empresas do usuário.
@@ -283,7 +307,6 @@ def handle_update_user_companies(usuario_id: str, empresas: set, empresa_ativa_i
         logger.error(response["message"])
 
     return response
-
 
 def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[str, Any]:
     """
@@ -346,7 +369,6 @@ def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[
         logger.error(response["message"])
 
     return response
-
 
 def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, Any]:
     """
