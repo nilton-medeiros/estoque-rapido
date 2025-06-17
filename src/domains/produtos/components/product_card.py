@@ -34,13 +34,17 @@ class ProductCard:
     @staticmethod
     def _create_card_header(produto: Produto, on_action_callback) -> ft.Row:
         """Cria o cabeçalho do card com imagem e menu"""
-        return ft.Row([
-            ProductCard._create_product_image(produto),
-            ft.Text(produto.categoria_name, weight=ft.FontWeight.BOLD,
-                   theme_style=ft.TextThemeStyle.BODY_LARGE),
-            ft.Container(expand=True),  # Spacer
-            ProductCard._create_action_menu(produto, on_action_callback),
-        ], alignment=ft.MainAxisAlignment.START)
+        return ft.Row(
+            [
+                ProductCard._create_product_image(produto),
+                ft.Text(produto.categoria_name, weight=ft.FontWeight.BOLD,
+                    theme_style=ft.TextThemeStyle.BODY_LARGE),
+                ft.Container(expand=True),  # Spacer
+                ProductCard._create_action_menu(produto, on_action_callback),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.START,
+        )
 
     @staticmethod
     def _create_product_image(produto: Produto) -> ft.Container:

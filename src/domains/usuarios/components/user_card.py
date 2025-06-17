@@ -36,17 +36,22 @@ class UserCard:
     @staticmethod
     def _create_card_header(usuario: Usuario, logged_user_id: str, on_action_callback) -> ft.Row:
         """Cria o cabeçalho do card com imagem e menu"""
-        return ft.Row([
-            UserCard._create_user_image(usuario),
-            ft.Text(
-                usuario.name.nome_completo,
-                weight=ft.FontWeight.BOLD,
-                theme_style=ft.TextThemeStyle.BODY_LARGE,
-                no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS
-            ),
-            ft.Container(expand=True),  # Spacer
-            UserCard._create_action_menu(usuario, logged_user_id, on_action_callback),
-        ], alignment=ft.MainAxisAlignment.START)
+        return ft.Row(
+            [
+                UserCard._create_user_image(usuario),
+                ft.Text(
+                    usuario.name.primeiro_e_ultimo_nome,
+                    weight=ft.FontWeight.BOLD,
+                    theme_style=ft.TextThemeStyle.BODY_LARGE,
+                    no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS,
+                    # expand=True,
+                ),
+                ft.Container(expand=True),  # Spacer
+                UserCard._create_action_menu(usuario, logged_user_id, on_action_callback),
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.START
+        )
 
     @staticmethod
     def _create_user_image(usuario: Usuario) -> ft.Container:

@@ -209,6 +209,7 @@ def show_categories_grid(page: ft.Page):
                                         ),
                                     ],
                                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    vertical_alignment=ft.CrossAxisAlignment.START,
                                 ),
                                 ft.Text(f"{categoria.name}", weight=ft.FontWeight.BOLD),
                                 ft.Text(f"{categoria.description if categoria.description else '<Sem descrição>'}",

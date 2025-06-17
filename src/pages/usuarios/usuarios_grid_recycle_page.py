@@ -255,6 +255,7 @@ def show_users_grid_trash(page: ft.Page):
                                         ),
                                     ],
                                     alignment=ft.MainAxisAlignment.START,
+                                    vertical_alignment=ft.CrossAxisAlignment.START
                                 ),
                                 ft.Text(
                                     f"{usuario.name.nome_completo}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
