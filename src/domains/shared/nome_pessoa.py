@@ -114,6 +114,25 @@ class NomePessoa:
                     for palavra in palavras if palavra not in palavras_ignoradas]
         return ''.join(iniciais)
 
+    @property
+    def primeiro_e_ultimo_nome(self) -> str:
+        """
+        Retorna a primeira palavra do primeiro nome e a última palavra do último nome.
+
+        Returns:
+            str: Primeira palavra do primeiro nome e última palavra do último nome.
+        """
+        primeiro_nome_palavras = self.first_name.split() if self.first_name else []
+        ultimo_nome_palavras = self.last_name.split()
+
+        primeiro = primeiro_nome_palavras[0] if primeiro_nome_palavras else ""
+        ultimo = ultimo_nome_palavras[-1] if ultimo_nome_palavras else ""
+
+        if primeiro and ultimo:
+            return f"{primeiro} {ultimo}"
+        elif primeiro:
+            return primeiro
+        return ultimo
 
 # Exemplo de uso:
 '''
