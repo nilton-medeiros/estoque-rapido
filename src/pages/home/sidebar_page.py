@@ -544,6 +544,7 @@ def sidebar_content(page: ft.Page):
         spacing=0,
     )
 
+    # ToDo: Criar um manual para o Estoque Rápido e atribuir o link do S3 do manual pdf
     manual = ft.TextButton(
         text='MANUAL RÁPIDO',
         style=ft.ButtonStyle(color=ft.Colors.GREY),
