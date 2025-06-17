@@ -46,7 +46,9 @@ class ChangePasswordDialog:
             prefix_icon=ft.Icons.LOCK,
             helper_text="Mínimo 8 caracteres",
             helper_style=ft.TextStyle(color=self.colors['primary'], size=12),
-            enable_suggestions=False
+            enable_suggestions=False,
+            autocorrect=False,
+            autofill_hints=ft.AutofillHint.NEW_PASSWORD,
         )
 
         self.confirm_password_field = ft.TextField(
@@ -61,6 +63,7 @@ class ChangePasswordDialog:
             prefix_icon=ft.Icons.LOCK_RESET,
             helper_text="Digite novamente a nova senha",
             helper_style=ft.TextStyle(color=self.colors['primary'], size=12),
+            autofill_hints=ft.AutofillHint.NEW_PASSWORD,
         )
 
         # Mensagem de erro/sucesso

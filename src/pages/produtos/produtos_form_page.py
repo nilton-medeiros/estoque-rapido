@@ -16,12 +16,12 @@ import src.domains.produtos.controllers.produtos_controllers as product_controll
 
 from src.domains.produtos.models import Produto, ProdutoStatus
 from src.pages.partials import build_input_field
-from src.services import UploadFile, fetch_product_info_by_ean, ImageDownloader
-from src.shared.utils.money_numpy import Money
+from src.services import UploadFile, fetch_product_info_by_ean
 from src.shared.utils import  show_banner, message_snackbar, MessageType, get_uuid, format_datetime_to_utc_minus_3
 from src.shared.utils.find_project_path import find_project_root
 from src.shared.config import get_app_colors
 from src.pages.partials.monetary_field import MonetaryTextField
+from src.shared.utils.money_numpy import Money
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class ProdutoForm:
         self.is_image_url_web = False
         self.previous_image_url: str | None = None
         self.local_upload_file: str | None = None
+        self.download_image_link: str | None = None
         # Campos de redimencionamento do formulário
         self.font_size = 18
         self.icon_size = 24
@@ -86,6 +87,8 @@ class ProdutoForm:
         dropdown.update()
 
     def _consult_product(self, e):
+        self.download_image_link = None
+
         if not self.ean_code.value:
             return
 
@@ -127,86 +130,27 @@ class ProdutoForm:
         self.name.value = product_data["description"]
         thumbnail = product_data.get("thumbnail")
 
+        logger.info(f"Result product_data: {product_data}")
+
         if thumbnail and thumbnail.startswith("http"):
-            # Inicializa o downloader de imagens
-            image_downloader = ImageDownloader()
+            self.download_image_link = product_data.get("thumbnail")
+            logger.info(f"URL de imagem do produto encontrada: {self.download_image_link}")
 
-            # Faz o download da imagem da URL
-            downloaded_file = image_downloader.download_image(
-                image_url=thumbnail,
-                prefix="cosmos_product"
-            )
+            # Tornar os componentes visíveis e atualizar o conteúdo
+            self.image_text.visible = True
+            self.image_link.visible = True
 
-            if downloaded_file:
-                # Sucesso no download - configura para usar o arquivo local
-                self.local_upload_file = downloaded_file
-                self.is_image_url_web = False  # Marca como arquivo local
-                self.image_url = None  # Limpa a URL web
-
-                # Atualiza a interface com a imagem baixada
-                # Obtem o diretório raiz do projeto
-                project_root = find_project_root(__file__)
-                img_file = project_root / downloaded_file
-
-                try:
-                    with open(img_file, "rb") as f_img:
-                        img_data = f_img.read()
-
-                    base64_data = base64.b64encode(img_data).decode('utf-8')
-                    mime_type, _ = mimetypes.guess_type(str(img_file))
-                    if not mime_type:
-                        # Tenta inferir pela extensão se mimetypes falhar
-                        ext = str(img_file).split('.')[-1].lower()
-                        if ext == "jpg" or ext == "jpeg":
-                            mime_type = "image/jpeg"
-                        elif ext == "png":
-                            mime_type = "image/png"
-                        elif ext == "svg":
-                            mime_type = "image/svg+xml"
-                        else:
-                            mime_type = "application/octet-stream"
-
-                    categoria_img = ft.Image(
-                        src_base64=base64_data,
-                        error_content=ft.Text("Erro ao carregar (base64)!"),
-                        repeat=ft.ImageRepeat.NO_REPEAT,
-                        fit=ft.ImageFit.CONTAIN,
-                        border_radius=ft.border_radius.all(20),
-                    )
-                    self.image_frame.content = categoria_img
-
-                except Exception as ex:
-                    logger.error(f"Erro ao processar imagem baixada {img_file}: {ex}")
-                    # Fallback: tenta usar a URL original diretamente
-                    self.image_url = thumbnail
-                    self.is_image_url_web = True
-                    self.local_upload_file = None
-
-                    categoria_img = ft.Image(
-                        src=self.image_url,
-                        error_content=ft.Text("Erro!"),
-                        repeat=ft.ImageRepeat.NO_REPEAT,
-                        fit=ft.ImageFit.CONTAIN,
-                        border_radius=ft.border_radius.all(20),
-                    )
-                    self.image_frame.content = categoria_img
-
-            else:
-                # Falha no download - usa a URL original diretamente
-                logger.warning(f"Falha ao baixar imagem da URL {thumbnail}, usando URL diretamente")
-                self.image_url = thumbnail
-                self.is_image_url_web = True
-                self.local_upload_file = None
-
-                categoria_img = ft.Image(
-                    src=self.image_url,
-                    error_content=ft.Text("Erro!"),
-                    repeat=ft.ImageRepeat.NO_REPEAT,
-                    fit=ft.ImageFit.CONTAIN,
-                    border_radius=ft.border_radius.all(20),
+            # Atualizar o conteúdo do link
+            self.image_link.spans = [
+                ft.TextSpan(
+                    text=self.download_image_link,
+                    style=ft.TextStyle(color=self.app_colors["primary"], decoration=ft.TextDecoration.UNDERLINE),
+                    url=self.download_image_link,
                 )
-                self.image_frame.content = categoria_img
+            ]
 
+            self.image_text.update()
+            self.image_link.update()
 
         if product_data.get("brand"):
             self.brand.value = product_data["brand"]["name"]
@@ -321,6 +265,28 @@ class ProdutoForm:
             value=True,
             on_change=self.on_change_status,
             col={'xs': 12, 'md': 4, 'lg': 4})
+
+        self.image_text = ft.Text(
+            col={'xs': 12, 'md': 12, 'lg': 12},
+            value="Para baixar a imagem do produto, clique no link abaixo:",
+            size=10,
+            weight=ft.FontWeight.BOLD,
+            tooltip="O download automático da imagem foi bloqueado pelo fornecedor, sendo necessário realizar o download manualmente.",
+            visible=False
+        )
+        self.image_link = ft.Text(
+            col={'xs': 12, 'md': 12, 'lg': 12},
+            spans=[
+                ft.TextSpan(
+                    text=self.download_image_link if self.download_image_link else "",
+                    style=ft.TextStyle(color=self.app_colors["primary"], decoration=ft.TextDecoration.UNDERLINE),
+                    url=self.download_image_link,
+                )
+            ],
+            selectable=True, # Permite que o usuário copie o link
+            tooltip="O download automático da imagem foi bloqueado pelo fornecedor, sendo necessário realizar o download manualmente.",
+            visible=False
+        )
 
         #--------------------------------------------------------------------------------------
         # Descrição do produto
@@ -578,6 +544,9 @@ class ProdutoForm:
                         self.image_section,
                     ]
                 ),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+                self.image_text,
+                self.image_link,
 
                 # Cria uma linha (espaço vazio) para efeito visual
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
