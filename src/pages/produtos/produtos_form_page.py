@@ -130,7 +130,7 @@ class ProdutoForm:
         self.name.value = product_data["description"]
         thumbnail = product_data.get("thumbnail")
 
-        logger.info(f"Result product_data: {product_data}")
+        # logger.info(f"Result product_data: {product_data}")
 
         if thumbnail and thumbnail.startswith("http"):
             self.download_image_link = product_data.get("thumbnail")
