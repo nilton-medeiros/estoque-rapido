@@ -549,8 +549,7 @@ def sidebar_content(page: ft.Page):
         style=ft.ButtonStyle(color=ft.Colors.GREY),
         icon=ft.Icons.DOWNLOAD,
         icon_color=ft.Colors.GREY,
-        url='https://drive.google.com/uc?export=download&id=1vHKz5-tKDC_HMwqaGYMbsAicGrKPwyFL',
-
+        # url='https://drive.google.com/uc?export=download&id=1vHKz5-tKDC_HMwqaGYMbsAicGrKPwyFL',
         # https://sites.google.com/site/gdocs2direct/?pli=1
     )
 
