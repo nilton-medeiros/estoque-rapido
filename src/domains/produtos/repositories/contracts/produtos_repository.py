@@ -29,3 +29,12 @@ class ProdutosRepository(ABC):
         """
         raise NotImplementedError(
         "Este método deve ser implementado pela subclasse")
+
+    @abstractmethod
+    def get_low_stock_count(self) -> int:
+        """
+        Obtém a quantidade de produtos ativos que necessitam de reposição no estoque.
+        Um produto necessita de reposição se 'quantity_on_hand' < 'minimum_stock_level'.
+        """
+        raise NotImplementedError(
+        "Este método deve ser implementado pela subclasse")

@@ -75,3 +75,8 @@ class ProdutosServices:
     def get_all(self, status_deleted: bool = False) -> tuple[list[Produto], int]:
         """Busca todas as produtos da empresa logada que sejam ativa ou não, dependendo do status_deleted True/False."""
         return self.repository.get_all(status_deleted)
+
+
+    def get_low_stock_count(self) -> int:
+        """Obtém a quantidade de produtos ativos que necessitam de reposição no estoque."""
+        return self.repository.get_low_stock_count()

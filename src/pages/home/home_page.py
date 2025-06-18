@@ -1,23 +1,18 @@
 import flet as ft
 
-from src.pages.home import main_content
+from src.pages.home.content_page import MainContent # Alterado para importar a classe
 from src.pages.home.sidebar_page import sidebar_container
 
 
 def show_home_page(page: ft.Page):
     """Página Home do usuário logado"""
-    # page.theme = AppTheme.theme
     page.theme_mode = ft.ThemeMode.DARK
 
     if colors := page.app_state.usuario.get('user_colors'): # type: ignore
        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color')) # type: ignore
 
-    # if colors := page.app_state.usuario.get('user_colors'):
-        # page.theme.color_scheme.primary = colors.get('primary')
-        # page.theme.color_scheme.primary_container = colors.get('container')
-
     sidebar = sidebar_container(page)
-    content = main_content()
+    content = MainContent(page) # Cria uma instância da classe
 
     # Layout inicial (para telas grandes)
     layout = ft.ResponsiveRow(

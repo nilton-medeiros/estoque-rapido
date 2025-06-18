@@ -2,6 +2,7 @@ import logging
 
 import flet as ft
 
+from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.shared import NomePessoa, Password
 from src.pages.partials import get_responsive_sizes, build_input_field
 
@@ -205,8 +206,8 @@ class LoginView:
 
             cia: Empresa = result["data"]
 
-            # Adiciona o empresa_id no state e publíca-a
-            if cia.status.name == 'ACTIVE':
+            # Adiciona o empresa_id no state e publica-a
+            if cia.status == Status.ACTIVE:
                 self.page.app_state.set_empresa(cia.to_dict()) # type: ignore
             else:
                 user.empresa_id = None

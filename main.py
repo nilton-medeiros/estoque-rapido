@@ -5,7 +5,6 @@ import threading
 import os
 
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 from dotenv import load_dotenv
 
 from src.pages import show_signup_page, show_landing_page, show_login_page
@@ -17,7 +16,7 @@ from src.pages.usuarios.usuarios_form_page import show_user_form
 from src.pages.usuarios.usuarios_grid_page import show_users_grid
 from src.pages.usuarios.usuarios_grid_recycle_page import show_users_grid_trash
 from src.services import AppStateManager
-
+from src.services.states.refresh_session import refresh_dashboard_session
 from src.shared.config import get_app_colors
 from src.shared.utils.find_project_path import find_project_root
 
@@ -82,6 +81,15 @@ def main(page: ft.Page):
     # Garante que há sempre uma cor padrão
     page.session.set("user_colors", get_app_colors('yellow'))
 
+    dashboard_data = {
+        "repor_produtos": 0,
+        "encomendas": 0,
+        "pagamentos": 0,
+        "recebimentos": 0,
+    }
+
+    page.session.set("dashboard", dashboard_data)
+
     # Inicialize o estado da aplicação
     app_state = AppStateManager(page)
     # Torna o app_state acessível globalmente
@@ -91,15 +99,16 @@ def main(page: ft.Page):
     def handle_pubsub(message):
         match message:
             case "usuario_updated":
-                # type: ignore  [attr-defined]
                 if page.app_state.usuario.get('name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem do usuário
                     update_usuario_dependent_ui()
                 else:
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
-            case "empresa_updated":
-                # type: ignore  [attr-defined]
+            case "empresa_updated": # Adicionado o tratamento para empresa_updated
+                print("Debug  -> Entrou em empresa_updated")
+                # Executa a atualização do dashboard em uma task separada (async)
+                page.run_task(refresh_dashboard_session, page)
                 if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
@@ -107,6 +116,11 @@ def main(page: ft.Page):
                     # Limpa elementos da UI relacionados à empresa
                     clear_empresa_ui()
 
+            case "dashboard_refreshed":
+                print("Debug -> Evento 'dashboard_refreshed' recebido em main.py")
+                # A UI específica (MainContent) irá lidar com a atualização.
+                # Podemos forçar um page.update() aqui se necessário para outras partes da UI global.
+                # page.update()
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):

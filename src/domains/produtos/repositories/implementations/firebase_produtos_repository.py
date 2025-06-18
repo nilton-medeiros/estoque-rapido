@@ -76,18 +76,25 @@ class FirebaseProdutosRepository(ProdutosRepository):
                 product_data_from_db = doc_snapshot.to_dict()
 
                 # Garante que o ID esteja presente no dicionário antes de passar para from_dict
-                product_data_from_db['id'] = doc_snapshot.id
+                if product_data_from_db: # Adicionada verificação para evitar erro se to_dict() retornar None
+                    product_data_from_db['id'] = doc_snapshot.id
 
-                # Cria um novo objeto Produto a partir dos dados do DB
-                # e transfere os timestamps reais para o objeto 'produto' original
-                # que foi passado para o método 'save'.
-                updated_produto_obj = Produto.from_dict(product_data_from_db)
+                    # Cria um novo objeto Produto a partir dos dados do DB
+                    # e transfere os timestamps reais para o objeto 'produto' original
+                    # que foi passado para o método 'save'.
+                    updated_produto_obj = Produto.from_dict(product_data_from_db)
 
-                produto.created_at = updated_produto_obj.created_at
-                produto.updated_at = updated_produto_obj.updated_at
-                produto.activated_at = updated_produto_obj.activated_at
-                produto.deleted_at = updated_produto_obj.deleted_at
-                produto.inactivated_at = updated_produto_obj.inactivated_at
+                    produto.created_at = updated_produto_obj.created_at
+                    produto.updated_at = updated_produto_obj.updated_at
+                    produto.activated_at = updated_produto_obj.activated_at
+                    produto.deleted_at = updated_produto_obj.deleted_at
+                    produto.inactivated_at = updated_produto_obj.inactivated_at
+                else:
+                    logger.warning(
+                        f"Documento {produto.id} retornou dados vazios após o set para releitura dos timestamps."
+                    )
+                    return produto.id # O save ocorreu, mas a releitura para atualizar o objeto em memória falhou em obter dados.
+
 
             except Exception as e_read:
                 logger.error(
@@ -99,16 +106,16 @@ class FirebaseProdutosRepository(ProdutosRepository):
 
         except exceptions.FirebaseError as e:
             # Tratamento de erros específicos do Firebase
-            if e.code == 'invalid-argument':
+            if hasattr(e, 'code') and e.code == 'invalid-argument': # Adicionado hasattr para segurança
                 logger.error(f"Argumento inválido fornecido: {e}")
-            elif e.code == 'not-found':
+            elif hasattr(e, 'code') and e.code == 'not-found':
                 logger.error(f"Documento ou recurso não encontrado: {e}")
-            elif e.code == 'permission-denied':
+            elif hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.error(f"Permissão negada para realizar a operação: {e}")
-            elif e.code == 'resource-exhausted':
+            elif hasattr(e, 'code') and e.code == 'resource-exhausted':
                 logger.error(f"Cota do Firebase excedida: {e}")
             else:
-                logger.error(f"Erro desconhecido do Firebase: {e.code} - {e}")
+                logger.error(f"Erro desconhecido do Firebase: {getattr(e, 'code', 'N/A')} - {e}")
 
             # Traduz e re-lança a exceção para que a camada de aplicação possa lidar com ela
             translated_error = deepl_translator(str(e))
@@ -151,7 +158,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             return Produto.from_dict(product_data)
 
         except exceptions.FirebaseError as e:
-            logger.error(f"Erro do Firebase ao buscar produto por ID {produto_id}: Código: {e.code}, Detalhes: {e}")
+            logger.error(f"Erro do Firebase ao buscar produto por ID {produto_id}: Código: {getattr(e, 'code', 'N/A')}, Detalhes: {e}")
             raise # Re-lança para tratamento em camadas superiores
         except Exception as e:
             logger.error(f"Erro inesperado ao buscar produto por ID {produto_id}: {e}")
@@ -214,7 +221,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             # Condição para erro de índice ausente (Failed Precondition)
             # O Firestore retorna uma mensagem específica com um link para criar o índice.
             is_missing_index_error = (
-                (hasattr(e, 'code') and e.code == 'failed-precondition') or
+                (hasattr(e, 'code') and e.code == 'failed-precondition') and # Adicionado hasattr
                 ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
             )
 
@@ -248,7 +255,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             else:
                 # Outros erros FirebaseError
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                     f"Erro do Firebase ao consultar lista de produtos da empresa logada: Código: {getattr(e, 'code', 'N/A')}, Detalhes: {e}"
                 )
             raise # Re-lança o FirebaseError original ou a Exception customizada
 
@@ -271,3 +278,52 @@ class FirebaseProdutosRepository(ProdutosRepository):
                     f"Detalhe original: {str(e)}"
                 )
             raise
+
+    def get_low_stock_count(self) -> int:
+        """
+        Obtém a quantidade de produtos ativos que necessitam de reposição no estoque.
+        Um produto necessita de reposição se 'quantity_on_hand' < 'minimum_stock_level'.
+        """
+        low_stock_count = 0
+        try:
+            # Filtra por produtos com status "ACTIVE" no nível do banco de dados
+            query = self.products_collection_ref.where("status", "==", ProdutoStatus.ACTIVE.name)
+            documents = query.stream()  # Usa stream() para iterar sobre os resultados
+
+            print(f"Debug  -> Entrou em get_low_stock_count = documents: {documents}")
+
+            for doc in documents:
+                product_data = doc.to_dict()
+                if product_data:
+                    quantity_on_hand = product_data.get('quantity_on_hand')
+                    minimum_stock_level = product_data.get('minimum_stock_level')
+
+                    print(f"Debug  -> quantity_on_hand: {quantity_on_hand}, type: {type(quantity_on_hand)}, minimum_stock_level: {minimum_stock_level}, type: {type(minimum_stock_level)}")
+
+                    # Verifica se ambos os campos são inteiros e existem
+                    if isinstance(quantity_on_hand, int) and isinstance(minimum_stock_level, int):
+                        if quantity_on_hand < minimum_stock_level:
+                            low_stock_count += 1
+                            print(f"\nlow_stock_count: {low_stock_count}")
+                    else:
+                        # Loga um aviso se campos importantes estiverem faltando ou com tipo incorreto para um produto ativo
+                        logger.warning(
+                            f"Produto ativo ID {doc.id} possui 'quantity_on_hand' ({quantity_on_hand}) ou "
+                            f"'minimum_stock_level' ({minimum_stock_level}) ausente ou com tipo inválido. Ignorando para contagem."
+                        )
+            return low_stock_count
+
+        except exceptions.FirebaseError as e:
+            logger.error(f"Erro do Firebase ao contar produtos com baixo estoque: Código: {getattr(e, 'code', 'N/A')}, Detalhes: {e}")
+            # Consistente com o método save, traduz o erro.
+            # Se deepl_translator não estiver disponível ou configurado, esta linha pode causar outro erro.
+            try:
+                translated_error = deepl_translator(str(e))
+                raise Exception(f"Erro ao contar produtos com baixo estoque: {translated_error}")
+            except Exception as te: # Captura erro do tradutor ou se deepl_translator não estiver definido
+                logger.error(f"Erro ao traduzir mensagem de erro do Firebase: {te}")
+                raise Exception(f"Erro do Firebase ao contar produtos com baixo estoque: {e}")
+
+        except Exception as e:
+            logger.error(f"Erro inesperado ao contar produtos com baixo estoque: {e}")
+            raise # Re-lança para que a camada de serviço/aplicação possa tratar

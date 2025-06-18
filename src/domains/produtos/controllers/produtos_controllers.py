@@ -164,3 +164,36 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
         response["message"] = str(e)
 
     return response
+
+
+def handle_get_low_stock_count(empresa_id: str) -> dict[str, Any]:
+    """
+    Obtém a quantidade de produtos ativos que necessitam de reposição no estoque.
+    Um produto necessita de reposição se 'quantity_on_hand' < 'minimum_stock_level'.
+    """
+    response = {}
+
+    try:
+        # Usa o repositório do Firebase para buscar os produtos
+        repository = FirebaseProdutosRepository(company_id=empresa_id)
+        produtos_services = ProdutosServices(repository)
+
+        if not empresa_id:
+            raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+
+        quantify = produtos_services.get_low_stock_count()
+
+        print(f"Debug  -> handle_get_low_stock_count quantify: {quantify}")
+
+        response["status"] = "success"
+        response["data"] = {
+            "products_low_stock": quantify if quantify else 0,
+        }
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"produtos_controllers.handle_get_low_stock_count ValueError: Erro de validação: {str(e)}"
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+
+    return response
