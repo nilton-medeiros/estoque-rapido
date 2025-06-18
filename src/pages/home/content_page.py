@@ -143,19 +143,6 @@ def main_content():
     )
 
     banner = ft.Container(
-        # shadow=ft.BoxShadow(
-        #     color='#2d2d3a',
-        #     offset=ft.Offset(x=0, y=-60),
-        #     spread_radius=-30,
-        # ),
-        # image=ft.Image(
-        #     src='images/bg.jpg',
-        #     # fit=ft.ImageFit.NONE,
-        #     repeat=ft.ImageRepeat.NO_REPEAT,
-        #     opacity=0.5,
-        #     # width=100,
-        #     # height=200,
-        # ),
         bgcolor='#111418',
         margin=ft.margin.only(top=0),
         height=200,
