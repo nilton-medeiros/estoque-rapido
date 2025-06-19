@@ -27,7 +27,8 @@ def gerar_senha(tamanho: int = 8):
     minusculas = string.ascii_lowercase
     maiusculas = string.ascii_uppercase
     numeros = string.digits
-    especiais = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    # especiais = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    especiais = "!@#%&"
 
     # Garantir pelo menos um de cada tipo
     senha = [
@@ -38,7 +39,8 @@ def gerar_senha(tamanho: int = 8):
     ]
 
     # Preencher o restante com caracteres aleatórios de todos os tipos
-    todos_caracteres = minusculas + maiusculas + numeros + especiais
+    # todos_caracteres = minusculas + maiusculas + numeros + especiais
+    todos_caracteres = minusculas + maiusculas + numeros
 
     for _ in range(tamanho - 4):
         senha.append(random.choice(todos_caracteres))
