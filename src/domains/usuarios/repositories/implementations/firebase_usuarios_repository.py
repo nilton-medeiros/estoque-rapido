@@ -61,7 +61,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # Valida a senha descriptografada
             if user.password.decrypted == password:
                 return user
-            print(f"Debug  ->  {user.password.decrypted} != {password}")
             raise InvalidCredentialsException("Senha incorreta")
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -282,7 +281,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             query = self.collection.where(
                 filter=FieldFilter("email", "==", email)).limit(1)
             docs = query.get()
-            print(f"Debug  ->  len(docs) = {len(docs)}")
             return len(docs) > 0
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':

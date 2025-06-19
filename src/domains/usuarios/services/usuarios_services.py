@@ -52,7 +52,7 @@ class UsuariosServices:
             raise ValueError("Password é necessário para criar usuário")
 
         existing_usuario = self.repository.exists_by_email(usuario.email)
-        print(f"Debug  ->  {existing_usuario}")
+        
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 

@@ -183,8 +183,6 @@ def handle_get_low_stock_count(empresa_id: str) -> dict[str, Any]:
 
         quantify = produtos_services.get_low_stock_count()
 
-        print(f"Debug  -> handle_get_low_stock_count quantify: {quantify}")
-
         response["status"] = "success"
         response["data"] = {
             "products_low_stock": quantify if quantify else 0,

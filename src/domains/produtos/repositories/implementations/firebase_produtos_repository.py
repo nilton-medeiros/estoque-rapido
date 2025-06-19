@@ -290,21 +290,16 @@ class FirebaseProdutosRepository(ProdutosRepository):
             query = self.products_collection_ref.where("status", "==", ProdutoStatus.ACTIVE.name)
             documents = query.stream()  # Usa stream() para iterar sobre os resultados
 
-            print(f"Debug  -> Entrou em get_low_stock_count = documents: {documents}")
-
             for doc in documents:
                 product_data = doc.to_dict()
                 if product_data:
                     quantity_on_hand = product_data.get('quantity_on_hand')
                     minimum_stock_level = product_data.get('minimum_stock_level')
 
-                    print(f"Debug  -> quantity_on_hand: {quantity_on_hand}, type: {type(quantity_on_hand)}, minimum_stock_level: {minimum_stock_level}, type: {type(minimum_stock_level)}")
-
                     # Verifica se ambos os campos são inteiros e existem
                     if isinstance(quantity_on_hand, int) and isinstance(minimum_stock_level, int):
                         if quantity_on_hand < minimum_stock_level:
                             low_stock_count += 1
-                            print(f"\nlow_stock_count: {low_stock_count}")
                     else:
                         # Loga um aviso se campos importantes estiverem faltando ou com tipo incorreto para um produto ativo
                         logger.warning(

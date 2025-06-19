@@ -11,11 +11,8 @@ async def refresh_dashboard_session(page: ft.Page):
     """
     Atualiza os dados da sessão do dashboard com base no estado atual da empresa.
     """
-    print("Debug  -> Entrou em refresh_dashboard_session")
     try:
         current_company = page.app_state.empresa # type: ignore [attr-defined]
-
-        print(f"Debug  -> refresh_dashboard_session current_company: {current_company}")
 
         dashboard_data = {
             "repor_produtos": 0, # Buscar contagem real
@@ -26,7 +23,6 @@ async def refresh_dashboard_session(page: ft.Page):
 
         # Se houver uma empresa selecionada, buscar dados reais (exemplo)
         if not current_company.get('id'):
-            print(f"Debug  -> Nenhuma empresa selecionada para atualizar dashboard session")
             logger.warning("Nenhuma empresa selecionada para atualizar dashboard session")
             return
 
@@ -35,8 +31,6 @@ async def refresh_dashboard_session(page: ft.Page):
         result = await asyncio.to_thread(
             handle_get_low_stock_count, empresa_id=current_company['id']
         )
-
-        print(f"Debug  -> handle_get_low_stock_count result: {result}")
 
         if result["status"] == "error":
             logger.warning(f"Erro ao buscar dados do dashboard: {result['message']}")
@@ -49,8 +43,6 @@ async def refresh_dashboard_session(page: ft.Page):
         # TODO: Implementar as demais lógicas real para buscar dados do dashboard
         # dashboard_data["encomendas"] = some_service.get_pending_orders_count(company_id=current_company['id'])
         # ... etc.
-
-        print(f"Debug  -> Atualizando dashboard session: {dashboard_data}")
 
         page.session.set("dashboard", dashboard_data)
         logger.info(f"Dashboard session updated for company: {current_company.get('id', 'None')}")

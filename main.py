@@ -1,10 +1,7 @@
 import flet as ft
 import logging
-import time
-import threading
 import os
 
-from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 
 from src.pages import show_signup_page, show_landing_page, show_login_page
@@ -18,7 +15,6 @@ from src.pages.usuarios.usuarios_grid_recycle_page import show_users_grid_trash
 from src.services import AppStateManager
 from src.services.states.refresh_session import refresh_dashboard_session
 from src.shared.config import get_app_colors
-from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -28,37 +24,6 @@ flet_key: str | None = os.getenv('FLET_SECRET_KEY')
 # Definindo a chave secreta - em produção, use variáveis de ambiente
 if flet_key:
     os.environ["FLET_SECRET_KEY"] = flet_key
-
-# Função para silenciar logs do uvicorn, mantendo-os apenas em arquivo
-
-
-def reconfigure_logging():
-    time.sleep(1)  # Espere o Flet inicializar
-
-    log_dir = find_project_root(__file__) / 'logs'
-
-    os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, "app.log")
-
-    # Crie o handler de arquivo
-    file_handler = RotatingFileHandler(
-        log_file, maxBytes=5242880, backupCount=5)
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - [%(levelname)s] - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
-
-    # Configure os loggers do uvicorn
-    for logger_name in ["flet_web.fastapi", "uvicorn", "uvicorn.access", "uvicorn.error"]:
-        logger = logging.getLogger(logger_name)
-        # Remova todos os handlers existentes (especialmente os do console)
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
-        # Adicione apenas o handler de arquivo
-        logger.addHandler(file_handler)
-        logger.propagate = False
 
 
 def main(page: ft.Page):
@@ -106,7 +71,6 @@ def main(page: ft.Page):
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
             case "empresa_updated": # Adicionado o tratamento para empresa_updated
-                print("Debug  -> Entrou em empresa_updated")
                 # Executa a atualização do dashboard em uma task separada (async)
                 page.run_task(refresh_dashboard_session, page)
                 if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
@@ -402,9 +366,8 @@ def main(page: ft.Page):
 
 
 if __name__ == '__main__':
-    # Inicie a reconfiguração de log em uma thread separada
-    threading.Thread(target=reconfigure_logging, daemon=True).start()
-
+    # A configuração de logging agora é feita centralmente através da importação
+    # de src.shared.config.logging_config (que é importado por src.shared.config)
     # Inicia o app Flet
     ft.app(
         target=main,

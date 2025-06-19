@@ -101,10 +101,9 @@ class MainContent(ft.Container):
     def _update_dashboard_display(self):
         # Adiciona uma verificação para self.page para satisfazer o Pylance e aumentar a robustez
         if not self.page:
-            print("Debug  -> MainContent._update_dashboard_display -> self.page is None. Skipping update.")
             return
+
         dashboard_data = self.page.session.get("dashboard") or {}
-        print(f"Debug  -> MainContent._update_dashboard_display -> dashboard_data: {dashboard_data}")
 
         self.low_stok_prefix_span.text = f"{dashboard_data.get('repor_produtos', 0)} "
         self.orders_prefix_span.text = f"{dashboard_data.get('encomendas', 0)} "
@@ -117,10 +116,8 @@ class MainContent(ft.Container):
 
     def _on_dashboard_event(self, message):
         if message == "dashboard_refreshed":
-            print("Debug -> MainContent recebeu 'dashboard_refreshed'")
             self._update_dashboard_display()
         elif message == "empresa_updated": # Se a empresa mudar, também pode precisar limpar/redefinir
-            print("Debug -> MainContent recebeu 'empresa_updated', atualizando dashboard display")
             self._update_dashboard_display()
 
     def _build_layout(self):

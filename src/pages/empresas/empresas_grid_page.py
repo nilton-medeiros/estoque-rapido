@@ -67,11 +67,13 @@ def show_companies_grid(page: ft.Page):
                 usuario_id = page.app_state.usuario.get('id') # type: ignore
                 empresas = page.app_state.usuario.get('empresas') # type: ignore
                 result = empresas_actions_page.user_update(usuario_id, empresa.id, empresas)
-                if result['is_error']:
+
+                if result['status'] == 'error':
                     logger.warning(result['message'])
                     message_snackbar(
                         message=result['message'], message_type=MessageType.WARNING, page=page)
                     return
+                
                 page.go('/home')  # Redireciona para página home do usuário
             case "MAIN_DATA":
                 page.app_state.set_form_data(empresa.to_dict()) # type: ignore

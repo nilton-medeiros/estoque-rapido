@@ -472,8 +472,6 @@ def send_mail_password(usuario: Usuario) -> dict[str, Any]:
         if not usuario.id:
             raise ValueError("ID da usuario não pode ser nulo ou vazio")
 
-        print(f"Debug  -> usuario: {usuario}")
-
         config = create_email_config_from_env()
         email_sender = ModernEmailSender(config)
         senha_temp = usuario.password.decrypted # Acessa a property diretamente
@@ -489,8 +487,6 @@ def send_mail_password(usuario: Usuario) -> dict[str, Any]:
             <a href="{URL_LOGIN}">Fazer Login Agora</a>
             """
         )
-
-        print(f"Debug  -> Chamando send_email_sync(mensagem)...")
 
         resultado = email_sender.send_email_sync_direct(mensagem)
 

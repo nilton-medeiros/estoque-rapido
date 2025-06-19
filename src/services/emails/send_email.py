@@ -46,7 +46,6 @@ class EmailMessage:
         if not self.body_text and not self.body_html:
             raise ValueError(
                 "Email deve ter pelo menos body_text ou body_html")
-        print("Debug  -> Entrou em EmailMessage")
 
 class EmailValidationError(Exception):
     """Exceção customizada para erros de validação de email"""
@@ -54,7 +53,6 @@ class EmailValidationError(Exception):
     def __init__(self, message: str, field: Optional[str] = None):
         self.field = field
         super().__init__(message)
-        print("Debug  -> Entrou em EmailValidationError")
 
 class EmailSendError(Exception):
     """Exceção customizada para erros de envio de email"""
@@ -63,7 +61,6 @@ class EmailSendError(Exception):
         self.error_type = error_type
         self.original_error = original_error
         super().__init__(message)
-        print("Debug  -> Entrou em EmailSendError")
         logger.error(f"error_type: {error_type}, original_error: {original_error}")
 
 class EmailConnectionError(EmailSendError):
@@ -71,7 +68,6 @@ class EmailConnectionError(EmailSendError):
 
     def __init__(self, message: str, original_error: Optional[Exception] = None):
         super().__init__(message, "CONNECTION_ERROR", original_error)
-        print("Debug  -> Entrou em EmailConnectionError")
         logger.error(f"messessage: {message}, original_error: {original_error}")
 
 class EmailAuthenticationError(EmailSendError):
@@ -79,7 +75,6 @@ class EmailAuthenticationError(EmailSendError):
 
     def __init__(self, message: str, original_error: Optional[Exception] = None):
         super().__init__(message, "AUTH_ERROR", original_error)
-        print("Debug  -> Entrou em EmailAuthenticationError")
         logger.error(f"message: {message}, original_error: {original_error}")
 
 class EmailRecipientError(EmailSendError):
@@ -88,7 +83,6 @@ class EmailRecipientError(EmailSendError):
     def __init__(self, message: str, invalid_emails: List[str], original_error: Optional[Exception] = None):
         self.invalid_emails = invalid_emails
         super().__init__(message, "RECIPIENT_ERROR", original_error)
-        print("Debug  -> Entrou em EmailRecipientError")
         logger.error(f"message: {message}, invalid_emails: {invalid_emails}, original_error: {original_error}")
 
 class ModernEmailSender:
@@ -103,7 +97,6 @@ class ModernEmailSender:
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._validate_config()
-        print("Debug  -> Entrou em ModernEmailSender")
 
     def _validate_config(self) -> None:
         """Valida a configuração do email"""
@@ -121,7 +114,6 @@ class ModernEmailSender:
         Analogia: Como um inspetor que verifica se o endereço
         na carta está no formato correto
         """
-        print("Debug  -> Entrou em _validate_email_format")
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         match_result = re.match(pattern, email.strip())
         return match_result is not None
@@ -209,17 +201,12 @@ class ModernEmailSender:
         Returns:
             Dict com status do envio e informações
         """
-        print("Debug  -> Entrou em send_email_async")
-
         try:
             # Validação prévia
-            print("Debug -> Antes de _validate_email_message")
             self._validate_email_message(message)
-            print("Debug -> Depois de _validate_email_message, antes de _create_mime_message")
 
             # Cria mensagem MIME
             mime_msg = self._create_mime_message(message)
-            print("Debug -> Depois de _create_mime_message, antes de _get_all_recipients")
             all_recipients = self._get_all_recipients(message)
 
             # Tentativa de conexão e envio
@@ -228,11 +215,9 @@ class ModernEmailSender:
                 port=self.config.smtp_port,
                 timeout=self.config.timeout
             ) as smtp_client:
-                print("Debug -> Dentro do bloco async with aiosmtplib.SMTP")
 
                 try:
                     # Conectar ao servidor
-                    print("Debug -> Antes de smtp_client.connect()")
                     await smtp_client.connect()
 
                     if self.config.use_tls:
@@ -348,7 +333,6 @@ class ModernEmailSender:
 
         Útil quando você não está em contexto assíncrono
         """
-        print("Debug  -> Entrou em send_email_sync")
         return asyncio.run(self.send_email_async(message))
 
     def send_email_sync_direct(self, message: EmailMessage) -> Dict[str, Any]:
@@ -438,7 +422,6 @@ class ModernEmailSender:
         # Validar formato dos emails
         invalid_emails = []
         all_emails = message.recipients.copy()
-        print(f"Debug -> Validando emails: {all_emails} (recipients: {message.recipients})")
 
         if message.cc:
             all_emails.extend(message.cc)
@@ -446,11 +429,7 @@ class ModernEmailSender:
             all_emails.extend(message.bcc)
 
         for email in all_emails:
-
-            print(f"Debug -> Validando email: '{email}' (tipo: {type(email)})")
             if not isinstance(email, str):
-                print(f"Debug -> ERRO: Email não é string: {email}")
-                # Adicionando log explícito aqui também, caso o print da exceção não apareça
                 self.logger.error(f"Email com tipo inválido encontrado: {type(email)}, valor: {email}")
                 raise EmailValidationError(
                     f"Endereço de email inválido (não é string): {email}",
@@ -459,25 +438,22 @@ class ModernEmailSender:
 
             if not self._validate_email_format(email.strip()):
                 invalid_emails.append(email)
-                print(f"Debug -> Email '{email}' validado.")
 
         if invalid_emails:
             raise EmailValidationError(
                 f"Emails com formato inválido: {', '.join(invalid_emails)}",
                 field="email_format"
             )
-        print("Debug -> Validação de formato de email concluída.")
 
         # Validar assunto
         if not message.subject or not message.subject.strip():
             raise EmailValidationError(
                 "Assunto não pode estar vazio", field="subject")
-        print("Debug -> Validação de assunto concluída.")
+
         # Validar tamanho do assunto (muitos servidores limitam)
         if len(message.subject) > 200:
             raise EmailValidationError(
                 "Assunto muito longo (máximo 200 caracteres)", field="subject")
-        print("Debug -> Validação de tamanho do assunto concluída.")
 
         # Validar corpo da mensagem
         if not message.body_text and not message.body_html:
@@ -508,7 +484,7 @@ class ModernEmailSender:
                     f"Tamanho total dos anexos muito grande ({total_size // (1024*1024)}MB). Máximo: 25MB",
                     field="attachments"
                 )
-            print("Debug -> _validate_email_message concluída com sucesso.")
+
     def _normalize_text(self, text: str) -> str:
         return text.encode('utf-8', errors='replace').decode('utf-8')
 
