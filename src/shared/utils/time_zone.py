@@ -5,7 +5,7 @@ import pytz  # Adicionado para manipulação de fuso horário
 # Função para formatar datetime para UTC-3 e no formato desejado
 
 
-def format_datetime_to_utc_minus_3(dt_object: datetime | None = None) -> str:
+def format_datetime_to_utc_minus_3(dt_object: datetime | None = None, format: str = "%d/%m/%Y %H:%M:%S") -> str:
     if dt_object is None:
         return "N/A"  # Ou uma string vazia, como preferir
 
@@ -21,4 +21,4 @@ def format_datetime_to_utc_minus_3(dt_object: datetime | None = None) -> str:
     utc_minus_3_tz = pytz.FixedOffset(-3 * 60)  # -3 horas * 60 minutos/hora
 
     # Converte para UTC-3 e formata
-    return dt_utc.astimezone(utc_minus_3_tz).strftime("%d/%m/%Y %H:%M:%S")
+    return dt_utc.astimezone(utc_minus_3_tz).strftime(format)
