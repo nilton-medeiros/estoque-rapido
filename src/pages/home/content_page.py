@@ -1,7 +1,9 @@
 import flet as ft
-import datetime
+from datetime import datetime, UTC
 import locale
 import platform
+
+from src.shared.utils.time_zone import format_datetime_to_utc_minus_3
 
 # Problemas de acentuação ao mostrar texto no navegador web quando sob S.O. Windows. Corrigido desta forma:
 # Configurar o locate dinamicamente
@@ -122,7 +124,8 @@ class MainContent(ft.Container):
             self._update_dashboard_display()
 
     def _build_layout(self):
-        date_description = datetime.datetime.now().strftime("%A, %d de %B")
+        # date_description = datetime.now(UTC).strftime("%A, %d de %B")
+        date_description = format_datetime_to_utc_minus_3(datetime.now(UTC), "%A, %d de %B")
 
         side_left = ft.Container(
             col={'md': 12, 'lg': 8},
