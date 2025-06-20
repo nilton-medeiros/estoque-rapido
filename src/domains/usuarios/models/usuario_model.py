@@ -21,13 +21,30 @@ class Usuario:
         password (Password): Objeto Senha.
         name (NomePessoa): Nome do usuário.
         phone_number (PhoneNumber): Número de telefone do usuário.
-        profile (UsuarioProfile): Perfil do usuário.
         id (str | None): ID opcional do usuário.
         empresa_id (str | None): ID da última empresa logada.
+        temp_password (bool | None = False): Se a senha é temporária (para novos usuários).
         empresas (Set[str]): Conjunto de IDs de empresas associadas ao usuário.
         photo_url (str | None): URL da foto de perfil do usuário.
         user_colors (dict | None): Cor preferencial do usuário.
-
+        profile (UsuarioProfile): Perfil do usuário.
+        status (UsuarioStatus = UsuarioStatus.ACTIVE): Status do usuário.
+        # --- Campos de Auditoria
+        created_at (datetime | None): Data e hora de criação.
+        created_by_id (str | None): ID do usuário que criou.
+        created_by_name (str | None): Nome do usuário que criou.
+        updated_at (datetime | None): Data e hora da última atualização.
+        updated_by_id (str | None): ID do usuário que atualizou.
+        updated_by_name (str | None): Nome do usuário que atualizou.
+        activated_at (datetime | None): Data e hora de ativação.
+        activated_by_id (str | None): ID do usuário que ativou.
+        activated_by_name (str | None): Nome do usuário que ativou.
+        inactivated_at (datetime | None): Data e hora de inativação.
+        inactivated_by_id (str | None): ID do usuário que inativou.
+        inactivated_by_name (str | None): Nome do usuário que inativou.
+        deleted_at (datetime | None): Data e hora de exclusão.
+        deleted_by_id (str | None): ID do usuário que excluiu.
+        deleted_by_name (str | None): Nome do usuário que excluiu.
 
     Example:
         Exemplo de como instanciar e usar a classe:
