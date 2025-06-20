@@ -202,10 +202,7 @@ class Usuario:
         """
 
         dict_db = {
-            "name": {
-                "first_name": self.name.first_name,
-                "last_name": self.name.last_name
-            },
+            "name": self.name.to_dict(),
             "email": self.email,
             "password": self.password.value,
             "temp_password": self.temp_password,
