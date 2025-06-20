@@ -222,7 +222,7 @@ class Empresa:
 
     def initials(self) -> str:
         """Retorna as iniciais do nome completo"""
-        palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
+        palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos', 'e'}
         palavras = self.corporate_name.split()
         iniciais = [palavra[0]
                     for palavra in palavras if palavra not in palavras_ignoradas]
@@ -413,13 +413,10 @@ class Empresa:
             elif isinstance(payment_gateway_data, dict):
                 payment_gateway = AsaasPaymentGateway(**payment_gateway_data)
 
-        status = Status.ACTIVE
-
-        if status_data := data.get("status"):
-            if isinstance(status_data, Status):
-                status = status_data
-            elif type(status_data) is str:
-                status = Status[status_data]
+        # Converte enums
+        status_data = data.get("status")
+        status = RegistrationStatus[status_data] if isinstance(
+            status_data, str) else RegistrationStatus.ACTIVE
 
         return cls(
             id=data.get("id"),  # id pode ser None
