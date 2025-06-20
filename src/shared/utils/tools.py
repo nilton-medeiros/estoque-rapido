@@ -18,7 +18,7 @@ def get_first_and_last_name(full_name: str) -> Tuple[str, str | None]:
 
 def initials(name: str) -> str:
     """Retorna as iniciais do nome completo"""
-    palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
+    palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos', 'e'}
     palavras = name.split()
     iniciais = [palavra[0]
                 for palavra in palavras if palavra not in palavras_ignoradas]
