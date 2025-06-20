@@ -19,6 +19,8 @@
     "general_info": "Docs",
     "app_config": "config",
     "produtos": "webpack",
+    "categorias": "webpack",
+    "clientes": "Admin",
   },
   "python.analysis.extraPaths": [
     "./src/shared/config"
