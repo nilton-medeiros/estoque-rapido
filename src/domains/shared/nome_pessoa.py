@@ -27,31 +27,24 @@ class NomePessoa:
         Raises:
             ValueError: Se ambos os nomes (primeiro e último) forem vazios.
         """
-        if not first_name and not last_name:
-            raise ValueError("Os nomes não podem ser vazios.")
+        def _format_name_part(name_part: str | None) -> str | None:
+            """Formata uma parte do nome, capitalizando e tratando exceções."""
+            if not name_part or not name_part.strip():
+                return None
 
-        palavras_excecoes = {'da', 'das', 'de', 'do', 'dos'}
-
-        self.first_name = None
-        self.last_name = ''
-
-        if first_name:
-            # Se o primeiro nome no args first_name não é vazio ""
-            self.first_name = ' '.join(
-                name.lower() if name.lower() in palavras_excecoes else name.capitalize()
-                for name in first_name.split()
+            palavras_excecoes = {'da', 'das', 'de', 'do', 'dos', 'e'}
+            return ' '.join(
+                word.lower() if word.lower() in palavras_excecoes else word.capitalize()
+                for word in name_part.split()
             )
-            if last_name:
-                self.last_name = ' '.join(
-                    name.lower() if name.lower() in palavras_excecoes else name.capitalize()
-                    for name in last_name.split()
-                )
-        elif last_name:
-            # Se o primeiro nome no args first_name é vazio ""
-            self.first_name = ' '.join(
-                name.lower() if name.lower() in palavras_excecoes else name.capitalize()
-                for name in last_name.split()
-            )
+
+        self.first_name = _format_name_part(first_name)
+        self.last_name = _format_name_part(last_name)
+
+        # Validação final para garantir que o primeiro nome é obrigatório.
+        if not self.first_name:
+            raise ValueError("O primeiro nome (first_name) é obrigatório e não pode ser vazio.")
+
     @classmethod
     def from_dict(cls, data: dict) -> 'NomePessoa':
         """
@@ -75,6 +68,14 @@ class NomePessoa:
 
         return cls(first_name, last_name)
 
+
+    def to_dict(self) -> dict:
+        return {
+            "first_name": self.first_name,
+            "last_name": self.last_name
+        }
+
+
     @property
     def nome_completo(self) -> str:
         """
@@ -83,7 +84,12 @@ class NomePessoa:
         Returns:
             str: Nome completo do usuário.
         """
-        return f"{self.first_name} {self.last_name}"
+        parts = []
+        if self.first_name:
+            parts.append(self.first_name)
+        if self.last_name:
+            parts.append(self.last_name)
+        return ' '.join(parts).strip()
 
     @property
     def nome_completo_maiusculo(self) -> str:
@@ -108,10 +114,10 @@ class NomePessoa:
     @property
     def iniciais(self) -> str:
         """Retorna as iniciais do nome completo"""
-        palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos'}
-        palavras = self.nome_completo
+        palavras_ignoradas = {'da', 'das', 'de', 'do', 'dos', 'e'}
+        palavras = self.nome_completo.split()
         iniciais = [palavra[0]
-                    for palavra in palavras if palavra not in palavras_ignoradas]
+                    for palavra in palavras if palavra.lower() not in palavras_ignoradas]
         return ''.join(iniciais)
 
     @property
@@ -122,10 +128,14 @@ class NomePessoa:
         Returns:
             str: Primeira palavra do primeiro nome e última palavra do último nome.
         """
-        primeiro_nome_palavras = self.first_name.split() if self.first_name else []
-        ultimo_nome_palavras = self.last_name.split()
+        # O __init__ garante que self.first_name nunca será None se o objeto for criado com sucesso.
+        # Usamos 'assert' para informar ao Pylance que self.first_name é uma string neste ponto.
+        assert self.first_name is not None, "first_name não deveria ser None aqui."
 
-        primeiro = primeiro_nome_palavras[0] if primeiro_nome_palavras else ""
+        primeiro_nome_palavras = self.first_name.split() # Agora Pylance não reclama
+        ultimo_nome_palavras = self.last_name.split() if self.last_name else []
+
+        primeiro = primeiro_nome_palavras[0] # first_name.split() sempre terá pelo menos um elemento
         ultimo = ultimo_nome_palavras[-1] if ultimo_nome_palavras else ""
 
         if primeiro and ultimo:
