@@ -7,23 +7,13 @@ ToDo: Refatorar. Aqui não deveria invocar diretamente a AsaasPaymentGateway (Es
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
-from src.domains.shared import Password, PhoneNumber
+from src.domains.shared import Password, PhoneNumber, Address
 from src.services import AsaasPaymentGateway
 from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresa_subclass import Status
 
-
-@dataclass
-class Address:
-    street: str
-    number: str
-    city: str
-    state: str
-    postal_code: str
-    complement: str | None = None
-    neighborhood: str | None = None
 
 
 @dataclass

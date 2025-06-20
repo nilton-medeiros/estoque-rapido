@@ -658,10 +658,10 @@ class EmpresaView:
         """
         Retorna um objeto Empresa com os dados do formulário.
         """
-        from src.domains.empresas import Address, CodigoRegimeTributario, Environment, FiscalData
+        from src.domains.empresas import CodigoRegimeTributario, Environment, FiscalData
         from src.domains.empresas.models.certificate_a1 import CertificateA1
         from src.domains.empresas.models.empresa_model import Empresa
-        from src.domains.shared import PhoneNumber, Password
+        from src.domains.shared import Address, Password, PhoneNumber
         from src.services import AsaasPaymentGateway
 
         address = None
