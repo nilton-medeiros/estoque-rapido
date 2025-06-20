@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
-from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.domains.usuarios.services.usuarios_services import UsuariosServices
 from src.services.emails.send_email import EmailAuthenticationError, EmailConnectionError, EmailMessage, EmailRecipientError, \
@@ -421,7 +421,7 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
     return response
 
-def handle_update_status(usuario: Usuario, logged_user: dict, status: UsuarioStatus) -> dict[str, Any]:
+def handle_update_status(usuario: Usuario, logged_user: dict, status: RegistrationStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletado de um usuário."""
     response = {}
 
@@ -434,8 +434,8 @@ def handle_update_status(usuario: Usuario, logged_user: dict, status: UsuarioSta
             raise ValueError("ID da usuario não pode ser nulo ou vazio")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
-        if not isinstance(status, UsuarioStatus):
-            raise ValueError("Status não é do tipo UsuarioStatus")
+        if not isinstance(status, RegistrationStatus):
+            raise ValueError("Status não é do tipo RegistrationStatus")
 
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)

@@ -7,7 +7,7 @@ from firebase_admin import exceptions, firestore
 
 from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
-from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
+from src.domains.shared.registration_status import RegistrationStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
@@ -337,15 +337,15 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
                     # Modificação 4: Corrigir comparação de status
                     # Conta todos os usuarios deletados, independentemente do filtro principal
-                    if user_obj.status == UsuarioStatus.DELETED:
+                    if user_obj.status == RegistrationStatus.DELETED:
                         quantify_deleted += 1
 
                     # Adiciona o usuário à lista de resultados com base no filtro 'status_deleted'
                     if status_deleted: # Se o filtro é para mostrar deletados
-                        if user_obj.status == UsuarioStatus.DELETED:
+                        if user_obj.status == RegistrationStatus.DELETED:
                             usuarios_result.append(user_obj)
                     else: # not status_deleted (mostrar não deletados)
-                        if user_obj.status != UsuarioStatus.DELETED:
+                        if user_obj.status != RegistrationStatus.DELETED:
                             usuarios_result.append(user_obj)
 
             # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.

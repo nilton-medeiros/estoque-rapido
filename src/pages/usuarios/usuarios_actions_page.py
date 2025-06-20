@@ -2,7 +2,8 @@ import logging
 import flet as ft
 import asyncio
 
-from src.domains.usuarios.models import Usuario, UsuarioStatus
+from src.domains.usuarios.models import Usuario
+from src.domains.shared import RegistrationStatus
 from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
@@ -16,7 +17,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em send_to_trash_user_async
 
-    status=UsuarioStatus.DELETED
+    status=RegistrationStatus.DELETED
 
     def send_to_trash_user_async(e_trash):
         # nonlocal status
@@ -40,12 +41,12 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             # OPERAÇÃO SOFT DELETE: Muda o status para excluído o usuario pelo ID
             # ToDo: Verificar se há pedidos ou estoque para este produto_id, se houver, alterar para INACTIVE
             """
-            Aviso: Se houver pedidos vinculados, o status será definido como UsuarioStatus.INACTIVE. (Obsoleto)
-            Caso contrário, o registro poderá ter o status UsuarioStatus.DELETED.
+            Aviso: Se houver pedidos vinculados, o status será definido como RegistrationStatus.INACTIVE. (Obsoleto)
+            Caso contrário, o registro poderá ter o status RegistrationStatus.DELETED.
             Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
-            A exclusão definitiva ocorrerá após 90 dias da mudança para UsuarioStatus.DELETED, realizada periodicamente por uma Cloud Function.
+            A exclusão definitiva ocorrerá após 90 dias da mudança para RegistrationStatus.DELETED, realizada periodicamente por uma Cloud Function.
             if is_linked:
-                status = UsuarioStatus.INACTIVE
+                status = RegistrationStatus.INACTIVE
             """
 
             logger.info(
@@ -55,7 +56,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             # Se não há pedido, usuarios ou estoque vinculado a esta usuario, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=UsuarioStatus.DELETED)
+            result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=RegistrationStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -160,7 +161,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
 def restore_from_trash(page: ft.Page, usuario: Usuario) -> bool:
     logger.info(f"Restaurando usuario ID: {usuario.id} da lixeira")
     user = page.app_state.usuario # type: ignore  [attr-defined]
-    result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=UsuarioStatus.ACTIVE)
+    result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

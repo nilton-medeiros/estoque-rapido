@@ -2,7 +2,7 @@
 # src/domains/usuarios/components/user_card.py
 # ==========================================
 import flet as ft
-from src.domains.usuarios.models import UsuarioStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.models.usuario_model import Usuario
 
 class UserCard:
@@ -112,7 +112,7 @@ class UserCard:
             ft.Text(
                 value=usuario.status.value,
                 theme_style=ft.TextThemeStyle.BODY_SMALL,
-                color=ft.Colors.GREEN if usuario.status == UsuarioStatus.ACTIVE else ft.Colors.RED,
+                color=ft.Colors.GREEN if usuario.status == RegistrationStatus.ACTIVE else ft.Colors.RED,
             ),
             # ft.Text(..adicionar outros campos de status se houver)
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)

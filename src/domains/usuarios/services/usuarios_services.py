@@ -1,9 +1,7 @@
 from typing import Optional
 
-from src.domains.shared.nome_pessoa import NomePessoa
-from src.domains.shared.password import Password
+from src.domains.shared import NomePessoa, RegistrationStatus, Password
 from src.domains.usuarios.models.usuario_model import Usuario
-from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared.utils import get_uuid
 
@@ -52,7 +50,7 @@ class UsuariosServices:
             raise ValueError("Password é necessário para criar usuário")
 
         existing_usuario = self.repository.exists_by_email(usuario.email)
-        
+
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
@@ -148,21 +146,21 @@ class UsuariosServices:
         """Deleta um usuário pelo usuario_id usando o repositório."""
         return self.repository.delete(usuario_id)
 
-    def update_status(self, usuario: Usuario, logged_user: dict, status: UsuarioStatus) -> bool:
+    def update_status(self, usuario: Usuario, logged_user: dict, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma usuário existente"""
         user_name: NomePessoa = logged_user["name"]
         usuario.status = status
 
         match status:
-            case UsuarioStatus.ACTIVE:
+            case RegistrationStatus.ACTIVE:
                 usuario.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 usuario.activated_by_id = logged_user["id"]
                 usuario.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
-            case UsuarioStatus.INACTIVE:
+            case RegistrationStatus.INACTIVE:
                 usuario.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 usuario.inactivated_by_id = logged_user["id"]
                 usuario.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
-            case UsuarioStatus.DELETED:
+            case RegistrationStatus.DELETED:
                 usuario.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 usuario.deleted_by_id = logged_user["id"]
                 usuario.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db

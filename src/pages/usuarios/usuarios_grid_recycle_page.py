@@ -6,7 +6,7 @@ import math # Adicionado para a função ceil (arredondar para cima)
 import flet as ft
 
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
-from src.domains.usuarios.models.usuario_subclass import UsuarioStatus
+from src.domains.shared import RegistrationStatus
 import src.pages.usuarios.usuarios_actions_page as users_actions
 
 from src.shared.utils import format_datetime_to_utc_minus_3
@@ -325,7 +325,7 @@ def show_users_grid_trash(page: ft.Page):
                         # Configuração responsiva para cada card
                         # Cada card com sua própria configuração de colunas
                         col={"xs": 12, "sm": 6, "md": 4, "lg": 3},
-                        tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if usuario.status == UsuarioStatus.DELETED else 'usuario arquivado não será removido do banco de dados! Pode estar vinculado a pedidos, estoque, etc.'}",
+                        tooltip=f"{'Exclusão automática e permanente após 90 dias na lixeira' if usuario.status == RegistrationStatus.DELETED else 'usuario arquivado não será removido do banco de dados! Pode estar vinculado a pedidos, estoque, etc.'}",
                     ) for usuario in usuarios_data  # Criar um card para cada empresa
                 ],
                 columns=12,  # Total de colunas no sistema de grid

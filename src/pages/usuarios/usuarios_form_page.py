@@ -9,14 +9,13 @@ from typing import Any
 import flet as ft
 
 from src.domains.empresas.controllers.empresas_controllers import handle_get_empresas
-from src.domains.shared.nome_pessoa import NomePessoa
+from src.domains.shared import NomePessoa, RegistrationStatus
 from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
-import src.shared.config.globals as app_globals
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 
-from src.domains.usuarios.models import Usuario, UsuarioStatus
+from src.domains.usuarios.models import Usuario
 from src.pages.partials import build_input_field
 from src.services import UploadFile
 from src.shared.utils import  message_snackbar, get_uuid, gerar_senha, MessageType, ProgressiveMessage
@@ -546,7 +545,7 @@ class UsuarioForm:
         self.data["phone_number"] = self.phone_number.value
         self.data["profile"] = UsuarioProfile[self.profile.value] if self.profile.value else UsuarioProfile.ADMIN
         self.data["empresas"] = self.get_selected_empresas_ids()
-        self.data['status'] = UsuarioStatus.ACTIVE if self.status.value else UsuarioStatus.INACTIVE
+        self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
         self.data['photo_url'] = self.photo_url
 
         if not self.data.get("password"):

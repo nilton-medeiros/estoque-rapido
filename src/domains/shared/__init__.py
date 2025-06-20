@@ -3,3 +3,4 @@ from .domain_exceptions import DomainException, AuthenticationException, UserNot
 from .nome_pessoa import NomePessoa
 from .password import Password
 from .phone_number import PhoneNumber
+from .registration_status import RegistrationStatus

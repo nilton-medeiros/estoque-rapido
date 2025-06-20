@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.password import Password
-from src.domains.usuarios.models.usuario_subclass import UsuarioProfile, UsuarioStatus
+from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
+from src.domains.shared.registration_status import RegistrationStatus
 from src.shared.config import get_app_colors
 
 
@@ -28,7 +29,7 @@ class Usuario:
         photo_url (str | None): URL da foto de perfil do usuário.
         user_colors (dict | None): Cor preferencial do usuário.
         profile (UsuarioProfile): Perfil do usuário.
-        status (UsuarioStatus = UsuarioStatus.ACTIVE): Status do usuário.
+        status (RegistrationStatus = RegistrationStatus.ACTIVE): Status do usuário.
         # --- Campos de Auditoria
         created_at (datetime | None): Data e hora de criação.
         created_by_id (str | None): ID do usuário que criou.
@@ -69,7 +70,7 @@ class Usuario:
     profile: UsuarioProfile = UsuarioProfile.UNDEFINED
 
     # --- Campos de Status e Auditoria
-    status: UsuarioStatus = UsuarioStatus.ACTIVE
+    status: RegistrationStatus = RegistrationStatus.ACTIVE
     created_at: datetime | None = field(
         default_factory=lambda: datetime.now(UTC))
     created_by_id: str | None = None
@@ -122,7 +123,7 @@ class Usuario:
             self.user_colors = get_app_colors('blue')
 
         # Se o usuário está sendo criado como ACTIVE e não tem activated_at, define-o
-        if self.status == UsuarioStatus.ACTIVE and self.created_at and not self.activated_at:
+        if self.status == RegistrationStatus.ACTIVE and self.created_at and not self.activated_at:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
@@ -259,17 +260,17 @@ class Usuario:
         empresas_set = set(data.get("empresas", []))
 
         status_data = data.get("status")
-        status = UsuarioStatus.ACTIVE  # Padrão
+        status = RegistrationStatus.ACTIVE  # Padrão
 
         if status_data:
-            if isinstance(status_data, UsuarioStatus):
+            if isinstance(status_data, RegistrationStatus):
                 status = status_data
             else:
                 try:
-                    status = UsuarioStatus[status_data]
+                    status = RegistrationStatus[status_data]
                 except KeyError:
                     # Lidar com status inválido, talvez logar um aviso ou usar um padrão
-                    status = UsuarioStatus.INACTIVE
+                    status = RegistrationStatus.INACTIVE
 
         profile_data = data.get("profile")
         profile = UsuarioProfile.UNDEFINED  # Padrão
