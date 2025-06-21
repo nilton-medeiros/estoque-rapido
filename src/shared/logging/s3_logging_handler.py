@@ -21,6 +21,7 @@ class S3BufferedHandler(logging.Handler):
 
     def __init__(self,
                  bucket_name: str,
+                 app_name: str,
                  s3_key_prefix: str = "logs",
                  aws_access_key_id: str | None = None,
                  aws_secret_access_key: str | None = None,
@@ -33,6 +34,7 @@ class S3BufferedHandler(logging.Handler):
         super().__init__(level)
 
         self.bucket_name = bucket_name
+        self.app_name = app_name
         self.s3_key_prefix = s3_key_prefix
         self.buffer_size = buffer_size
         self.flush_interval = flush_interval
@@ -142,8 +144,11 @@ class S3BufferedHandler(logging.Handler):
             try:
                 # Cria o nome do arquivo com informações detalhadas
                 timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")[:-3]
+
+                # O log será salvo na estrutura: estoquerapido/ > logs/ > 202506/
+                # Para logs > YYYY > MM > DD/ Use: f"{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/" para separar Ano, mês e dia em pastas diferentes
                 s3_key = (f"{self.s3_key_prefix}/"
-                         f"{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/"
+                         f"{datetime.now(timezone.utc).strftime('%Y%m')}/"
                          f"estoque_rapido_{self.instance_id}_{timestamp}.jsonl")
 
                 # Prepara o conteúdo (JSON Lines format para eficiência)
@@ -158,7 +163,7 @@ class S3BufferedHandler(logging.Handler):
                     'session_id': self.session_id,
                     'instance_id': self.instance_id,
                     'log_count': str(len(logs_to_send)),
-                    'app_name': 'estoque-rapido',
+                    'app_name': self.app_name,
                     'environment': 'production' if os.getenv('RENDER') else 'development'
                 }
 
@@ -253,7 +258,8 @@ class EstoqueRapidoLogConfig:
     def __init__(self,
                  log_level=None,  # Auto-detecta baseado no ambiente
                  use_s3=None,     # Auto-detecta baseado no ambiente
-                 bucket_name=None):
+                 bucket_name=None,
+                 app_name=None):
 
         # Auto-detecção do ambiente
         self.is_production = os.getenv('RENDER') is not None
@@ -267,6 +273,9 @@ class EstoqueRapidoLogConfig:
 
         if bucket_name is None:
             bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
+
+        if app_name is None:
+            app_name = os.getenv('AWS_S3_APP_NAME')
 
         self.use_s3 = use_s3 and bucket_name
         self.s3_handler = None
@@ -288,7 +297,7 @@ class EstoqueRapidoLogConfig:
 
         # Handler para S3 (produção)
         if self.use_s3:
-            self._setup_s3_handler(root_logger, formatter, bucket_name, log_level)
+            self._setup_s3_handler(root_logger, formatter, bucket_name, app_name, log_level)
 
         # Handler para console (sempre presente)
         self._setup_console_handler(root_logger, formatter)
@@ -339,12 +348,13 @@ class EstoqueRapidoLogConfig:
         except Exception as e:
             print(f"✗ Erro ao configurar handler local: {e}")
 
-    def _setup_s3_handler(self, root_logger, formatter, bucket_name, log_level):
+    def _setup_s3_handler(self, root_logger, formatter, bucket_name, app_name, log_level):
         """Configura handler para S3 com buffer otimizado"""
         try:
             self.s3_handler = S3BufferedHandler(
                 bucket_name=bucket_name,
-                s3_key_prefix="estoque-rapido/logs",
+                app_name=app_name,
+                s3_key_prefix=f"{app_name}/logs",
                 buffer_size=100,     # Buffer maior para produção
                 flush_interval=300,  # 5 minutos
                 level=log_level
@@ -352,7 +362,7 @@ class EstoqueRapidoLogConfig:
             self.s3_handler.setFormatter(formatter)
             root_logger.addHandler(self.s3_handler)
 
-            print(f"✓ Log S3 configurado: {bucket_name}/estoque-rapido/logs/")
+            print(f"✓ Log S3 configurado: {bucket_name}/{app_name}/logs/")
 
         except Exception as e:
             print(f"✗ Erro ao configurar handler S3: {e}")
