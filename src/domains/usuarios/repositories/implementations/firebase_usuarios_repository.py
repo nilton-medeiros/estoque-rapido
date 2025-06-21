@@ -22,7 +22,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
     Esta classe fornece métodos para realizar operações de CRUD em dados de usuários
     armazenados em um banco de dados Firestore.
-    Utiliza Google Authorization para autenticação de usuarios.
+    Não Utiliza mais o Google Authorization para autenticação de usuarios.
     """
 
     def __init__(self):
@@ -314,7 +314,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
         Returns:
             list[Usuario]: Lista de usuários encontrados.
-            int: Número total de usuários encontrados.
+            int: Quantidade total de usuários marcados como "DELETED".
 
         Raises:
             Exception: Em caso de erro na operação de banco de dados.
@@ -560,6 +560,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 f"Erro inesperado ao consultar usuário pelo pefil do usuário '{profile}': {e}")
             raise
 
+    # ToDo: Excluir este método, esta aplicação usa soft delete
     def delete(self, usuario_id: str) -> bool:
         """
         Excluir um usuário pelo seu identificador único do Firestore e também do Firebase Authentication.
