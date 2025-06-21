@@ -156,7 +156,6 @@ class FirebaseProdutosRepository(ProdutosRepository):
             product_data['id'] = doc_snapshot.id # Inclui o ID no dicionário
 
             return Produto.from_dict(product_data)
-
         except exceptions.FirebaseError as e:
             logger.error(f"Erro do Firebase ao buscar produto por ID {produto_id}: Código: {getattr(e, 'code', 'N/A')}, Detalhes: {e}")
             raise # Re-lança para tratamento em camadas superiores
