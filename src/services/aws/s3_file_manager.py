@@ -29,7 +29,7 @@ class S3FileManager:
         load_dotenv()
 
         self.region_name = os.getenv('AWS_DEFAULT_REGION')
-        self.bucket = os.getenv('AWS_BUCKET')
+        self.bucket = os.getenv('AWS_S3_BUCKET_NAME')
 
         self.s3_client = boto3.client(
             's3',
