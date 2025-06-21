@@ -15,6 +15,7 @@ class Cliente:
 
     Attributes:
         - id (str): Identificação do cliente no sistema.
+        - empresa_id (str): Identificação da empresa associada ao cliente.
         - name (NomePessoa): Nome do cliente.
         - phone (PhoneNumber): Número do celular do cliente.
         - cpf (str | None): CPF do cliente (opcional, mas obrigatório para emitir NFCe).
@@ -27,6 +28,7 @@ class Cliente:
     """
     name: NomePessoa
     phone: PhoneNumber
+    empresa_id: str
     id: str | None
     cpf: str | None
     email: str | None
@@ -96,6 +98,7 @@ class Cliente:
             "delivery_address": self.delivery_address.__dict__ if self.delivery_address else None,
             "birthday": self.birthday,
             "status": self.status.name,
+            "empresa_id": self.empresa_id,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
@@ -127,6 +130,7 @@ class Cliente:
             "delivery_address": self.delivery_address.__dict__ if self.delivery_address else None,
             "birthday": self.birthday,
             "status": self.status.name,
+            "empresa_id": self.empresa_id,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
@@ -190,5 +194,6 @@ class Cliente:
             phone=phone_obj,
             delivery_address=address_obj,
             status=status,
+            empresa_id=data["empresa_id"],
             **data
         )
