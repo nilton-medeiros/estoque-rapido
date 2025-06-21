@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
-    """Salva ou atualiza uma produto de produto."""
+    """Salva ou atualiza um produto."""
     response = {}
 
     try:
@@ -81,7 +81,8 @@ def handle_update_status(produto: Produto, usuario: dict, status: ProdutoStatus)
 
     return response
 
-def get_by_id(self, empresa_id: str, produto_id: str) -> dict | None:
+
+def handle_get_by_id(empresa_id: str, produto_id: str) -> dict | None:
     """Busca uma produto de produto pelo seu ID."""
     response = {}
 
@@ -105,7 +106,7 @@ def get_by_id(self, empresa_id: str, produto_id: str) -> dict | None:
 
     except ValueError as e:
         response["status"] = "error"
-        response["message"] = f"get__by_id ValueError: Erro de validação: {str(e)}"
+        response["message"] = f"handle_get_by_id ValueError: Erro de validação: {str(e)}"
         logger.error(response["message"])
     except Exception as e:
         response["status"] = "error"
