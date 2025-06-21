@@ -5,14 +5,14 @@ import asyncio
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import Status
+from src.domains.empresas.models.empresa_subclass import CompanyStatus
 
 from src.shared.utils import MessageType, message_snackbar
 
 logger = logging.getLogger(__name__)
 
 
-async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status.DELETED) -> bool:
+async def send_to_trash(page: ft.Page, empresa: Empresa, status: CompanyStatus = CompanyStatus.DELETED) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em delete_company
 
@@ -37,10 +37,10 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: Status = Status
             # OPERAÇÃO SOFT DELETE: Muda o status para excluído a empresa pelo ID
             # ToDo: Verificar se há produtos, pedidos, ou estoque para este empresa_id se a operação for DELETAR
             """
-            Aviso: Se houver produtos, pedidos ou estoque vinculados, o status será definido como Status.ARCHIVED.
-            Caso contrário, o registro poderá ter o status Status.DELETED.
+            Aviso: Se houver produtos, pedidos ou estoque vinculados, o status será definido como CompanyStatus.ARCHIVED.
+            Caso contrário, o registro poderá ter o status CompanyStatus.DELETED.
             Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
-            A exclusão definitiva ocorrerá após 90 dias da mudança para Status.DELETED, realizada periodicamente por uma Cloud Function.
+            A exclusão definitiva ocorrerá após 90 dias da mudança para CompanyStatus.DELETED, realizada periodicamente por uma Cloud Function.
             """
 
             logger.info(
@@ -167,7 +167,7 @@ def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     result = company_controllers.handle_update_status_empresas(
         empresa=empresa,
         usuario=page.app_state.usuario, # type: ignore
-        status=Status.ACTIVE)
+        status=CompanyStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

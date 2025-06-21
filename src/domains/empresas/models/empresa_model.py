@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any  # Necessário para dict[str, Any]
+from typing import Any
+
 
 """
 ToDo: Refatorar. Aqui não deveria invocar diretamente a AsaasPaymentGateway (Está quebrando regra DDD)
@@ -9,11 +10,9 @@ from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
 from src.domains.shared import Password, PhoneNumber, Address
 from src.services import AsaasPaymentGateway
-from src.domains.empresas.models.empresa_subclass import Environment, EmpresaSize, CodigoRegimeTributario
+from src.domains.empresas.models.empresa_subclass import CompanyStatus, Environment, EmpresaSize, CodigoRegimeTributario
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.cnpj import CNPJ
-from src.domains.empresas.models.empresa_subclass import Status
-
 
 
 @dataclass
@@ -43,7 +42,7 @@ class Empresa:
     Attributes:
         corporate_name (str): Razão Social da empresa.
         email (str): E-mail da empresa.
-        status (Status:Enum): Status da empresa.
+        status (CompanyStatus:Enum): Status da empresa.
         deleted_at: (datetime): Data de exclusão
         archived_at: (datetime | None): Data de arquivamento
         cnpj (CNPJ): CNPJ da empresa.
@@ -70,7 +69,7 @@ class Empresa:
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
-    status: Status = Status.ACTIVE
+    status: CompanyStatus = CompanyStatus.ACTIVE
     trade_name: str | None = None  # Nome fantasia
     store_name: str | None = 'Matriz'
     cnpj: CNPJ | None = None  # CNPJ do emitente da NFCe
@@ -415,8 +414,8 @@ class Empresa:
 
         # Converte enums
         status_data = data.get("status")
-        status = RegistrationStatus[status_data] if isinstance(
-            status_data, str) else RegistrationStatus.ACTIVE
+        status = CompanyStatus[status_data] if isinstance(
+            status_data, str) else CompanyStatus.ACTIVE
 
         return cls(
             id=data.get("id"),  # id pode ser None

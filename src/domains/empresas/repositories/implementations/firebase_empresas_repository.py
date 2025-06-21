@@ -8,7 +8,6 @@ from firebase_admin import exceptions
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importação direta
 from src.domains.empresas.models.empresa_model import Empresa  # Importação direta
-from src.domains.empresas.models.empresa_subclass import Status
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
@@ -270,7 +269,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
         Args:
             ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado.
-            status_active (bool): Status requerido (ACTIVE, ARCHIVED ou DELETED)
+            status_active (bool): CompanyStatus requerido (ACTIVE, ARCHIVED ou DELETED)
 
         Return:
             list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar

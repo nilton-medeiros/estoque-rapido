@@ -2,7 +2,7 @@
 from enum import Enum
 
 
-class Status(Enum):
+class CompanyStatus(Enum):
     ACTIVE = "Ativo"
     ARCHIVED = "Arquivado"
     DELETED = "Lixeira"
