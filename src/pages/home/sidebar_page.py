@@ -699,9 +699,12 @@ def sidebar_footer(page: ft.Page):
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.SHOPPING_BAG_OUTLINED,
                                     color="white", size=22),
-                    tooltip="Produtos",
+                    tooltip="Produtos" if page.app_state.empresa.get(  # type: ignore
+                        'id') else "Produtos indisponíveis: Selecione uma empresa primeiro.",
                     on_click=lambda _: page.go(
                         '/home/produtos/grid'),
+                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                        'id') else True,
                 ),
                 # --- Ícone de Estoque ---
                 ft.Container(
@@ -710,8 +713,11 @@ def sidebar_footer(page: ft.Page):
                     content=ft.Icon(ft.Icons.FACT_CHECK_OUTLINED,
                                     color="white", size=22),
                     # content=ft.Icon(ft.Icons.ASSIGNMENT_TURNED_IN_OUTLINED, color="white", size=22),
-                    tooltip="Estoque",
+                    tooltip="Estoque" if page.app_state.empresa.get(  # type: ignore
+                        'id') else "Estoque indisponíveis: Selecione uma empresa primeiro.",
                     # on_click=, # Adicione o handler de clique aqui quando tiver
+                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                        'id') else True,
                 ),
                 # --- Fim dos Ícones ---
                 ft.Container(
