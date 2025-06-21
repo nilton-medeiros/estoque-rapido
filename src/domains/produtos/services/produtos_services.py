@@ -16,10 +16,11 @@ class ProdutosServices:
         if not usuario.get("id"):
             raise ValueError("ID do usuário é necessário")
 
-        # Gera por padrão um uuid raw (sem ons hífens) com prefixo 'pro_'
+        # Gera por padrão um uuid raw (sem os hífens) com prefixo 'pro_'
         produto.id = "pro_" + get_uuid()
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
+        produto.created_at = None  # Garante None para ser atribuído pelo banco um SERVER_TIMESTAMP
         produto.created_by_id = usuario["id"]
         user_name: NomePessoa = usuario["name"]
         produto.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
