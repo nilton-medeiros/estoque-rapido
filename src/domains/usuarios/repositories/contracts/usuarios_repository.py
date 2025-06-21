@@ -66,6 +66,7 @@ class UsuariosRepository(ABC):
         """Busca usuários por perfil."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
+    # ToDo: Excluir este método, esta aplicação usa soft delete
     @abstractmethod
     def delete(self, usuario_id: str) -> bool:
         """Remove um usuário do banco de dados."""
