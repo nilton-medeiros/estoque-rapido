@@ -750,7 +750,7 @@ def sidebar_footer(page: ft.Page):
 
 def sidebar_container(page: ft.Page):
     """Container Esquerdo vertical na Home page do usuário"""
-    page.data = '/home'
+    page.data = page.route  # Armazena a rota atual em `page.data` para uso pela função `page.back()` de navegação.
 
     sidebar = ft.Container(
         col={"xs": 0, "md": 5, "lg": 4, "xxl": 3},

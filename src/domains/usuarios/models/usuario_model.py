@@ -3,9 +3,9 @@ from typing import Set
 from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
-from src.domains.shared.password import Password
+from src.domains.shared.models.password import Password
 from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
-from src.domains.shared.registration_status import RegistrationStatus
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.config import get_app_colors
 
 

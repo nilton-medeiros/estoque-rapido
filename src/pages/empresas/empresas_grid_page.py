@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def show_companies_grid(page: ft.Page):
     """Página de exibição das empresas do usuário logado em formato Cards"""
     page.theme_mode = ft.ThemeMode.DARK
-    page.data = "/home/empresas/grid"
+    page.data = page.route  # Armazena a rota atual em `page.data` para uso pela função `page.back()` de navegação.
 
     # --- Indicador de Carregamento (Spinner) ---
     loading_container = ft.Container(

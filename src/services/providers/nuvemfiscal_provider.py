@@ -9,7 +9,7 @@ import src.domains.app_config.controllers.app_config_controllers as app_controll
 from src.domains.empresas import Environment
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.shared.password import Password
+from src.domains.shared.models.password import Password
 from src.services.contracts.dfe_provider import DFeProvider
 
 logger = logging.getLogger(__name__)

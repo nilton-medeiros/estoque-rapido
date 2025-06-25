@@ -4,9 +4,10 @@
 from typing import TYPE_CHECKING
 import flet as ft
 from src.domains.produtos.models.produtos_model import Produto
-from src.domains.produtos.models.grid_models import FilterType, StockLevel
+from src.domains.produtos.models.grid_model import StockLevel
 from src.domains.produtos.components.product_card import ProductCard
 from src.domains.produtos.components.filter_components import FilterComponents
+from src.domains.shared.models.filter_type import FilterType
 
 if TYPE_CHECKING:
     from src.domains.produtos.controllers.grid_controller import ProdutoGridController

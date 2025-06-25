@@ -40,7 +40,7 @@ class UsuarioForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self._usuario_id: str | None = None
+        # self._usuario_id: str | None = None
         self.app_colors: dict[str, str] = get_app_colors('blue')
 
         if page.session.get("user_colors"):
@@ -709,8 +709,7 @@ def show_user_form(page: ft.Page):
                 alignment=ft.alignment.center,
                 on_hover=handle_icon_hover,
                 content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go(
-                    page.data if page.data else '/home'),
+                on_click=lambda _: page.back(), # type: ignore [attr-defined]
                 tooltip="Voltar",
                 # Ajuda a garantir que o hover respeite o border_radius
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS
@@ -796,7 +795,7 @@ def show_user_form(page: ft.Page):
 
             usuarios_view.clear_form()
             page.app_state.clear_form_data() # type: ignore [attr-defined]
-            page.go(page.data if page.data else '/home')
+            page.back() # type: ignore [attr-defined]
 
         except Exception as ex:
             # Em caso de erro inesperado
@@ -825,7 +824,7 @@ def show_user_form(page: ft.Page):
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         usuarios_view.clear_form()
         page.app_state.clear_form_data()  # type: ignore
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(

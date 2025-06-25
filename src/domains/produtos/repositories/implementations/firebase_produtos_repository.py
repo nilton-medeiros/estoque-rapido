@@ -50,13 +50,13 @@ class FirebaseProdutosRepository(ProdutosRepository):
             data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-            if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
+            if data_to_save.get("status") == ProdutoStatus.ACTIVE.name and not data_to_save.get("activated_at"):
                 data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
+            if data_to_save.get("status") == ProdutoStatus.DELETED.name and not data_to_save.get("deleted_at"):
                 data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == 'INACTIVE' and not data_to_save.get("inactivated_at"):
+            if data_to_save.get("status") == ProdutoStatus.INACTIVE.name and not data_to_save.get("inactivated_at"):
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             doc_ref = self.products_collection_ref.document(produto.id)

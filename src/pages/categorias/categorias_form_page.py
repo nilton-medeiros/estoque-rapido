@@ -428,8 +428,8 @@ def show_category_form(page: ft.Page):
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,
                 on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go(page.data if page.data else '/home'),
+                content=ft.Icon(ft.Icons.ARROW_BACK), # type: ignore
+                on_click=lambda _: page.back(), # type: ignore [attr-defined]
                 tooltip="Voltar",
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
             ),
@@ -486,7 +486,7 @@ def show_category_form(page: ft.Page):
         # Limpa o formulário salvo e volta para a página anterior que a invocou
         categorias_view.clear_form()
         page.app_state.clear_form_data() # type: ignore
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     def exit_form_categorias(e):
         if not categorias_view.is_image_url_web and categorias_view.local_upload_file:
@@ -499,7 +499,7 @@ def show_category_form(page: ft.Page):
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         categorias_view.clear_form()
         page.app_state.clear_form_data() # type: ignore
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(

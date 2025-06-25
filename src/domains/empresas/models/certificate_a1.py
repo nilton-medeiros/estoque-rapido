@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.domains.shared.password import Password
+from src.domains.shared.models.password import Password
 
 
 @dataclass

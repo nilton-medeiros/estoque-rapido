@@ -2,7 +2,6 @@
 # src/domains/usuarios/components/filter_components.py
 # ==========================================
 import flet as ft
-from src.domains.usuarios.models.grid_models import FilterType
 
 class FilterComponents:
     """Componentes de filtro reutilizáveis"""

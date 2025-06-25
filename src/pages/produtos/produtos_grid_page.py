@@ -29,7 +29,7 @@ def show_products_grid(page: ft.Page):
 
     # Configuração da página
     page.theme_mode = ft.ThemeMode.DARK
-    page.data = "/home/produtos/grid"
+    page.data = page.route
 
     # Cria o controlador e UI
     controller = ProdutoGridController(page, handle_action)

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def show_categories_grid(page: ft.Page):
     """Página de exibição das categorias de produtos da empresa logada"""
     page.theme_mode = ft.ThemeMode.DARK
-    page.data = "/home/produtos/categorias/grid"
+    page.data = page.route  # Armazena a rota atual em `page.data` para uso pela função `page.back()` de navegação.
 
         # --- Indicador de Carregamento (Spinner) ---
     loading_container = ft.Container(

@@ -4,7 +4,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 
-from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
+from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
@@ -429,9 +429,9 @@ def handle_update_status(usuario: Usuario, logged_user: dict, status: Registrati
         if not usuario:
             raise ValueError("Usuário não pode ser nulo ou vazio")
         if not isinstance(usuario, Usuario):
-            raise ValueError("Usuario não é do tipo Usuario")
+            raise ValueError("O argumento 'usuario' não é do tipo Usuario")
         if not usuario.id:
-            raise ValueError("ID da usuario não pode ser nulo ou vazio")
+            raise ValueError("ID do usuário não pode ser nulo ou vazio")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
         if not isinstance(status, RegistrationStatus):
@@ -441,13 +441,15 @@ def handle_update_status(usuario: Usuario, logged_user: dict, status: Registrati
         usuarios_services = UsuariosServices(repository)
 
         is_updated = usuarios_services.update_status(usuario, logged_user, status)
+        operation = "ativado" if status == RegistrationStatus.ACTIVE else "inativado" if status == RegistrationStatus.INACTIVE else "marcado como excluído"
 
         if is_updated:
             response["status"] = "success"
             response["data"] = status
+            response["message"] = f"Usuário {operation} com sucesso!"
         else:
             response["status"] = "error"
-            response["message"] = f"Não foi possível atualizar o status da usuario para {status.value}"
+            response["message"] = f"Não foi possível atualizar o status do usuario para {status.value}"
 
     except ValueError as e:
         response["status"] = "error"

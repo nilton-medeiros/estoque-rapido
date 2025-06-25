@@ -2,7 +2,7 @@
 # src/domains/produtos/components/filter_components.py
 # ==========================================
 import flet as ft
-from src.domains.produtos.models.grid_models import FilterType, StockLevel
+
 
 class FilterComponents:
     """Componentes de filtro reutilizáveis"""

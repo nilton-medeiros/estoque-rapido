@@ -366,11 +366,11 @@ def show_company_tax_form(page: ft.Page):
         route_title += f"/{id}"
     else:
         message_snackbar(page=page, message="Empresa não definida", message_type=MessageType.WARNING)
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     if not empresa_form.get('cnpj'):
         message_snackbar(page=page, message="CNPJ não definido", message_type=MessageType.WARNING)
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
 
     def handle_icon_hover(e):
@@ -390,8 +390,8 @@ def show_company_tax_form(page: ft.Page):
                 bgcolor=ft.Colors.TRANSPARENT,
                 alignment=ft.alignment.center,
                 on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go(page.data if page.data else '/home'),
+                content=ft.Icon(ft.Icons.ARROW_BACK), # type: ignore
+                on_click=lambda _: page.back(), # type: ignore [attr-defined]
                 tooltip="Voltar",
                 # clip_behavior: O conteúdo será recortado (ou não) de acordo com esta opção.
                 clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
@@ -437,13 +437,13 @@ def show_company_tax_form(page: ft.Page):
         page.app_state.clear_form_data() # type: ignore
         message_snackbar(page=page, message="Dados fiscais salvo com sucesso!",
                          message_type=MessageType.SUCCESS)
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     def exit_form_empresa(e):
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
         page.app_state.clear_form_data() # type: ignore
-        page.go(page.data if page.data else '/home')
+        page.back() # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"
     save_btn = ft.ElevatedButton(

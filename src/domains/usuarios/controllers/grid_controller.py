@@ -4,7 +4,8 @@
 from typing import Callable, TYPE_CHECKING, Optional
 import asyncio
 import flet as ft
-from src.domains.usuarios.models.grid_models import GridState, FilterType
+from src.domains.shared.models.filter_type import FilterType
+from src.domains.usuarios.models.grid_model import UserGridState
 from src.domains.usuarios.models.usuario_model import Usuario
 from src.domains.usuarios.controllers import usuarios_controllers as user_controllers
 
@@ -16,7 +17,7 @@ class UsuarioGridController:
 
     def __init__(self, page: ft.Page, on_action: Callable):
         self.page = page
-        self.state = GridState()
+        self.state = UserGridState()
         self.on_action = on_action
         self.ui_components: Optional['UsuarioGridUI'] = None
 
@@ -37,7 +38,7 @@ class UsuarioGridController:
 
         # Filtro por texto de busca
         if self.state.search_text.strip():
-            search_lower = self.state.search_text.lower()
+            search_lower = self.state.search_text.strip().lower()
             filtered = [u for u in filtered if search_lower in u.name.nome_completo_minusculo]
 
         return filtered

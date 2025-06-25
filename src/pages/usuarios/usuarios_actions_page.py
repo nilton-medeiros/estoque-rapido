@@ -39,7 +39,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             page_ctx.update()
 
             # OPERAÇÃO SOFT DELETE: Muda o status para excluído o usuario pelo ID
-            # ToDo: Verificar se há pedidos ou estoque para este produto_id, se houver, alterar para INACTIVE
+            # ToDo: Verificar se há pedidos ou estoque para este usuario_id, se houver, alterar para INACTIVE
             """
             Aviso: Se houver pedidos vinculados, o status será definido como RegistrationStatus.INACTIVE. (Obsoleto)
             Caso contrário, o registro poderá ter o status RegistrationStatus.DELETED.
@@ -74,7 +74,6 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
                 operation_complete_future.set_result(True)
 
         except IndexError as ie:  # Deveria ser menos provável com referência direta
-            # type: ignore
             logger.error(
                 f"IndexError em send_to_trash_user_async: {ie}.\
                 Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")  # type: ignore

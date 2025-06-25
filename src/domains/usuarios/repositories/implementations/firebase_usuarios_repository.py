@@ -5,9 +5,9 @@ from typing import Optional
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
 
-from src.domains.shared.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
+from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuario_model import Usuario
-from src.domains.shared.registration_status import RegistrationStatus
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
@@ -119,13 +119,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-            if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
+            if data_to_save.get("status") == RegistrationStatus.ACTIVE.name and not data_to_save.get("activated_at"):
                 data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
+            if data_to_save.get("status") == RegistrationStatus.DELETED.name and not data_to_save.get("deleted_at"):
                 data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == 'INACTIVE' and not data_to_save.get("inactivated_at"):
+            if data_to_save.get("status") == RegistrationStatus.INACTIVE.name and not data_to_save.get("inactivated_at"):
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             doc_ref = self.collection.document(usuario.id)

@@ -102,13 +102,13 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: CompanyStatus =
     text = "Aviso: A empresa será movida para a lixeira e permanecerá lá indefinidamente até que você a restaure."
     action_title = "Mover para lixeira?"
 
-    if status.name == "DELETED":
+    if status == CompanyStatus.DELETED:
         text = (
             "Aviso: Este registro será excluído permanentemente após 90 dias. "
             "Caso exista estoque ou pedidos vinculados a esta empresa, "
             "ela será arquivada e não poderá ser excluída definitivamente."
         )
-    elif status.name == "ARCHIVED":
+    elif status == CompanyStatus.ARCHIVED:
         action_title = "Arquivar empresa?"
         text = "Aviso: A empresa será arquivada e permanecerá assim indefinidamente até que você a restaure ou exclua."
 

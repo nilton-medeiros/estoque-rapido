@@ -4,9 +4,10 @@
 from typing import Callable, TYPE_CHECKING, Optional
 import asyncio
 import flet as ft
-from src.domains.produtos.models.grid_models import GridState, FilterType, StockLevel
+from src.domains.produtos.models.grid_model import ProdGridState, StockLevel
 from src.domains.produtos.models.produtos_model import Produto
 from src.domains.produtos.controllers import produtos_controllers as product_controllers
+from src.domains.shared.models.filter_type import FilterType
 
 if TYPE_CHECKING:
     from src.domains.produtos.views.produtos_grid_ui import ProdutoGridUI
@@ -16,7 +17,7 @@ class ProdutoGridController:
 
     def __init__(self, page: ft.Page, on_action: Callable):
         self.page = page
-        self.state = GridState()
+        self.state = ProdGridState()
         self.on_action = on_action
         self.ui_components: Optional['ProdutoGridUI'] = None
 

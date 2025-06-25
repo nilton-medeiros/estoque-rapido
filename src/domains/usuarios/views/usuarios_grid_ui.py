@@ -3,8 +3,8 @@
 # ==========================================
 from typing import TYPE_CHECKING
 import flet as ft
+from src.domains.shared.models.filter_type import FilterType
 from src.domains.usuarios.models.usuario_model import Usuario
-from src.domains.usuarios.models.grid_models import FilterType
 from src.domains.usuarios.components.user_card import UserCard
 from src.domains.usuarios.components.filter_components import FilterComponents
 

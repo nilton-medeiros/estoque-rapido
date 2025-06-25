@@ -32,7 +32,7 @@ def show_users_grid(page: ft.Page):
 
     # Configuração da página
     page.theme_mode = ft.ThemeMode.DARK
-    page.data = "/home/usuarios/grid"
+    page.data = page.route  # Armazena a rota atual em `page.data` para uso pela função `page.back()` de navegação.
 
     # Cria o controlador e UI
     controller = UsuarioGridController(page, handle_action)
