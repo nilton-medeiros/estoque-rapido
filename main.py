@@ -5,6 +5,9 @@ import os
 from dotenv import load_dotenv
 
 from src.pages import show_signup_page, show_landing_page, show_login_page
+from src.pages.clientes.clientes_form_page import show_client_form
+from src.pages.clientes.clientes_grid_page import show_clients_grid
+from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
 from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
@@ -85,6 +88,7 @@ def main(page: ft.Page):
                 # A UI específica (MainContent) irá lidar com a atualização.
                 # Podemos forçar um page.update() aqui se necessário para outras partes da UI global.
                 # page.update()
+
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
@@ -111,6 +115,19 @@ def main(page: ft.Page):
             # type: ignore  [attr-defined]
             page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA" # type: ignore  [attr-defined]
             # page.company_name_text_btn.update()
+
+    def page_back(_=None):
+        """Gerencia a navegação para a página anterior.
+
+        Prioriza a rota armazenada em `page.data`. Se não houver rota
+        definida, navega para '/home' como fallback.
+        """
+        if page.data:
+            page.go(page.data)
+        else:
+            page.go('/home')
+
+    page.back = page_back  # type: ignore  [attr-defined]
 
     # Registra o handler do PubSub
     page.pubsub.subscribe(handle_pubsub)
@@ -240,6 +257,33 @@ def main(page: ft.Page):
                     form = show_user_form(page)
                     pg_view = ft.View(
                         route='home/usuarios/form',
+                        appbar=form.data,
+                        controls=[form],
+                        scroll=ft.ScrollMode.AUTO,
+                        bgcolor=ft.Colors.BLACK,
+                        vertical_alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                else:
+                    page.go('/login')  # Redireciona se não estiver autenticado
+            case '/home/clientes/grid':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    pg_view = show_clients_grid(page)
+                else:
+                    page.go('/login')
+            case '/home/clientes/grid/lixeira':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    pg_view = show_clients_grid_trash(page)
+                else:
+                    page.go('/login')
+            case '/home/clientes/form':
+                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
+                    page.on_resized = None
+                    form = show_client_form(page)
+                    pg_view = ft.View(
+                        route='home/clientes/form',
                         appbar=form.data,
                         controls=[form],
                         scroll=ft.ScrollMode.AUTO,

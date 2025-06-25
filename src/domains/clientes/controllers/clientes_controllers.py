@@ -3,6 +3,7 @@ import logging
 from src.domains.clientes.models.cliente_model import Cliente
 from src.domains.clientes.repositories.implementations.firebase_clientes_repository import FirebaseClientesRepository
 from src.domains.clientes.services.clientes_services import ClientesServices
+from src.domains.shared.models.registration_status import RegistrationStatus
 
 
 logger = logging.getLogger(__name__)
@@ -90,12 +91,13 @@ def handle_get_by_id(cliente_id: str, empresa_logada: str) -> dict:
     return response
 
 
-def handle_get_all(empresa_logada: str) -> dict:
+def handle_get_all(empresa_logada: str, status_deleted: bool = False) -> dict:
     """
     Obtém todos os clientes da empresa logada.
 
     Args:
         empresa_logada (str): ID da empresa logada.
+        status_deleted (bool): Se True, busca apenas clientes deletados.
 
     Returns:
         response (dict): Resposta da operação.
@@ -110,7 +112,7 @@ def handle_get_all(empresa_logada: str) -> dict:
         repository = FirebaseClientesRepository(empresa_logada)
         clientes_services = ClientesServices(repository)
 
-        clientes_list, quantidade_deletados = clientes_services.get_all()
+        clientes_list, quantidade_deletados = clientes_services.get_all(status_deleted=status_deleted)
 
         response["status"] = "success"
         response["data"] = {
@@ -123,5 +125,47 @@ def handle_get_all(empresa_logada: str) -> dict:
     except Exception as e:
         response["status"] = "error"
         response["message"] = str(e)
+
+    return response
+
+
+def handle_update_status(cliente: Cliente, logged_user: dict, status: RegistrationStatus) -> dict:
+    """Manipula o status para ativo, inativo ou deletado de um cliente."""
+    response = {}
+
+    try:
+        if not cliente:
+            raise ValueError("Cliente não pode ser nulo ou vazio")
+        if not isinstance(cliente, Cliente):
+            raise ValueError("O argumento 'cliente' não é do tipo Cliente")
+        if not cliente.id:
+            raise ValueError("ID do cliente não pode ser nulo ou vazio")
+        if not status:
+            raise ValueError("Status não pode ser nulo ou vazio")
+        if not isinstance(status, RegistrationStatus):
+            raise ValueError("Status não é do tipo RegistrationStatus")
+
+        repository = FirebaseClientesRepository(cliente.empresa_id)
+        clientes_services = ClientesServices(repository)
+
+        is_updated = clientes_services.update_status(cliente, logged_user, status)
+        operation = "ativado" if status == RegistrationStatus.ACTIVE else "inativado" if status == RegistrationStatus.INACTIVE else "marcado como excluído"
+
+        if is_updated:
+            response["status"] = "success"
+            response["data"] = status
+            response["message"] = f"Cliente {operation} com sucesso!"
+        else:
+            response["status"] = "error"
+            response["message"] = f"Não foi possível atualizar o status do cliente para {status.value}"
+
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error("clientes_controllers.handle_update_status(ValueError). " + response["message"])
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+        logger.error(response["message"])
 
     return response

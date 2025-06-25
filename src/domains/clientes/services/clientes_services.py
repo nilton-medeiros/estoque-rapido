@@ -1,6 +1,7 @@
 from src.domains.clientes.models.cliente_model import Cliente
 from src.domains.clientes.repositories.contracts.clientes_repository import ClientesRepository
-from src.domains.shared.nome_pessoa import NomePessoa
+from src.domains.shared.models.nome_pessoa import NomePessoa
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.gen_uuid import get_uuid
 
 
@@ -43,6 +44,7 @@ class ClientesServices:
         # Envia para o repositório selecionado em clientes_controllrer salvar
         return self.repository.save(cliente)
 
+
     def update(self, cliente: Cliente, usuario_logado: dict) -> str | None:
         """
         Atualiza os dados de uma cliente existente.
@@ -67,19 +69,44 @@ class ClientesServices:
         # Envia para o repositório selecionado em clientes_controllrer salvar
         return self.repository.save(cliente)
 
+
     def get_by_id(self, cliente_id: str) -> Cliente | None:
         """Obtém um cliente pelo seu ID."""
         return self.repository.get_by_id(cliente_id)
 
-    def get_all(self) -> tuple[list[Cliente], int]:
+
+    def get_all(self, status_deleted: bool = False) -> tuple[list[Cliente], int]:
         """
         Obtém todos os clientes da empresa logada.
 
         Args:
-            Nenhum
+            status_deleted (bool): Se True, retorna apenas clientes deletados.
 
         Returns:
             list[Cliente]: Lista de clientes.
             int: Número total de clientes marcados como "DELETED".
         """
-        return self.repository.get_all()
+        return self.repository.get_all(status_deleted=status_deleted)
+
+
+    def update_status(self, cliente: Cliente, logged_user: dict, status: RegistrationStatus) -> bool:
+        """Atualiza o status de uma cliente existente"""
+        user_name: NomePessoa = logged_user["name"]
+        cliente.status = status
+
+        match status:
+            case RegistrationStatus.ACTIVE:
+                cliente.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                cliente.activated_by_id = logged_user["id"]
+                cliente.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+            case RegistrationStatus.INACTIVE:
+                cliente.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                cliente.inactivated_by_id = logged_user["id"]
+                cliente.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+            case RegistrationStatus.DELETED:
+                cliente.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                cliente.deleted_by_id = logged_user["id"]
+                cliente.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+
+        id = self.repository.save(cliente)
+        return id is not None

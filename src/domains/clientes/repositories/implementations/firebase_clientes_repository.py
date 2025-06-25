@@ -2,6 +2,7 @@ import logging
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
+from src.domains.shared import RegistrationStatus
 
 from src.domains.clientes.models.cliente_model import Cliente
 from src.domains.clientes.repositories.contracts.clientes_repository import ClientesRepository
@@ -50,18 +51,18 @@ class FirebaseClientesRepository(ClientesRepository):
         try:
             cliente_data = cliente.to_dict_db()
 
-            if not cliente_data.get("created_at"):
+            if not cliente_data.get("created_at"): # type: ignore
                 cliente_data["created_at"] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
             cliente_data["updated_at"] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
-            if cliente_data.get("status") == "ACTIVE" and not cliente_data.get("activated_at"):
+            if cliente_data.get("status") == RegistrationStatus.ACTIVE.name and not cliente_data.get("activated_at"):
                 cliente_data["activated_at"] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
-            if cliente_data.get("status") == "DELETED" and not cliente_data.get("deleted_at"):
+            if cliente_data.get("status") == RegistrationStatus.DELETED.name and not cliente_data.get("deleted_at"):
                 cliente_data["deleted_at"] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
-            if cliente_data.get("status") == "INACTIVE" and not cliente_data.get("inactivated_at"):
+            if cliente_data.get("status") == RegistrationStatus.INACTIVE.name and not cliente_data.get("inactivated_at"):
                 cliente_data["inactivated_at"] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
             doc_ref = self.collection.document(cliente.id)
@@ -76,7 +77,7 @@ class FirebaseClientesRepository(ClientesRepository):
 
                 cliente_data_from_db = doc_snapshot.to_dict()
 
-                cliente_data_from_db["id"] = doc_snapshot.id
+                cliente_data_from_db["id"] = doc_snapshot.id # type: ignore
 
                 updated_cliente_obj = Cliente.from_dict(cliente_data_from_db)
 
@@ -131,7 +132,7 @@ class FirebaseClientesRepository(ClientesRepository):
                 return None
 
             cliente_data = doc_ref.to_dict()
-            cliente_data["id"] = doc_ref.id
+            cliente_data["id"] = doc_ref.id # type: ignore
             if not cliente_data:
                 logger.warning(f"Documento {cliente_id} está vazio.")
                 return None
@@ -147,12 +148,13 @@ class FirebaseClientesRepository(ClientesRepository):
             raise
 
 
-    def get_all(self) -> tuple[list[Cliente], int]:
+    def get_all(self, status_deleted: bool = False) -> tuple[list[Cliente], int]:
         """
         Obtém todos os clientes da empresa logada pelo ID self.empresa_id.
 
         Args:
-            Sem argumentos, a empresa logada (empresa_id) foi definida no construtor (self.empresa_id).
+            status_deleted (bool): Se True, apenas os clientes com status "DELETED" serão incluídos;
+                                    caso contrário, todos os clientes, exceto os excluídos, serão retornados.
 
         Returns:
             list[Cliente]: Lista de clientes.
@@ -173,12 +175,20 @@ class FirebaseClientesRepository(ClientesRepository):
 
             for doc in docs:
                 clientes_data = doc.to_dict()
-                clientes_data["id"] = doc.id
-                clientes_result.append(Cliente.from_dict(clientes_data))
+                if clientes_data:
+                    clientes_data["id"] = doc.id
+                    cliente_obj = Cliente.from_dict(clientes_data)
 
-                if clientes_data["status"] == "DELETED":
-                    quantidade_deletados += 1
+                    if cliente_obj.status == RegistrationStatus.DELETED:
+                        quantidade_deletados += 1
 
+                    # Adiciona o cliente à lista de resultados com base no filtro 'status_deleted'
+                    if status_deleted: # Se o filtro é para mostrar deletados
+                        if cliente_obj.status == RegistrationStatus.DELETED:
+                            clientes_result.append(cliente_obj)
+                    else: # not status_deleted (mostrar não deletados)
+                        if cliente_obj.status != RegistrationStatus.DELETED:
+                            clientes_result.append(cliente_obj)
             return clientes_result, quantidade_deletados
 
         except exceptions.FirebaseError as e:

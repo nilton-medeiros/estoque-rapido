@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, UTC
 import re
+import logging
 
 from src.domains.shared import Address, NomePessoa, PhoneNumber, RegistrationStatus
 
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Cliente:
@@ -29,11 +32,11 @@ class Cliente:
     name: NomePessoa
     phone: PhoneNumber
     empresa_id: str
-    id: str | None
-    cpf: str | None
-    email: str | None
-    delivery_address: Address | None
-    birthday: date | None
+    id: str | None = None
+    cpf: str | None = None
+    email: str | None = None
+    delivery_address: Address | None = None
+    birthday: date | None = None
     is_whatsapp: bool = False
     status: RegistrationStatus = RegistrationStatus.ACTIVE
 
@@ -65,9 +68,11 @@ class Cliente:
         if not self.name or not self.name.first_name:
             raise ValueError("O nome do cliente é obrigatório.")
 
-        if self.cpf:
+        if self.cpf is not None:
             # Remove qualquer formatação do CPF, mantendo apenas os dígitos
-            self.cpf = re.sub(r'\D', '', self.cpf)
+            cpf_limpo = re.sub(r'\D', '', self.cpf)
+            # Se o resultado for uma string vazia, define como None para não ser salvo no DB
+            self.cpf = cpf_limpo if cpf_limpo else None
 
         if self.email:
             self.email = self.email.strip().lower()
@@ -168,22 +173,39 @@ class Cliente:
 
         # Converte objetos aninhados
         try:
-            # Fornece um dict vazio como padrão para evitar passar None para from_dict.
-            # O próprio from_dict/NomePessoa.__init__ levantará um ValueError se os dados forem insuficientes.
-            name_obj = NomePessoa.from_dict(data.get("name", {}))
-        except ValueError:  # Captura o erro de validação de NomePessoa
-            # Se houver erro ao criar NomePessoa, cria uma instância padrão
-            name_obj = NomePessoa(first_name="[Nome não informado]")
+            name_data = data.get("name")
+            if isinstance(name_data, dict):
+                name_obj = NomePessoa.from_dict(name_data)
+            elif isinstance(name_data, NomePessoa):
+                name_obj = name_data
+            else:
+                # Força um erro de validação se name_data for None ou inválido
+                raise ValueError(f"Dados de nome ausentes ou inválidos para o cliente ID: {data.get('id', 'N/A')}")
+        except (ValueError, TypeError) as e:  # Captura erro de validação ou tipo
+            # Loga o erro e cria uma instância padrão para evitar que a aplicação quebre.
+            logger.warning(f"Erro ao processar o nome do cliente: {e}. Usando valor padrão.")
+            name_obj = NomePessoa(first_name="[Nome Inválido]")
 
         try:
-            # Fornece uma string vazia como padrão para que from_dict possa validar.
-            phone_obj = PhoneNumber.from_dict(data.get("phone", ""))
-        except ValueError:  # Captura o erro de validação de PhoneNumber
-            # Se houver erro ao criar PhoneNumber, cria uma instância padrão
+            phone_data = data.get("phone")
+            if isinstance(phone_data, str):
+                phone_obj = PhoneNumber.from_dict(phone_data)
+            elif isinstance(phone_data, PhoneNumber):
+                phone_obj = phone_data
+            else:
+                # Força um erro de validação se phone_data for None ou inválido
+                raise ValueError(f"Dados de telefone ausentes ou inválidos para o cliente ID: {data.get('id', 'N/A')}")
+        except (ValueError, TypeError) as e:  # Captura erro de validação de PhoneNumber
+            # Loga o erro e cria uma instância padrão.
+            logger.warning(f"Erro ao processar o telefone do cliente: {e}. Usando valor padrão.")
             phone_obj = PhoneNumber("+5500000000000")
 
         address_data = data.get("delivery_address")
-        address_obj = Address(**address_data) if isinstance(address_data, dict) and address_data else None
+        address_obj = None  # Padrão para None
+        if isinstance(address_data, dict) and address_data:
+            address_obj = Address(**address_data)
+        elif isinstance(address_data, Address):
+            address_obj = address_data
 
         # Remove campos já tratados para evitar passar duas vezes no construtor
         for key in ["name", "phone", "delivery_address", "status"]:
@@ -194,6 +216,5 @@ class Cliente:
             phone=phone_obj,
             delivery_address=address_obj,
             status=status,
-            empresa_id=data["empresa_id"],
             **data
         )

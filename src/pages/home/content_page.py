@@ -194,9 +194,31 @@ class MainContent(ft.Container):
         # Exemplo de como os cards seriam criados (simplificado)
         # Mantenha as funções on_click como métodos da classe se elas precisarem acessar self ou page
         salles_cards = [
-            self.content_card(icons=[ft.Icon(ft.Icons.ADD, size=40, color=ft.Colors.PRIMARY), ft.Icon(ft.Icons.POINT_OF_SALE, size=40, color=ft.Colors.PRIMARY)], title="Registrar", click_action=self._on_click_registrar, tool_tip="Registrar venda"),
-            self.content_card(icons=[ft.Icon(ft.Icons.NOTE_ALT_OUTLINED, size=40, color=ft.Colors.PRIMARY)], title="Status", click_action=self._on_click_status, tool_tip="Verificar status da venda"),
-            self.content_card(icons=[ft.Icon(ft.Icons.ATTACH_MONEY_OUTLINED, size=40, color=ft.Colors.PRIMARY)], title="NFC-e", click_action=self._on_click_nfce, tool_tip="Gerar Nota Fiscal de Consumidor Eletrônica"),
+            self.content_card(
+                icons=[
+                    ft.Icon(ft.Icons.ADD, size=40, color=ft.Colors.PRIMARY),
+                    ft.Icon(ft.Icons.POINT_OF_SALE, size=40, color=ft.Colors.PRIMARY)
+                ],
+                title="Registrar",
+                click_action=self._on_click_salle_add,
+                tool_tip="Registrar venda"
+            ),
+            self.content_card(
+                icons=[
+                    ft.Icon(ft.Icons.NOTE_ALT_OUTLINED, size=40, color=ft.Colors.PRIMARY)
+                ],
+                title="Status",
+                click_action=self._on_click_status,
+                tool_tip="Verificar status da venda"
+            ),
+            self.content_card(
+                icons=[
+                    ft.Icon(ft.Icons.ATTACH_MONEY_OUTLINED, size=40, color=ft.Colors.PRIMARY)
+                ],
+                title="NFC-e",
+                click_action=self._on_click_nfce,
+                tool_tip="Gerar Nota Fiscal de Consumidor Eletrônica"
+            ),
         ]
 
         salles = ft.Container(
@@ -205,9 +227,30 @@ class MainContent(ft.Container):
             border_radius=10, alignment=ft.alignment.top_center, margin=ft.margin.only(top=30, bottom=30)
         )
 
-        stock = ft.Container(
+        clients_cards = [
+            self.content_card(
+                icons=[
+                    ft.Icon(ft.Icons.PERSON_ADD, size=40, color=ft.Colors.PRIMARY),
+                ],
+                title="Novo",
+                click_action=lambda e: e.control.page.go('/home/clientes/form'),
+                tool_tip="Incluir cliente"
+            ),
+            self.content_card(
+                icons=[
+                    ft.Icon(ft.Icons.LIST_OUTLINED, size=40, color=ft.Colors.PRIMARY),
+                    ft.Icon(ft.Icons.PEOPLE, size=40, color=ft.Colors.PRIMARY),
+                ],
+                title="Lista",
+                click_action=lambda e: e.control.page.go('/home/clientes/grid'),
+                tool_tip="Lista de clientes"
+            ),
+        ]
+
+        clients = ft.Container(
+            content=ft.ResponsiveRow(controls=clients_cards),
             col={"xs": 12, "md": 7, "lg": 8, "xxl": 9}, expand=True, bgcolor="#111418",
-            border_radius=10, alignment=ft.alignment.center, margin=ft.margin.symmetric(vertical=40)
+            border_radius=10, alignment=ft.alignment.center, margin=ft.margin.symmetric(vertical=30)
         )
 
         financial = ft.Container(
@@ -222,8 +265,8 @@ class MainContent(ft.Container):
                 self.news_container,
                 self._sections_title(title='Vendas'),
                 salles,
-                self._sections_title(title="Estoque"),
-                stock,
+                self._sections_title(title="Clientes"),
+                clients,
                 self._sections_title(title="Financeiro"),
                 financial,
             ],
@@ -235,8 +278,11 @@ class MainContent(ft.Container):
         self.padding = ft.padding.only(left=20, right=20, bottom=20)
 
     # --- Métodos Helper para Ações e Títulos (movidos para dentro da classe) ---
-    def _on_click_registrar(self, e):
+    def _on_click_salle_add(self, e):
         print(f"on_click_registrar {e.control}")
+
+    def _on_click_client_add(self, e):
+        e.control.page.go('/home/clientes/form')
 
     def _on_click_status(self, e):
         print(f"on_click_status {e.control}")
