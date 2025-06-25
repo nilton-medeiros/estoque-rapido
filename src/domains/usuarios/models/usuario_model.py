@@ -170,7 +170,7 @@ class Usuario:
             "profile": self.profile.name,
             "empresa_id": self.empresa_id,
             # Converte conjunto para lista ao salvar
-            "empresas": self.empresas,
+            "empresas": list(self.empresas),
             "photo_url": self.photo_url,
             "user_colors": self.user_colors,
             "status": self.status.name,  # Armazena o nome do enum
@@ -253,12 +253,11 @@ class Usuario:
             Este método assume que os objetos NomePessoa, PhoneNumber e Password
             também possuem métodos from_dict para sua criação.
         """
-        # Converte as empresas de lista para conjunto
-        empresas_set = set(data.get("empresas", []))
-
+        # --- Conversão de Enums e Tipos Primitivos ---
         status_data = data.get("status")
         status = RegistrationStatus.ACTIVE  # Padrão
 
+        # Converte string para Enum RegistrationStatus
         if status_data:
             if isinstance(status_data, RegistrationStatus):
                 status = status_data
@@ -272,6 +271,7 @@ class Usuario:
         profile_data = data.get("profile")
         profile = UsuarioProfile.UNDEFINED  # Padrão
 
+        # Converte string para Enum UsuarioProfile
         if profile_data:
             if isinstance(profile_data, UsuarioProfile):
                 profile = profile_data
@@ -282,71 +282,49 @@ class Usuario:
                     # Lidar com profile inválido, talvez logar um aviso ou usar um padrão
                     profile = UsuarioProfile.UNDEFINED
 
-        # Database retorna Timestamps, que precisam ser convertidos para datetime
-        created_at = data.get("created_at")
-        if created_at and not isinstance(created_at, datetime):
-            created_at = created_at.to_datetime() if hasattr(
-                # Compatibilidade com Timestamp do Database
-                created_at, 'to_datetime') else None
+        # Converte Timestamps do Firestore para datetime
+        for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at']:
+            if key in data and data.get(key) and hasattr(data[key], 'to_datetime'):
+                data[key] = data[key].to_datetime()
 
-        updated_at = data.get("updated_at")
-        if updated_at and not isinstance(updated_at, datetime):
-            updated_at = updated_at.to_datetime() if hasattr(
-                updated_at, 'to_datetime') else None
+        # --- Conversão de Objetos Aninhados ---
+        name_data = data.get("name")
+        if isinstance(name_data, dict):
+            name_obj = NomePessoa.from_dict(name_data)
+        elif isinstance(name_data, NomePessoa):
+            name_obj = name_data
+        else:
+            raise ValueError("Dados de 'name' inválidos ou ausentes para criar Usuario.")
 
-        activated_at = data.get("activated_at")
-        if activated_at and not isinstance(activated_at, datetime):
-            activated_at = activated_at.to_datetime() if hasattr(
-                activated_at, 'to_datetime') else None
+        phone_data = data.get("phone_number")
+        if isinstance(phone_data, str):
+            phone_obj = PhoneNumber.from_dict(phone_data)
+        elif isinstance(phone_data, PhoneNumber):
+            phone_obj = phone_data
+        else:
+            raise ValueError("Dados de 'phone_number' inválidos ou ausentes para criar Usuario.")
 
-        inactivated_at = data.get("inactivated_at")
-        if inactivated_at and not isinstance(inactivated_at, datetime):
-            inactivated_at = inactivated_at.to_datetime() if hasattr(
-                inactivated_at, 'to_datetime') else None
+        password_data = data.get("password")
+        if isinstance(password_data, (str, bytes)):
+            password_obj = Password.from_dict(password_data)
+        elif isinstance(password_data, Password):
+            password_obj = password_data
+        else:
+            raise ValueError("Dados de 'password' inválidos ou ausentes para criar Usuario.")
 
-        deleted_at = data.get("deleted_at")
-        if deleted_at and not isinstance(deleted_at, datetime):
-            deleted_at = deleted_at.to_datetime() if hasattr(
-                deleted_at, 'to_datetime') else None
+        # Remove campos já tratados para evitar passar duas vezes no construtor
+        for key in ["name", "phone_number", "password", "status", "profile"]:
+            data.pop(key, None)
 
-        if password := data.get("password"):
-           if isinstance(password, bytes) or isinstance(password, str):
-                password_ok = password
-           elif isinstance(password, Password):
-                password_ok = password.value
+        # Converte a lista de empresas para um conjunto (set)
+        if 'empresas' in data and isinstance(data['empresas'], list):
+            data['empresas'] = set(data['empresas'])
 
-        if not password_ok:
-            raise ValueError("Password não encontrada!")
-
-        temp_password = data.get("temp_password", False)
-
-        # Assumindo que NomePessoa, PhoneNumber e Password têm métodos from_dict
         return cls(
-            id=data.get("id"),
-            email=data.get("email", ""),
-            name=NomePessoa.from_dict(data["name"]) if isinstance(data.get("name"), dict) else data["name"],
-            password=Password.from_dict(password_ok),
-            temp_password=temp_password,
-            phone_number=PhoneNumber.from_dict(data["phone_number"]) if isinstance(data["phone_number"], str) else data["phone_number"],
-            profile=profile,
-            empresa_id=data.get("empresa_id"),
-            empresas=empresas_set,
-            photo_url=data.get("photo_url"),
-            user_colors=data.get("user_colors", {}),
+            name=name_obj,
+            phone_number=phone_obj,
+            password=password_obj,
             status=status,
-            created_at=created_at,
-            created_by_id=data.get("created_by_id"),
-            created_by_name=data.get("created_by_name"),
-            updated_at=updated_at,
-            updated_by_id=data.get("updated_by_id"),
-            updated_by_name=data.get("updated_by_name"),
-            activated_at=activated_at,
-            activated_by_id=data.get("activated_by_id"),
-            activated_by_name=data.get("activated_by_name"),
-            inactivated_at=inactivated_at,
-            inactivated_by_id=data.get("inactivated_by_id"),
-            inactivated_by_name=data.get("inactivated_by_name"),
-            deleted_at=deleted_at,
-            deleted_by_id=data.get("deleted_by_id"),
-            deleted_by_name=data.get("deleted_by_name"),
+            profile=profile,
+            **data
         )
