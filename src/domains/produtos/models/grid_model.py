@@ -1,11 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from src.domains.produtos.models.produtos_model import Produto
-
-class FilterType(Enum):
-    ALL = "all"
-    ACTIVE = "active"
-    INACTIVE = "inactive"
+from src.domains.shared.models.filter_type import FilterType
 
 class StockLevel(Enum):
     ALL = "all"
@@ -14,7 +10,7 @@ class StockLevel(Enum):
     REPLACE = "replace"
 
 @dataclass
-class GridState:
+class ProdGridState:
     """Estado do grid de produtos"""
     produtos: list[Produto] | None = None
     inactive_count: int = 0
