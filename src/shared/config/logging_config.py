@@ -2,6 +2,7 @@
 import logging
 from src.shared.logging.s3_logging_handler import setup_estoque_rapido_logging
 
+
 # Inicializa o sistema de logging globalmente quando este módulo é importado.
 # A função setup_estoque_rapido_logging() configura o logger raiz e outros.
 # Módulos subsequentes podem obter loggers usando logging.getLogger(__name__).

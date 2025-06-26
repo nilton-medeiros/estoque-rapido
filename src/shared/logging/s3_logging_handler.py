@@ -43,6 +43,7 @@ class S3BufferedHandler(logging.Handler):
         # Buffer thread-safe para armazenar logs
         self.buffer = deque()
         self.buffer_lock = Lock()
+        self.sending_threads = [] # Para rastrear threads de envio e aguardar sua conclusão
 
         # Estatísticas para monitoramento
         self.stats = {
@@ -126,9 +127,10 @@ class S3BufferedHandler(logging.Handler):
             self.buffer.clear()
 
             # Envia em thread separada para não bloquear
-            from threading import Thread
+            from threading import Thread # Importa aqui para evitar dependência circular se Thread for usado em outras partes
             thread = Thread(target=self._send_to_s3, args=(logs_to_send,))
             thread.daemon = True
+            self.sending_threads.append(thread) # Adiciona à lista antes de iniciar
             thread.start()
 
         except Exception as e:
@@ -232,13 +234,24 @@ class S3BufferedHandler(logging.Handler):
         # Flush final
         self.flush()
 
-        # Log das estatísticas finais
-        print(f"📊 Estatísticas do S3Handler:")
-        print(f"   Logs processados: {self.stats['logs_buffered']}")
-        print(f"   Logs enviados: {self.stats['logs_sent']}")
-        print(f"   Lotes enviados: {self.stats['batches_sent']}")
-        print(f"   Erros: {self.stats['errors']}")
+        # Aguarda todas as threads de envio concluírem
+        for thread in list(self.sending_threads): # Itera sobre uma cópia, pois a lista pode ser modificada
+            if thread.is_alive():
+                try:
+                    thread.join(timeout=5) # Espera até 5 segundos para cada thread
+                except RuntimeError: # A thread pode já ter terminado
+                    pass
+            with self.buffer_lock: # Adquire o lock para remover com segurança da lista compartilhada
+                if thread in self.sending_threads:
+                    self.sending_threads.remove(thread)
 
+        final_logger = logging.getLogger(__name__)
+        # Log das estatísticas finais
+        final_logger.info("📊 Estatísticas do S3Handler:")
+        final_logger.info(f"   Logs processados: {self.stats['logs_buffered']}")
+        final_logger.info(f"   Logs enviados: {self.stats['logs_sent']}")
+        final_logger.info(f"   Lotes enviados: {self.stats['batches_sent']}")
+        final_logger.info(f"   Erros: {self.stats['errors']}")
         super().close()
 
     def get_stats(self):
@@ -262,7 +275,7 @@ class EstoqueRapidoLogConfig:
                  app_name=None):
 
         # Auto-detecção do ambiente
-        self.is_production = os.getenv('RENDER') is not None
+        self.is_production = os.getenv('RENDER', '').lower() == 'true'
 
         # Configurações inteligentes baseadas no ambiente
         if log_level is None:
@@ -351,12 +364,18 @@ class EstoqueRapidoLogConfig:
     def _setup_s3_handler(self, root_logger, formatter, bucket_name, app_name, log_level):
         """Configura handler para S3 com buffer otimizado"""
         try:
+            # Torna o buffer e o intervalo configuráveis via variáveis de ambiente
+            buffer_size = int(os.getenv('AWS_S3_LOG_BUFFER_SIZE', '200'))
+            flush_interval = int(os.getenv('AWS_S3_LOG_FLUSH_INTERVAL', '600')) # 10 minutos
+
             self.s3_handler = S3BufferedHandler(
                 bucket_name=bucket_name,
                 app_name=app_name,
                 s3_key_prefix=f"{app_name}/logs",
-                buffer_size=100,     # Buffer maior para produção
-                flush_interval=300,  # 5 minutos
+                # buffer_size=100,     # Buffer maior para produção
+                # flush_interval=300,  # 5 minutos
+                buffer_size=buffer_size,
+                flush_interval=flush_interval,
                 level=log_level
             )
             self.s3_handler.setFormatter(formatter)
