@@ -21,7 +21,7 @@ class ClientCard:
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Row(
                         controls=[
-                            ft.Text(f"Aniversário: {cliente.birthday}", theme_style=ft.TextThemeStyle.BODY_SMALL),
+                            ft.Text(f"Aniversário: {cliente.get_birthday()}", theme_style=ft.TextThemeStyle.BODY_SMALL),
                             ft.Text(f"{cliente.phone}", theme_style=ft.TextThemeStyle.BODY_SMALL),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

@@ -183,13 +183,7 @@ def show_clients_grid_trash(page: ft.Page):
                 controls=[
                     create_recycle_bin_card(
                         entity=cliente,
-                        top_content=ft.Container(
-                            content=ft.Icon(ft.Icons.PERSON_OUTLINED, size=40),
-                            width=100, height=100,
-                            border_radius=ft.border_radius.all(10),
-                            border=ft.border.all(width=1, color=ft.colors.OUTLINE_VARIANT),
-                            alignment=ft.alignment.center,
-                        ),
+                        top_content=ft.Text(f"ID: {cliente.id}", color=ft.Colors.WHITE70, weight=ft.FontWeight.BOLD),
                         title_text=cliente.name.nome_completo,
                         subtitle_controls=[
                             ft.Text(f"{cliente.email if cliente.email else 'E-mail não informado'}", theme_style=ft.TextThemeStyle.BODY_MEDIUM, size=12),

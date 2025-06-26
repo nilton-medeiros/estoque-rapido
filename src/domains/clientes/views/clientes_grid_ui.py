@@ -132,7 +132,6 @@ class ClienteGridUI:
         cards = []
         for cliente in clientes:
             # Passar o novo método do controller que lida com page.run_task
-            logged_client_id = self.controller.page.app_state.cliente.get('id') # type: ignore [attr-defined]
             card = ClientCard.create(cliente, self.controller.execute_action_async)
             cards.append(card)
 

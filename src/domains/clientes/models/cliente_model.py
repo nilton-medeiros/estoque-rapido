@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date, UTC
+from datetime import datetime, date, time, UTC # Import 'time'
 import re
 import logging
+from babel.dates import format_date
+from babel.core import Locale # Import para formatação de data localizada
 
 from src.domains.shared import Address, NomePessoa, PhoneNumber, RegistrationStatus
+from src.shared.utils.time_zone import format_datetime_to_utc_minus_3
 
 
 logger = logging.getLogger(__name__)
@@ -85,6 +88,14 @@ class Cliente:
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
 
+    def get_birthday(self) -> str | None:
+        """Retorna a data de aniversário formatada, ou None se não houver."""
+        if not self.birthday:
+            return None
+        # Formata o objeto date diretamente usando babel para nomes de meses localizados.
+        # O formato "dd 'de' MMMM" resultará em "19 de Abril" (exemplo).
+        # Usamos 'pt_BR' para português do Brasil.
+        return format_date(self.birthday, format="dd 'de' MMMM", locale=Locale('pt', 'BR'))
 
     def to_dict(self) -> dict:
         """
@@ -133,7 +144,7 @@ class Cliente:
             "is_whatsapp": self.is_whatsapp,
             "cpf": self.cpf,
             "delivery_address": self.delivery_address.__dict__ if self.delivery_address else None,
-            "birthday": self.birthday,
+            "birthday": datetime.combine(self.birthday, time(12, 0, 0), tzinfo=UTC) if self.birthday else None, # Salva ao meio-dia UTC para evitar mudança de dia
             "status": self.status.name,
             "empresa_id": self.empresa_id,
             "created_at": self.created_at,

@@ -445,7 +445,8 @@ class ClienteForm:
             try:
                 # Usa um ano bissexto (2000) para validar e armazenar, garantindo que 29/02 seja aceito.
                 birthday_date = datetime.strptime(
-                    f"{birthday_str}/2000", '%d/%m/%Y')
+                    f"{birthday_str}/2000", '%d/%m/%Y'
+                ).date() # Converte para objeto date para evitar problemas de fuso horário
             except ValueError:
                 birthday_date = None  # Garante que datas inválidas não quebrem a aplicação
 
