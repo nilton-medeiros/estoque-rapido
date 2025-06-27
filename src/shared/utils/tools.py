@@ -51,12 +51,13 @@ def capitalize_first_word_of_sentence(text: str) -> str:
         >>> capitalize_first_word_of_sentence("primeira")
         'Primeira'
     """
-    if not text.strip(): # Retorna original se for vazia ou só espaços
+    if not text.strip():  # Retorna original se for vazia ou só espaços
         return text
     parts = text.split(' ', 1)
     parts[0] = parts[0].capitalize()
     return ' '.join(parts)
 
 
-def capitalize_words(text: str) -> str:
-    return ' '.join(word.capitalize() for word in text.split())
+# def capitalize_words(text: str) -> str:
+    """Função desnecessária, utilizar o método title() do str Python (Ex.: 'estoque rápido'.title() == 'Estoque Rápido')."""
+#   return ' '.join(word.capitalize() for word in text.split())
