@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from src.domains.produtos.models.produtos_subclass import ProdutoStatus
+from src.domains.produtos.models.produtos_subclass import ProductStatus
 
 
 @dataclass
@@ -11,7 +11,7 @@ class ProdutoCategorias:
     name: str
     name_lowercase: str
     empresa_id: str
-    status: ProdutoStatus = ProdutoStatus.ACTIVE
+    status: ProductStatus = ProductStatus.ACTIVE
     id: str | None = None
     description: str | None = None
     image_url: str | None = None
@@ -85,13 +85,13 @@ class ProdutoCategorias:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ProdutoCategorias":
-        status = ProdutoStatus.ACTIVE
+        status = ProductStatus.ACTIVE
 
         if status_data := data.get("status"):
-            if isinstance(status_data, ProdutoStatus):
+            if isinstance(status_data, ProductStatus):
                 status = status_data
             else:
-                status = ProdutoStatus[status_data]
+                status = ProductStatus[status_data]
 
         return cls(
             id=data.get("id"),

@@ -1,7 +1,7 @@
 import logging
 
 from typing import Any
-from src.domains.produtos.models import Produto, ProdutoStatus
+from src.domains.produtos.models import Produto, ProductStatus
 from src.domains.produtos.repositories import FirebaseProdutosRepository
 from src.domains.produtos.services import ProdutosServices
 
@@ -40,7 +40,7 @@ def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
     return response
 
 
-def handle_update_status(produto: Produto, usuario: dict, status: ProdutoStatus) -> dict[str, Any]:
+def handle_update_status(produto: Produto, usuario: dict, status: ProductStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletado de um produto."""
     response = {}
 
@@ -55,8 +55,8 @@ def handle_update_status(produto: Produto, usuario: dict, status: ProdutoStatus)
             raise ValueError("Usuário não é do tipo dict")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
-        if not isinstance(status, ProdutoStatus):
-            raise ValueError("Status não é do tipo ProdutoStatus")
+        if not isinstance(status, ProductStatus):
+            raise ValueError("Status não é do tipo ProductStatus")
 
         repository = FirebaseProdutosRepository(company_id=produto.empresa_id)
         produtos_services = ProdutosServices(repository)

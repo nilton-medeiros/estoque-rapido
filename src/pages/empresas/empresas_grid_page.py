@@ -4,7 +4,7 @@ import flet as ft
 # import asyncio  # Importar asyncio se precisar simular delays ou usar recursos async
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
-from src.domains.empresas.models.empresa_subclass import CompanyStatus
+from src.domains.empresas.models.empresas_subclass import CompanyStatus
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.shared.utils import MessageType, message_snackbar, show_banner
 # Rota: /home/empresas/grid

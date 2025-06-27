@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime, UTC
 from typing import Any
 
-# Supondo que ProdutoStatus esteja no mesmo local ou acessível
-from src.domains.produtos.models.produtos_subclass import ProdutoStatus
+# Supondo que ProductStatus esteja no mesmo local ou acessível
+from src.domains.produtos.models.produtos_subclass import ProductStatus
 from src.shared.utils import Money
 
 
@@ -40,7 +40,7 @@ class Produto:
     maximum_stock_level: int = 0
 
     # --- Campos de Status e Auditoria ---
-    status: ProdutoStatus = ProdutoStatus.ACTIVE
+    status: ProductStatus = ProductStatus.ACTIVE
     # ID do documento no Firestore (gerado automaticamente)
     id: str | None = None
 
@@ -113,7 +113,7 @@ class Produto:
             self.maximum_stock_level = 0
 
         # Se o produto está sendo criado como ACTIVE e não tem activated_at, define-o
-        if self.status == ProdutoStatus.ACTIVE and self.created_at and not self.activated_at:
+        if self.status == ProductStatus.ACTIVE and self.created_at and not self.activated_at:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
@@ -210,17 +210,17 @@ class Produto:
     def from_dict(cls, data: dict[str, Any], doc_id: str | None = None) -> "Produto":
         """Cria uma instância de Produto a partir de um dicionário (ex: do Firestore)."""
         status_data = data.get("status")
-        status = ProdutoStatus.ACTIVE  # Padrão
+        status = ProductStatus.ACTIVE  # Padrão
 
         if status_data:
-            if isinstance(status_data, ProdutoStatus):
+            if isinstance(status_data, ProductStatus):
                 status = status_data
             else:
                 try:
-                    status = ProdutoStatus[status_data]
+                    status = ProductStatus[status_data]
                 except KeyError:
                     # Lidar com status inválido, talvez logar um aviso ou usar um padrão
-                    status = ProdutoStatus.INACTIVE
+                    status = ProductStatus.INACTIVE
 
         # Database retorna Timestamps, que precisam ser convertidos para datetime
         created_at = data.get("created_at")

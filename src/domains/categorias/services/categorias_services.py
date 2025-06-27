@@ -1,5 +1,5 @@
 from typing import Any
-from src.domains.produtos.models import ProdutoStatus
+from src.domains.produtos.models import ProductStatus
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import CategoriasRepository
 from src.domains.shared import NomePessoa
@@ -45,25 +45,25 @@ class CategoriasServices:
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(categoria)
 
-    def update_status(self, categoria: ProdutoCategorias, usuario: dict, status: ProdutoStatus) -> bool:
+    def update_status(self, categoria: ProdutoCategorias, usuario: dict, status: ProductStatus) -> bool:
         """Atualiza o status de uma categoria existente"""
         user_name: NomePessoa = usuario["name"]
         categoria.status = status
 
         match status:
-            case ProdutoStatus.ACTIVE:
+            case ProductStatus.ACTIVE:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.activated_at = None
                 categoria.activated_by_id = usuario["id"]
                 # Desnormalização p/ otimização de índices no db
                 categoria.activated_by_name = user_name.nome_completo
-            case ProdutoStatus.INACTIVE:
+            case ProductStatus.INACTIVE:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.inactivated_at = None
                 categoria.inactivated_by_id = usuario["id"]
                 # Desnormalização p/ otimização de índices no db
                 categoria.inactivated_by_name = user_name.nome_completo
-            case ProdutoStatus.DELETED:
+            case ProductStatus.DELETED:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.deleted_at = None
                 categoria.deleted_by_id = usuario["id"]

@@ -3,7 +3,7 @@ from typing import Optional
 
 # Importação direta para não ocorrer ciclo
 from src.domains.empresas.models.cnpj import CNPJ
-from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresas_model import Empresa
 
 
 class EmpresasRepository(ABC):

@@ -16,7 +16,7 @@ import src.shared.utils.tools as tools
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas import EmpresaSize
-from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresas_model import Empresa
 
 from src.pages.partials import build_input_field
 from src.shared.utils import validate_email, get_uuid, MessageType, message_snackbar
@@ -660,7 +660,7 @@ class EmpresaView:
         """
         from src.domains.empresas import CodigoRegimeTributario, Environment, FiscalData
         from src.domains.empresas.models.certificate_a1 import CertificateA1
-        from src.domains.empresas.models.empresa_model import Empresa
+        from src.domains.empresas.models.empresas_model import Empresa
         from src.domains.shared import Address, Password, PhoneNumber
         from src.services import AsaasPaymentGateway
 

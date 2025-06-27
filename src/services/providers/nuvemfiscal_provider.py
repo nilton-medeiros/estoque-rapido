@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, UTC
 import src.domains.app_config.controllers.app_config_controllers as app_controllers
 from src.domains.empresas import Environment
 from src.domains.empresas.models.certificate_a1 import CertificateA1
-from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresas_model import Empresa
 from src.domains.shared.models.password import Password
 from src.services.contracts.dfe_provider import DFeProvider
 

@@ -10,7 +10,7 @@ from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
 from src.domains.shared import Password, PhoneNumber, Address
 from src.services import AsaasPaymentGateway
-from src.domains.empresas.models.empresa_subclass import CompanyStatus, Environment, EmpresaSize, CodigoRegimeTributario
+from src.domains.empresas.models.empresas_subclass import CompanyStatus, Environment, EmpresaSize, CodigoRegimeTributario
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.cnpj import CNPJ
 

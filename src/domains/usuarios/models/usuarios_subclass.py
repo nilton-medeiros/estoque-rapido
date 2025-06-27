@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class UsuarioProfile(Enum):
+class UserProfile(Enum):
     ADMIN = "Admin"
     BILLING = "Cobrança"
     ACCOUNTING = "Contabil"

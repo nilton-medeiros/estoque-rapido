@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from src.domains.shared.models.filter_type import FilterType
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 
 @dataclass

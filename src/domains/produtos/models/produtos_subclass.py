@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ProdutoStatus(Enum):
+class ProductStatus(Enum):
     ACTIVE = "Ativo"
     INACTIVE = "Descontinuado"
     DELETED = "Lixeira"

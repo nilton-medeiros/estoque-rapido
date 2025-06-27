@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.models.password import Password
-from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
+from src.domains.usuarios.models.usuarios_subclass import UserProfile
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.config import get_app_colors
 
@@ -28,7 +28,7 @@ class Usuario:
         empresas (Set[str]): Conjunto de IDs de empresas associadas ao usuário.
         photo_url (str | None): URL da foto de perfil do usuário.
         user_colors (dict | None): Cor preferencial do usuário.
-        profile (UsuarioProfile): Perfil do usuário.
+        profile (UserProfile): Perfil do usuário.
         status (RegistrationStatus = RegistrationStatus.ACTIVE): Status do usuário.
         # --- Campos de Auditoria
         created_at (datetime | None): Data e hora de criação.
@@ -53,7 +53,7 @@ class Usuario:
         >>> from src.domain.models.phone_number import PhoneNumber
         >>> name = NomePessoa("João", "Silva")
         >>> phone = PhoneNumber("+5511999999999")
-        >>> user = Usuario(email="joao.silva@example.com", name=name, phone_number=phone, profile=UsuarioProfile.ADMIN)
+        >>> user = Usuario(email="joao.silva@example.com", name=name, phone_number=phone, profile=UserProfile.ADMIN)
         >>> print(user)
     """
 
@@ -67,7 +67,7 @@ class Usuario:
     empresas: Set[str] = field(default_factory=set)
     photo_url: str | None = None
     user_colors: dict | None = field(default_factory=dict)
-    profile: UsuarioProfile = UsuarioProfile.UNDEFINED
+    profile: UserProfile = UserProfile.UNDEFINED
 
     # --- Campos de Status e Auditoria
     status: RegistrationStatus = RegistrationStatus.ACTIVE
@@ -269,18 +269,18 @@ class Usuario:
                     status = RegistrationStatus.INACTIVE
 
         profile_data = data.get("profile")
-        profile = UsuarioProfile.UNDEFINED  # Padrão
+        profile = UserProfile.UNDEFINED  # Padrão
 
-        # Converte string para Enum UsuarioProfile
+        # Converte string para Enum UserProfile
         if profile_data:
-            if isinstance(profile_data, UsuarioProfile):
+            if isinstance(profile_data, UserProfile):
                 profile = profile_data
             else:
                 try:
-                    profile = UsuarioProfile[profile_data]
+                    profile = UserProfile[profile_data]
                 except KeyError:
                     # Lidar com profile inválido, talvez logar um aviso ou usar um padrão
-                    profile = UsuarioProfile.UNDEFINED
+                    profile = UserProfile.UNDEFINED
 
         # Converte Timestamps do Firestore para datetime
         for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at']:

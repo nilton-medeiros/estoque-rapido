@@ -1,5 +1,5 @@
 import flet as ft
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.usuarios.controllers.grid_controller import UsuarioGridController
 from src.domains.usuarios.views.usuarios_grid_ui import UsuarioGridUI
 from src.shared.components.dialogs.change_password_dialog import ChangePasswordDialog

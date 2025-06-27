@@ -1,7 +1,7 @@
 
 from src.domains.empresas.models.cnpj import CNPJ
-from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import CompanyStatus
+from src.domains.empresas.models.empresas_model import Empresa
+from src.domains.empresas.models.empresas_subclass import CompanyStatus
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.domains.shared.models.nome_pessoa import NomePessoa
 from src.shared.utils import get_uuid

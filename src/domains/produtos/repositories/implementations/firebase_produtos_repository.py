@@ -4,7 +4,7 @@ from typing import Any, Tuple, List # Usar List explicitamente para type hints
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.produtos.models import Produto, ProdutoStatus
+from src.domains.produtos.models import Produto, ProductStatus
 from src.domains.produtos.repositories import ProdutosRepository
 from src.shared.utils import deepl_translator
 from storage.data import get_firebase_app
@@ -50,13 +50,13 @@ class FirebaseProdutosRepository(ProdutosRepository):
             data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-            if data_to_save.get("status") == ProdutoStatus.ACTIVE.name and not data_to_save.get("activated_at"):
+            if data_to_save.get("status") == ProductStatus.ACTIVE.name and not data_to_save.get("activated_at"):
                 data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == ProdutoStatus.DELETED.name and not data_to_save.get("deleted_at"):
+            if data_to_save.get("status") == ProductStatus.DELETED.name and not data_to_save.get("deleted_at"):
                 data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            if data_to_save.get("status") == ProdutoStatus.INACTIVE.name and not data_to_save.get("inactivated_at"):
+            if data_to_save.get("status") == ProductStatus.INACTIVE.name and not data_to_save.get("inactivated_at"):
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             doc_ref = self.products_collection_ref.document(produto.id)
@@ -199,15 +199,15 @@ class FirebaseProdutosRepository(ProdutosRepository):
 
                     # Modificação 4: Corrigir comparação de status
                     # Conta todos os produtos deletados, independentemente do filtro principal
-                    if product_obj.status == ProdutoStatus.DELETED:
+                    if product_obj.status == ProductStatus.DELETED:
                         quantify_deleted += 1
 
                     # Adiciona o produto à lista de resultados com base no filtro 'status_deleted'
                     if status_deleted: # Se o filtro é para mostrar deletados
-                        if product_obj.status == ProdutoStatus.DELETED:
+                        if product_obj.status == ProductStatus.DELETED:
                             produtos_result.append(product_obj)
                     else: # not status_deleted (mostrar não deletados)
-                        if product_obj.status != ProdutoStatus.DELETED:
+                        if product_obj.status != ProductStatus.DELETED:
                             produtos_result.append(product_obj)
 
             # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
@@ -286,7 +286,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
         low_stock_count = 0
         try:
             # Filtra por produtos com status "ACTIVE" no nível do banco de dados
-            query = self.products_collection_ref.where("status", "==", ProdutoStatus.ACTIVE.name)
+            query = self.products_collection_ref.where("status", "==", ProductStatus.ACTIVE.name)
             documents = query.stream()  # Usa stream() para iterar sobre os resultados
 
             for doc in documents:

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from src.domains.shared import NomePessoa, RegistrationStatus, Password
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared.utils import get_uuid
 

@@ -6,7 +6,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
 
 from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.domains.usuarios.repositories.contracts.usuarios_repository import UsuariosRepository
 from src.shared.utils import deepl_translator

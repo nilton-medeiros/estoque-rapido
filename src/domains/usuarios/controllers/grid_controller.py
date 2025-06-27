@@ -6,7 +6,7 @@ import asyncio
 import flet as ft
 from src.domains.shared.models.filter_type import FilterType
 from src.domains.usuarios.models.grid_model import UserGridState
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.usuarios.controllers import usuarios_controllers as user_controllers
 
 if TYPE_CHECKING:

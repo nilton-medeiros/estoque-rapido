@@ -9,9 +9,9 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 
-from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import CodigoRegimeTributario, EmpresaSize, Environment
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.empresas.models.empresas_model import Empresa
+from src.domains.empresas.models.empresas_subclass import CodigoRegimeTributario, EmpresaSize, Environment
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.pages.partials.build_input_responsive import build_input_field
 from src.shared.utils import MessageType, message_snackbar
 

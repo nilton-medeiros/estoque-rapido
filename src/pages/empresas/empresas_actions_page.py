@@ -4,8 +4,8 @@ import asyncio
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
-from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import CompanyStatus
+from src.domains.empresas.models.empresas_model import Empresa
+from src.domains.empresas.models.empresas_subclass import CompanyStatus
 
 from src.shared.utils import MessageType, message_snackbar
 

@@ -2,7 +2,7 @@
 # src/domains/produtos/components/product_card.py
 # ==========================================
 import flet as ft
-from src.domains.produtos.models import ProdutoStatus
+from src.domains.produtos.models import ProductStatus
 from src.domains.produtos.models.produtos_model import Produto
 
 class ProductCard:
@@ -99,7 +99,7 @@ class ProductCard:
             ft.Text(
                 value=produto.status.value,
                 theme_style=ft.TextThemeStyle.BODY_SMALL,
-                color=ft.Colors.GREEN if produto.status == ProdutoStatus.ACTIVE else ft.Colors.RED,
+                color=ft.Colors.GREEN if produto.status == ProductStatus.ACTIVE else ft.Colors.RED,
             ),
             ft.Text(
                 value=f"Estoque min: {produto.minimum_stock_level}, max: {produto.maximum_stock_level}, atual: {produto.quantity_on_hand}",

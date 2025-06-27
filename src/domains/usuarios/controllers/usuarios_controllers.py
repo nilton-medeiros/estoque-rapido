@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 
 from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.domains.usuarios.services.usuarios_services import UsuariosServices

@@ -3,7 +3,7 @@
 # ==========================================
 import flet as ft
 from src.domains.shared import RegistrationStatus
-from src.domains.usuarios.models.usuario_model import Usuario
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 class UserCard:
     """Componente reutilizável para card de usuario"""

@@ -10,7 +10,7 @@ import flet as ft
 
 from src.domains.empresas.controllers.empresas_controllers import handle_get_empresas
 from src.domains.shared import NomePessoa, RegistrationStatus
-from src.domains.usuarios.models.usuario_subclass import UsuarioProfile
+from src.domains.usuarios.models.usuarios_subclass import UserProfile
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
@@ -127,7 +127,7 @@ class UsuarioForm:
             expand_loose=True,
             options=[
                 ft.dropdown.Option(key=profile.name, text=profile.value)
-                for profile in UsuarioProfile
+                for profile in UserProfile
             ],
             enable_filter=True,
             hint_text="Selecione o perfil do usuário",
@@ -543,7 +543,7 @@ class UsuarioForm:
         self.data['name'] = user_name
         self.data["email"] = self.email.value
         self.data["phone_number"] = self.phone_number.value
-        self.data["profile"] = UsuarioProfile[self.profile.value] if self.profile.value else UsuarioProfile.ADMIN
+        self.data["profile"] = UserProfile[self.profile.value] if self.profile.value else UserProfile.ADMIN
         self.data["empresas"] = self.get_selected_empresas_ids()
         self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
         self.data['photo_url'] = self.photo_url

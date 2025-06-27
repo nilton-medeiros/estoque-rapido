@@ -2,8 +2,8 @@ import logging
 from typing import Any
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importar diretamente para evitar cíclo em src/domains/empresa/__init__.py
-from src.domains.empresas.models.empresa_model import Empresa
-from src.domains.empresas.models.empresa_subclass import CompanyStatus
+from src.domains.empresas.models.empresas_model import Empresa
+from src.domains.empresas.models.empresas_subclass import CompanyStatus
 from src.domains.empresas.repositories.implementations.firebase_empresas_repository import FirebaseEmpresasRepository
 from src.domains.empresas.services.empresas_services import EmpresasServices
 
@@ -284,7 +284,7 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Compa
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=ACTIVE)
+        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=CompanyStatus.ACTIVE)
 
         if is_updated:
             response["status"] = "success"

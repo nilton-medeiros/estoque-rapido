@@ -2,7 +2,7 @@ import logging
 
 import flet as ft
 
-from src.domains.empresas.models.empresa_subclass import CompanyStatus
+from src.domains.empresas.models.empresas_subclass import CompanyStatus
 from src.domains.shared import NomePessoa, Password
 from src.pages.partials import get_responsive_sizes, build_input_field
 
@@ -11,7 +11,7 @@ from src.shared.utils import MessageType, message_snackbar, validate_email
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 
-from src.domains.empresas.models.empresa_model import Empresa
+from src.domains.empresas.models.empresas_model import Empresa
 
 logger = logging.getLogger(__name__)
 
