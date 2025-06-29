@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class FirebasePedidosRepository(PedidosRepository):
+    """Repositorio de pedidos do Firestore."""
     def __init__(self):
         get_firebase_app()  # Garante que o aplicativo Firebase esteja inicializado
         self.db = firestore.client()

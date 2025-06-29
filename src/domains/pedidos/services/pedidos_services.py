@@ -19,7 +19,8 @@ class PedidosServices:
             pedido_id (str): ID do pedido criado
         """
         if pedido.order_number:
-            raise ValueError("Este pedido já tem um número de pedido atribuído.")
+            raise ValueError(
+                "Este pedido já tem um número de pedido atribuído.")
 
         # Gera por padrão um uuid raw (sem os hífens) com prefixo 'ped_'
         pedido.id = 'ped_' + get_uuid()
@@ -50,7 +51,6 @@ class PedidosServices:
         pedido.updated_by_name = usuario_logado["name"].nome_completo
 
         return self.repository.save_pedido(pedido)
-
 
     def get_pedido_by_id(self, pedido_id: str) -> Pedido | None:
         """
