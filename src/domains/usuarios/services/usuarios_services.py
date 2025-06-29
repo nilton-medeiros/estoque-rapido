@@ -43,7 +43,6 @@ class UsuariosServices:
         :param usuario: Instância do Usuário a salvar
         :return: ID do documento do Usuário salvo
         """
-        # Verifica se já existe um usuário com este email
         if not usuario.email:
             raise ValueError("Email é necessário para criar usuário")
         if not usuario.password:
