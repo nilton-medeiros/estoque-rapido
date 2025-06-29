@@ -150,12 +150,12 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        produtos_list, quantify = produtos_services.get_all(status_deleted=status_deleted)
+        produtos_list, quantity = produtos_services.get_all(status_deleted=status_deleted)
 
         response["status"] = "success"
         response["data"] = {
             "produtos": produtos_list if produtos_list else [],
-            "deleted": quantify if quantify else 0,
+            "deleted": quantity if quantity else 0,
         }
     except ValueError as e:
         response["status"] = "error"
@@ -182,11 +182,11 @@ def handle_get_low_stock_count(empresa_id: str) -> dict[str, Any]:
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
 
-        quantify = produtos_services.get_low_stock_count()
+        quantity = produtos_services.get_low_stock_count()
 
         response["status"] = "success"
         response["data"] = {
-            "products_low_stock": quantify if quantify else 0,
+            "products_low_stock": quantity if quantity else 0,
         }
     except ValueError as e:
         response["status"] = "error"
