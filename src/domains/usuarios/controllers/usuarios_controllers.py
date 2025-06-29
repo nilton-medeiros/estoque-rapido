@@ -405,12 +405,12 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
-        usuarios_list, quantify = usuarios_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
+        usuarios_list, quantity = usuarios_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
 
         response["status"] = "success"
         response["data"] = {
             "usuarios": usuarios_list if usuarios_list else [],
-            "deleted": quantify if quantify else 0,
+            "deleted": quantity if quantity else 0,
         }
     except ValueError as e:
         response["status"] = "error"
