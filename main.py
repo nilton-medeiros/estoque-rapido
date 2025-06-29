@@ -4,12 +4,13 @@ import os
 
 from dotenv import load_dotenv
 
-from src.pages import show_signup_page, show_landing_page, show_login_page
+from src.pages.external_pages import show_signup_page, show_landing_page, show_login_page
 from src.pages.clientes.clientes_form_page import show_client_form
 from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
+from src.pages.pedidos.pedidos_grid_page import show_orders_grid
 from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
 from src.pages.categorias import show_categories_grid, show_categories_grid_trash, show_category_form
 from src.pages.usuarios.usuarios_form_page import show_user_form
@@ -151,11 +152,18 @@ def main(page: ft.Page):
 
     # Rotas
     def route_change(e: ft.RouteChangeEvent):
+        # Centraliza a verificação de autenticação para rotas protegidas
+        if e.route.startswith('/home'):
+            page.on_resized = None
+            if not page.app_state.usuario.get('id'):  # type: ignore [attr-defined]
+                page.go('/login')
+                return  # Interrompe o processamento para redirecionar
+
         page.views.clear()
         pg_view = None
 
         match e.route:
-            case '/':    # Raiz: Landing Page
+            case '/':  # Raiz: Landing Page
                 pg_view = ft.View(
                     route='/',
                     controls=[show_landing_page(page)],
@@ -172,187 +180,111 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             case '/logout':
-                page.app_state.clear_states()  # type: ignore  [attr-defined]
+                page.app_state.clear_states()  # type: ignore [attr-defined]
                 page.go('/')  # Redireciona para a página inicial
             case '/home':
                 # Acesso a página /home somente usuários logados
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    home_container = show_home_page(page)
-                    pg_view = ft.View(
-                        route='/home',
-                        appbar=home_container.data,
-                        controls=[home_container],
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                home_container = show_home_page(page)
+                pg_view = ft.View(
+                    route='/home',
+                    appbar=home_container.data,
+                    controls=[home_container],
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/empresas/grid':
-                # Verifica se usuário está logado
-                # type: ignore  [attr-defined] [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_companies_grid(page)
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                pg_view = show_companies_grid(page)
             case '/home/empresas/grid/lixeira':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_companies_grid_trash(page)
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                pg_view = show_companies_grid_trash(page)
             case '/home/empresas/form/principal':
-                # Verifica se usuário está logado
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_company_main_form(page)
-                    pg_view = ft.View(
-                        route='/home/empresas/form/principal',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                form = show_company_main_form(page)
+                pg_view = ft.View(
+                    route='/home/empresas/form/principal',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/empresas/form/dados-fiscais':
-                # Verifica se usuário está logado
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_company_tax_form(page)
-                    pg_view = ft.View(
-                        route='/home/empresas/form/dados-fiscais',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')
+                form = show_company_tax_form(page)
+                pg_view = ft.View(
+                    route='/home/empresas/form/dados-fiscais',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/usuarios/grid':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_users_grid(page)
-                else:
-                    page.go('/login')
+                pg_view = show_users_grid(page)
             case '/home/usuarios/grid/lixeira':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_users_grid_trash(page)
-                else:
-                    page.go('/login')
+                pg_view = show_users_grid_trash(page)
             case '/home/usuarios/form':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_user_form(page)
-                    pg_view = ft.View(
-                        route='home/usuarios/form',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                form = show_user_form(page)
+                pg_view = ft.View(
+                    route='home/usuarios/form',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/clientes/grid':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_clients_grid(page)
-                else:
-                    page.go('/login')
+                pg_view = show_clients_grid(page)
             case '/home/clientes/grid/lixeira':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_clients_grid_trash(page)
-                else:
-                    page.go('/login')
+                pg_view = show_clients_grid_trash(page)
             case '/home/clientes/form':
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_client_form(page)
-                    pg_view = ft.View(
-                        route='home/clientes/form',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                form = show_client_form(page)
+                pg_view = ft.View(
+                    route='home/clientes/form',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/produtos/grid':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_products_grid(page)
-                else:
-                    page.go('/login')
+                pg_view = show_products_grid(page)
             case '/home/produtos/grid/lixeira':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_products_grid_trash(page)
-                else:
-                    page.go('/login')
+                pg_view = show_products_grid_trash(page)
             case '/home/produtos/form':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_product_form(page)
-                    pg_view = ft.View(
-                        route='home/produtos/form',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                form = show_product_form(page)
+                pg_view = ft.View(
+                    route='home/produtos/form',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             case '/home/produtos/categorias/grid':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_categories_grid(page)
-                else:
-                    page.go('/login')
+                pg_view = show_categories_grid(page)
             case '/home/produtos/categorias/grid/lixeira':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    pg_view = show_categories_grid_trash(page)
-                else:
-                    page.go('/login')
+                pg_view = show_categories_grid_trash(page)
             case '/home/produtos/categorias/form':
-                # type: ignore  [attr-defined]
-                if page.app_state.usuario.get('id'): # type: ignore  [attr-defined]
-                    page.on_resized = None
-                    form = show_category_form(page)
-                    pg_view = ft.View(
-                        route='home/produtos/categorias/form',
-                        appbar=form.data,
-                        controls=[form],
-                        scroll=ft.ScrollMode.AUTO,
-                        bgcolor=ft.Colors.BLACK,
-                        vertical_alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    )
-                else:
-                    page.go('/login')  # Redireciona se não estiver autenticado
+                form = show_category_form(page)
+                pg_view = ft.View(
+                    route='home/produtos/categorias/form',
+                    appbar=form.data,
+                    controls=[form],
+                    scroll=ft.ScrollMode.AUTO,
+                    bgcolor=ft.Colors.BLACK,
+                    vertical_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+            case '/home/pedidos/grid':
+                pg_view = show_orders_grid(page)
+            case '/home/pedidos/grid/lixeira':
+                pass  # implementado
+            case '/home/pedidos/form':
+                pass  # implementado
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
@@ -361,7 +293,7 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
-            case _:
+            case _:  # Rota não encontrada (page 404)
                 # Opcional: tratamento para rotas não encontradas
                 pg_view = ft.View(
                     route="/404",
