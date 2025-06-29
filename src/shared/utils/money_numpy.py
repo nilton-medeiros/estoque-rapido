@@ -76,6 +76,7 @@ class Money:
         # "mint" vem da ideia de "cunhar" moedas
         if isinstance(amount, str):
             amount = Decimal(amount)
+        amount = amount.quantize(Decimal("0.01"))  # Garante precisão de 2 casas decimais
         return cls(int(amount * 100), currency_symbol)
 
     def __str__(self):
