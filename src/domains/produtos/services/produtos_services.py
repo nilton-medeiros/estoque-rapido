@@ -46,7 +46,7 @@ class ProdutosServices:
 
 
     def update_status(self, produto: Produto, usuario: dict, status: ProductStatus) -> bool:
-        """Atualiza o status de uma produto existente"""
+        """Atualiza o status de um produto existente"""
         user_name: NomePessoa = usuario["name"]
         produto.status = status
 
