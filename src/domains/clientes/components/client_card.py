@@ -3,7 +3,7 @@
 # ==========================================
 import flet as ft
 from src.domains.shared import RegistrationStatus
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 
 class ClientCard:
     """Componente reutilizável para card de cliente"""

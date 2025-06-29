@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 
 
 class ClientesRepository(ABC):

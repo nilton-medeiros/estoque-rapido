@@ -1,6 +1,6 @@
 import logging
 
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.clientes.repositories.implementations.firebase_clientes_repository import FirebaseClientesRepository
 from src.domains.clientes.services.clientes_services import ClientesServices
 from src.domains.shared.models.registration_status import RegistrationStatus

@@ -1,4 +1,4 @@
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.clientes.repositories.contracts.clientes_repository import ClientesRepository
 from src.domains.shared.models.nome_pessoa import NomePessoa
 from src.domains.shared.models.registration_status import RegistrationStatus

@@ -6,7 +6,7 @@ import asyncio
 import flet as ft
 from src.domains.shared.models.filter_type import FilterType
 from src.domains.clientes.models.grid_model import ClieGridState
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.clientes.controllers import clientes_controllers as client_controllers
 
 if TYPE_CHECKING:

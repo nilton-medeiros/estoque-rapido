@@ -4,7 +4,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
 from src.domains.shared import RegistrationStatus
 
-from src.domains.clientes.models.cliente_model import Cliente
+from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.clientes.repositories.contracts.clientes_repository import ClientesRepository
 from src.shared.utils.deep_translator import deepl_translator
 from storage.data import get_firebase_app
