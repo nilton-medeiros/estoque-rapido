@@ -12,20 +12,21 @@ def show_clients_grid(page: ft.Page):
 
     async def handle_action(action: str, cliente: Cliente | None):
         """Handler unificado para todas as ações"""
+        if not cliente and action != "INSERT":
+            return 
+
         match action:
             case "INSERT":
                 page.app_state.clear_form_data() # type: ignore [attr-defined]
                 page.go('/home/clientes/form')
             case "EDIT":
-                if cliente:
-                    page.app_state.set_form_data(cliente.to_dict()) # type: ignore [attr-defined]
-                    page.go('/home/clientes/form')
+                page.app_state.set_form_data(cliente.to_dict()) # type: ignore [attr-defined]
+                page.go('/home/clientes/form')
             case "SOFT_DELETE":
-                if cliente:
-                    from src.pages.clientes import clientes_actions_page as cli_actions
-                    is_deleted = await cli_actions.send_to_trash(page=page, cliente=cliente)
-                    if is_deleted:
-                        await controller.load_clientes()
+                from src.pages.clientes import clientes_actions_page as cli_actions
+                is_deleted = await cli_actions.send_to_trash(page=page, cliente=cliente)
+                if is_deleted:
+                    await controller.load_clientes()
 
     # Configuração da página
     page.theme_mode = ft.ThemeMode.DARK
@@ -42,7 +43,7 @@ def show_clients_grid(page: ft.Page):
         route="/home/clientes/grid",
         controls=[ui.loading_container, ui.content_area],
         appbar=ui.appbar,
-        floating_action_button=ui.fab_buttons, # type: ignore [attr-defined] floating_action_button type FloatingActionButton | None aceita sim um ft.Column()
+        floating_action_button=ui.fab_buttons, # type: ignore [attr-defined] floating_action_button type FloatingActionButton | None, aceita sim um ft.Column()
         vertical_alignment=ft.MainAxisAlignment.START,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         padding=ft.padding.all(10)
