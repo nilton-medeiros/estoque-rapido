@@ -10,6 +10,8 @@ from src.domains.clientes.components.filter_components import FilterComponents
 
 if TYPE_CHECKING:
     from src.domains.clientes.controllers.grid_controller import ClienteGridController
+
+
 class ClienteGridUI:
     """Componente UI principal do grid de clientes"""
 
@@ -43,8 +45,10 @@ class ClienteGridUI:
 
     def _create_appbar(self) -> ft.AppBar:
         """Cria a AppBar com filtros"""
-        self.filter_radio = FilterComponents.create_radio_filter(self._on_radio_changed)
-        self.search_field = FilterComponents.create_search_field(self._on_search_clicked)
+        self.filter_radio = FilterComponents.create_radio_filter(
+            self._on_radio_changed)
+        self.search_field = FilterComponents.create_search_field(
+            self._on_search_clicked)
 
         return ft.AppBar(
             leading=self._create_back_button(),
@@ -52,8 +56,10 @@ class ClienteGridUI:
             bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
             adaptive=True,
             actions=[
-                ft.Container(content=self.filter_radio, margin=ft.margin.only(left=10, right=10)),
-                ft.Container(content=self.search_field, margin=ft.margin.only(left=10, right=10)),
+                ft.Container(content=self.filter_radio,
+                             margin=ft.margin.only(left=10, right=10)),
+                ft.Container(content=self.search_field,
+                             margin=ft.margin.only(left=10, right=10)),
             ],
         )
 
@@ -83,7 +89,8 @@ class ClienteGridUI:
                 fit=ft.ImageFit.CONTAIN,
                 error_content=ft.Text("Erro"),
             ),
-            on_click=lambda _: self.controller.page.go("/home/clientes/grid/lixeira"),
+            on_click=lambda _: self.controller.page.go(
+                "/home/clientes/grid/lixeira"),
             tooltip="Clientes inativos: 0",
             bgcolor=ft.Colors.TRANSPARENT,
         )
@@ -118,7 +125,7 @@ class ClienteGridUI:
     def _create_empty_content(self) -> ft.Container:
         return ft.Container(
             content=ft.Image(
-                src="images/empty_folder.png",
+                src=f"images/steel_cabinets_documents_empty.png",
                 error_content=ft.Text("Nenhum cliente cadastrado"),
                 width=300, height=300,
                 fit=ft.ImageFit.CONTAIN,
@@ -132,7 +139,8 @@ class ClienteGridUI:
         cards = []
         for cliente in clientes:
             # Passar o novo método do controller que lida com page.run_task
-            card = ClientCard.create(cliente, self.controller.execute_action_async)
+            card = ClientCard.create(
+                cliente, self.controller.execute_action_async)
             cards.append(card)
 
         return ft.ResponsiveRow(

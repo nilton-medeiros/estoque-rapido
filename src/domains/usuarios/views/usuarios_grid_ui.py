@@ -102,7 +102,7 @@ class UsuarioGridUI:
 
     def render_grid(self, usuarios: list[Usuario]):
         """Renderiza o grid com os usuarios filtrados"""
-        self.content_area.controls.clear()
+        self.content_area.controls.clear()  
 
         if not usuarios:
             self.content_area.controls.append(self._create_empty_content())
@@ -118,7 +118,8 @@ class UsuarioGridUI:
     def _create_empty_content(self) -> ft.Container:
         return ft.Container(
             content=ft.Image(
-                src="images/empty_folder.png",
+                # src="images/empty_folder.png",
+                src=f"images/steel_cabinets_documents_empty.png",
                 error_content=ft.Text("Nenhum usuario cadastrado"),
                 width=300, height=300,
                 fit=ft.ImageFit.CONTAIN,
