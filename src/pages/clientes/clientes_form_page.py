@@ -626,7 +626,6 @@ def show_client_form(page: ft.Page):
                 return
 
             clientes_view.clear_form()
-            page.app_state.clear_form_data()  # type: ignore [attr-defined]
             page.back()  # type: ignore [attr-defined]
 
         except Exception as ex:
@@ -648,7 +647,6 @@ def show_client_form(page: ft.Page):
     def exit_form_clientes(e):
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         clientes_view.clear_form()
-        page.app_state.clear_form_data()  # type: ignore
         page.back()  # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"

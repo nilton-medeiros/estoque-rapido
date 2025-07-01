@@ -434,7 +434,6 @@ def show_company_tax_form(page: ft.Page):
 
         # Limpa o formulário salvo e limpa a empresa do app state: form_data e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_form_data() # type: ignore
         message_snackbar(page=page, message="Dados fiscais salvo com sucesso!",
                          message_type=MessageType.SUCCESS)
         page.back() # type: ignore [attr-defined]
@@ -442,7 +441,6 @@ def show_company_tax_form(page: ft.Page):
     def exit_form_empresa(e):
         # Limpa o formulário sem salvar e volta para a página inicial do usuário
         empresa_view.clear_form()
-        page.app_state.clear_form_data() # type: ignore
         page.back() # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"

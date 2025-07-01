@@ -893,7 +893,6 @@ def show_product_form(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página anterior que a invocou
         produtos_view.clear_form()
-        page.app_state.clear_form_data()  # type: ignore
         page.back()  # type: ignore
 
     def exit_form_produtos(e):
@@ -906,7 +905,6 @@ def show_product_form(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         produtos_view.clear_form()
-        page.app_state.clear_form_data()  # type: ignore
         page.back()  # type: ignore
 
     # Adiciona os botões "Salvar" & "Cancelar"

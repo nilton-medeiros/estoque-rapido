@@ -123,6 +123,8 @@ def main(page: ft.Page):
         Prioriza a rota armazenada em `page.data`. Se não houver rota
         definida, navega para '/home' como fallback.
         """
+        # Antes de voltar a página anterior, limpa dados de formulário.
+        page.app_state.clear_form_data()  # type: ignore [attr-defined]
         if page.data:
             page.go(page.data)
         else:

@@ -485,7 +485,6 @@ def show_category_form(page: ft.Page):
 
         # Limpa o formulário salvo e volta para a página anterior que a invocou
         categorias_view.clear_form()
-        page.app_state.clear_form_data() # type: ignore
         page.back() # type: ignore [attr-defined]
 
     def exit_form_categorias(e):
@@ -498,7 +497,6 @@ def show_category_form(page: ft.Page):
 
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         categorias_view.clear_form()
-        page.app_state.clear_form_data() # type: ignore
         page.back() # type: ignore [attr-defined]
 
     # Adiciona os botões "Salvar" & "Cancelar"
