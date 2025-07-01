@@ -161,6 +161,6 @@ class EmpresasServices:
         """
         return self.repository.find_by_id(empresa_id)
 
-    def find_all(self, ids_empresas: set[str]|list[str], status_active: bool = True) -> list[Empresa]:
+    def find_all(self, ids_empresas: set[str]|list[str], empresas_inativas: bool = False) -> list[Empresa]:
         """Busca todas as empresas do usuário logado."""
-        return self.repository.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        return self.repository.find_all(ids_empresas=ids_empresas, empresas_inativas=empresas_inativas)

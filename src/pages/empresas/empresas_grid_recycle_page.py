@@ -171,8 +171,8 @@ def show_companies_grid_trash(page: ft.Page):
             # empresas_data = asyncio.to_thread(handle_get_empresas, ids_empresas=set_empresas)
 
             if set_empresas:  # Só busca se houver IDs
-                # Busca as empresas do usuário e por default somente as empresas ativas
-                result = company_controllers.handle_get_empresas(ids_empresas=set_empresas, status_active=False)
+                # Busca as empresas do usuário e por default somente as empresas inativas (deletedas ou arquivadas)
+                result = company_controllers.handle_get_empresas(ids_empresas=set_empresas, empresas_inativas=True)
                 if result["status"] == "success":
                     empresas_data = result['data']['empresas']
                     empresas_inactivated = result['data']['inactivated']

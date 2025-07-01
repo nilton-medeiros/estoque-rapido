@@ -263,13 +263,13 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                 f"Erro inesperado ao consultar empresa com CNPJ '{str(cnpj)}': {e}")
             raise
 
-    def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> tuple[list[Empresa], int]:
+    def find_all(self, ids_empresas: set[str] | list[str], empresas_inativas: bool = False) -> tuple[list[Empresa], int]:
         """
         Faz uma busca de todas as empresas que estão na lista de ids_empresas e pelo seu status.
 
         Args:
             ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado.
-            status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativas (arquivadas ou deletadas).
+            empresas_inativas (bool): Padrão False, define se serão filtrados somente as empresas ativas ou inativas (arquivadas ou deletadas).
 
         Return:
             list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar
@@ -282,7 +282,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
             # Buscar documentos diretamente pelos IDs
             empresas = []
-            quantify_inactivated = 0
+            quantidade_nao_ativas = 0
 
             for empresa_id in ids_empresas_list:
                 doc_ref = self.collection.document(empresa_id)
@@ -291,9 +291,9 @@ class FirebaseEmpresasRepository(EmpresasRepository):
                     empresa_data = doc.to_dict()
                     if empresa_data.get('status') != 'ACTIVE':
                         # Registra a quantidade de empresas inativadas ('ARCHIVED' ou 'DELETED')
-                        quantify_inactivated += 1
+                        quantidade_nao_ativas += 1
                     # Filtra somente as empresas ativas ou somente as empresas não ativas (arquivadas ou deletadas)
-                    if (status_active and empresa_data.get('status') == 'ACTIVE') or (not status_active and empresa_data.get('status') != 'ACTIVE'):
+                    if (not empresas_inativas and empresa_data.get('status') == 'ACTIVE') or (empresas_inativas and empresa_data.get('status') != 'ACTIVE'):
                         # Adicionar o ID do documento ao dicionário antes de converter para objeto Empresa
                         empresa_data['id'] = doc.id
                         empresas.append(Empresa.from_dict(empresa_data))
@@ -304,7 +304,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             # Ordenar a lista de empresas por corporate_name
             empresas.sort(key=lambda empresa: empresa.corporate_name)
 
-            return empresas, quantify_inactivated
+            return empresas, quantidade_nao_ativas
         except exceptions.FirebaseError as e:
             if e.code == 'permission-denied':
                 logger.warning(

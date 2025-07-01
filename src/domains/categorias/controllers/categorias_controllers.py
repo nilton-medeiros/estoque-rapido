@@ -106,7 +106,7 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = handle_get_empresas(['abc123', 'def456'])
+        >>> response = handle_get_all(['abc123', 'def456'])
         >>> print(response)
     """
 

@@ -316,8 +316,7 @@ def show_categories_grid(page: ft.Page):
         empresa_id = page.app_state.empresa['id'] # type: ignore
 
         try:
-            # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***
-            # Se handle_get_empresas for síncrona e demorar, a UI *vai* congelar.
+            # Se handle_get_all for síncrona e demorar, a UI *vai* congelar.
             # Pode ser necessário refatorar handle_get_all para usar um driver de banco de dados async
             # ou executá-la em uma thread separada usando asyncio.to_thread (Python 3.9+)
             # Exemplo usando asyncio.to_thread se handle_get_all for sync:

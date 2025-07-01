@@ -190,7 +190,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             query_snapshot = query.get() # Chamada síncrona
 
             produtos_result: List[Produto] = []
-            quantify_deleted = 0
+            quantity_deleted = 0
 
             for doc in query_snapshot:
                 product_data = doc.to_dict()
@@ -201,7 +201,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
                     # Modificação 4: Corrigir comparação de status
                     # Conta todos os produtos deletados, independentemente do filtro principal
                     if product_obj.status == RegistrationStatus.DELETED:
-                        quantify_deleted += 1
+                        quantity_deleted += 1
 
                     # Adiciona o produto à lista de resultados com base no filtro 'status_deleted'
                     if status_deleted: # Se o filtro é para mostrar deletados
@@ -214,7 +214,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
             # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
             # produtos_result.sort(key=lambda produto: produto.categoria_name) # REMOVIDO
 
-            return produtos_result, quantify_deleted
+            return produtos_result, quantity_deleted
 
         except exceptions.FirebaseError as e:
             error_message_lower = str(e).lower()

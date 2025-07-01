@@ -34,7 +34,7 @@ class EmpresasRepository(ABC):
             "Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def find_all(self, ids_empresas: set[str] | list[str], status_active: bool = True) -> list[Empresa]:
+    def find_all(self, ids_empresas: set[str] | list[str], empresas_inativas: bool = False) -> list[Empresa]:
         """Lista as empresas do usuário logado"""
         raise NotImplementedError(
             "Este método deve ser implementado pela subclasse")

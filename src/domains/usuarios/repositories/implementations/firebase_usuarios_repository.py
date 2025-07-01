@@ -327,7 +327,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             docs = query.get()
 
             usuarios_result: list[Usuario] = []
-            quantify_deleted = 0
+            quantity_deleted = 0
 
             for doc in docs:
                 user_data = doc.to_dict()
@@ -338,7 +338,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                     # Modificação 4: Corrigir comparação de status
                     # Conta todos os usuarios deletados, independentemente do filtro principal
                     if user_obj.status == RegistrationStatus.DELETED:
-                        quantify_deleted += 1
+                        quantity_deleted += 1
 
                     # Adiciona o usuário à lista de resultados com base no filtro 'status_deleted'
                     if status_deleted: # Se o filtro é para mostrar deletados
@@ -351,7 +351,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
             # usuarios_result.sort(key=lambda usuario: usuario.categoria_name) # REMOVIDO
 
-            return usuarios_result, quantify_deleted
+            return usuarios_result, quantity_deleted
 
         except exceptions.FirebaseError as e:
             error_message_lower = str(e).lower()

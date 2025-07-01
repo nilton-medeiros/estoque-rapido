@@ -187,16 +187,16 @@ def handle_get_empresas_by_cnpj(cnpj: CNPJ) -> dict:
     return response
 
 
-def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = True) -> dict[str, Any]:
+def handle_get_empresas(ids_empresas: set[str]|list[str], empresas_inativas: bool = False) -> dict[str, Any]:
     """
-    Busca todas as empresas do usuário logado que sejam ativa ou não, dependendo do status_active desejado.
+    Busca todas as empresas do usuário logado que sejam ativa ou não, dependendo do empresas_inativas desejado.
 
     Esta função retorna todas as empresas do usuário logado, se não houver empresas, retorna uma lista vazia.
     Ela utiliza um repositório específico para realizar a busca e retorna a lista de empresas, se encontrada.
 
     Args:
         ids_empresas (set[str]|list[str]): Uma lista ou conjunto de ID's das empresas do usuário logado.
-        status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativa (arquivadas ou deletadas).
+        empresas_inativas (bool): Padrão False, define se serão filtrados somente as empresas ativas ou inativas (arquivadas ou deletadas).
 
     Returns (dict):
         is_error (bool): True se houve erro na operação, False caso contrário.
@@ -223,7 +223,7 @@ def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = 
         if not ids_empresas or len(ids_empresas) == 0:
             raise ValueError("A lista de empresas não pode ser vazia")
 
-        list_empresas, quantity = empresas_services.find_all(ids_empresas=ids_empresas, status_active=status_active)
+        list_empresas, quantity = empresas_services.find_all(ids_empresas=ids_empresas, empresas_inativas=empresas_inativas)
 
         if not quantity:
             quantity = 0
