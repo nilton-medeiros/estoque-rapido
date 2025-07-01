@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.domains.pedidos.models.pedidos_model import Pedido
-from src.domains.pedidos.models.pedidos_subclass import OrderStatus
+from src.domains.shared.models.registration_status import RegistrationStatus
 
 
 class PedidosRepository(ABC):
@@ -32,7 +32,7 @@ class PedidosRepository(ABC):
 
 
     @abstractmethod
-    def get_pedidos_by_empresa_id(self, empresa_id: str, status: OrderStatus | None = None) -> list[Pedido]:
+    def get_pedidos_by_empresa_id(self, empresa_id: str, status: RegistrationStatus | None = None) -> tuple[list[Pedido], int]:
         """Busca todos os pedidos de uma empresa, opcionalmente filtrando por status."""
         raise NotImplementedError(
         "Este método deve ser implementado pela subclasse")
@@ -55,5 +55,12 @@ class PedidosRepository(ABC):
     @abstractmethod
     def hard_delete_pedido(self, pedido_id: str) -> bool:
         """Remove um pedido completamente do Firestore (uso cauteloso)."""
+        raise NotImplementedError(
+        "Este método deve ser implementado pela subclasse")
+
+
+    @abstractmethod
+    def restore_pedido(self, pedido: Pedido) -> bool:
+        """Restaura um pedido da lixeira."""
         raise NotImplementedError(
         "Este método deve ser implementado pela subclasse")

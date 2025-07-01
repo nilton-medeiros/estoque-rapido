@@ -1,6 +1,7 @@
 from src.domains.pedidos.models.pedidos_model import Pedido
-from src.domains.pedidos.models.pedidos_subclass import OrderStatus
+from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.pedidos.repositories.contracts.pedidos_repository import PedidosRepository
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.gen_uuid import get_uuid
 
 
@@ -64,16 +65,17 @@ class PedidosServices:
         """
         return self.repository.get_pedido_by_id(pedido_id)
 
-    def get_pedidos_by_empresa_id(self, empresa_id: str, status: OrderStatus | None = None) -> list[Pedido]:
+    def get_pedidos_by_empresa_id(self, empresa_id: str, status: RegistrationStatus | None = None) -> tuple[list[Pedido], int]:
         """
         Busca todos os pedidos de uma empresa.
 
         Args:
             empresa_id (str): ID da empresa a ser buscada
-            status (OrderStatus | None, optional): Se passado, filtra os pedidos pelo seu status
+            status (RegistrationStatus | None, optional): Se passado, filtra os pedidos pelo seu status
 
         Returns:
             pedidos (list[Pedido]): Lista de Instâncias de Pedido encontradas ou vazia se não existir
+            int: Quantidade de pedidos deletados na empresa
         """
         return self.repository.get_pedidos_by_empresa_id(empresa_id, status)
 
@@ -87,10 +89,28 @@ class PedidosServices:
         Returns:
             bool: True se o pedido for deletado com sucesso, False caso contrário.
         """
-        if pedido.status == OrderStatus.DELIVERED:
+        if pedido.delivery_status == DeliveryStatus.DELIVERED:
             raise ValueError("Não é possível deletar um pedido já entregue.")
 
         pedido.deleted_by_id = usuario_logado["id"]
         pedido.deleted_by_name = usuario_logado["name"].nome_completo
 
         return self.repository.delete_pedido(pedido)
+
+    def restore_pedido(self, pedido: Pedido, usuario_logado: dict) -> bool:
+        """
+        Restaura um pedido da lixeira.
+
+        Args:
+            pedido_id (str): ID do pedido a ser restaurado.
+
+        Returns:
+            bool: True se o pedido for restaurado com sucesso, False caso contrário.
+        """
+        if not pedido.id:
+            raise ValueError("ID do pedido é necessário para restauração")
+
+        pedido.activated_by_id = usuario_logado["id"]
+        pedido.activated_by_name = usuario_logado["name"].nome_completo
+
+        return self.repository.restore_pedido(pedido)

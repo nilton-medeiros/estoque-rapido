@@ -1,7 +1,7 @@
 from src.domains.pedidos.models.pedidos_model import Pedido
-from src.domains.pedidos.models.pedidos_subclass import OrderStatus
 from src.domains.pedidos.repositories.implementations.firebase_pedidos_repository import FirebasePedidosRepository
 from src.domains.pedidos.services.pedidos_services import PedidosServices
+from src.domains.shared.models.registration_status import RegistrationStatus
 
 
 def handle_save_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
@@ -66,7 +66,7 @@ def handle_get_pedido_by_id(pedido_id: str) -> dict:
     return response
 
 
-def handle_get_pedidos_by_empresa_id(empresa_id: str, status: OrderStatus | None = None) -> dict:
+def handle_get_pedidos_by_empresa_id(empresa_id: str, status: RegistrationStatus | None = None) -> dict:
     """Busca todos os pedidos de uma empresa."""
     response = {}
     try:
@@ -76,16 +76,19 @@ def handle_get_pedidos_by_empresa_id(empresa_id: str, status: OrderStatus | None
         repository = FirebasePedidosRepository()
         services = PedidosServices(repository)
 
-        pedidos = services.get_pedidos_by_empresa_id(empresa_id, status)
+        pedidos, quantidade_deletados = services.get_pedidos_by_empresa_id(empresa_id, status)
 
         response["status"] = "success"
-        response["data"] = pedidos
+        response["data"] = {
+            "pedidos": pedidos,
+            "quantidade_deletados": quantidade_deletados
+        }
     except ValueError as e:
         response["status"] = "error"
-        response["message"] = str(e)
+        response["message"] = f"Erro de validação: {str(e)}"
     except Exception as e:
         response["status"] = "error"
-        response["message"] = f"Erro ao buscar pedido: {str(e)}"
+        response["message"] = f"Erro ao buscar pedidos: {str(e)}"
 
     return response
 
@@ -116,5 +119,34 @@ def handle_delete_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
     except Exception as e:
         response["status"] = "error"
         response["message"] = f"Erro ao buscar pedido: {str(e)}"
+
+    return response
+
+def handle_restore_pedido_from_trash(pedido: Pedido, usuario_logado: dict) -> dict:
+    """Restaura um pedido da lixeira."""
+    response = {}
+    try:
+        if not pedido.id:
+            raise ValueError("ID do pedido é necessário para restauração.")
+        if not usuario_logado:
+            raise ValueError("Usuário logado é necessário para restauração.")
+
+        repository = FirebasePedidosRepository()
+        services = PedidosServices(repository)
+
+        is_restored = services.restore_pedido(pedido, usuario_logado)
+
+        if is_restored:
+            response["status"] = "success"
+            response["message"] = "Pedido restaurado com sucesso."
+        else:
+            response["status"] = "error"
+            response["message"] = "Erro ao restaurar pedido."
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = f"Erro ao restaurar pedido: {str(e)}"
 
     return response

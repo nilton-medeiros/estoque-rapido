@@ -1,9 +1,19 @@
 from enum import Enum
 
 
-class OrderStatus(Enum):
-    ACTIVE = "Ativo"
-    CANCELED = "Cancelado"
-    INACTIVE = "Inativo"
+class DeliveryStatus(Enum):
+    """Status de Entrega: Cancelado[CANCELED], Pendente[PENDING], Em trânsito[IN_TRANSIT] ou Entregue[DELIVERED]."""
+    PENDING = "Pendente"
+    IN_TRANSIT = "Em trânsito"
     DELIVERED = "Entregue"
-    DELETED = "Lixeira"
+    CANCELED = "Cancelado"
+
+class OrderFilterType(Enum):
+    """Tipo de Filtro de Pedidos: Todos[ALL], Ativos[ACTIVE], Inativos[INACTIVE], Entregues[DELIVERED], Cancelados[CANCELED]."""
+    ALL = "all"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+    IN_TRANSIT = "in_transit"
+    DELIVERED = "delivered"
+    CANCELED = "canceled"

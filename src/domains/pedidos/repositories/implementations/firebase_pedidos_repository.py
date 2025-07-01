@@ -4,8 +4,8 @@ from firebase_admin import exceptions, firestore
 
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.repositories.contracts.pedidos_repository import PedidosRepository
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.domains.shared.models.sequential_number import SequentialNumber
-from src.domains.pedidos.models import OrderStatus
 from src.shared.utils.deep_translator import deepl_translator
 from storage.data import get_firebase_app
 
@@ -81,20 +81,14 @@ class FirebasePedidosRepository(PedidosRepository):
             pedido_data['updated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
             # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-            if pedido_data.get("status") == OrderStatus.ACTIVE.name and not pedido_data.get("activated_at"):
+            if pedido_data.get("status") == RegistrationStatus.ACTIVE.name and not pedido_data.get("activated_at"):
                 pedido_data['activated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
-            if pedido_data.get("status") == OrderStatus.DELETED.name and not pedido_data.get("deleted_at"):
+            if pedido_data.get("status") == RegistrationStatus.DELETED.name and not pedido_data.get("deleted_at"):
                 pedido_data['deleted_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
-            if pedido_data.get("status") == OrderStatus.INACTIVE.name and not pedido_data.get("inactivated_at"):
+            if pedido_data.get("status") == RegistrationStatus.INACTIVE.name and not pedido_data.get("inactivated_at"):
                 pedido_data['inactivated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            if pedido_data.get("status") == OrderStatus.CANCELED.name and not pedido_data.get("canceled_at"):
-                pedido_data['canceled_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            if pedido_data.get("status") == OrderStatus.DELIVERED.name and not pedido_data.get("delivered_at"):
-                pedido_data['delivered_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
 
             # Salva o pedido no Firestore, se é um novo pedido, o pedido.id foi definido em services antes de vir para este método save
             # Se existe, faz o update, se não, cria um novo pedido no Firestore
@@ -129,8 +123,6 @@ class FirebasePedidosRepository(PedidosRepository):
                 pedido.activated_at = updated_pedido_obj.activated_at
                 pedido.deleted_at = updated_pedido_obj.deleted_at
                 pedido.inactivated_at = updated_pedido_obj.inactivated_at
-                pedido.canceled_at = updated_pedido_obj.canceled_at
-                pedido.delivered_at = updated_pedido_obj.delivered_at
 
             except Exception as e_read:
                 logger.error(
@@ -190,24 +182,40 @@ class FirebasePedidosRepository(PedidosRepository):
                 f"Erro inesperado ao consultar pedido com id '{pedido_id}': {e}")
             raise
 
-    def get_pedidos_by_empresa_id(self, empresa_id: str, status: OrderStatus | None = None) -> list[Pedido]:
+    def get_pedidos_by_empresa_id(self, empresa_id: str, status: RegistrationStatus | None = None) -> tuple[list[Pedido], int]:
         """Busca todos os pedidos de uma empresa, opcionalmente filtrando por status."""
         try:
             query = self.pedidos_collection.where(
                 "empresa_id", "==", empresa_id)
             if status:
+                # Filtros para somente pedidos 'ACTIVE' ou 'INACTIVE', não haverá contagem de deletados
                 query = query.where("status", "==", status.name)
+            query = query.order_by("order_number")
 
             docs = query.get()
 
             pedidos_result: list[Pedido] = []
-            for doc in docs:
-                order_data = doc.to_dict()
-                if order_data:
-                    order_obj = Pedido.from_dict(order_data, doc.id)
-                    pedidos_result.append(order_obj)
+            quantidade_deletados = 0
 
-            return pedidos_result
+            for doc in docs:
+                pedido_data = doc.to_dict()
+                if pedido_data:
+                    pedido_obj = Pedido.from_dict(pedido_data, doc.id)
+
+                    # Se for um pedido 'DELETED', independente do filtro 'status', adiciona em quantidade_deletados
+                    if pedido_obj.status == RegistrationStatus.DELETED:
+                        quantidade_deletados += 1
+
+                    # Adiciona o pedido à lista de resultados com base no filtro 'status'
+                    if status == RegistrationStatus.DELETED:
+                        # Adiciona somente os deletados
+                        pedidos_result.append(pedido_obj)
+                    else:
+                        # Adiciona somente os ativos e inativos, mas envia a contagem de deletados
+                        if pedido_obj.status != RegistrationStatus.DELETED:
+                            pedidos_result.append(pedido_obj)
+
+            return pedidos_result, quantidade_deletados
         except exceptions.FirebaseError as e:
             error_message_lower = str(e).lower()
             # Condição para erro de índice ausente (Failed Precondition)
@@ -295,7 +303,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 "deleted_at": firestore.SERVER_TIMESTAMP,  # type: ignore [attr-defined]
                 "deleted_by_id": pedido.created_by_id,
                 "deleted_by_name": pedido.created_by_name,
-                "status": OrderStatus.DELETED.name
+                "status": RegistrationStatus.DELETED.name
             }
             self.pedidos_collection.document(pedido.id).update(updates)
             logger.info(
@@ -314,3 +322,24 @@ class FirebasePedidosRepository(PedidosRepository):
         except Exception as e:
             logger.error(f"Erro ao remover pedido {pedido_id}: {e}")
             raise Exception(f"Erro inesperado ao remover pedido: {e}")
+
+    def restore_pedido(self, pedido: Pedido) -> bool:
+        """Restaura um pedido da lixeira."""
+        try:
+            if not pedido.id:
+                raise ValueError("ID do pedido é necessário para restauração.")
+
+            updates = {
+                "activated_at": firestore.SERVER_TIMESTAMP,  # type: ignore [attr-defined]
+                "activated_by_id": pedido.activated_by_id,
+                "activated_by_name": pedido.activated_by_name,
+                "status": RegistrationStatus.ACTIVE.name
+            }
+            self.pedidos_collection.document(pedido.id).update(updates)
+            logger.info(
+                f"Pedido {pedido.id} marcado como ACTIVE.")
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao restaurar pedido {pedido.id}: {e}")
+            raise Exception(
+                f"Erro inesperado ao restaurar pedido #'{pedido.order_number}': {e}")

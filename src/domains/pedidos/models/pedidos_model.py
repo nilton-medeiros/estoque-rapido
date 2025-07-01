@@ -2,9 +2,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, UTC
 from typing import Any
 
+from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import Address
+from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.money_numpy import Money
-from src.domains.pedidos.models import OrderStatus
 
 
 @dataclass
@@ -58,8 +59,9 @@ class Pedido:
     client_cpf: str | None = None
     client_address: Address | None = None
 
-    # Status do Pedido
-    status: OrderStatus = OrderStatus.ACTIVE # Ex: ACTIVE, CANCELED, DELIVERED, DELETED
+    # Status do pedido e entrega
+    status: RegistrationStatus = RegistrationStatus.ACTIVE # Ex: ACTIVE, INACTIVE, DELETED
+    delivery_status: DeliveryStatus = DeliveryStatus.PENDING # Ex: CANCELED, PENDING, IN_TRANSIT, DELIVERED
 
     id: str | None = None
 
@@ -83,14 +85,6 @@ class Pedido:
     deleted_at: datetime | None = None
     deleted_by_id: str | None = None
     deleted_by_name: str | None = None
-
-    canceled_at: datetime | None = None
-    canceled_by_id: str | None = None
-    canceled_by_name: str | None = None
-
-    delivered_at: datetime | None = None
-    delivered_by_id: str | None = None
-    delivered_by_name: str | None = None
 
 
     def __post_init__(self):
@@ -120,7 +114,7 @@ class Pedido:
             self.client_cpf = ''.join(filter(str.isdigit, self.client_cpf))
 
         # Se o pedido está sendo criado como ACTIVE e não tem activated_at, define-o
-        if self.status == OrderStatus.ACTIVE and self.created_at and not self.activated_at:
+        if self.status == RegistrationStatus.ACTIVE and self.created_at and not self.activated_at:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
@@ -138,7 +132,8 @@ class Pedido:
             "client_phone": self.client_phone,
             "client_cpf": self.client_cpf,
             "client_address": self.client_address.__dict__ if self.client_address else None,
-            "status": self.status.name,
+            "status": self.status,
+            "delivery_status": self.delivery_status,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
@@ -154,12 +149,6 @@ class Pedido:
             "deleted_at": self.deleted_at,
             "deleted_by_id": self.deleted_by_id,
             "deleted_by_name": self.deleted_by_name,
-            "canceled_at": self.canceled_at,
-            "canceled_by_id": self.canceled_by_id,
-            "canceled_by_name": self.canceled_by_name,
-            "delivered_at": self.delivered_at,
-            "delivered_by_id": self.delivered_by_id,
-            "delivered_by_name": self.delivered_by_name,
         }
 
     def to_dict_db(self) -> dict[str, Any]:
@@ -178,6 +167,7 @@ class Pedido:
             "client_cpf": self.client_cpf,
             "client_address": self.client_address.__dict__ if self.client_address else None,
             "status": self.status.name,
+            "delivery_status": self.delivery_status.name,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
@@ -193,27 +183,34 @@ class Pedido:
             "deleted_at": self.deleted_at,
             "deleted_by_id": self.deleted_by_id,
             "deleted_by_name": self.deleted_by_name,
-            "canceled_at": self.canceled_at,
-            "canceled_by_id": self.canceled_by_id,
-            "canceled_by_name": self.canceled_by_name,
-            "delivered_at": self.delivered_at,
-            "delivered_by_id": self.delivered_by_id,
-            "delivered_by_name": self.delivered_by_name,
         }
         return {k: v for k, v in dict_db.items() if v is not None}
 
     @classmethod
     def from_dict(cls, data: dict[str, Any], doc_id: str | None = None) -> "Pedido":
         """Cria uma instância de Pedido a partir de um dicionário."""
-        status = OrderStatus.ACTIVE
-        if status_data := data.get("status"):
-            if isinstance(status_data, OrderStatus):
-                status = status_data
+        # Converte enums Order Status
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status_data é do tipo RegistrationStatus
+
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
             else:
-                status = OrderStatus[status_data]
+                status = RegistrationStatus.ACTIVE
+
+        # Converte enums Delivery Status
+        status_data = data.get("delivery_status", DeliveryStatus.PENDING)
+        delivery_status = status_data # Por padrão delivery_status é do tipo DeliveryStatus
+
+        if not isinstance(status_data, DeliveryStatus):
+            if isinstance(status_data, str) and status_data in DeliveryStatus.__members__:
+                delivery_status = DeliveryStatus[status_data]
+            else:
+                delivery_status = DeliveryStatus.PENDING
 
         # Converte Timestamps do Firestore para datetime
-        for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at', 'canceled_at', 'delivered_at']:
+        for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at']:
             if key in data and data.get(key) and hasattr(data[key], 'to_datetime'):
                 data[key] = data[key].to_datetime()
 
@@ -236,6 +233,7 @@ class Pedido:
             client_cpf=data.get("client_cpf"),
             client_address=client_address_obj,
             status=status,
+            delivery_status=delivery_status,
             created_at=data.get("created_at"),
             created_by_id=data.get("created_by_id"),
             created_by_name=data.get("created_by_name"),
@@ -251,12 +249,6 @@ class Pedido:
             deleted_at=data.get("deleted_at"),
             deleted_by_id=data.get("deleted_by_id"),
             deleted_by_name=data.get("deleted_by_name"),
-            canceled_at=data.get("canceled_at"),
-            canceled_by_id=data.get("canceled_by_id"),
-            canceled_by_name=data.get("canceled_by_name"),
-            delivered_at=data.get("delivered_at"),
-            delivered_by_id=data.get("delivered_by_id"),
-            delivered_by_name=data.get("delivered_by_name"),
         )
 
     def calcular_total(self) -> Money:
@@ -266,3 +258,10 @@ class Pedido:
         zero = Money.mint("0.00", currency_symbol=self.total_amount.currency_symbol)
         total = sum((item.price_total for item in self.items), zero)
         return total
+
+    def get_totais(self) -> dict[str, Any]:
+        return {
+            "total_amount": self.calcular_total,
+            "total_items": len(self.items),
+            "total_products": sum(item.quantity for item in self.items),
+        }
