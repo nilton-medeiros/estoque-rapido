@@ -10,7 +10,7 @@ import flet as ft
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
-from src.domains.produtos.models import ProductStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 
 from src.pages.partials import build_input_field
@@ -245,9 +245,9 @@ class ProdutoCategoriaForm:
 
         self.name.value = self.data.get('name', '')
 
-        status = self.data.get("status", ProductStatus.ACTIVE)
+        status = self.data.get("status", RegistrationStatus.ACTIVE)
 
-        if status.name == "ACTIVE":
+        if status == RegistrationStatus.ACTIVE:
             self.status.value = True
             self.status.label = "Categoria Ativo"
         else:
@@ -315,7 +315,7 @@ class ProdutoCategoriaForm:
         Atualiza self.data com os dados do formulário e o retorna atualizado.
         """
         self.data['name'] = self.name.value
-        self.data['status'] = ProductStatus.ACTIVE if self.status.value else ProductStatus.INACTIVE
+        self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
         self.data['description'] = self.description.value
 
         if self.image_url:

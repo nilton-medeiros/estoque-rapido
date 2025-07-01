@@ -110,7 +110,7 @@ class UserCard:
         """Cria a linha com status e informações de status"""
         return ft.Row([
             ft.Text(
-                value=usuario.status.value,
+                value=usuario.status.default_label,
                 theme_style=ft.TextThemeStyle.BODY_SMALL,
                 color=ft.Colors.GREEN if usuario.status == RegistrationStatus.ACTIVE else ft.Colors.RED,
             ),

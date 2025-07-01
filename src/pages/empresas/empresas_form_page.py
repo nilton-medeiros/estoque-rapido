@@ -54,7 +54,7 @@ class EmpresaView:
     def _create_form_fields(self):
         """Cria os campos do formulário Principal"""
 
-        # Por causa dd on_change do self.cnpj, não funciona se usar a função build_input_field
+        # Por causa do on_change do self.cnpj, não funciona se usar a função build_input_field
         # para criar o campo CNPJ
         # Adiciona o campo CNPJ e o botão de consulta
 

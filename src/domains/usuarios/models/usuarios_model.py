@@ -173,7 +173,7 @@ class Usuario:
             "empresas": list(self.empresas),
             "photo_url": self.photo_url,
             "user_colors": self.user_colors,
-            "status": self.status.name,  # Armazena o nome do enum
+            "status": self.status,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
             "created_by_name": self.created_by_name,
@@ -253,20 +253,15 @@ class Usuario:
             Este método assume que os objetos NomePessoa, PhoneNumber e Password
             também possuem métodos from_dict para sua criação.
         """
-        # --- Conversão de Enums e Tipos Primitivos ---
-        status_data = data.get("status")
-        status = RegistrationStatus.ACTIVE  # Padrão
+        # Converte enums
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status é do tipo RegistrationStatus
 
-        # Converte string para Enum RegistrationStatus
-        if status_data:
-            if isinstance(status_data, RegistrationStatus):
-                status = status_data
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
             else:
-                try:
-                    status = RegistrationStatus[status_data]
-                except KeyError:
-                    # Lidar com status inválido, talvez logar um aviso ou usar um padrão
-                    status = RegistrationStatus.INACTIVE
+                status = RegistrationStatus.ACTIVE
 
         profile_data = data.get("profile")
         profile = UserProfile.UNDEFINED  # Padrão

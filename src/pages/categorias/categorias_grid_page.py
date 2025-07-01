@@ -217,7 +217,7 @@ def show_categories_grid(page: ft.Page):
                                 ft.Row(
                                     controls=[
                                         ft.Text(
-                                            value=f"Status: {categoria.status.value}", # Ex: "Ativo", "Descontinuado"
+                                            value=f"Status: {categoria.status.produto_label}", # Ex: "Ativo", "Descontinuado"
                                             theme_style=ft.TextThemeStyle.BODY_SMALL,
                                             color=ft.Colors.GREEN if categoria.status.name == 'ACTIVE' else ft.Colors.RED,
                                         ),

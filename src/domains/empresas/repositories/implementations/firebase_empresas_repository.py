@@ -269,7 +269,7 @@ class FirebaseEmpresasRepository(EmpresasRepository):
 
         Args:
             ids_empresas (set[str]): Lista dos IDs de documentos das empresas do usuário logado.
-            status_active (bool): CompanyStatus requerido (ACTIVE, ARCHIVED ou DELETED)
+            status_active (bool): Padrão True, define se serão filtrados somente as empresas ativas ou somente as não ativas (arquivadas ou deletadas).
 
         Return:
             list[Empresa]: Lista de empresas encontradas ou vazio se não encontrar

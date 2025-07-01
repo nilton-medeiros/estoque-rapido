@@ -6,7 +6,7 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore
 from firebase_admin import exceptions
 
-from src.domains.produtos.models import ProductStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import CategoriasRepository
 from src.shared.utils import deepl_translator
@@ -184,14 +184,14 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     "ID da empresa logada não pode ser nulo ou vazio")
 
             categorias: list[ProdutoCategorias] = []
-            quantify_deleted = 0
+            quantidade_deletados = 0
             query = None
 
             if status_deleted:
                 # Somente os deletados da empresa_id
                 query = self.collection.where(
                     filter=FieldFilter("empresa_id", "==", empresa_id)).where(
-                    filter=FieldFilter("status", "==", ProductStatus.DELETED.name)).order_by("name")
+                    filter=FieldFilter("status", "==", RegistrationStatus.DELETED.name)).order_by("name")
             else:
                 # Obtem todos da empresa_id
                 query = self.collection.where(
@@ -220,12 +220,12 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     )
                     continue
 
-                if status_value == ProductStatus.DELETED.name:
-                    quantify_deleted += 1
-                if status_deleted or (status_value != ProductStatus.DELETED.name):
+                if status_value == RegistrationStatus.DELETED.name:
+                    quantidade_deletados += 1
+                if status_deleted or (status_value != RegistrationStatus.DELETED.name):
                     categorias.append(ProdutoCategorias.from_dict(categoria_data_dict))
 
-            return categorias, quantify_deleted
+            return categorias, quantidade_deletados
         except exceptions.FirebaseError as e:
             error_message_lower = str(e).lower()
             # Condição para erro de índice ausente (Failed Precondition)
@@ -317,7 +317,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             query = self.collection.where(
                 filter=FieldFilter("empresa_id", "==", empresa_id)
             ).where(
-                filter=FieldFilter("status", "==", ProductStatus.ACTIVE.name)
+                filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)
             ).select(
                 ("name", "description") # Campos a serem selecionados
             ).order_by("name")
@@ -429,7 +429,7 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             ).where(
                 filter=FieldFilter("name_lowercase", "==", name)
             ).where(
-                filter=FieldFilter("status", "==", ProductStatus.ACTIVE.name)
+                filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)
             ).limit(1) # Garante que pegamos apenas um, caso haja duplicidade (o que não deveria ocorrer)
 
             docs = query.get() # Retorna uma lista de DocumentSnapshot

@@ -1,7 +1,8 @@
 import logging
 
 from typing import Any
-from src.domains.produtos.models import Produto, ProductStatus
+from src.domains.produtos.models import Produto
+from src.domains.shared import RegistrationStatus
 from src.domains.produtos.repositories import FirebaseProdutosRepository
 from src.domains.produtos.services import ProdutosServices
 
@@ -40,7 +41,7 @@ def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
     return response
 
 
-def handle_update_status(produto: Produto, usuario: dict, status: ProductStatus) -> dict[str, Any]:
+def handle_update_status(produto: Produto, usuario: dict, status: RegistrationStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletado de um produto."""
     response = {}
 
@@ -55,8 +56,8 @@ def handle_update_status(produto: Produto, usuario: dict, status: ProductStatus)
             raise ValueError("Usuário não é do tipo dict")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
-        if not isinstance(status, ProductStatus):
-            raise ValueError("Status não é do tipo ProductStatus")
+        if not isinstance(status, RegistrationStatus):
+            raise ValueError("Status não é do tipo RegistrationStatus")
 
         repository = FirebaseProdutosRepository(company_id=produto.empresa_id)
         produtos_services = ProdutosServices(repository)
@@ -68,7 +69,7 @@ def handle_update_status(produto: Produto, usuario: dict, status: ProductStatus)
             response["data"] = status
         else:
             response["status"] = "error"
-            response["message"] = f"Não foi possível atualizar o status da produto para {status.value}"
+            response["message"] = f"Não foi possível atualizar o status da produto para {status.produto_label}"
 
     except ValueError as e:
         response["status"] = "error"

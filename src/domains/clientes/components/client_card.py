@@ -79,7 +79,7 @@ class ClientCard:
         """Cria a linha com status e informações de status"""
         return ft.Row([
             ft.Text(
-                value=cliente.status.value,
+                value=cliente.status.default_label,
                 theme_style=ft.TextThemeStyle.BODY_SMALL,
                 color=ft.Colors.GREEN if cliente.status == RegistrationStatus.ACTIVE else ft.Colors.RED,
             ),

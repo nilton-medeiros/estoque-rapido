@@ -405,9 +405,9 @@ class ClienteForm:
             self.state.value = address.state
             self.postal_code.value = address.postal_code
 
-        status = self.data.get("status", "ACTIVE")
+        status = self.data.get("status", RegistrationStatus.ACTIVE)
 
-        if status == "ACTIVE":
+        if status == RegistrationStatus.ACTIVE:
             self.status.value = True
             self.status.label = "Cliente Ativo"
         else:

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from src.domains.produtos.models.produtos_subclass import ProductStatus
+from src.domains.shared import RegistrationStatus
 
 
 @dataclass
@@ -11,7 +11,7 @@ class ProdutoCategorias:
     name: str
     name_lowercase: str
     empresa_id: str
-    status: ProductStatus = ProductStatus.ACTIVE
+    status: RegistrationStatus = RegistrationStatus.ACTIVE
     id: str | None = None
     description: str | None = None
     image_url: str | None = None
@@ -85,13 +85,15 @@ class ProdutoCategorias:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ProdutoCategorias":
-        status = ProductStatus.ACTIVE
+        # Converte enums
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status_data é do tipo RegistrationStatus
 
-        if status_data := data.get("status"):
-            if isinstance(status_data, ProductStatus):
-                status = status_data
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
             else:
-                status = ProductStatus[status_data]
+                status = RegistrationStatus.ACTIVE
 
         return cls(
             id=data.get("id"),

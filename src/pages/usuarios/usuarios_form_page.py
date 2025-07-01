@@ -505,9 +505,9 @@ class UsuarioForm:
         self.phone_number.value = self.data.get("phone_number", "")
         self.profile.value = self.data["profile"]
 
-        status = self.data.get("status", "ACTIVE")
+        status = self.data.get("status", RegistrationStatus.ACTIVE)
 
-        if status == "ACTIVE":
+        if status == RegistrationStatus.ACTIVE:
             self.status.value = True
             self.status.label = "Usuário Ativo"
         else:

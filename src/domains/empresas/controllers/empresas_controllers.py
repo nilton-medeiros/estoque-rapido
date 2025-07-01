@@ -3,7 +3,7 @@ from typing import Any
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importar diretamente para evitar cíclo em src/domains/empresa/__init__.py
 from src.domains.empresas.models.empresas_model import Empresa
-from src.domains.empresas.models.empresas_subclass import CompanyStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.empresas.repositories.implementations.firebase_empresas_repository import FirebaseEmpresasRepository
 from src.domains.empresas.services.empresas_services import EmpresasServices
 
@@ -244,7 +244,7 @@ def handle_get_empresas(ids_empresas: set[str]|list[str], status_active: bool = 
     return response
 
 
-def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: CompanyStatus) -> dict:
+def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: RegistrationStatus) -> dict:
     """
     Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados.
     Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
@@ -252,7 +252,7 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Compa
     Args:
         empresa (Empresa): A instância da empresa a ser alterada.
         usuario (Ususario): Usuário logado.
-        status (CompanyStatus): Novo status da empresa. ARCHIVED, DELETED ou ACTIVE.
+        status (RegistrationStatus): Novo status da empresa. ARCHIVED, DELETED ou ACTIVE.
 
     Returns:
         response (dict): Retorna as informações necessárias, inclusive as de erros.
@@ -261,7 +261,7 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Compa
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
-        >>> response = handle_update_status_empresas(empresa, CompanyStatus.DELETED)
+        >>> response = handle_update_status_empresas(empresa, RegistrationStatus.DELETED)
         >>> print(response)
     """
     response = {}
@@ -277,14 +277,14 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Compa
             raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
         if not status:
             raise ValueError("Status não informado em args: handle_update_status_empresas")
-        if not isinstance(status, CompanyStatus):
+        if not isinstance(status, RegistrationStatus):
             raise ValueError("Argumento status não é uma instância de Status")
 
         # Usa o repositório do Firebase
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=CompanyStatus.ACTIVE)
+        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=RegistrationStatus.ACTIVE)
 
         if is_updated:
             response["status"] = "success"

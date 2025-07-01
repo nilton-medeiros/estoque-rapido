@@ -1,7 +1,7 @@
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresas_model import Empresa
-from src.domains.empresas.models.empresas_subclass import CompanyStatus
+from src.domains.shared import RegistrationStatus
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.domains.shared.models.nome_pessoa import NomePessoa
 from src.shared.utils import get_uuid
@@ -109,22 +109,22 @@ class EmpresasServices:
 
         return self.repository.save(empresa=empresa)
 
-    def update_status(self, empresa: Empresa, usuario: dict, status: CompanyStatus) -> bool:
+    def update_status(self, empresa: Empresa, usuario: dict, status: RegistrationStatus) -> bool:
         """Altera o status de uma empresa no banco de dados."""
         user_name: NomePessoa = usuario["name"]
 
-        if status.name == "ACTIVE":
-            empresa.status = CompanyStatus.ACTIVE
+        if status == RegistrationStatus.ACTIVE:
+            empresa.status = RegistrationStatus.ACTIVE
             empresa.activated_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.activated_by_id = usuario.get("id")
             empresa.activated_by_name = user_name.nome_completo
-        elif status.name == "DELETED":
-            empresa.status = CompanyStatus.DELETED
+        elif status == RegistrationStatus.DELETED:
+            empresa.status = RegistrationStatus.DELETED
             empresa.deleted_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.deleted_by_id = usuario.get("id")
             empresa.deleted_by_name = user_name.nome_completo
-        elif status.name == "ARCHIVED":
-            empresa.status = CompanyStatus.ARCHIVED
+        elif status == RegistrationStatus.INACTIVE:
+            empresa.status = RegistrationStatus.INACTIVE
             empresa.archived_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
             empresa.archived_by_id = usuario.get("id")
             empresa.archived_by_name = user_name.nome_completo

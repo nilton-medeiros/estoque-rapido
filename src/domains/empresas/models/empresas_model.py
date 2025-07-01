@@ -8,9 +8,9 @@ ToDo: Refatorar. Aqui não deveria invocar diretamente a AsaasPaymentGateway (Es
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
-from src.domains.shared import Password, PhoneNumber, Address
+from src.domains.shared import Password, PhoneNumber, Address, RegistrationStatus
 from src.services import AsaasPaymentGateway
-from src.domains.empresas.models.empresas_subclass import CompanyStatus, Environment, EmpresaSize, CodigoRegimeTributario
+from src.domains.empresas.models.empresas_subclass import Environment, EmpresaSize, CodigoRegimeTributario
 from src.domains.empresas.models.certificate_a1 import CertificateA1
 from src.domains.empresas.models.cnpj import CNPJ
 
@@ -42,7 +42,7 @@ class Empresa:
     Attributes:
         corporate_name (str): Razão Social da empresa.
         email (str): E-mail da empresa.
-        status (CompanyStatus:Enum): Status da empresa.
+        status (RegistrationStatus:Enum): Status da empresa.
         deleted_at: (datetime): Data de exclusão
         archived_at: (datetime | None): Data de arquivamento
         cnpj (CNPJ): CNPJ da empresa.
@@ -69,7 +69,7 @@ class Empresa:
     """
     corporate_name: str  # Razão Social
     email: str  # E-mail
-    status: CompanyStatus = CompanyStatus.ACTIVE
+    status: RegistrationStatus = RegistrationStatus.ACTIVE
     trade_name: str | None = None  # Nome fantasia
     store_name: str | None = 'Matriz'
     cnpj: CNPJ | None = None  # CNPJ do emitente da NFCe
@@ -413,9 +413,14 @@ class Empresa:
                 payment_gateway = AsaasPaymentGateway(**payment_gateway_data)
 
         # Converte enums
-        status_data = data.get("status")
-        status = CompanyStatus[status_data] if isinstance(
-            status_data, str) else CompanyStatus.ACTIVE
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status é do tipo RegistrationStatus
+
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
+            else:
+                status = RegistrationStatus.ACTIVE
 
         return cls(
             id=data.get("id"),  # id pode ser None

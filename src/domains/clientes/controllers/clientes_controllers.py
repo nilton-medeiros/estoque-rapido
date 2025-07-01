@@ -157,7 +157,7 @@ def handle_update_status(cliente: Cliente, logged_user: dict, status: Registrati
             response["message"] = f"Cliente {operation} com sucesso!"
         else:
             response["status"] = "error"
-            response["message"] = f"Não foi possível atualizar o status do cliente para {status.value}"
+            response["message"] = f"Não foi possível atualizar o status do cliente para {str(status)}"
 
     except ValueError as e:
         response["status"] = "error"

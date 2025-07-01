@@ -1,4 +1,5 @@
-from src.domains.produtos.models import Produto, ProductStatus
+from src.domains.produtos.models import Produto
+from src.domains.shared import RegistrationStatus
 from src.domains.produtos.repositories import ProdutosRepository
 from src.domains.shared import NomePessoa
 from src.shared.utils import get_uuid
@@ -45,21 +46,21 @@ class ProdutosServices:
         return self.repository.save(produto)
 
 
-    def update_status(self, produto: Produto, usuario: dict, status: ProductStatus) -> bool:
+    def update_status(self, produto: Produto, usuario: dict, status: RegistrationStatus) -> bool:
         """Atualiza o status de um produto existente"""
         user_name: NomePessoa = usuario["name"]
         produto.status = status
 
         match status:
-            case ProductStatus.ACTIVE:
+            case RegistrationStatus.ACTIVE:
                 produto.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.activated_by_id = usuario["id"]
                 produto.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
-            case ProductStatus.INACTIVE:
+            case RegistrationStatus.INACTIVE:
                 produto.inactivated_at = None# Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.inactivated_by_id = usuario["id"]
                 produto.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
-            case ProductStatus.DELETED:
+            case RegistrationStatus.DELETED:
                 produto.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.deleted_by_id = usuario["id"]
                 produto.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db

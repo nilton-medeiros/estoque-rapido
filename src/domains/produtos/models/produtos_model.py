@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime, UTC
 from typing import Any
 
-# Supondo que ProductStatus esteja no mesmo local ou acessível
-from src.domains.produtos.models.produtos_subclass import ProductStatus
+# Supondo que RegistrationStatus esteja no mesmo local ou acessível
+from src.domains.shared import RegistrationStatus
 from src.shared.utils import Money
 
 
@@ -40,7 +40,7 @@ class Produto:
     maximum_stock_level: int = 0
 
     # --- Campos de Status e Auditoria ---
-    status: ProductStatus = ProductStatus.ACTIVE
+    status: RegistrationStatus = RegistrationStatus.ACTIVE
     # ID do documento no Firestore (gerado automaticamente)
     id: str | None = None
 
@@ -113,7 +113,7 @@ class Produto:
             self.maximum_stock_level = 0
 
         # Se o produto está sendo criado como ACTIVE e não tem activated_at, define-o
-        if self.status == ProductStatus.ACTIVE and self.created_at and not self.activated_at:
+        if self.status == RegistrationStatus.ACTIVE and self.created_at and not self.activated_at:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
@@ -142,7 +142,7 @@ class Produto:
             "minimum_stock_level": self.minimum_stock_level,
             "maximum_stock_level": self.maximum_stock_level,
             "ncm": self.ncm,  # Nomenclatura Comum do Mercosul
-            "status": self.status.name,  # Armazena o nome do enum
+            "status": self.status,  # Armazena o nome do enum
             "image_url": self.image_url,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
@@ -209,18 +209,15 @@ class Produto:
     @classmethod
     def from_dict(cls, data: dict[str, Any], doc_id: str | None = None) -> "Produto":
         """Cria uma instância de Produto a partir de um dicionário (ex: do Firestore)."""
-        status_data = data.get("status")
-        status = ProductStatus.ACTIVE  # Padrão
+        # Converte enums
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status é do tipo RegistrationStatus
 
-        if status_data:
-            if isinstance(status_data, ProductStatus):
-                status = status_data
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
             else:
-                try:
-                    status = ProductStatus[status_data]
-                except KeyError:
-                    # Lidar com status inválido, talvez logar um aviso ou usar um padrão
-                    status = ProductStatus.INACTIVE
+                status = RegistrationStatus.ACTIVE
 
         # Database retorna Timestamps, que precisam ser convertidos para datetime
         created_at = data.get("created_at")

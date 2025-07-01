@@ -113,7 +113,7 @@ class Cliente:
             "email": self.email,
             "delivery_address": self.delivery_address.__dict__ if self.delivery_address else None,
             "birthday": self.birthday,
-            "status": self.status.name,
+            "status": self.status,
             "empresa_id": self.empresa_id,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
@@ -172,9 +172,14 @@ class Cliente:
         Cria uma instância de Cliente a partir de um dicionário (geralmente do Firestore).
         """
         # Converte enums
-        status_data = data.get("status")
-        status = RegistrationStatus[status_data] if isinstance(
-            status_data, str) else RegistrationStatus.ACTIVE
+        status_data = data.get("status", RegistrationStatus.ACTIVE)
+        status = status_data # Por padrão status_data é do tipo RegistrationStatus
+
+        if not isinstance(status_data, RegistrationStatus):
+            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
+                status = RegistrationStatus[status_data]
+            else:
+                status = RegistrationStatus.ACTIVE
 
         # Converte Timestamps do Firestore para datetime/date
         for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at', 'birthday']:

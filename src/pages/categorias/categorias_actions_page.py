@@ -3,7 +3,7 @@ import flet as ft
 import asyncio
 
 from src.domains.categorias.models import ProdutoCategorias
-from src.domains.produtos.models import ProductStatus
+from src.domains.shared import RegistrationStatus
 from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
@@ -16,7 +16,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em send_to_trash_category_async
 
-    status=ProductStatus.DELETED
+    status=RegistrationStatus.DELETED
 
     def send_to_trash_category_async(e_trash):
         # nonlocal status
@@ -40,12 +40,12 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # OPERAÇÃO SOFT DELETE: Muda o status para excluído a categoria pelo ID
             # ToDo: Verificar se há produtos para esta categoria_id, se houver, alterar para INACTIVE
             """
-            Aviso: Se houver produtos vinculados, o status será definido como ProductStatus.INACTIVE. (Obsoleto)
-            Caso contrário, o registro poderá ter o status ProductStatus.DELETED.
+            Aviso: Se houver produtos vinculados, o status será definido como RegistrationStatus.INACTIVE. (Obsoleto)
+            Caso contrário, o registro poderá ter o status RegistrationStatus.DELETED.
             Esta aplicação não exclui efetivamente o registro, apenas altera seu status.
-            A exclusão definitiva ocorrerá após 90 dias da mudança para ProductStatus.DELETED, realizada periodicamente por uma Cloud Function.
+            A exclusão definitiva ocorrerá após 90 dias da mudança para RegistrationStatus.DELETED, realizada periodicamente por uma Cloud Function.
             if is_linked:
-                status = ProductStatus.INACTIVE
+                status = RegistrationStatus.INACTIVE
             """
 
             logger.info(
@@ -55,7 +55,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
             user = page_ctx.app_state.usuario
-            result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProductStatus.DELETED)
+            result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=RegistrationStatus.DELETED)
 
             dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
             page_ctx.update()
@@ -160,7 +160,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
 def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
     user = page.app_state.usuario # type: ignore
-    result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=ProductStatus.ACTIVE)
+    result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

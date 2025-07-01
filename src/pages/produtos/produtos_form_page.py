@@ -14,7 +14,8 @@ import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 import src.domains.produtos.controllers.produtos_controllers as product_controllers
 
-from src.domains.produtos.models import Produto, ProductStatus
+from src.domains.produtos.models import Produto
+from src.domains.shared import RegistrationStatus
 from src.pages.partials import build_input_field
 from src.services import UploadFile, fetch_product_info_by_ean
 from src.shared.utils import  show_banner, message_snackbar, MessageType, get_uuid, format_datetime_to_utc_minus_3
@@ -613,9 +614,9 @@ class ProdutoForm:
             self.ncm_description.value = ncm.get("description", "")
             self.ncm_full_description.value = ncm.get("full_description", "")
 
-        status = self.data.get("status", "ACTIVE")
+        status = self.data.get("status", RegistrationStatus.ACTIVE)
 
-        if status == "ACTIVE":
+        if status == RegistrationStatus.ACTIVE:
             self.status.value = True
             self.status.label = "Produto Ativo"
         else:
@@ -723,7 +724,7 @@ class ProdutoForm:
 
         self.data["brand"] = self.brand.value
         self.data["unit_of_measure"] = self.unit_of_measure.value
-        self.data['status'] = ProductStatus.ACTIVE if self.status.value else ProductStatus.INACTIVE
+        self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
 
         if not self.data.get('empresa_id'):
             self.data["empresa_id"] = self.empresa_logada["id"]
