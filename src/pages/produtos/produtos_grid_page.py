@@ -12,6 +12,9 @@ def show_products_grid(page: ft.Page):
 
     async def handle_action(action: str, produto: Produto | None):
         """Handler unificado para todas as ações"""
+        if not produto and action != 'INSERT':
+            return
+
         match action:
             case "INSERT":
                 page.app_state.clear_form_data() # type: ignore [attr-defined]
