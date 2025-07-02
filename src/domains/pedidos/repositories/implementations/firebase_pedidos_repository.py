@@ -71,6 +71,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 pedido.order_number = self.get_next_pedido_number(
                     pedido.empresa_id)
 
+            # Os itens do pedido são convertidos em uma lista (items) de dict pelo método to_dict_db() para o Firestore
             pedido_data = pedido.to_dict_db()
 
             # Define created_at apenas na criação inicial
