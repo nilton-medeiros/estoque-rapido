@@ -223,6 +223,7 @@ class Cliente:
         elif isinstance(address_data, Address):
             address_obj = address_data
 
+        # ToDo: Implementar este esquema abaixo para os demais módulos "*_model.py" (remover campos tratados e **data)
         # Remove campos já tratados para evitar passar duas vezes no construtor
         for key in ["name", "phone", "delivery_address", "status"]:
             data.pop(key, None)
