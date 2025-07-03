@@ -169,3 +169,43 @@ def handle_update_status(cliente: Cliente, logged_user: dict, status: Registrati
         logger.error(response["message"])
 
     return response
+
+
+def handle_get_by_name_cpf_or_phone(empresa_id: str, research_data: str) -> dict:
+    """
+    Obtém uma lista de clientes ativos pelo nome, CPF ou telefone.
+
+    Args:
+        empresa_id (str): ID da empresa logada.
+        research_data (str): Dados de pesquisa (nome, CPF ou telefone).
+
+    Returns:
+        Lista de clientes encontrados.
+    """
+    response = {}
+
+    try:
+        if not empresa_id:
+            raise ValueError("ID da empresa é necessário")
+        if not research_data:
+            raise ValueError("Dados para pesquisa é necessário")
+
+        repository = FirebaseClientesRepository(empresa_id)
+        clientes = repository.get_by_name_cpf_or_phone(research_data)
+
+        if clientes:
+            response["status"] = "success"
+            response["data"] = clientes
+        else:
+            response["status"] = "error"
+            response["message"] = "Cliente não encontrado"
+
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+
+    return response
