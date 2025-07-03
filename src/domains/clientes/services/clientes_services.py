@@ -92,6 +92,7 @@ class ClientesServices:
     def update_status(self, cliente: Cliente, logged_user: dict, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma cliente existente"""
         user_name: NomePessoa = logged_user["name"]
+        previous_status = cliente.status
         cliente.status = status
 
         match status:
@@ -109,4 +110,7 @@ class ClientesServices:
                 cliente.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
 
         id = self.repository.save(cliente)
+        if not id:
+            # Status não foi alterado, retorna o status anterior ao objeto
+            cliente.status = previous_status
         return id is not None
