@@ -40,10 +40,14 @@ class NomePessoa:
 
         self.first_name = _format_name_part(first_name)
         self.last_name = _format_name_part(last_name)
+        # Nomes em minúsculo para índices e busca no banco normalizada
+        self.first_name_lower = self.first_name.lower() if self.first_name else None
+        self.last_name_lower = self.last_name.lower() if self.last_name else None
 
         # Validação final para garantir que o primeiro nome é obrigatório.
         if not self.first_name:
-            raise ValueError("O primeiro nome (first_name) é obrigatório e não pode ser vazio.")
+            raise ValueError(
+                "O primeiro nome (first_name) é obrigatório e não pode ser vazio.")
 
     @classmethod
     def from_dict(cls, data: dict) -> 'NomePessoa':
@@ -68,13 +72,16 @@ class NomePessoa:
 
         return cls(first_name, last_name)
 
-
-    def to_dict(self) -> dict:
-        return {
-            "first_name": self.first_name,
-            "last_name": self.last_name
-        }
-
+    def to_dict(self) -> dict | None:
+        name_dict = {}
+        # Otimização de consultas e indices no banco de dados para os campos de nomes em lower
+        if self.first_name:
+            name_dict["first_name"] = self.first_name
+            name_dict["first_name_lower"] = self.first_name_lower
+        if self.last_name:
+            name_dict["last_name"] = self.last_name
+            name_dict["last_name_lower"] = self.last_name_lower
+        return name_dict if name_dict else None
 
     @property
     def nome_completo(self) -> str:
@@ -82,7 +89,7 @@ class NomePessoa:
         Retorna o nome completo do usuário capitalizado em cada palavra.
 
         Returns:
-            str: Nome completo do usuário.
+            str: Nome completo do usuário Capitalizado na criação.
         """
         parts = []
         if self.first_name:
@@ -132,10 +139,11 @@ class NomePessoa:
         # Usamos 'assert' para informar ao Pylance que self.first_name é uma string neste ponto.
         assert self.first_name is not None, "first_name não deveria ser None aqui."
 
-        primeiro_nome_palavras = self.first_name.split() # Agora Pylance não reclama
+        primeiro_nome_palavras = self.first_name.split()  # Agora Pylance não reclama
         ultimo_nome_palavras = self.last_name.split() if self.last_name else []
 
-        primeiro = primeiro_nome_palavras[0] # first_name.split() sempre terá pelo menos um elemento
+        # first_name.split() sempre terá pelo menos um elemento
+        primeiro = primeiro_nome_palavras[0]
         ultimo = ultimo_nome_palavras[-1] if ultimo_nome_palavras else ""
 
         if primeiro and ultimo:
@@ -143,6 +151,7 @@ class NomePessoa:
         elif primeiro:
             return primeiro
         return ultimo
+
 
 # Exemplo de uso:
 '''
