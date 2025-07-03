@@ -120,7 +120,7 @@ class Pedido:
             self.activated_by_name = self.created_by_name
 
     def to_dict(self) -> dict[str, Any]:
-        """Converte o objeto Pedido para um dicionário."""
+        """Converte o objeto Pedido para um dicionário, usado no gerenciamento de formulários."""
         return {
             "id": self.id,
             "empresa_id": self.empresa_id,
