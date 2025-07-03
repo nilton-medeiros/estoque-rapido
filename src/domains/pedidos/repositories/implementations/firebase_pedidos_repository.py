@@ -1,6 +1,8 @@
 import logging
 
+from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
+from google.api_core import exceptions as google_api_exceptions
 
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.repositories.contracts.pedidos_repository import PedidosRepository
@@ -186,11 +188,11 @@ class FirebasePedidosRepository(PedidosRepository):
     def get_pedidos_by_empresa_id(self, empresa_id: str, status: RegistrationStatus | None = None) -> tuple[list[Pedido], int]:
         """Busca todos os pedidos de uma empresa, opcionalmente filtrando por status."""
         try:
-            query = self.pedidos_collection.where(
-                "empresa_id", "==", empresa_id)
+            query = (self.pedidos_collection
+                     .where(filter=FieldFilter("empresa_id", "==", empresa_id)))
             if status:
                 # Filtros para somente pedidos 'ACTIVE' ou 'INACTIVE', não haverá contagem de deletados
-                query = query.where("status", "==", status.name)
+                query = query.where(filter=FieldFilter("status", "==", status.name))
             query = query.order_by("order_number")
 
             docs = query.get()
@@ -217,38 +219,30 @@ class FirebasePedidosRepository(PedidosRepository):
                             pedidos_result.append(pedido_obj)
 
             return pedidos_result, quantidade_deletados
-        except exceptions.FirebaseError as e:
-            error_message_lower = str(e).lower()
-            # Condição para erro de índice ausente (Failed Precondition)
-            # O Firestore retorna uma mensagem específica com um link para criar o índice.
-            is_missing_index_error = (
-                (hasattr(e, 'code') and e.code == 'failed-precondition') or
-                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
+            logger.error(
+                f"Erro de pré-condição ao consultar pedido (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
             )
-
-            if is_missing_index_error:
-                logger.error(
-                    f"Erro de pré-condição ao consultar pedidos (provavelmente índice ausente): {e}. "
-                    "O Firestore requer um índice para esta consulta. "
-                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
-                )
-                # A mensagem 'e' já deve conter o link.
-                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
-                raise Exception(
-                    "Erro ao buscar pedidos: Um índice necessário não foi encontrado no banco de dados. "
-                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
-                    f"Detalhe original: {str(e)}"
-                )
-            elif hasattr(e, 'code') and e.code == 'permission-denied':
+            raise Exception(
+                "Erro ao buscar pedido: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.warning(
-                    f"Permissão negada ao consultar lista de pedidos da empresa logada: {e}"
+                    f"Permissão negada ao consultar lista de pedido: {e}"
                 )
                 # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
                 # Por ora, vamos re-lançar para manter o comportamento anterior.
                 raise
             elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar lista de pedidos da empresa logada: {e}"
+                    f"Serviço do Firestore indisponível ao consultar lista de pedido: {e}"
                 )
                 raise Exception(
                     "Serviço do Firestore temporariamente indisponível."
@@ -256,29 +250,15 @@ class FirebasePedidosRepository(PedidosRepository):
             else:
                 # Outros erros FirebaseError
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de pedidos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                    f"Erro do Firebase ao consultar lista de pedido: Código: {e.code}, Detalhes: {e}"
                 )
             raise  # Re-lança o FirebaseError original ou a Exception customizada
 
         except Exception as e:  # Captura exceções que não são FirebaseError
             # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de pedidos da empresa logada: {e}"
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de pedido: {e}"
             )
-            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
-            error_message_lower = str(e).lower()
-            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
-                logger.error(
-                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
-                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
-                )
-                #  print(f"Link de criação do índice: {str(e)}")
-                # Ainda assim, levanta uma exceção que o usuário possa entender
-                raise Exception(
-                    "Erro crítico ao buscar pedidos: Um índice pode ser necessário (detectado em exceção genérica). "
-                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
-                    f"Detalhe original: {str(e)}"
-                )
             raise
 
     # def update_pedido(self, pedido: Pedido) -> Pedido:

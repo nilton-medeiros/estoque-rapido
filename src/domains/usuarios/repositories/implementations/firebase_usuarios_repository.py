@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from google.cloud.firestore_v1.base_query import FieldFilter
+from google.api_core import exceptions as google_api_exceptions
 from firebase_admin import exceptions, firestore
 
 from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
@@ -198,8 +199,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             int: O número de usuários encontrados.
         """
         try:
-            query = self.collection.where(filter=FieldFilter(
-                "empresas", "array_contains", empresa_id))
+            query = (self.collection
+                     .where(filter=FieldFilter("empresas", "array_contains", empresa_id)))
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id) # método antigo
             docs = query.get()
             return len(docs)
@@ -278,8 +279,9 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(
-                filter=FieldFilter("email", "==", email)).limit(1)
+            query = (self.collection
+                     .where(filter=FieldFilter("email", "==", email))
+                     .limit(1))
             docs = query.get()
             return len(docs) > 0
         except exceptions.FirebaseError as e:
@@ -320,9 +322,10 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(
-                filter=FieldFilter("empresas", "array_contains", empresa_id)
-            ).order_by("name.first_name").order_by("name.last_name")
+            query = (self.collection
+                     .where(filter=FieldFilter("empresas", "array_contains", empresa_id))
+                     .order_by("name.first_name_lower")
+                     .order_by("name.last_name_lower"))
 
             docs = query.get()
 
@@ -353,38 +356,30 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             return usuarios_result, quantity_deleted
 
-        except exceptions.FirebaseError as e:
-            error_message_lower = str(e).lower()
-            # Condição para erro de índice ausente (Failed Precondition)
-            # O Firestore retorna uma mensagem específica com um link para criar o índice.
-            is_missing_index_error = (
-                (hasattr(e, 'code') and e.code == 'failed-precondition') or
-                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
+            logger.error(
+                f"Erro de pré-condição ao consultar usuário (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
             )
-
-            if is_missing_index_error:
-                logger.error(
-                    f"Erro de pré-condição ao consultar usuários (provavelmente índice ausente): {e}. "
-                    "O Firestore requer um índice para esta consulta. "
-                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
-                )
-                # A mensagem 'e' já deve conter o link.
-                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
-                raise Exception(
-                    "Erro ao buscar usuários: Um índice necessário não foi encontrado no banco de dados. "
-                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
-                    f"Detalhe original: {str(e)}"
-                )
-            elif hasattr(e, 'code') and e.code == 'permission-denied':
+            raise Exception(
+                "Erro ao buscar usuário: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.warning(
-                    f"Permissão negada ao consultar lista de usuários da empresa logada: {e}"
+                    f"Permissão negada ao consultar lista de usuário: {e}"
                 )
                 # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
                 # Por ora, vamos re-lançar para manter o comportamento anterior.
                 raise
             elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar lista de usuários da empresa logada: {e}"
+                    f"Serviço do Firestore indisponível ao consultar lista de usuário: {e}"
                 )
                 raise Exception(
                     "Serviço do Firestore temporariamente indisponível."
@@ -392,30 +387,17 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             else:
                 # Outros erros FirebaseError
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de usuários da empresa logada: Código: {e.code}, Detalhes: {e}"
+                    f"Erro do Firebase ao consultar lista de usuário: Código: {e.code}, Detalhes: {e}"
                 )
-            raise # Re-lança o FirebaseError original ou a Exception customizada
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
 
-        except Exception as e: # Captura exceções que não são FirebaseError
+        except Exception as e:  # Captura exceções que não são FirebaseError
             # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de usuários da empresa logada: {e}"
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de usuário: {e}"
             )
-            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
-            error_message_lower = str(e).lower()
-            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
-                 logger.error(
-                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
-                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
-                 )
-                #  print(f"Link de criação do índice: {str(e)}")
-                 # Ainda assim, levanta uma exceção que o usuário possa entender
-                 raise Exception(
-                    "Erro crítico ao buscar usuários: Um índice pode ser necessário (detectado em exceção genérica). "
-                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
-                    f"Detalhe original: {str(e)}"
-                 )
             raise
+
 
     def find_by_email(self, email: str) -> Usuario | None:
         """
@@ -431,8 +413,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(
-                filter=FieldFilter("email", "==", email)).limit(1)
+            query = (self.collection
+                     .where(filter=FieldFilter("email", "==", email)).limit(1))
             docs = query.get()
 
             if docs:
@@ -479,9 +461,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(
-                filter=FieldFilter("name", ">=", name)).where(filter=FieldFilter("name", "<=", name + '\uf8ff'))
-            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where('name', '>=', name).where('name', '<=', name + '\uf8ff')
+            research_data_normalized = name.lower().strip()
+            query = (self.collection
+                     .where(filter=FieldFilter("empresas", "array_contains", empresa_id))
+                     .where(filter=FieldFilter("name.first_name_lower", ">=", research_data_normalized))
+                     .where(filter=FieldFilter("name.first_name_lower", "<=", research_data_normalized + '\uf8ff'))
+                     .order_by("name.first_name_lower")
+                     .order_by("name.last_name_lower"))
 
             docs = query.stream()
             usuarios: list[Usuario] = []
@@ -492,25 +478,48 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 usuarios.append(Usuario.from_dict(usuario_data))
 
             return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
-        except exceptions.FirebaseError as e:
-            if e.code == 'permission-denied':
-                logger.warning(
-                    f"Permissão negada ao consultar usuário pelo nome '{name}': {e}")
-            elif e.code == 'unavailable':
-                logger.error(
-                    f"Serviço do Firestore indisponível ao consultar usuário pelo nome '{name}': {e}")
-                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
-                raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
-            else:
-                logger.error(
-                    f"Erro do Firebase ao consultar usuário pelo nome '{name}': Código: {e.code}, Detalhes: {e}")
-            raise  # Re-lançar a exceção para tratamento em camadas superiores
-        except Exception as e:
-            # Captura outros erros inesperados (problemas de rede, etc.)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
             logger.error(
-                f"Erro inesperado ao consultar usuário pelo nome '{name}': {e}")
+                f"Erro de pré-condição ao consultar usuário (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+            )
+            raise Exception(
+                "Erro ao buscar usuário: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de usuário: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
+                logger.error(
+                    f"Serviço do Firestore indisponível ao consultar lista de usuário: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de usuário: Código: {e.code}, Detalhes: {e}"
+                )
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e:  # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
+            logger.error(
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de usuário: {e}"
+            )
             raise
+
 
     def find_by_profile(self, empresa_id: str, profile: str) -> list[Usuario]:
         """
@@ -527,8 +536,11 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             Exception: Em caso de erro na operação de banco de dados.
         """
         try:
-            query = self.collection.where(filter=FieldFilter("empresas", "array_contains", empresa_id)).where(
-                filter=FieldFilter("profile", "==", profile))
+            query = (self.collection
+                     .where(filter=FieldFilter("empresas", "array_contains", empresa_id))
+                     .where(filter=FieldFilter("profile", "==", profile))
+                     .order_by("name.first_name_lower")
+                     .order_by("name.last_name_lower"))
             # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(field_path='profile', op_string='==', value=profile)  # Método antigo
 
             docs = query.stream()
@@ -540,25 +552,48 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                 usuarios.append(Usuario.from_dict(usuario_data))
 
             return usuarios  # Retorna uma lista de usuários encontrados ou lista vazia se nenhum for encontrado
-        except exceptions.FirebaseError as e:
-            if e.code == 'permission-denied':
-                logger.warning(
-                    f"Permissão negada ao consultar usuário pelo pefil do usuário '{profile}': {e}")
-            elif e.code == 'unavailable':
-                logger.error(
-                    f"Serviço do Firestore indisponível ao consultar usuário pelo pefil do usuário '{profile}': {e}")
-                # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
-                raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
-            else:
-                logger.error(
-                    f"Erro do Firebase ao consultar usuário pelo pefil do usuário '{profile}': Código: {e.code}, Detalhes: {e}")
-            raise  # Re-lançar a exceção para tratamento em camadas superiores
-        except Exception as e:
-            # Captura outros erros inesperados (problemas de rede, etc.)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
             logger.error(
-                f"Erro inesperado ao consultar usuário pelo pefil do usuário '{profile}': {e}")
+                f"Erro de pré-condição ao consultar usuário (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+            )
+            raise Exception(
+                "Erro ao buscar usuário: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de usuário: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
+                logger.error(
+                    f"Serviço do Firestore indisponível ao consultar lista de usuário: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de usuário: Código: {e.code}, Detalhes: {e}"
+                )
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e:  # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
+            logger.error(
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de usuário: {e}"
+            )
             raise
+
 
     # ToDo: Excluir este método, esta aplicação usa soft delete
     def delete(self, usuario_id: str) -> bool:

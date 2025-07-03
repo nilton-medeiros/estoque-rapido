@@ -3,8 +3,8 @@ from datetime import datetime, UTC
 from typing import Any
 
 from google.cloud.firestore_v1.base_query import FieldFilter
-from firebase_admin import firestore
-from firebase_admin import exceptions
+from google.api_core import exceptions as google_api_exceptions
+from firebase_admin import exceptions, firestore
 
 from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
@@ -189,13 +189,15 @@ class FirebaseCategoriasRepository(CategoriasRepository):
 
             if status_deleted:
                 # Somente os deletados da empresa_id
-                query = self.collection.where(
-                    filter=FieldFilter("empresa_id", "==", empresa_id)).where(
-                    filter=FieldFilter("status", "==", RegistrationStatus.DELETED.name)).order_by("name")
+                query = (self.collection
+                         .where(filter=FieldFilter("empresa_id", "==", empresa_id))
+                         .where(filter=FieldFilter("status", "==", RegistrationStatus.DELETED.name))
+                         .order_by("name"))
             else:
                 # Obtem todos da empresa_id
-                query = self.collection.where(
-                    filter=FieldFilter("empresa_id", "==", empresa_id)).order_by("name")
+                query = (self.collection
+                         .where(filter=FieldFilter("empresa_id", "==", empresa_id))
+                         .order_by("name"))
 
             docs = query.get()
 
@@ -226,38 +228,30 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     categorias.append(ProdutoCategorias.from_dict(categoria_data_dict))
 
             return categorias, quantidade_deletados
-        except exceptions.FirebaseError as e:
-            error_message_lower = str(e).lower()
-            # Condição para erro de índice ausente (Failed Precondition)
-            # O Firestore retorna uma mensagem específica com um link para criar o índice.
-            is_missing_index_error = (
-                (hasattr(e, 'code') and e.code == 'failed-precondition') or
-                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
+            logger.error(
+                f"Erro de pré-condição ao consultar categoria (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
             )
-
-            if is_missing_index_error:
-                logger.error(
-                    f"Erro de pré-condição ao consultar categorias de produtos (provavelmente índice ausente): {e}. "
-                    "O Firestore requer um índice para esta consulta. "
-                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
-                )
-                # A mensagem 'e' já deve conter o link.
-                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
-                raise Exception(
-                    "Erro ao buscar categorias de produtos: Um índice necessário não foi encontrado no banco de dados. "
-                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
-                    f"Detalhe original: {str(e)}"
-                )
-            elif hasattr(e, 'code') and e.code == 'permission-denied':
+            raise Exception(
+                "Erro ao buscar categoria: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.warning(
-                    f"Permissão negada ao consultar lista de categorias de produtos da empresa logada: {e}"
+                    f"Permissão negada ao consultar lista de categoria: {e}"
                 )
                 # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
                 # Por ora, vamos re-lançar para manter o comportamento anterior.
                 raise
             elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar lista de categorias de produtos da empresa logada: {e}"
+                    f"Serviço do Firestore indisponível ao consultar lista de categoria: {e}"
                 )
                 raise Exception(
                     "Serviço do Firestore temporariamente indisponível."
@@ -265,28 +259,15 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             else:
                 # Outros erros FirebaseError
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de categorias de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                    f"Erro do Firebase ao consultar lista de categoria: Código: {e.code}, Detalhes: {e}"
                 )
-            raise # Re-lança o FirebaseError original ou a Exception customizada
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
 
-        except Exception as e: # Captura exceções que não são FirebaseError
+        except Exception as e:  # Captura exceções que não são FirebaseError
             # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categorias de produtos da empresa logada: {e}"
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categoria: {e}"
             )
-            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
-            error_message_lower = str(e).lower()
-            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
-                 logger.error(
-                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
-                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
-                )
-                # Ainda assim, levanta uma exceção que o usuário possa entender
-                 raise Exception(
-                    "Erro crítico ao buscar categorias de produtos: Um índice pode ser necessário (detectado em exceção genérica). "
-                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
-                    f"Detalhe original: {str(e)}"
-                )
             raise
 
 
@@ -314,13 +295,11 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             raise ValueError("ID da empresa não pode ser nulo ou vazio")
 
         try:
-            query = self.collection.where(
-                filter=FieldFilter("empresa_id", "==", empresa_id)
-            ).where(
-                filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)
-            ).select(
-                ("name", "description") # Campos a serem selecionados
-            ).order_by("name")
+            query = (self.collection
+                     .where(filter=FieldFilter("empresa_id", "==", empresa_id))
+                     .where(filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name))
+                     .select(("name", "description")) # Campos a serem selecionados
+                     .order_by("name"))
 
             docs = query.get() # Alterado para .get()
 
@@ -335,39 +314,30 @@ class FirebaseCategoriasRepository(CategoriasRepository):
                     })
 
             return categorias_summary_list
-
-        except exceptions.FirebaseError as e:
-            error_message_lower = str(e).lower()
-            # Condição para erro de índice ausente (Failed Precondition)
-            # O Firestore retorna uma mensagem específica com um link para criar o índice.
-            is_missing_index_error = (
-                (hasattr(e, 'code') and e.code == 'failed-precondition') or
-                ("query requires an index" in error_message_lower and "create it here" in error_message_lower)
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
+            logger.error(
+                f"Erro de pré-condição ao consultar categoria (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
             )
-
-            if is_missing_index_error:
-                logger.error(
-                    f"Erro de pré-condição ao consultar categorias de produtos (provavelmente índice ausente): {e}. "
-                    "O Firestore requer um índice para esta consulta. "
-                    f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
-                )
-                # A mensagem 'e' já deve conter o link.
-                # Re-lançar com uma mensagem mais amigável, mas instruindo a verificar os logs para o link.
-                raise Exception(
-                    "Erro ao buscar categorias de produtos: Um índice necessário não foi encontrado no banco de dados. "
-                    "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
-                    f"Detalhe original: {str(e)}"
-                )
-            elif hasattr(e, 'code') and e.code == 'permission-denied':
+            raise Exception(
+                "Erro ao buscar categoria: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
                 logger.warning(
-                    f"Permissão negada ao consultar lista de categorias de produtos da empresa logada: {e}"
+                    f"Permissão negada ao consultar lista de categoria: {e}"
                 )
                 # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
                 # Por ora, vamos re-lançar para manter o comportamento anterior.
                 raise
             elif hasattr(e, 'code') and e.code == 'unavailable':
                 logger.error(
-                    f"Serviço do Firestore indisponível ao consultar lista de categorias de produtos da empresa logada: {e}"
+                    f"Serviço do Firestore indisponível ao consultar lista de categoria: {e}"
                 )
                 raise Exception(
                     "Serviço do Firestore temporariamente indisponível."
@@ -375,28 +345,15 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             else:
                 # Outros erros FirebaseError
                 logger.error(
-                    f"Erro do Firebase ao consultar lista de categorias de produtos da empresa logada: Código: {e.code}, Detalhes: {e}"
+                    f"Erro do Firebase ao consultar lista de categoria: Código: {e.code}, Detalhes: {e}"
                 )
-            raise # Re-lança o FirebaseError original ou a Exception customizada
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
 
-        except Exception as e: # Captura exceções que não são FirebaseError
+        except Exception as e:  # Captura exceções que não são FirebaseError
             # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
             logger.error(
-                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categorias de produtos da empresa logada: {e}"
+                f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de categoria: {e}"
             )
-            # Mesmo aqui, vamos verificar se, por algum motivo, um erro de índice passou batido
-            error_message_lower = str(e).lower()
-            if "query requires an index" in error_message_lower and "create it here" in error_message_lower:
-                 logger.error(
-                    f"Atenção: Um erro que parece ser de índice ausente foi capturado pelo bloco 'except Exception': {e}. "
-                    "Isso é inesperado se a exceção for do tipo FirebaseError ou google.api_core.exceptions.FailedPrecondition."
-                )
-                # Ainda assim, levanta uma exceção que o usuário possa entender
-                 raise Exception(
-                    "Erro crítico ao buscar categorias de produtos: Um índice pode ser necessário (detectado em exceção genérica). "
-                    "Verifique os logs do servidor para a mensagem de erro completa do Firestore. "
-                    f"Detalhe original: {str(e)}"
-                )
             raise
 
     def get_active_id_by_name(self, company_id: str, name: str) -> str | None:
@@ -424,13 +381,11 @@ class FirebaseCategoriasRepository(CategoriasRepository):
             raise ValueError("Nome da categoria não pode ser nulo ou vazio")
 
         try:
-            query = self.collection.where(
-                filter=FieldFilter("empresa_id", "==", company_id)
-            ).where(
-                filter=FieldFilter("name_lowercase", "==", name)
-            ).where(
-                filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)
-            ).limit(1) # Garante que pegamos apenas um, caso haja duplicidade (o que não deveria ocorrer)
+            query = (self.collection
+                     .where(filter=FieldFilter("empresa_id", "==", company_id))
+                     .where(filter=FieldFilter("name_lowercase", "==", name))
+                     .where(filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name))
+                     .limit(1)) # Garante que pegamos apenas um, caso haja duplicidade (o que não deveria ocorrer)
 
             docs = query.get() # Retorna uma lista de DocumentSnapshot
 

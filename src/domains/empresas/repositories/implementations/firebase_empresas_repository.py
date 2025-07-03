@@ -3,8 +3,7 @@ from datetime import datetime, UTC # Adicionado para isinstance
 
 # from google.cloud.firestore import Query
 from google.cloud.firestore_v1.base_query import FieldFilter
-from firebase_admin import firestore
-from firebase_admin import exceptions
+from firebase_admin import exceptions, firestore
 
 from src.domains.empresas.models.cnpj import CNPJ  # Importação direta
 from src.domains.empresas.models.empresas_model import Empresa  # Importação direta
@@ -196,8 +195,10 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             Exception: Se ocorrer um erro no Firebase ou outro erro inesperado durante a busca.
         """
         try:
-            query = self.collection.where(filter=FieldFilter(
-                "cnpj", "==", cnpj.raw_cnpj)).limit(1)
+            query = (self.collection
+                     .where(filter=FieldFilter("cnpj", "==", cnpj.raw_cnpj))
+                     .limit(1))
+
             docs = query.get()
 
             if docs:
@@ -239,8 +240,9 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             bool: True se a empresa existir, False caso contrário.
         """
         try:
-            query = self.collection.where(filter=FieldFilter(
-                "cnpj", "==", cnpj.raw_cnpj)).limit(1)
+            query = (self.collection
+                     .where(filter=FieldFilter("cnpj", "==", cnpj.raw_cnpj))
+                     .limit(1))
             docs = query.get()
             return len(docs) > 0
         except exceptions.FirebaseError as e:
@@ -331,8 +333,9 @@ class FirebaseEmpresasRepository(EmpresasRepository):
             ids_empresas_list = list(ids_empresas)
 
             # Buscar documentos diretamente pelos IDs
-            query = self.collection.where(filter=FieldFilter(
-                "id", "in", ids_empresas_list)).where(filter=FieldFilter("status" "<>", "ACTIVE"))
+            query = (self.collection
+                     .where(filter=FieldFilter("id", "in", ids_empresas_list))
+                     .where(filter=FieldFilter("status" "<>", "ACTIVE")))
             # A construção da query é sincrona, mas o get() é assincrono, precisa do await
             docs = query.get()
             return len(docs)
