@@ -103,7 +103,7 @@ class PhoneNumber:
             return f"({national[:2]}) {national[2:6]}-{national[6:]}"
         return national
 
-    def get_digits_only(self) -> str:
+    def get_only_digits(self) -> str:
         """
         Retorna apenas os dígitos do número sem qualquer formatação.
 
@@ -167,7 +167,7 @@ try:
 
     # Diferentes formatos de saída
     >>> print(phone1.get_national())        # (11) 99999-9999
-    >>> print(phone1.get_digits_only())     # 5511999999999
+    >>> print(phone1.get_only_digits())     # 5511999999999
     >>> print(phone1.get_e164())           # +5511999999999
     >>> print(phone1.get_international())   # +55 (11) 99999-9999
 
