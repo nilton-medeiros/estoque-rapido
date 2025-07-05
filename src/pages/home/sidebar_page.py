@@ -59,37 +59,6 @@ def sidebar_header(page: ft.Page):
 
         previous_user_photo = current_user['photo_url']
 
-        async def handle_file_picker_result(e: ft.FilePickerResultEvent):
-            if not e.files:
-                status_text.value = "Nenhum arquivo selecionado"
-                status_text.update()
-                return
-
-            # Atualiza o texto com o nome do arquivo selecionado
-            status_text.value = f"Arquivo selecionado: {e.files[0].name}"
-            status_text.update()
-
-            # Inicia o upload do arquivo
-            await upload_file(e.files)
-
-        def handle_upload_progress(e: ft.FilePickerUploadEvent):
-            # Atualiza a barra de progresso
-            if e.progress == 1:
-                progress_bar.visible = False
-                status_text.value = "Upload concluído!"
-            else:
-                progress_bar.visible = True
-                progress_bar.value = e.progress
-
-            status_text.update()
-            progress_bar.update()
-
-        # Cria o FilePicker
-        pick_files_dialog = ft.FilePicker(
-            on_result=handle_file_picker_result,  # type: ignore
-            on_upload=handle_upload_progress
-        )
-
         async def upload_file(files):
             try:
                 progress_bar.visible = True
@@ -257,6 +226,37 @@ def sidebar_header(page: ft.Page):
                     message_type=MessageType.ERROR
                 )
                 page.close(dialog)
+
+        async def handle_file_picker_result(e: ft.FilePickerResultEvent):
+            if not e.files:
+                status_text.value = "Nenhum arquivo selecionado"
+                status_text.update()
+                return
+
+            # Atualiza o texto com o nome do arquivo selecionado
+            status_text.value = f"Arquivo selecionado: {e.files[0].name}"
+            status_text.update()
+
+            # Inicia o upload do arquivo
+            await upload_file(e.files)
+
+        def handle_upload_progress(e: ft.FilePickerUploadEvent):
+            # Atualiza a barra de progresso
+            if e.progress == 1:
+                progress_bar.visible = False
+                status_text.value = "Upload concluído!"
+            else:
+                progress_bar.visible = True
+                progress_bar.value = e.progress
+
+            status_text.update()
+            progress_bar.update()
+
+        # Cria o FilePicker
+        pick_files_dialog = ft.FilePicker(
+            on_result=handle_file_picker_result,  # type: ignore
+            on_upload=handle_upload_progress
+        )
 
         # Adiciona o FilePicker ao overlay da página
         page.overlay.append(pick_files_dialog)
