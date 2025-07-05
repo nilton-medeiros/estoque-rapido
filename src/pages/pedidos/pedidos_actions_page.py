@@ -43,8 +43,7 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
             user = page_ctx.app_state.usuario
             result = order_controllers.handle_delete_pedido(pedido=pedido, usuario_logado=user)
 
-            dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
-            page_ctx.update()
+            page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
             if result["status"] == "error":
                 message_snackbar(page=page_ctx,
@@ -66,7 +65,7 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
                 Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")  # type: ignore [attr-defined]
             # Ainda assim, fechar o diálogo em caso de erro interno
             if dlg_modal:
-                dlg_modal.open = False
+                page.close(dlg_modal)
             page_ctx.update()
             if not operation_complete_future.done():
                 operation_complete_future.set_result(False)
@@ -74,7 +73,7 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
             logger.error(
                 f"Erro durante a operação 'SOFT_DELETED' ao enviar para lixeira: {ex}")
             if dlg_modal:
-                dlg_modal.open = False
+                page.close(dlg_modal)
             page_ctx.update()
             message_snackbar(
                 message=f"Erro ao enviar para lixeira: {ex}", message_type=MessageType.ERROR, page=page_ctx)
@@ -82,8 +81,7 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
                 operation_complete_future.set_result(False)
 
     def close_dlg(e_close):
-        dlg_modal.open = False
-        e_close.page.update()
+        page.close(dlg_modal)
         if not operation_complete_future.done():
             operation_complete_future.set_result(False)  # Usuário cancelou
 
@@ -130,9 +128,8 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
         )
     )
     # Adiciona ao overlay e abre
-    page.overlay.append(dlg_modal)
-    dlg_modal.open = True
-    page.update()
+    page.open(dlg_modal)
+    # page.update()
     return await operation_complete_future
 
 

@@ -236,15 +236,14 @@ class ChangePasswordDialog:
         """Cancela e fecha o dialog"""
         self._clear_fields()
         if isinstance(self.dialog, ft.AlertDialog):
-            self.dialog.open = False
+            self.page.close(self.dialog)
         e.control.page.update()
 
     def show(self):
         """Exibe o dialog de alteração de senha"""
         self._clear_fields()
         if isinstance(self.dialog, ft.AlertDialog):
-            self.page.overlay.append(self.dialog)
-            self.dialog.open = True
+            self.page.open(self.dialog)
         self.page.update()
         # Foco no primeiro campo
         self.current_password_field.focus()

@@ -59,8 +59,7 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
             user = page_ctx.app_state.usuario
             result = client_controllers.handle_update_status(cliente=cliente, logged_user=user, status=RegistrationStatus.DELETED)
 
-            dlg_modal.open = False  # Fechar diálogo antes de um possível snackbar
-            page_ctx.update()
+            page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
             if result["status"] == "error":
                 message_snackbar(
@@ -82,7 +81,7 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
                 Controls: {dlg_modal.content.controls if dlg_modal else 'dlg_modal não definido'}")  # type: ignore [attr-defined]
             # Ainda assim, fechar o diálogo em caso de erro interno
             if dlg_modal:
-                dlg_modal.open = False
+                page.close(dlg_modal)
             page_ctx.update()
             if not operation_complete_future.done():
                 operation_complete_future.set_result(False)
@@ -90,16 +89,14 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
             logger.error(
                 f"Erro durante a operação '{status.name}' ao enviar para lixeira: {ex}")
             if dlg_modal:
-                dlg_modal.open = False
-            page_ctx.update()
+                page.close(dlg_modal)
             message_snackbar(
                 message=f"Erro ao enviar para lixeira: {ex}", message_type=MessageType.ERROR, page=page_ctx)
             if not operation_complete_future.done():
                 operation_complete_future.set_result(False)
 
     def close_dlg(e_close):
-        dlg_modal.open = False
-        e_close.page.update()
+        page.close(dlg_modal)
         if not operation_complete_future.done():
             operation_complete_future.set_result(False)  # Usuário cancelou
 
@@ -154,9 +151,7 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
     )
     # Adiciona ao overlay e abre
     # Usar e.control.page garante pegar a página do contexto do clique original
-    page.overlay.append(dlg_modal)
-    dlg_modal.open = True
-    page.update()
+    page.open(dlg_modal)
     return await operation_complete_future
 
 
