@@ -180,7 +180,8 @@ def handle_get_by_name_cpf_or_phone(empresa_id: str, research_data: str) -> dict
         research_data (str): Dados de pesquisa (nome, CPF ou telefone).
 
     Returns:
-        Lista de clientes encontrados.
+        response (dict): Resposta da operação. Se response["status"] for "success", response["data"] contém lista de clientes
+        encontrados. Se response["status"] for "error", response["message"] contém mensagem de erro.
     """
     response = {}
 
