@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import datetime, date, UTC
 from typing import Any
 
-from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
+from src.domains.pedidos.models import DeliveryStatus
 from src.domains.shared import Address
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.money_numpy import Money
@@ -56,7 +56,9 @@ class Pedido:
     client_id: str | None = None
     client_name: str | None = None
     client_phone: str | None = None
+    client_is_whatsapp: bool = False
     client_cpf: str | None = None
+    client_birthday: date | None = None
     client_address: Address | None = None
 
     # Status do pedido e entrega
@@ -125,12 +127,14 @@ class Pedido:
             "id": self.id,
             "empresa_id": self.empresa_id,
             "order_number": self.order_number,
-            "total_amount": self.total_amount.to_dict(),
+            "total_amount": self.total_amount,
             "items": [item.to_dict() for item in self.items],
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
+            "client_is_whatsapp": self.client_is_whatsapp,
             "client_cpf": self.client_cpf,
+            "client_birthday": self.client_birthday,
             "client_address": self.client_address.__dict__ if self.client_address else None,
             "status": self.status,
             "delivery_status": self.delivery_status,
@@ -149,6 +153,7 @@ class Pedido:
             "deleted_at": self.deleted_at,
             "deleted_by_id": self.deleted_by_id,
             "deleted_by_name": self.deleted_by_name,
+            **self.get_totais(),
         }
 
     def to_dict_db(self) -> dict[str, Any]:
@@ -164,7 +169,9 @@ class Pedido:
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
+            "client_is_whatsapp": self.client_is_whatsapp,
             "client_cpf": self.client_cpf,
+            "client_birthday": self.client_birthday,
             "client_address": self.client_address.__dict__ if self.client_address else None,
             "status": self.status.name,
             "delivery_status": self.delivery_status.name,
@@ -230,7 +237,9 @@ class Pedido:
             client_id=data.get("client_id"),
             client_name=data.get("client_name"),
             client_phone=data.get("client_phone"),
+            client_is_whatsapp=data.get("client_is_whatsapp", False),
             client_cpf=data.get("client_cpf"),
+            client_birthday=data.get("client_birthday"),
             client_address=client_address_obj,
             status=status,
             delivery_status=delivery_status,
