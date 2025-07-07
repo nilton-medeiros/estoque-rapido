@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class DeliveryStatus(Enum):
-    """Status de Entrega: Cancelado[CANCELED], Pendente[PENDING], Em trânsito[IN_TRANSIT] ou Entregue[DELIVERED]."""
+    """Status de Entrega: Pendente[PENDING], Em trânsito[IN_TRANSIT], Entregue[DELIVERED] ou Cancelado[CANCELED]."""
     PENDING = "Pendente"
     IN_TRANSIT = "Em trânsito"
     DELIVERED = "Entregue"
