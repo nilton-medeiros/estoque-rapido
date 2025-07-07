@@ -392,7 +392,7 @@ class ProdutoCategoriaForm:
     def clear_form(self):
         """Limpa os campos do formulário"""
         for field in self.__dict__.values():
-            if isinstance(field, (ft.TextField, ft.Dropdown)):
+            if isinstance(field, ft.TextField):
                 field.value = ''
             if isinstance(field, (ft.Switch)):
                 field.value = True  # Por default, a categoria sempre é ativa
