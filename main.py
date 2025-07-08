@@ -10,7 +10,9 @@ from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
+from src.pages.pedidos.pedidos_form_page import show_pedido_form
 from src.pages.pedidos.pedidos_grid_page import show_orders_grid
+from src.pages.pedidos.pedidos_grid_recycle_page import show_orders_grid_trash
 from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
 from src.pages.categorias import show_categories_grid, show_categories_grid_trash, show_category_form
 from src.pages.usuarios.usuarios_form_page import show_user_form
@@ -284,9 +286,9 @@ def main(page: ft.Page):
             case '/home/pedidos/grid':
                 pg_view = show_orders_grid(page)
             case '/home/pedidos/grid/lixeira':
-                pass  # implementado
+                pg_view = show_orders_grid_trash(page)
             case '/home/pedidos/form':
-                pass  # implementado
+                pg_view = show_pedido_form(page)
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',

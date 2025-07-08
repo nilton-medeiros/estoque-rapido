@@ -25,7 +25,7 @@ class PedidoGridController:
             self.page.run_task(self.on_action, action, pedido)
 
     def _search_in_pedido(self, pedido: Pedido, search_lower: str) -> bool:
-        if search_lower in pedido.order_number:
+        if pedido.order_number and search_lower in pedido.order_number:
             return True
         if pedido.client_name and search_lower in pedido.client_name:
             return True
@@ -79,7 +79,7 @@ class PedidoGridController:
                 raise Exception(result.get('message', 'Erro desconhecido'))
 
             self.state.pedidos = result['data']["pedidos"]
-            self.state.inactive_count = result['data']["deleted"]
+            self.state.inactive_count = result['data']["quantidade_deletados"]
 
         except Exception as e:
             self.state.pedidos = []

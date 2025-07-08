@@ -15,7 +15,7 @@ class OrderCard:
                 padding=15,
                 content=ft.Column([
                     OrderCard._create_card_header(pedido, on_action_callback),
-                    ft.Text(f"Nº: {pedido.order_number}", weight=ft.FontWeight.BOLD,
+                    ft.Text(f"Total do pedido: {pedido.total_amount}", weight=ft.FontWeight.BOLD,
                            theme_style=ft.TextThemeStyle.BODY_MEDIUM,
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Text(pedido.client_name,
@@ -35,8 +35,7 @@ class OrderCard:
         """Cria o cabeçalho do card com imagem e menu"""
         return ft.Row(
             [
-                ft.Text(f"Total do pedido: {pedido.total_amount}", weight=ft.FontWeight.BOLD,
-                    theme_style=ft.TextThemeStyle.BODY_LARGE),
+                ft.Text(f"Nº: {pedido.order_number}", weight=ft.FontWeight.BOLD, theme_style=ft.TextThemeStyle.BODY_LARGE),
                 ft.Container(expand=True),  # Spacer
                 OrderCard._create_action_menu(pedido, on_action_callback),
             ],
