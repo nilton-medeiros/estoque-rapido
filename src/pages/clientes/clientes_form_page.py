@@ -610,14 +610,14 @@ def show_client_form(page: ft.Page):
             # Instância do objeto Cliente com os dados do formulário para enviar para o backend
             cliente: Cliente = clientes_view.get_form_object_updated()
 
-            # Segunda etapa: Salvando no banco
-            progress_msg.update_progress("Finalizando cadastro...")
-
             # Envia os dados para o backend
             result = client_controllers.handle_save(
                 cliente=cliente,
                 usuario_logado=page.app_state.usuario # type: ignore  [attr-defined]
             )
+
+            # Segunda etapa: Salvando no banco
+            progress_msg.update_progress("Finalizando cadastro...")
 
             if result["status"] == "error":
                 print(f"Debug  -> {result['message']}")
