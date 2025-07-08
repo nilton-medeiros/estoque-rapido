@@ -701,8 +701,7 @@ def sidebar_footer(page: ft.Page):
                                     color="white", size=22),
                     tooltip="Produtos" if page.app_state.empresa.get(  # type: ignore
                         'id') else "Produtos indisponíveis: Selecione uma empresa primeiro.",
-                    on_click=lambda _: page.go(
-                        '/home/produtos/grid'),
+                    on_click=lambda _: page.go('/home/produtos/grid'),
                     disabled=False if page.app_state.empresa.get(  # type: ignore
                         'id') else True,
                 ),
@@ -716,6 +715,17 @@ def sidebar_footer(page: ft.Page):
                     tooltip="Estoque" if page.app_state.empresa.get(  # type: ignore
                         'id') else "Estoque indisponíveis: Selecione uma empresa primeiro.",
                     # on_click=, # Adicione o handler de clique aqui quando tiver
+                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                        'id') else True,
+                ),
+                # --- Ícone de Pedidos ---
+                ft.Container(
+                    **icon_container_props,
+                    content=ft.Icon(ft.Icons.POINT_OF_SALE_OUTLINED,
+                                    color="white", size=22),
+                    tooltip="Pedidos" if page.app_state.empresa.get(  # type: ignore
+                        'id') else "Pedidos indisponíveis: Selecione uma empresa primeiro.",
+                    on_click=lambda _: page.go('/home/pedidos/grid'),
                     disabled=False if page.app_state.empresa.get(  # type: ignore
                         'id') else True,
                 ),
