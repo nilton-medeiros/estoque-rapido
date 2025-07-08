@@ -104,4 +104,5 @@ def create_recycle_bin_card(
         margin=ft.margin.all(5),
         col=col_config,
         tooltip=tooltip_text,
+        expand=True,
     )
