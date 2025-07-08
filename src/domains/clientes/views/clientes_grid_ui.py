@@ -91,7 +91,7 @@ class ClienteGridUI:
             ),
             on_click=lambda _: self.controller.page.go(
                 "/home/clientes/grid/lixeira"),
-            tooltip="Clientes inativos: 0",
+            tooltip="Clientes na lixeira: 0",
             bgcolor=ft.Colors.TRANSPARENT,
         )
 
@@ -156,7 +156,7 @@ class ClienteGridUI:
 
         if isinstance(self.fab_trash.content, ft.Image):
             self.fab_trash.content.src = f"icons/{icon_filename}"
-            self.fab_trash.tooltip = f"Clientes inativos: {self.controller.state.inactive_count}"
+            self.fab_trash.tooltip = f"Clientes na lixeira: {self.controller.state.inactive_count}"
 
     # Event Handlers
     def _on_radio_changed(self, e):

@@ -88,7 +88,7 @@ class PedidoGridUI:
             ),
             on_click=lambda _: self.controller.page.go(
                 "/home/pedidos/grid/lixeira"),
-            tooltip="Pedidos inativos: 0",
+            tooltip="Pedidos na lixeira: 0",
             bgcolor=ft.Colors.TRANSPARENT,
         )
 
@@ -152,7 +152,7 @@ class PedidoGridUI:
 
         if isinstance(self.fab_trash.content, ft.Image):
             self.fab_trash.content.src = f"icons/{icon_filename}"
-            self.fab_trash.tooltip = f"Pedidos inativos: {self.controller.state.inactive_count}"
+            self.fab_trash.tooltip = f"Pedidos na lixeira: {self.controller.state.inactive_count}"
 
     # Event Handlers
     def _on_radio_changed(self, e):
