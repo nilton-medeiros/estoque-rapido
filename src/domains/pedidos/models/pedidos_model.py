@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, date, UTC
 from typing import Any
 
-from src.domains.pedidos.models import DeliveryStatus
+from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import Address
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.money_numpy import Money
@@ -48,7 +48,6 @@ class Pedido:
     Representa um Pedido no sistema.
     """
     empresa_id: str
-    order_number: str # Número sequencial do pedido (ex: "001023")
     total_amount: Money # Novo campo para o total do pedido
     items: list[PedidoItem] = field(default_factory=list)
 
@@ -66,6 +65,7 @@ class Pedido:
     delivery_status: DeliveryStatus = DeliveryStatus.PENDING # Ex: CANCELED, PENDING, IN_TRANSIT, DELIVERED
 
     id: str | None = None
+    order_number: str | None = None # Número sequencial do pedido (ex: "001023") criado pelo database ao salvar
 
     # --- Campos de Auditoria
     created_at: datetime | None = datetime.now(UTC)
@@ -93,10 +93,11 @@ class Pedido:
         # Validações e normalizações
         if not self.empresa_id:
             raise ValueError("O ID da empresa é obrigatório para um pedido.")
-        if not self.order_number:
-            raise ValueError("O número do pedido é obrigatório.")
-        if not self.items:
-            raise ValueError("Um pedido deve conter pelo menos um item.")
+        if self.delivery_status == DeliveryStatus.IN_TRANSIT or self.delivery_status == DeliveryStatus.DELIVERED:
+            if not self.order_number:
+                raise ValueError("O número do pedido é obrigatório para pedidos em trânsito ou entregues.")
+            if not self.items:
+                raise ValueError("Um pedido deve conter pelo menos um item para pedidos em trânsito ou entregues.")
         if not isinstance(self.total_amount, Money):
             raise TypeError("total_amount deve ser uma instância de Money.")
 
@@ -231,8 +232,8 @@ class Pedido:
         return cls(
             id=doc_id or data.get("id"),
             empresa_id=data["empresa_id"],
-            order_number=data["order_number"],
-            total_amount=Money.from_dict(data["total_amount"]),
+            order_number=data.get("order_number"),
+            total_amount=Money.from_dict(data.get("amount_cents", {"amount_cents": 0})),
             items=items,
             client_id=data.get("client_id"),
             client_name=data.get("client_name"),

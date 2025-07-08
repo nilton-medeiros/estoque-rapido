@@ -4,17 +4,18 @@ import re  # Adicionado para expressões regulares
 import flet as ft
 from datetime import datetime  # Adicionado para validação de data
 
+from src.domains.clientes.controllers.clientes_controllers import handle_get_by_name_cpf_or_phone
+from src.domains.clientes.models.clientes_model import Cliente
+from src.domains.pedidos.models.pedidos_model import Pedido
+from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import RegistrationStatus
-
-import src.domains.pedidos.controllers.pedidos_controllers as order_controllers
-
-from src.domains.pedidos.models import Pedido
 from src.domains.shared.models.address import Address
-from src.domains.shared.models.nome_pessoa import NomePessoa
 from src.pages.partials import build_input_field
 from src.pages.partials.responsive_sizes import get_responsive_sizes
-from src.shared.utils import message_snackbar, MessageType, ProgressiveMessage
 from src.shared.config import get_app_colors
+
+import src.domains.pedidos.controllers.pedidos_controllers as order_controllers
+import src.shared.utils.messages as messages
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ class PedidoForm:
         self.padding = 50
         self.app_colors: dict[str, str] = get_app_colors('blue')
 
-        # ! page.session é um objeto que contém o método .get(), não confundir com um dict
+        # * page.session é um objeto que contém o método .get(), não confundir com um dict *
         if page.session.get("user_colors"):
             self.app_colors: dict[str, str] = page.session.get(
                 "user_colors")  # type: ignore [attr-defined]
@@ -47,73 +48,116 @@ class PedidoForm:
         status.label = "Pedido Ativo" if e.data == "true" else "Pedido Inativo"
         status.update()
 
+    def on_change_delivery_status(self, e):
+        delivery_index = e.control.selected_index
+
+        match delivery_index:
+            case 0:
+                e.control.thumb_color = ft.Colors.AMBER_900
+            case 1:
+                e.control.thumb_color = ft.Colors.GREEN_900
+            case 2:
+                e.control.thumb_color = ft.Colors.BLUE_900
+            case 3:
+                e.control.thumb_color = ft.Colors.RED_900
+            case _:
+                e.control.thumb_color = ft.Colors.AMBER_900
+
+        e.control.update()
+
     def _create_form_fields(self):
         """Cria os campos do formulário de Pedido"""
 
+        # Identificação do Pedido ---------------------------------------------
+        # Primeiro responsive row
         # Número do Pedido
         self.order_number = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
+            col={'xs': 12, 'md': 4, 'lg': 4},
             label="Pedido Nº",
             icon=ft.Icons.NUMBERS,
             read_only=True,
-        )
-        # Switch Ativo/Inativo
-        self.status = ft.Switch(
-            col={'xs': 12, 'md': 12, 'lg': 12},
-            label="Pedido Ativo",
-            value=True,
-            on_change=self.on_change_status,
         )
         # Total do pedido
         self.total_amount = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
-            label="Total",
+            col={'xs': 12, 'md': 4, 'lg': 4},
+            label="Total Pedido",
             icon=ft.Icons.ATTACH_MONEY,
             read_only=True,
         )
-        # Total de Itens
-        self.total_items = build_input_field(
+        # Quantidade de Itens
+        self.quantity_items = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
-            label="Itens",
-            icon=ft.Icons.NUMBERS,
-            read_only=True,
-        )
-        # Total de Produtos
-        self.total_products = build_input_field(
-            page_width=self.page.width, # type: ignore [attr-defined]
-            app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
-            label="Produtos",
+            col={'xs': 12, 'md': 4, 'lg': 4},
+            label="Total Itens",
             icon=ft.Icons.NUMBERS,
             read_only=True,
         )
 
+        # Segundo responsive row
+        # Quantidade de Produtos
+        self.quantity_products = build_input_field(
+            page_width=self.page.width, # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 4, 'lg': 4},
+            label="Qtde. Produtos",
+            icon=ft.Icons.NUMBERS,
+            read_only=True,
+        )
+        # Status do Pedido: Switch Ativo/Inativo
+        self.status = ft.Switch(
+            col={'xs': 12, 'md': 2, 'lg': 2},
+            label="Pedido Ativo",
+            value=True,
+            on_change=self.on_change_status,
+        )
+        # Status de Entrega
+        self.delivery_status = ft.CupertinoSlidingSegmentedButton(
+            selected_index=0,
+            thumb_color=ft.Colors.AMBER_900,
+            padding=ft.padding.symmetric(0, 10),
+            controls=[ft.Text(delivery.value) for delivery in DeliveryStatus],
+            on_change=self.on_change_delivery_status,
+        )
+        self.entrega_column = ft.Column(
+            col={'xs': 12, 'md': 6, 'lg': 6},
+            alignment=ft.MainAxisAlignment.START,
+            spacing=20,
+            run_spacing=20,
+            controls=[
+                ft.Text("Status de Entrega", size=16),
+                ft.Divider(height=5),
+                self.delivery_status,
+            ],
+        )
+
+        # Identificação do Cliente (Opcional) ---------------------------------
+        # Filtro para Consultar Cliente
         self.consult_client = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
+            col={'xs': 8, 'md': 6, 'lg': 4},
             label="Consultar Cliente",
             icon=ft.Icons.SEARCH,
+            counter_text="Nome, CPF ou Celular",
         )
-        # Cliente (Opcional)
-        self.client_name = build_input_field(
-            page_width=self.page.width,  # type: ignore [attr-defined]
-            app_colors=self.app_colors,
-            col={'xs': 12, 'md': 12, 'lg': 4},
-            label="Nome do Cliente",
-            icon=ft.Icons.PERSON_3,
+        self.consult_client_btn = ft.IconButton(
+            col={'xs': 4, 'md': 2, 'lg': 2},
+            icon=ft.Icons.SEARCH,
+            icon_size=self.icon_size,
+            tooltip="Consultar CNPJ",
+            disabled=True,
+            on_click=self._consult_client
         )
         # CPF
-        self.cpf = build_input_field(
+        self.client_cpf = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 6, 'lg': 4},
+            col={'xs': 12, 'md': 4, 'lg': 4},
             label="CPF",
             hint_text="123.456.789-00",
             keyboard_type=ft.KeyboardType.NUMBER,
@@ -122,27 +166,11 @@ class PedidoForm:
             counter_text="Opcional",
             on_change=self._handle_cpf_change,
         )
-        # Celular
-        self.phone = build_input_field(
-            page_width=self.page.width,  # type: ignore [attr-defined]
-            app_colors=self.app_colors,
-            col={'xs': 12, 'md': 6, 'lg': 4},
-            label="Celular",
-            hint_text="(11) 98765-4321",  # Atualizado para refletir a máscara
-            keyboard_type=ft.KeyboardType.NUMBER,  # Define o teclado numérico
-            max_length=15,  # (XX) XXXXX-XXXX tem 15 caracteres
-            icon=ft.Icons.CONTACT_PHONE_OUTLINED,
-            on_change=self._handle_phone_change,  # Adiciona o handler de mudança
-        )
-        self.is_whatsapp_check = ft.Checkbox(
-            col={'xs': 12, 'md': 6, 'lg': 2},
-            label="WhatsApp",
-        )
 
         sizes = get_responsive_sizes(self.page.width)
 
         # Dia e mês de aniversário
-        self.birthday = ft.TextField(
+        self.client_birthday = ft.TextField(
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Aniversário",
             text_size=self.font_size,
@@ -174,22 +202,57 @@ class PedidoForm:
             ),
             on_change=self._handle_birthday_change,
         )
+
+        # Cliente (Opcional)
+        self.client_name = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 12, 'lg': 4},
+            label="Nome do Cliente",
+            icon=ft.Icons.PERSON_3,
+        )
+        # Email do Cliente
+        self.client_email = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 12, 'lg': 4},
+            label="Email",
+            keyboard_type=ft.KeyboardType.EMAIL,
+            icon=ft.Icons.EMAIL_OUTLINED,
+        )
+        # Celular
+        self.client_phone = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 6, 'lg': 3},
+            label="Celular",
+            hint_text="(11) 98765-4321",  # Atualizado para refletir a máscara
+            keyboard_type=ft.KeyboardType.NUMBER,  # Define o teclado numérico
+            max_length=15,  # (XX) XXXXX-XXXX tem 15 caracteres
+            icon=ft.Icons.CONTACT_PHONE_OUTLINED,
+            on_change=self._handle_phone_change,  # Adiciona o handler de mudança
+        )
+        self.client_is_whatsapp_check = ft.Checkbox(
+            col={'xs': 12, 'md': 6, 'lg': 1},
+            label="WhatsApp",
+        )
+
         # Endereço
-        self.street = build_input_field(
+        self.client_street = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 12, 'lg': 6},
             label="Rua",
             icon=ft.Icons.LOCATION_ON,
         )
-        self.number = build_input_field(
+        self.client_number = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
             label="Número",
             icon=ft.Icons.NUMBERS,
         )
-        self.complement = build_input_field(
+        self.client_complement = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
@@ -198,14 +261,14 @@ class PedidoForm:
             hint_text="Apto 101",
             hint_fade_duration=5,
         )
-        self.neighborhood = build_input_field(
+        self.client_neighborhood = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 4},
             label="Bairro",
             icon=ft.Icons.LOCATION_CITY,
         )
-        self.city = build_input_field(
+        self.client_city = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 3},
@@ -214,7 +277,7 @@ class PedidoForm:
             hint_text="São Paulo",
             hint_fade_duration=5,
         )
-        self.state = build_input_field(
+        self.client_state = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 2},
@@ -225,7 +288,7 @@ class PedidoForm:
             keyboard_type=ft.KeyboardType.TEXT,
             max_length=2,
         )
-        self.postal_code = build_input_field(
+        self.client_postal_code = build_input_field(
             page_width=self.page.width,  # type: ignore
             app_colors=self.app_colors,
             col={'xs': 12, 'md': 6, 'lg': 3},
@@ -234,6 +297,74 @@ class PedidoForm:
             hint_text="00000-000",
             hint_fade_duration=5,
         )
+
+        self.order_items = []
+
+
+    def _handle_consult_client_change(self, e) -> None:
+        """Atualiza o estado do botão de consulta de clientes baseado no valor do campo de consulta"""
+        self.consult_client_btn.disabled = not self.consult_client.value
+        self.consult_client_btn.update()
+
+    def _consult_client(self, e) -> None:
+        research_data = self.consult_client.value
+        if not research_data or len(research_data.strip()) < 3:
+            return
+        research_data = research_data.strip()
+        result = handle_get_by_name_cpf_or_phone(self.empresa_logada["id"], research_data)
+
+        if result["status"] == "error":
+            messages.message_snackbar(
+                page=self.page, message=result["message"], message_type=messages.MessageType.ERROR)
+            return
+
+        clientes_list = result["data"]
+
+        if len(clientes_list) == 0:
+            messages.show_banner(self.page, "Nenhum cliente encontrado", "Fechar")
+            return
+        elif len(clientes_list) == 1:
+            cliente = clientes_list[0]
+        else:
+            # Mais de um cliente encontrado, pedir para o usuário escolher um deles
+            cliente = self.select_a_client(clientes_list)
+
+        if not cliente:
+            messages.show_banner(self.page, "Nenhum cliente selecionado", "Fechar")
+            return
+
+        self.populate_client_fields(cliente)
+
+
+    def populate_client_fields(self, cliente) -> None:
+        self.client_name.value = f"{cliente.nome.first_name} {cliente.nome.last_name}"
+        self.client_cpf.value = cliente.cpf
+        self.client_phone.value = cliente.phone
+        self.client_email.value = cliente.email
+        self.client_is_whatsapp_check.value = cliente.is_whatsapp
+        self.client_birthday.value = cliente.birthday
+        self.client_street.value = cliente.endereco.street
+        self.client_number.value = cliente.endereco.number
+        self.client_complement.value = cliente.endereco.complement
+        self.client_neighborhood.value = cliente.endereco.neighborhood
+        self.client_city.value = cliente.endereco.city
+        self.client_state.value = cliente.endereco.state
+        self.client_postal_code.value = cliente.endereco.postal_code
+        self.page.update()
+        return
+
+    def select_a_client(self, clientes) -> Cliente | None:
+        """
+        Abre uma interface ui para o usuário escolher um cliente da lista de clientes.
+
+        Args:
+            clientes (list): Lista de objetos Cliente.
+
+        Returns:
+            Cliente: Cliente selecionado pelo usuário ou None se usuário desistir (Cancelar).
+        """
+        # ToDo: Implementar este método para obter do usuário uma das empresas da lista de objetos do tipo Clientes do argumento clientes
+        pass
 
     def _apply_cpf_mask(self, cpf_str: str) -> str:
         """Aplica a máscara de CPF (XXX.XXX.XXX-XX) a uma string."""
@@ -334,7 +465,7 @@ class PedidoForm:
         return bool(re.match(r'^\d{2}/\d{2}$', birthday_str) and self._is_valid_day_month(birthday_str))
 
     def build_form(self) -> ft.Container:
-        """Constrói o formulário de Categoria de Pedidos"""
+        """Constrói o formulário de Pedidos"""
         def responsive_row(controls):
             return ft.ResponsiveRow(
                 columns=12,
@@ -345,27 +476,42 @@ class PedidoForm:
                 controls=controls,
             )
 
+        client_identifications = ft.ExpansionTile(
+            title=ft.Text("Dados do Cliente"),
+            subtitle=ft.Text("Identificação do cliente ou NFCe (Opcional)"),
+            affinity=ft.TileAffinity.LEADING,
+            collapsed_text_color=self.app_colors["primary"],
+            text_color=self.app_colors["container"],
+            controls=[
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.consult_client, self.consult_client_btn, self.client_cpf, self.client_birthday]),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.client_name, self.client_email, self.client_phone, self.client_is_whatsapp_check]),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.Divider(height=5),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                ft.Text("Endereço de entrega", size=16),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.client_street, self.client_number, self.client_complement]),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                responsive_row(controls=[self.client_neighborhood, self.client_city, self.client_state, self.client_postal_code]),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+            ],
+            expanded_cross_axis_alignment=ft.CrossAxisAlignment.START,
+        )
+
         build_content = ft.Column(
             controls=[
                 ft.Text("Identificação do Pedido", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(
-                    controls=[self.first_name, self.last_name, self.email]),
+                responsive_row(controls=[self.order_number, self.total_amount, self.quantity_items]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                ft.ResponsiveRow(controls=[self.cpf, self.phone, self.is_whatsapp_check,
-                                 self.birthday], columns=12, expand=True, spacing=20, run_spacing=20),
-                ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-                ft.Divider(height=5),
-                ft.Text("Endereço de entrega", size=16),
-                responsive_row(
-                    controls=[self.street, self.number, self.complement]),
+                responsive_row(controls=[self.quantity_products, self.status, self.entrega_column]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(
-                    controls=[self.neighborhood, self.city, self.state, self.postal_code]),
+                client_identifications,
                 ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-                ft.Divider(height=5),
-                ft.Container(
-                    self.status, alignment=ft.alignment.center_right, expand=True),
+                ft.Text("Itens do Pedido", size=16),
+                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=5,
@@ -387,37 +533,50 @@ class PedidoForm:
 
     def populate_form_fields(self):
         """Preenche os campos do formulário com os dados do pedido"""
-        user_name = self.data["name"]
-        self.first_name.value = user_name.first_name if user_name.first_name else ""
-        self.last_name.value = user_name.last_name if user_name.last_name else ""
-        self.email.value = self.data["email"]
-        self.cpf.value = self._apply_cpf_mask(self.data.get("cpf", ""))
-        self.phone.value = self.data.get("phone", "")
-        self.is_whatsapp_check.value = self.data.get("is_whatsapp", False)
+
+        self.order_number.value = self.data["order_number"]
+        self.total_amount.value = str(self.data["total_amount"])
+        # self.quantity_items.value = str(len(self.data["items"]))
+        # self.quantity_products.value = str(sum(item['quantity'] for item in self.data["items"]))
+        self.quantity_items.value = str(self.data["total_items"])
+        self.quantity_products.value = str(self.data["total_products"])
+
+        index_status = {
+            "PENDING": 0,
+            "IN_TRANSIT": 1,
+            "DELIVERED": 2,
+            "CANCELED": 3,
+        }
+
+        status_data = self.data["delivery_status"]
+        self.delivery_status.selected_index = index_status[status_data.name]
+
+        self.status.value = self.data["status"] == RegistrationStatus.ACTIVE
+        self.status.label = f"Pedido {str(self.data["status"])}"
+        self.consult_client.value = ""
+        self.consult_client_btn.disabled = True
+        self.client_cpf.value = self.data.get("client_cpf", "")
+        self.client_name.value = self.data.get("client_name", "")
+        self.client_email.value = self.data.get("client_email", "")
+        self.client_phone.value = self.data.get("client_phone", "")
+        self.client_is_whatsapp_check.value = self.data.get("client_is_whatsapp", False)
 
         # Converte o objeto 'date' do modelo para uma string 'DD/MM' para a UI
-        birthday_date = self.data.get("birthday")
+        birthday_date = self.data.get("client_birthday")
         if isinstance(birthday_date, datetime):
             # Formata a data para o formato DD/MM
-            self.birthday.value = birthday_date.strftime('%d/%m')
+            self.client_birthday.value = birthday_date.strftime('%d/%m')
 
-        if address := self.data.get("delivery_address"):
-            self.street.value = address.street
-            self.number.value = address.number
-            self.complement.value = address.complement
-            self.neighborhood.value = address.neighborhood
-            self.city.value = address.city
-            self.state.value = address.state
-            self.postal_code.value = address.postal_code
+        if address := self.data.get("client_address"):
+            self.client_street.value = address.street
+            self.client_number.value = address.number
+            self.client_complement.value = address.complement
+            self.client_neighborhood.value = address.neighborhood
+            self.client_city.value = address.city
+            self.client_state.value = address.state
+            self.client_postal_code.value = address.postal_code
 
-        status = self.data.get("status", RegistrationStatus.ACTIVE)
-
-        if status == RegistrationStatus.ACTIVE:
-            self.status.value = True
-            self.status.label = "Pedido Ativo"
-        else:
-            self.status.value = False
-            self.status.label = "Pedido Inativo"
+        self.order_items = [item for item in self.data["items"]]
 
     def _is_valid_day_month(self, dd_mm_str: str) -> bool:
         """
@@ -434,15 +593,21 @@ class PedidoForm:
 
     def get_form_object_updated(self) -> Pedido:
         """Atualiza self.data com os dados do formulário e o retorna atualizado."""
-        client_name = NomePessoa(first_name=self.first_name.value, last_name=self.last_name.value)
+        index_status = {
+            0: DeliveryStatus.PENDING,
+            1: DeliveryStatus.IN_TRANSIT,
+            2: DeliveryStatus.DELIVERED,
+            3: DeliveryStatus.CANCELED,
+        }
+        self.data["delivery_status"] = index_status[self.delivery_status.selected_index]
+        self.data["status"] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
+        self.data["client_cpf"] = self.client_cpf.value if self.client_cpf.value else None
+        self.data['client_name'] = self.client_name.value if self.client_name.value else None
+        self.data["client_email"] = self.client_email.value if self.client_email.value else None
+        self.data["client_phone"] = self.client_phone.value if self.client_phone.value else None
+        self.data["client_is_whatsapp"] = self.client_is_whatsapp_check.value
 
-        self.data['name'] = client_name
-        self.data["email"] = self.email.value
-        self.data["cpf"] = self.cpf.value
-        self.data["phone"] = self.phone.value
-        self.data["is_whatsapp"] = self.is_whatsapp_check.value
-
-        birthday_str = self.birthday.value
+        birthday_str = self.client_birthday.value
         birthday_date = None
 
         # Converte a string 'DD/MM' da UI de volta para um objeto 'date' para o modelo
@@ -455,51 +620,39 @@ class PedidoForm:
             except ValueError:
                 birthday_date = None  # Garante que datas inválidas não quebrem a aplicação
 
-        self.data["birthday"] = birthday_date  # Armazena o objeto date ou None
+        self.data["client_birthday"] = birthday_date  # Armazena o objeto date ou None
 
-        if self.street.value and self.number.value and self.neighborhood.value and self.city.value and self.state.value and self.postal_code.value:
-            self.data["delivery_address"] = Address(
-                street=self.street.value,
-                number=self.number.value,
-                complement=self.complement.value,
-                neighborhood=self.neighborhood.value,
-                city=self.city.value,
-                state=self.state.value,
-                postal_code=self.postal_code.value,
+        if self.client_street.value and self.client_number.value and self.client_neighborhood.value and\
+           self.client_city.value and self.client_state.value and self.client_postal_code.value:
+            self.data["client_address"] = Address(
+                street=self.client_street.value,
+                number=self.client_number.value,
+                complement=self.client_complement.value,
+                neighborhood=self.client_neighborhood.value,
+                city=self.client_city.value,
+                state=self.client_state.value,
+                postal_code=self.client_postal_code.value,
             )
-
-        self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
 
         if not self.data.get("empresa_id"):
             self.data["empresa_id"] = self.empresa_logada["id"]
+
+        self.data["items"] = [item for item in self.order_items]
+        self.data["total_amount"] = {"amount_cents": int(self.total_amount.value) if self.total_amount.value else 0}
 
         return Pedido.from_dict(self.data)
 
     def validate_form(self) -> str | None:
         """Valida os campos do formulário. Retorna uma mensagem de erro se algum campo obrigatório não estiver preenchido."""
-        if not self.first_name.value:
-            return "Por favor, preencha o nome do pedido."
-        if not self.phone.value:
-            return "Por favor, preencha o telefone do pedido."
-        if self.birthday.value and not self._validate_birthday_format(self.birthday.value):
+        selected_index = self.delivery_status.selected_index
+        if selected_index in [1, 2]:
+            # Pedido entregue, verifica se há itens e valor para faturamento
+            qtty_items = len(self.order_items)
+            qtty_products = int(self.quantity_products.value) if self.quantity_products.value else 0
+            if qtty_items == 0 or qtty_products == 0:
+                return "O Pedido não pode estar em trânsito ou entregue sem itens."
+        if self.client_birthday.value and not self._validate_birthday_format(self.client_birthday.value):
             return "Formato de aniversário inválido. Use DD/MM."
-
-        # Lista de campos de endereço e suas respectivas mensagens de erro
-        address_fields_with_messages = [
-            (self.street.value, "Por favor, preencha o endereço do pedido."),
-            (self.number.value, "Por favor, preencha o número do endereço do pedido."),
-            (self.neighborhood.value, "Por favor, preencha o bairro do endereço do pedido."),
-            (self.city.value, "Por favor, preencha a cidade do endereço do pedido."),
-            (self.state.value, "Por favor, preencha o estado do endereço do pedido."),
-            (self.postal_code.value, "Por favor, preencha o CEP do endereço do pedido.")
-        ]
-
-        # Verifica se *qualquer* campo de endereço foi preenchido
-        if any(value for value, _ in address_fields_with_messages):
-            # Se algum campo foi preenchido, todos os campos obrigatórios devem estar preenchidos
-            for value, message in address_fields_with_messages:
-                if not value:
-                    return message
 
         return None
 
@@ -521,12 +674,23 @@ class PedidoForm:
             self.input_width = 400
 
         # Atualiza os tamanhos dos campos do formulário
-        self.first_name.text_size = self.font_size
-        self.last_name.text_size = self.font_size
-        self.email.text_size = self.font_size
-        self.phone.text_size = self.font_size
-        self.cpf.text_size = self.font_size
-        self.birthday.text_size = self.font_size
+        self.order_number.text_size = self.font_size
+        self.total_amount.text_size = self.font_size
+        self.quantity_items.text_size = self.font_size
+        self.quantity_products.text_size = self.font_size
+        self.consult_client.text_size = self.font_size
+        self.client_cpf.text_size = self.font_size
+        self.client_name.text_size = self.font_size
+        self.client_email.text_size = self.font_size
+        self.client_phone.text_size = self.font_size
+        self.client_birthday.text_size = self.font_size
+        self.client_street.text_size = self.font_size
+        self.client_number.text_size = self.font_size
+        self.client_complement.text_size = self.font_size
+        self.client_neighborhood.text_size = self.font_size
+        self.client_city.text_size = self.font_size
+        self.client_state.text_size = self.font_size
+        self.client_postal_code.text_size = self.font_size
 
         # Atualiza o padding do container
         self.form.padding = self.padding
@@ -539,18 +703,20 @@ class PedidoForm:
         """Limpa os campos do formulário"""
         for field in self.__dict__.values():
             if isinstance(field, ft.TextField):
-                field.value = ''
+                field.value = ""
             if isinstance(field, ft.Switch):
                 field.value = True  # Por default, o status é ativo
             if isinstance(field, ft.Checkbox):
                 field.value = False  # Por default, o "tem whatsapp" é False
+            if isinstance(field, ft.CupertinoSlidingSegmentedButton):
+                field.selected_index = 0  # Por default, o status é pendente
 
         # Limpa o buffer com os dados de pedidos carregados
         self.data = {}
 
 
 # Rota: /home/pedidos/form
-def show_client_form(page: ft.Page):
+def show_pedido_form(page: ft.Page):
     """Página de cadastro de usuarios."""
     route_title = "home/pedidos/form"
     pedido_data = page.app_state.form_data  # type: ignore
@@ -598,15 +764,15 @@ def show_client_form(page: ft.Page):
     def save_form_pedidos(e):
         # Valida os dados do formulário
         if msg := pedidos_view.validate_form():
-            message_snackbar(
-                page=page, message=msg, message_type=MessageType.WARNING)
+            messages.message_snackbar(
+                page=page, message=msg, message_type=messages.MessageType.WARNING)
             return
 
         # Desabilita o botão de salvar para evitar múltiplos cliques
         save_btn.disabled = True
 
         # Cria o gerenciador de mensagens progressivas
-        progress_msg = ProgressiveMessage(page)
+        progress_msg = messages.ProgressiveMessage(page)
 
         try:
             # Primeira etapa: Salvando pedido
@@ -615,14 +781,14 @@ def show_client_form(page: ft.Page):
             # Instância do objeto Pedido com os dados do formulário para enviar para o backend
             pedido: Pedido = pedidos_view.get_form_object_updated()
 
-            # Segunda etapa: Salvando no banco
-            progress_msg.update_progress("Finalizando cadastro...")
-
             # Envia os dados para o backend
-            result = order_controllers.handle_save(
+            result = order_controllers.handle_save_pedido(
                 pedido=pedido,
                 usuario_logado=page.app_state.usuario # type: ignore  [attr-defined]
             )
+
+            # Segunda etapa: Salvando no banco
+            progress_msg.update_progress("Finalizando cadastro...")
 
             if result["status"] == "error":
                 print(f"Debug  -> {result['message']}")
@@ -630,13 +796,16 @@ def show_client_form(page: ft.Page):
                 save_btn.disabled = False
                 return
 
+            progress_msg.show_success("Pedido salvo com sucesso!")
+            # Limpa o formulário e volta para a página anterior
             pedidos_view.clear_form()
             page.back()  # type: ignore [attr-defined]
 
         except Exception as ex:
             # Em caso de erro inesperado
-            print(f"Debug  -> Erro inesperado: {str(ex)}")
-            progress_msg.show_error(f"Erro inesperado: {str(ex)}")
+            logger.error(f"Erro em get_form_object_updated ou handle_save_pedido: {str(ex)}")
+            print(f"Debug  -> Erro: {str(ex)}")
+            progress_msg.show_error(f"Erro: {str(ex)}")
             save_btn.disabled = False
         finally:
             # Sempre reabilita o botão após um tempo
@@ -660,7 +829,8 @@ def show_client_form(page: ft.Page):
     exit_btn = ft.ElevatedButton(
         text="Cancelar", col={'xs': 5, 'md': 5, 'lg': 5}, on_click=exit_form_pedidos)
     space_between = ft.Container(col={'xs': 2, 'md': 2, 'lg': 2})
-    return ft.Column(
+
+    form_page = ft.Column(
         controls=[
             form_container,
             ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
@@ -675,5 +845,14 @@ def show_client_form(page: ft.Page):
                 alignment=ft.MainAxisAlignment.END,
             ),
         ],
-        data=appbar,
+    )
+
+    return ft.View(
+        route=page.route,
+        controls=[form_page],
+        appbar=appbar,
+        bgcolor=ft.Colors.BLACK,
+        scroll=ft.ScrollMode.AUTO,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )

@@ -18,7 +18,7 @@ class PedidosRepository(ABC):
 
 
     @abstractmethod
-    def save_pedido(self, pedido: Pedido) -> str | None:
+    def save_pedido(self, pedido: Pedido) -> Pedido | None:
         """Adiciona um novo pedido ao Firestore."""
         raise NotImplementedError(
         "Este método deve ser implementado pela subclasse")

@@ -197,7 +197,7 @@ class MainContent(ft.Container):
             self.content_card(
                 icons=[
                     ft.Icon(ft.Icons.ADD, size=40, color=ft.Colors.PRIMARY),
-                    ft.Icon(ft.Icons.POINT_OF_SALE, size=40, color=ft.Colors.PRIMARY)
+                    ft.Icon(ft.Icons.POINT_OF_SALE_OUTLINED, size=40, color=ft.Colors.PRIMARY)
                 ],
                 title="Registrar",
                 click_action=self._on_click_salle_add,
@@ -279,21 +279,21 @@ class MainContent(ft.Container):
 
     # --- Métodos Helper para Ações e Títulos (movidos para dentro da classe) ---
     def _on_click_salle_add(self, e):
-        print(f"on_click_registrar {e.control}")
+        e.control.page.go('/home/pedidos/form')
 
     def _on_click_client_add(self, e):
         e.control.page.go('/home/clientes/form')
 
     def _on_click_status(self, e):
-        print(f"on_click_status {e.control}")
+        print(f"on_click_status: {e.control.tooltip}")
 
     def _on_click_nfce(self, e):
-        print(f"on_click_nfce {e.control}")
+        print(f"on_click_nfce {e.control.tooltip}")
 
     def _sections_title(self, title: str):
         return ft.Container(content=ft.Text(value=title, theme_style=ft.TextThemeStyle.HEADLINE_MEDIUM))
 
 
 # Função original que será chamada para criar a instância de MainContent
-def main_content(page: ft.Page) -> MainContent:
-    return MainContent(page)
+# def main_content(page: ft.Page) -> MainContent:
+#     return MainContent(page)

@@ -19,13 +19,13 @@ def handle_save_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
         operation = "atualizado"
 
         if pedido.id:
-            pedido_id = services.update_pedido(pedido, usuario_logado)
+            pedido_obj = services.update_pedido(pedido, usuario_logado)
         else:
-            pedido_id = services.create_pedido(pedido, usuario_logado)
+            pedido_obj = services.create_pedido(pedido, usuario_logado)
             operation = "criado"
 
         response["status"] = "success"
-        response["data"] = pedido_id
+        response["data"] = pedido_obj
         response["message"] = f"Pedido {operation} com sucesso."
     except ValueError as e:
         response["status"] = "error"

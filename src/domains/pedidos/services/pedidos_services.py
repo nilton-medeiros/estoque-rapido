@@ -9,7 +9,7 @@ class PedidosServices:
     def __init__(self, repository: PedidosRepository):
         self.repository = repository
 
-    def create_pedido(self, pedido: Pedido, usuario_logado: dict) -> str | None:
+    def create_pedido(self, pedido: Pedido, usuario_logado: dict) -> Pedido | None:
         """
         Envia dados do Pedido para o repositorio do database instânciado em pedidos_controllers
 
@@ -33,7 +33,7 @@ class PedidosServices:
 
         return self.repository.save_pedido(pedido)
 
-    def update_pedido(self, pedido: Pedido, usuario_logado: dict) -> str | None:
+    def update_pedido(self, pedido: Pedido, usuario_logado: dict) -> Pedido | None:
         """
         Envia dados do Pedido para o repositorio do database instânciado em pedidos_controllers
 

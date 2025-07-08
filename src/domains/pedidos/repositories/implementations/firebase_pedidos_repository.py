@@ -65,7 +65,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 f"Erro ao obter ou incrementar o número do pedido para empresa {empresa_id}: {e}")
             raise
 
-    def save_pedido(self, pedido: Pedido) -> str | None:
+    def save_pedido(self, pedido: Pedido) -> Pedido | None:
         """Adiciona um novo pedido ou altera um existente ao Firestore."""
         try:
             # Obtém e incrementa o número do pedido antes de salvar caso seja um novo pedido
@@ -120,12 +120,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 # e transfere os timestamps reais para o objeto 'pedido' original
                 # que foi passado para o método 'save'.
                 updated_pedido_obj = Pedido.from_dict(pedido_data_from_db)
-
-                pedido.created_at = updated_pedido_obj.created_at
-                pedido.updated_at = updated_pedido_obj.updated_at
-                pedido.activated_at = updated_pedido_obj.activated_at
-                pedido.deleted_at = updated_pedido_obj.deleted_at
-                pedido.inactivated_at = updated_pedido_obj.inactivated_at
+                return updated_pedido_obj
 
             except Exception as e_read:
                 logger.error(
@@ -134,7 +129,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 # A operação de save principal foi bem-sucedida, mas a releitura falhou.
                 # O objeto 'pedido' em memória não terá os timestamps reais, mas o registro no DB está correto.
                 # Ainda retorna o ID, pois o save no DB foi OK.
-                return pedido.id
+                return pedido
 
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -155,8 +150,6 @@ class FirebasePedidosRepository(PedidosRepository):
             logger.error(
                 f"Erro inesperado ao salvar pedido: {translated_error} [{str(e)}]")
             raise
-
-        return pedido.id
 
     def get_pedido_by_id(self, pedido_id: str) -> Pedido | None:
         """Busca um pedido pelo seu ID."""
