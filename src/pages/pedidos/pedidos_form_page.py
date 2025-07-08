@@ -166,6 +166,7 @@ class PedidoForm:
             label="Consultar Cliente",
             icon=ft.Icons.SEARCH,
             counter_text="Nome, CPF ou Celular",
+            on_change=self._handle_consult_client_change,
         )
         self.consult_client_btn = ft.IconButton(
             col={'xs': 4, 'md': 2, 'lg': 2},
@@ -373,18 +374,58 @@ class PedidoForm:
         self.page.update()
         return
 
-    def select_a_client(self, clientes) -> Cliente | None:
-        """
-        Abre uma interface ui para o usuário escolher um cliente da lista de clientes.
+    def select_a_client(self, clientes: list[Cliente]) -> Cliente | None:
+        selected_cliente: Cliente | None = None
+        dialog = ft.AlertDialog(modal=True)
+        list_controls = []
 
-        Args:
-            clientes (list): Lista de objetos Cliente.
+        def close_dialog(e):
+            self.page.close(dialog)
 
-        Returns:
-            Cliente: Cliente selecionado pelo usuário ou None se usuário desistir (Cancelar).
-        """
-        # ToDo: Implementar este método para obter do usuário uma das empresas da lista de objetos do tipo Clientes do argumento clientes
-        pass
+        def select_and_close(cliente: Cliente):
+            def handler(e):
+                nonlocal selected_cliente
+                selected_cliente = cliente
+                self.page.close(dialog)
+            return handler
+
+        for cliente in clientes:
+            list_controls.append(
+                ft.ListTile(
+                    title=ft.Text(cliente.name.nome_completo, size=16),
+                    subtitle=ft.Text(f"CPF: {cliente.cpf or '---'} | Fone: {cliente.phone}", size=14),
+                    leading=ft.Icon(ft.Icons.PERSON),
+                    on_click=select_and_close(cliente),
+                )
+            )
+
+        dialog.content = ft.Container(
+            width=500,
+            height=400,
+            content=ft.Column(
+                scroll=ft.ScrollMode.AUTO,
+                controls=[
+                    ft.Text("Selecione um Cliente", size=18, weight=ft.FontWeight.BOLD),
+                    ft.Divider(),
+                    ft.ListView(
+                        expand=True,
+                        spacing=5,
+                        controls=list_controls,
+                    ),
+                    ft.Divider(),
+                    ft.TextButton("Cancelar", on_click=lambda _: self.page.close(dialog)),
+                ],
+            )
+        )
+
+        self.page.open(dialog)
+
+        # Espera de forma síncrona até o usuário interagir (hack)
+        import time
+        while dialog.open:
+            time.sleep(0.1)
+
+        return selected_cliente
 
     def _apply_cpf_mask(self, cpf_str: str) -> str:
         """Aplica a máscara de CPF (XXX.XXX.XXX-XX) a uma string."""
