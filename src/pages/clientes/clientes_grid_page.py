@@ -13,7 +13,7 @@ def show_clients_grid(page: ft.Page):
     async def handle_action(action: str, cliente: Cliente | None):
         """Handler unificado para todas as ações"""
         if not cliente and action != "INSERT":
-            return 
+            return
 
         match action:
             case "INSERT":
@@ -24,9 +24,10 @@ def show_clients_grid(page: ft.Page):
                 page.go('/home/clientes/form')
             case "SOFT_DELETE":
                 from src.pages.clientes import clientes_actions_page as cli_actions
-                is_deleted = await cli_actions.send_to_trash(page=page, cliente=cliente)
-                if is_deleted:
-                    await controller.load_clientes()
+                if cliente:
+                    is_deleted = await cli_actions.send_to_trash(page=page, cliente=cliente)
+                    if is_deleted:
+                        await controller.load_clientes()
 
     # Configuração da página
     page.theme_mode = ft.ThemeMode.DARK
