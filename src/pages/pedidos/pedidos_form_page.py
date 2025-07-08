@@ -12,6 +12,7 @@ from src.domains.shared import RegistrationStatus
 from src.domains.shared.models.address import Address
 from src.pages.partials import build_input_field
 from src.pages.partials.responsive_sizes import get_responsive_sizes
+from src.pages.pedidos.pedido_items_subform import PedidoItemsSubform
 from src.shared.config import get_app_colors
 
 import src.domains.pedidos.controllers.pedidos_controllers as order_controllers
@@ -40,6 +41,14 @@ class PedidoForm:
 
         # Responsividade
         self._create_form_fields()
+
+        # Inicializa o subformulário de itens
+        self.items_subform = PedidoItemsSubform(
+            page=self.page,
+            app_colors=self.app_colors,
+            on_items_change=self._on_items_change
+        )
+
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
 
@@ -64,6 +73,19 @@ class PedidoForm:
                 e.control.thumb_color = ft.Colors.AMBER_900
 
         e.control.update()
+
+    def _on_items_change(self, items):
+        """Callback chamado quando os itens são alterados"""
+        # Atualiza os campos de totais automaticamente
+        self.total_amount.value = f"{self.items_subform.get_total_amount():.2f}"
+        self.quantity_items.value = str(int(self.items_subform.get_total_quantity()))
+        self.quantity_products.value = str(self.items_subform.get_total_products())
+
+        # Atualiza a interface
+        self.total_amount.update()
+        self.quantity_items.update()
+        self.quantity_products.update()
+
 
     def _create_form_fields(self):
         """Cria os campos do formulário de Pedido"""
@@ -298,8 +320,7 @@ class PedidoForm:
             hint_fade_duration=5,
         )
 
-        self.order_items = []
-
+        # self.order_items será gerenciado pelo subformulário
 
     def _handle_consult_client_change(self, e) -> None:
         """Atualiza o estado do botão de consulta de clientes baseado no valor do campo de consulta"""
@@ -334,7 +355,6 @@ class PedidoForm:
             return
 
         self.populate_client_fields(cliente)
-
 
     def populate_client_fields(self, cliente) -> None:
         self.client_name.value = f"{cliente.nome.first_name} {cliente.nome.last_name}"
@@ -500,6 +520,22 @@ class PedidoForm:
             expanded_cross_axis_alignment=ft.CrossAxisAlignment.START,
         )
 
+        # ExpansionTile para os itens do pedido
+        items_section = ft.ExpansionTile(
+            title=ft.Text("Itens do Pedido"),
+            subtitle=ft.Text("Adicione produtos ao pedido"),
+            affinity=ft.TileAffinity.LEADING,
+            collapsed_text_color=self.app_colors["primary"],
+            text_color=self.app_colors["container"],
+            initially_expanded=True,  # Começa expandido
+            controls=[
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                self.items_subform.build(),
+                ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+            ],
+            expanded_cross_axis_alignment=ft.CrossAxisAlignment.START,
+        )
+
         build_content = ft.Column(
             controls=[
                 ft.Text("Identificação do Pedido", size=16),
@@ -510,8 +546,7 @@ class PedidoForm:
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 client_identifications,
                 ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-                ft.Text("Itens do Pedido", size=16),
-                ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
+                items_section,  # Substitui a linha antiga "Itens do Pedido"
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=5,
@@ -576,7 +611,17 @@ class PedidoForm:
             self.client_state.value = address.state
             self.client_postal_code.value = address.postal_code
 
-        self.order_items = [item for item in self.data["items"]]
+        items_data = []
+        for i, item in enumerate(self.data.get("items", [])):
+            items_data.append({
+                'id': i + 1,
+                'description': item.get('description', ''),
+                'quantity': item.get('quantity', 0),
+                'unit_price': item.get('unit_price', 0),
+                'total': item.get('total', 0)
+            })
+
+        self.items_subform.set_items(items_data)
 
     def _is_valid_day_month(self, dd_mm_str: str) -> bool:
         """
@@ -637,20 +682,42 @@ class PedidoForm:
         if not self.data.get("empresa_id"):
             self.data["empresa_id"] = self.empresa_logada["id"]
 
-        self.data["items"] = [item for item in self.order_items]
-        self.data["total_amount"] = {"amount_cents": int(self.total_amount.value) if self.total_amount.value else 0}
+        items_data = []
+        for item in self.items_subform.get_items():
+            items_data.append({
+                'description': item['description'],
+                'quantity': item['quantity'],
+                'unit_price': item['unit_price'],
+                'total': item['total']
+            })
+
+        self.data["items"] = items_data
+
+        # Atualiza o valor total baseado nos itens
+        total_amount = self.items_subform.get_total_amount()
+        self.data["total_amount"] = {"amount_cents": int(total_amount * 100)}
+
+        # Atualiza as quantidades
+        self.data["total_items"] = int(self.items_subform.get_total_quantity())
+        self.data["total_products"] = self.items_subform.get_total_products()
 
         return Pedido.from_dict(self.data)
 
     def validate_form(self) -> str | None:
         """Valida os campos do formulário. Retorna uma mensagem de erro se algum campo obrigatório não estiver preenchido."""
+
+        # Validação dos itens
+        if not self.items_subform.get_items():
+            return "Adicione pelo menos um item ao pedido."
+
         selected_index = self.delivery_status.selected_index
         if selected_index in [1, 2]:
             # Pedido entregue, verifica se há itens e valor para faturamento
-            qtty_items = len(self.order_items)
-            qtty_products = int(self.quantity_products.value) if self.quantity_products.value else 0
+            qtty_items = self.items_subform.get_total_products()
+            qtty_products = int(self.items_subform.get_total_quantity())
             if qtty_items == 0 or qtty_products == 0:
                 return "O Pedido não pode estar em trânsito ou entregue sem itens."
+
         if self.client_birthday.value and not self._validate_birthday_format(self.client_birthday.value):
             return "Formato de aniversário inválido. Use DD/MM."
 
@@ -711,9 +778,11 @@ class PedidoForm:
             if isinstance(field, ft.CupertinoSlidingSegmentedButton):
                 field.selected_index = 0  # Por default, o status é pendente
 
+        # Limpa os itens do subformulário
+        self.items_subform.clear_items()
+
         # Limpa o buffer com os dados de pedidos carregados
         self.data = {}
-
 
 # Rota: /home/pedidos/form
 def show_pedido_form(page: ft.Page):
