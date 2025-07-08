@@ -14,20 +14,20 @@ class PedidoItem:
     Representa um item individual dentro de um Pedido.
     """
     product_id: str
-    product_name: str # Desnormalizado
+    description: str # Desnormalizado
     quantity: int
-    price_unit: Money
-    price_total: Money
+    unit_price: Money
+    total: Money
     id: str | None = None # ID do item na sub-coleção
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "product_id": self.product_id,
-            "product_name": self.product_name,
+            "description": self.description,
             "quantity": self.quantity,
-            "price_unit": self.price_unit.to_dict(),
-            "price_total": self.price_total.to_dict(),
+            "unit_price": self.unit_price.to_dict(),
+            "total": self.total.to_dict(),
         }
 
     @classmethod
@@ -35,10 +35,10 @@ class PedidoItem:
         return cls(
             id=data.get("id"),
             product_id=data["product_id"],
-            product_name=data["product_name"],
+            description=data["description"],
             quantity=data["quantity"],
-            price_unit=Money.from_dict(data["price_unit"]),
-            price_total=Money.from_dict(data["price_total"]),
+            unit_price=Money.from_dict(data["unit_price"]),
+            total=Money.from_dict(data["total"]),
         )
 
 
@@ -50,6 +50,8 @@ class Pedido:
     empresa_id: str
     total_amount: Money # Novo campo para o total do pedido
     items: list[PedidoItem] = field(default_factory=list)
+    total_items: int = 0
+    total_products: int = 0
 
     # Dados do Cliente (desnormalizados e opcionais)
     client_id: str | None = None
@@ -130,6 +132,8 @@ class Pedido:
             "order_number": self.order_number,
             "total_amount": self.total_amount,
             "items": [item.to_dict() for item in self.items],
+            "total_items": self.total_items,
+            "total_products": self.total_products,
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
@@ -167,6 +171,8 @@ class Pedido:
             "order_number": self.order_number,
             "total_amount": self.total_amount.to_dict(),
             "items": [item.to_dict() for item in self.items],
+            "total_items": self.total_items,
+            "total_products": self.total_products,
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
@@ -235,6 +241,8 @@ class Pedido:
             order_number=data.get("order_number"),
             total_amount=Money.from_dict(data.get("amount_cents", {"amount_cents": 0})),
             items=items,
+            total_items=data.get("total_items", 0),
+            total_products=data.get("total_products", 0),
             client_id=data.get("client_id"),
             client_name=data.get("client_name"),
             client_phone=data.get("client_phone"),
@@ -266,12 +274,16 @@ class Pedido:
         # Usa o método factory `mint` para criar um valor 'zero' com a moeda correta.
         # É a forma preferencial e mais segura de instanciar Money.
         zero = Money.mint("0.00", currency_symbol=self.total_amount.currency_symbol)
-        total = sum((item.price_total for item in self.items), zero)
+        total = sum((item.total for item in self.items), zero)
         return total
 
     def get_totais(self) -> dict[str, Any]:
+        # Garante uma atualização nos totais em caso de alteração de algum item
+        self.total_amount = self.calcular_total()
+        self.total_items = len(self.items)
+        self.total_products = sum(item.quantity for item in self.items)
         return {
-            "total_amount": self.calcular_total,
-            "total_items": len(self.items),
-            "total_products": sum(item.quantity for item in self.items),
+            "total_amount": self.total_amount,
+            "total_items": self.total_items,
+            "total_products": self.total_products,
         }
