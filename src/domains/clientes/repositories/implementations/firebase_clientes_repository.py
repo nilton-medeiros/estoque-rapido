@@ -179,7 +179,6 @@ class FirebaseClientesRepository(ClientesRepository):
 
             clientes_result: list[Cliente] = []
             quantidade_deletados = 0
-
             for doc in docs:
                 clientes_data = doc.to_dict()
                 if clientes_data:
@@ -196,6 +195,9 @@ class FirebaseClientesRepository(ClientesRepository):
                     else:  # not status_deleted (mostrar não deletados)
                         if cliente_obj.status != RegistrationStatus.DELETED:
                             clientes_result.append(cliente_obj)
+                else:
+                    logger.warning(f"Documento {doc.id} está vazio. Talvez os campos não existam na base de dados.")
+
             return clientes_result, quantidade_deletados
 
         except google_api_exceptions.FailedPrecondition as e:
