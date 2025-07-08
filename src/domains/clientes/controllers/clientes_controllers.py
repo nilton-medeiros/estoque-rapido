@@ -110,9 +110,8 @@ def handle_get_all(empresa_logada: str, status_deleted: bool = False) -> dict:
             raise ValueError("ID da empresa é necessário")
 
         repository = FirebaseClientesRepository(empresa_logada)
-        clientes_services = ClientesServices(repository)
 
-        clientes_list, quantidade_deletados = clientes_services.get_all(status_deleted=status_deleted)
+        clientes_list, quantidade_deletados = repository.get_all(status_deleted=status_deleted)
 
         response["status"] = "success"
         response["data"] = {
@@ -125,7 +124,6 @@ def handle_get_all(empresa_logada: str, status_deleted: bool = False) -> dict:
     except Exception as e:
         response["status"] = "error"
         response["message"] = str(e)
-
     return response
 
 

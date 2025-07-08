@@ -75,18 +75,18 @@ class ClientesServices:
         return self.repository.get_by_id(cliente_id)
 
 
-    def get_all(self, status_deleted: bool = False) -> tuple[list[Cliente], int]:
-        """
-        Obtém todos os clientes da empresa logada.
+    # def get_all(self, status_deleted: bool = False) -> tuple[list[Cliente], int]:
+    #     """
+    #     Obtém todos os clientes da empresa logada.
 
-        Args:
-            status_deleted (bool): Se True, retorna apenas clientes deletados.
+    #     Args:
+    #         status_deleted (bool): Se True, retorna apenas clientes deletados.
 
-        Returns:
-            list[Cliente]: Lista de clientes.
-            int: Número total de clientes marcados como "DELETED".
-        """
-        return self.repository.get_all(status_deleted=status_deleted)
+    #     Returns:
+    #         list[Cliente]: Lista de clientes.
+    #         int: Número total de clientes marcados como "DELETED".
+    #     """
+    #     return self.repository.get_all(status_deleted=status_deleted)
 
 
     def update_status(self, cliente: Cliente, logged_user: dict, status: RegistrationStatus) -> bool:
