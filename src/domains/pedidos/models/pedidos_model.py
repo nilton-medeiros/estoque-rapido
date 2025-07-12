@@ -18,6 +18,7 @@ class PedidoItem:
     quantity: int
     unit_price: Money
     total: Money
+    unit_of_measure: str = "UN"
     id: str | None = None # ID do item na sub-coleção
 
     def to_dict(self) -> dict[str, Any]:
@@ -26,21 +27,37 @@ class PedidoItem:
             "product_id": self.product_id,
             "description": self.description,
             "quantity": self.quantity,
+            "unit_of_measure": self.unit_of_measure,
             "unit_price": self.unit_price.to_dict(),
             "total": self.total.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PedidoItem":
+        def get_money(value: Any) -> Money:
+            if isinstance(value, Money):
+                return value
+            elif isinstance(value, dict):
+                return Money.from_dict(value)
+            elif isinstance(value, int):
+                # Assume que o valor inteiro está em centavos
+                return Money.mint(str(value / 100))
+            elif isinstance(value, float):
+                return Money.mint(str(value))
+            return Money.mint("0.00")  # Fallback para outros tipos
+
+        price = data["unit_price"]
+        total = data["total"]
+
         return cls(
             id=data.get("id"),
             product_id=data["product_id"],
             description=data["description"],
             quantity=data["quantity"],
-            unit_price=Money.from_dict(data["unit_price"]),
-            total=Money.from_dict(data["total"]),
+            unit_of_measure=data["unit_of_measure"],
+            unit_price=get_money(price),
+            total=get_money(total),
         )
-
 
 @dataclass
 class Pedido:
@@ -235,11 +252,25 @@ class Pedido:
         if address_data := data.get("client_address"):
             client_address_obj = Address(**address_data) # Assumindo que Address pode ser instanciado diretamente de um dict
 
+        def get_money(value: Any) -> Money:
+            if isinstance(value, Money):
+                return value
+            elif isinstance(value, dict):
+                return Money.from_dict(value)
+            elif isinstance(value, int):
+                # Assume que o valor inteiro está em centavos
+                return Money.mint(str(value / 100))
+            elif isinstance(value, float):
+                return Money.mint(str(value))
+            return Money.mint("0.00")  # Fallback para outros tipos
+
+        total = data["total_amount"]
+
         return cls(
             id=doc_id or data.get("id"),
             empresa_id=data["empresa_id"],
             order_number=data.get("order_number"),
-            total_amount=Money.from_dict(data.get("amount_cents", {"amount_cents": 0})),
+            total_amount=get_money(total),
             items=items,
             total_items=data.get("total_items", 0),
             total_products=data.get("total_products", 0),
