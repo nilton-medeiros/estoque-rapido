@@ -16,13 +16,21 @@ from src.pages.pedidos.pedido_items_subform import PedidoItemsSubform
 from src.shared.config import get_app_colors
 
 import src.domains.pedidos.controllers.pedidos_controllers as order_controllers
+import src.domains.produtos.controllers.produtos_controllers as product_controllers
 import src.shared.utils.messages as messages
 
 logger = logging.getLogger(__name__)
 
 
 class PedidoForm:
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, products: list[dict]):
+        """
+        Inicializa o formulário de Pedido.
+
+        Args:
+            page: Objeto Page do Flet.
+            products: Lista de produtos disponíveis.
+        """
         self.page = page
         self.empresa_logada = page.app_state.empresa  # type: ignore [attr-defined]
         self.data = page.app_state.form_data  # type: ignore [attr-defined] dados do pedido, se houver.
@@ -46,6 +54,7 @@ class PedidoForm:
         self.items_subform = PedidoItemsSubform(
             page=self.page,
             app_colors=self.app_colors,
+            products=products,
             on_items_change=self._on_items_change
         )
 
@@ -358,19 +367,25 @@ class PedidoForm:
         self.populate_client_fields(cliente)
 
     def populate_client_fields(self, cliente) -> None:
-        self.client_name.value = f"{cliente.nome.first_name} {cliente.nome.last_name}"
+        self.client_name.value = f"{cliente.name.first_name} {cliente.name.last_name}"
         self.client_cpf.value = cliente.cpf
-        self.client_phone.value = cliente.phone
+        self.client_phone.value = str(cliente.phone)
         self.client_email.value = cliente.email
         self.client_is_whatsapp_check.value = cliente.is_whatsapp
-        self.client_birthday.value = cliente.birthday
-        self.client_street.value = cliente.endereco.street
-        self.client_number.value = cliente.endereco.number
-        self.client_complement.value = cliente.endereco.complement
-        self.client_neighborhood.value = cliente.endereco.neighborhood
-        self.client_city.value = cliente.endereco.city
-        self.client_state.value = cliente.endereco.state
-        self.client_postal_code.value = cliente.endereco.postal_code
+
+        birthday_date = cliente.birthday
+        if isinstance(birthday_date, datetime):
+            # Formata a data para o formato DD/MM
+            self.client_birthday.value = birthday_date.strftime('%d/%m')
+
+        if cliente.delivery_address:
+            self.client_street.value = cliente.delivery_address.street
+            self.client_number.value = cliente.delivery_address.number
+            self.client_complement.value = cliente.delivery_address.complement
+            self.client_neighborhood.value = cliente.delivery_address.neighborhood
+            self.client_city.value = cliente.delivery_address.city
+            self.client_state.value = cliente.delivery_address.state
+            self.client_postal_code.value = cliente.delivery_address.postal_code
         self.page.update()
         return
 
@@ -609,11 +624,10 @@ class PedidoForm:
 
     def populate_form_fields(self):
         """Preenche os campos do formulário com os dados do pedido"""
+        from src.shared.utils.money_numpy import Money
 
         self.order_number.value = self.data["order_number"]
         self.total_amount.value = str(self.data["total_amount"])
-        # self.quantity_items.value = str(len(self.data["items"]))
-        # self.quantity_products.value = str(sum(item['quantity'] for item in self.data["items"]))
         self.quantity_items.value = str(self.data["total_items"])
         self.quantity_products.value = str(self.data["total_products"])
 
@@ -654,12 +668,29 @@ class PedidoForm:
 
         items_data = []
         for i, item in enumerate(self.data.get("items", [])):
+            # Converte unit_price e total de Money/dict para float
+            unit_price = item.get('unit_price')
+            total = item.get('total')
+
+            # Verifica se unit_price é um objeto Money ou um dict e converte para float
+            if isinstance(unit_price, Money):
+                unit_price = unit_price.get_decimal()
+            elif isinstance(unit_price, dict):
+                unit_price = Money.from_dict(unit_price).get_decimal()
+
+            # Verifica se total é um objeto Money ou um dict e converte para float
+            if isinstance(total, Money):
+                total = total.get_decimal()
+            elif isinstance(total, dict):
+                total = Money.from_dict(total).get_decimal()
+
             items_data.append({
                 'id': i + 1,
                 'description': item.get('description', ''),
                 'quantity': item.get('quantity', 0),
-                'unit_price': item.get('unit_price', 0),
-                'total': item.get('total', 0)
+                'unit_price': float(unit_price),  # Garante que é float
+                'total': float(total),  # Garante que é float
+                'unit_of_measure': item.get('unit_of_measure', 'UN'),
             })
 
         self.items_subform.set_items(items_data)
@@ -724,19 +755,21 @@ class PedidoForm:
             self.data["empresa_id"] = self.empresa_logada["id"]
 
         items_data = []
+        # parei aki parei aqui Parei aki Parei aqui
         for item in self.items_subform.get_items():
             items_data.append({
+                'product_id': item['id'],
                 'description': item['description'],
                 'quantity': item['quantity'],
-                'unit_price': item['unit_price'],
-                'total': item['total']
+                'unit_of_measure': item['unit_of_measure'] or 'UN',
+                'unit_price': item['unit_price'],   # float, em Pedido.from_dict() trata isto
+                'total': item['total'],   # float, em Pedido.from_dict() trata isto
             })
-
         self.data["items"] = items_data
 
         # Atualiza o valor total baseado nos itens
         total_amount = self.items_subform.get_total_amount()
-        self.data["total_amount"] = {"amount_cents": int(total_amount * 100)}
+        self.data["total_amount"] = total_amount
 
         # Atualiza as quantidades
         self.data["total_items"] = int(self.items_subform.get_total_quantity())
@@ -867,7 +900,28 @@ def show_pedido_form(page: ft.Page):
         adaptive=True,
     )
 
-    pedidos_view = PedidoForm(page=page)
+    # Busca os produtos da empresa logada
+    empresa_id = page.app_state.empresa["id"]  # type: ignore [attr-defined]
+    result = product_controllers.handle_get_all(empresa_id)
+
+    if result["status"] == "error":
+        messages.message_snackbar(
+            page=page, message=result["message"], message_type=messages.MessageType.ERROR)
+        return
+
+    products = result["data"]["produtos"]
+    product_list = [
+        {
+            "id": prod.id,
+            "description": prod.name,
+            "sale_price": prod.sale_price.get_decimal(),
+            "quantity_on_hand": prod.quantity_on_hand,
+            "unit_of_measure": prod.unit_of_measure
+        }
+        for prod in products
+    ]
+
+    pedidos_view = PedidoForm(page=page, products=product_list)
     pedidos_view.did_mount()
     form_container = pedidos_view.build()
 
@@ -901,7 +955,6 @@ def show_pedido_form(page: ft.Page):
             progress_msg.update_progress("Finalizando cadastro...")
 
             if result["status"] == "error":
-                print(f"Debug  -> {result['message']}")
                 progress_msg.show_error(result["message"])
                 save_btn.disabled = False
                 return
@@ -913,8 +966,7 @@ def show_pedido_form(page: ft.Page):
 
         except Exception as ex:
             # Em caso de erro inesperado
-            logger.error(f"Erro em get_form_object_updated ou handle_save_pedido: {str(ex)}")
-            print(f"Debug  -> Erro: {str(ex)}")
+            logger.error(f"Erro: {str(ex)}")
             progress_msg.show_error(f"Erro: {str(ex)}")
             save_btn.disabled = False
         finally:
