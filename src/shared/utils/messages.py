@@ -38,6 +38,7 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
         margin=ft.margin.all(10),
     )
 
+    # ToDo: Refatorar para page.open(snack_bar)
     page.overlay.append(snack_bar)
     page.update()
     snack_bar.open = True
