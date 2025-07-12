@@ -1,4 +1,5 @@
 import logging
+import datetime
 
 from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import exceptions, firestore
@@ -75,6 +76,13 @@ class FirebasePedidosRepository(PedidosRepository):
 
             # Os itens do pedido são convertidos em uma lista (items) de dict pelo método to_dict_db() para o Firestore
             pedido_data = pedido.to_dict_db()
+
+            # Firestore não suporta nativamente objetos `datetime.date`.
+            # É necessário convertê-los para `datetime.datetime` antes de salvar.
+            client_birthday = pedido_data.get('client_birthday')
+            if client_birthday and isinstance(client_birthday, datetime.date) and not isinstance(client_birthday, datetime.datetime):
+                # Converte a data para um datetime à meia-noite.
+                pedido_data['client_birthday'] = datetime.datetime.combine(client_birthday, datetime.time.min)
 
             # Define created_at apenas na criação inicial
             if not pedido_data.get("created_at"):
