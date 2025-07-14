@@ -642,7 +642,7 @@ class PedidoForm:
         self.delivery_status.selected_index = index_status[status_data.name]
 
         self.status.value = self.data["status"] == RegistrationStatus.ACTIVE
-        self.status.label = f"Pedido {str(self.data["status"])}"
+        self.status.label = f"Pedido {str(self.data['status'])}"
         self.consult_client.value = ""
         self.consult_client_btn.disabled = True
         self.client_cpf.value = self.data.get("client_cpf", "")
