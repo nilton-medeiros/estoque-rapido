@@ -33,7 +33,7 @@ def handle_save_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
     except Exception as e:
         response["status"] = "error"
         response[
-            "message"] = f"Erro ao {"criar" if operation == "criado" else "atualizar"} pedido: {str(e)}"
+            "message"] = f"Erro ao {'criar' if operation == 'criado' else 'atualizar'} pedido: {str(e)}"
 
     return response
 
