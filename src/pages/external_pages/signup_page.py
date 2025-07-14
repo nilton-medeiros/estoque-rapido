@@ -153,7 +153,8 @@ class SignupView:
                         on_click=lambda _: self.page.go('/'),
                     ),
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                scroll=ft.ScrollMode.AUTO,
             ),
         )
 
