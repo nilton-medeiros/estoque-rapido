@@ -331,7 +331,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             usuarios_result: list[Usuario] = []
             quantity_deleted = 0
-
             for doc in docs:
                 user_data = doc.to_dict()
                 if user_data: # Garante que o documento não esteja vazio
@@ -353,7 +352,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             # Modificação 2: Remover ordenação em memória, pois o Firestore já fez isso.
             # usuarios_result.sort(key=lambda usuario: usuario.categoria_name) # REMOVIDO
-
             return usuarios_result, quantity_deleted
 
         except google_api_exceptions.FailedPrecondition as e:
