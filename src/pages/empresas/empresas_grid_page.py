@@ -175,7 +175,6 @@ def show_companies_grid(page: ft.Page):
     async def load_data_and_update_ui():
         empresas_data = []
         nonlocal empresas_inactivated
-
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
         set_empresas = page.app_state.usuario.get( # type: ignore
             'empresas', [])  # Usar get com default

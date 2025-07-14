@@ -146,12 +146,7 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: RegistrationSta
             ft.OutlinedButton("Não", icon=ft.Icons.CLOSE, on_click=close_dlg),
         ],
         actions_alignment=ft.MainAxisAlignment.END,
-        on_dismiss=lambda e_dismiss: (
-            logger.info(
-                f"Modal dialog para empresa {empresa.id} ({status.name}) foi descartado."),
-            # Garante que a future seja resolvida se descartado
-            close_dlg(e_dismiss)
-        )
+        on_dismiss=lambda e_dismiss: close_dlg(e_dismiss) # Garante que a future seja resolvida se descartado
     )
     # Adiciona ao overlay e abre
     # Usar e.control.page garante pegar a página do contexto do clique original

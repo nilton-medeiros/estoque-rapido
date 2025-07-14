@@ -620,7 +620,6 @@ def show_client_form(page: ft.Page):
             progress_msg.update_progress("Finalizando cadastro...")
 
             if result["status"] == "error":
-                print(f"Debug  -> {result['message']}")
                 progress_msg.show_error(result["message"])
                 save_btn.disabled = False
                 return
@@ -630,7 +629,6 @@ def show_client_form(page: ft.Page):
 
         except Exception as ex:
             # Em caso de erro inesperado
-            print(f"Debug  -> Erro inesperado: {str(ex)}")
             progress_msg.show_error(f"Erro inesperado: {str(ex)}")
             save_btn.disabled = False
         finally:
