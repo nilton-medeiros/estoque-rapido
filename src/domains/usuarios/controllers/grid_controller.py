@@ -59,7 +59,7 @@ class UsuarioGridController:
             result = await self._fetch_usuarios_async(empresa_id)
 
             if result["status"] == "error":
-                raise Exception(result.get('message', 'Erro desconhecido'))
+                raise Exception(result["message"])
 
             self.state.usuarios = result['data']["usuarios"]
             self.state.inactive_count = result['data']["deleted"]
