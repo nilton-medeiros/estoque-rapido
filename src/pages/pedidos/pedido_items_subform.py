@@ -16,7 +16,8 @@ class PedidoItemsSubform:
         self.items: list[dict] = []
 
         # Componentes do subformulário
-        self.items_container = ft.ListView(spacing=20, padding=ft.padding.all(20), expand=True)  # Usando ListView com spacing e expand
+        # self.items_container = ft.ListView(spacing=20, padding=ft.padding.all(20), expand=True)  # Usando ListView com spacing e expand
+        self.items_container = ft.ListView()  # Usando ListView
         self.total_display = ft.Text("Total: R$ 0,00", size=16, weight=ft.FontWeight.BOLD)
 
         # Campos do formulário de novo item
@@ -278,14 +279,14 @@ class PedidoItemsSubform:
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    spacing=20,
-                    run_spacing=20,
                 ),
-                padding=20,
-                border=ft.border.only(bottom=ft.border.BorderSide(1, self.app_colors.get("primary", ft.Colors.BLUE))),
-                border_radius=8,
+                padding=10,
+                margin=ft.margin.only(left=10, right=10),
+            bgcolor=ft.Colors.TRANSPARENT,
             ),
-            margin=ft.margin.all(0),  # Garante que não haja margem externa
+            color=ft.Colors.GREY_900,
+            shadow_color=ft.Colors.WHITE,
+            margin=ft.margin.only(left=10, right=10, top=10),
             elevation=5,  # Elevação para distinção visual
         )
 
@@ -375,9 +376,7 @@ class PedidoItemsSubform:
             content=self.items_container,
             border=ft.border.all(1, ft.Colors.GREY_300),
             border_radius=8,
-            padding=25,  # Padding para espaço interno
-            expand=True,  # Permite que o container se expanda
-            # margin=ft.margin.all(10)
+            bgcolor=ft.Colors.BLACK,
         )
 
         items_section = ft.Card(
@@ -407,7 +406,6 @@ class PedidoItemsSubform:
                 new_item_section,
                 items_section,
             ],
-            spacing=10,
         )
 
     def get_items(self) -> list[dict]:
