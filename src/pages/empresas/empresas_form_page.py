@@ -943,8 +943,9 @@ def show_company_main_form(page: ft.Page):
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return
 
-        # Atualiza o estado do app com o nova empresa antes da navegação se não existir
-        page.app_state.set_empresa(empresa.to_dict()) # type: ignore
+        if not page.app_state.empresa:  # type: ignore [attr: defined]
+            # Atualiza o estado do app com o nova empresa antes da navegação se não existir
+            page.app_state.set_empresa(empresa.to_dict()) # type: ignore
 
         # Associa a empresa a lista de empresas do usuário
         user['empresas'].add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
