@@ -48,6 +48,7 @@ class LoginView:
                 tight=True,
             ),
             width=sizes["button_width"],
+            height=50,
             style=ft.ButtonStyle(
                 color=ft.Colors.WHITE,
                 side=ft.BorderSide(
