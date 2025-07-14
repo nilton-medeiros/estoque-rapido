@@ -284,7 +284,7 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Regis
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=RegistrationStatus.ACTIVE)
+        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
 
         if is_updated:
             response["status"] = "success"
