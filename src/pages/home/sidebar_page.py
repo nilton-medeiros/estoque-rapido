@@ -628,112 +628,78 @@ class PopupColorItem(ft.PopupMenuItem):
 
 
 def sidebar_footer(page: ft.Page):
-    def logoff_user(e):
-        page.go('/logout')
-
-    # --- Nova Função de Hover ---
     def handle_icon_hover(e):
         """Muda o bgcolor do container no hover."""
-        # Ensure e.control is the container
-
         if isinstance(e.control, ft.Container):
             e.control.bgcolor = ft.Colors.with_opacity(
                 0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
             e.control.update()
 
-    # --- Fim da Nova Função ---
-
-    # --- Definições comuns para os Containers de Ícone ---
     icon_container_props = {
         "width": 40,
         "height": 40,
-        # Metade da largura/altura para ser círculo
         "border_radius": ft.border_radius.all(20),
         "ink": True,
         "bgcolor": ft.Colors.TRANSPARENT,
         "alignment": ft.alignment.center,
         "on_hover": handle_icon_hover,
     }
-    # --- Fim das Definições Comuns ---
 
     return ft.Container(
-        # Ajuste o padding se necessário
         padding=ft.padding.symmetric(vertical=10, horizontal=10),
         content=ft.Row(
             controls=[
-                # --- Ícone Sair ---
-                ft.Container(
-                    **icon_container_props,
-                    content=ft.Icon(ft.Icons.POWER_SETTINGS_NEW,
-                                    color="white", size=22),
-                    tooltip="Sair",
-                    on_click=logoff_user,
-                ),
-                # --- Ícone Empresas ---
                 ft.Container(
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.BUSINESS, color="white", size=22),
                     tooltip="Empresas",
                     on_click=lambda _: page.go('/home/empresas/grid'),
                 ),
-                # --- Ícone Usuários ---
                 ft.Container(
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.GROUPS, color="white", size=22),
                     tooltip="Usuários",
                     on_click=lambda _: page.go('/home/usuarios/grid'),
                 ),
-                # --- Ícone Categorias de Produtos ---
                 ft.Container(
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.ASSIGNMENT_OUTLINED,
                                     color="white", size=22),
-                    tooltip="Categorias de produtos" if page.app_state.empresa.get(  # type: ignore
+                    tooltip="Categorias de produtos" if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else "Categorias de produtos indisponíveis: Selecione uma empresa primeiro.",
                     on_click=lambda _: page.go('/home/produtos/categorias/grid'),
-                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                    disabled=False if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else True,
                 ),
-                # --- Ícone de Produtos ---
                 ft.Container(
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.SHOPPING_BAG_OUTLINED,
                                     color="white", size=22),
-                    tooltip="Produtos" if page.app_state.empresa.get(  # type: ignore
+                    tooltip="Produtos" if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else "Produtos indisponíveis: Selecione uma empresa primeiro.",
                     on_click=lambda _: page.go('/home/produtos/grid'),
-                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                    disabled=False if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else True,
                 ),
-                # --- Ícone de Estoque ---
                 ft.Container(
                     **icon_container_props,
-                    # content=ft.Icon(ft.Icons.FORKLIFT, color="white", size=22),
                     content=ft.Icon(ft.Icons.FACT_CHECK_OUTLINED,
                                     color="white", size=22),
-                    # content=ft.Icon(ft.Icons.ASSIGNMENT_TURNED_IN_OUTLINED, color="white", size=22),
-                    tooltip="Estoque" if page.app_state.empresa.get(  # type: ignore
+                    tooltip="Estoque" if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else "Estoque indisponíveis: Selecione uma empresa primeiro.",
-                    # on_click=, # Adicione o handler de clique aqui quando tiver
-                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                    disabled=False if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else True,
                 ),
-                # --- Ícone de Pedidos ---
                 ft.Container(
                     **icon_container_props,
                     content=ft.Icon(ft.Icons.POINT_OF_SALE_OUTLINED,
                                     color="white", size=22),
-                    tooltip="Pedidos" if page.app_state.empresa.get(  # type: ignore
+                    tooltip="Pedidos" if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else "Pedidos indisponíveis: Selecione uma empresa primeiro.",
                     on_click=lambda _: page.go('/home/pedidos/grid'),
-                    disabled=False if page.app_state.empresa.get(  # type: ignore
+                    disabled=False if page.app_state.empresa.get( # type: ignore [attr: defined]
                         'id') else True,
                 ),
-                # --- Fim dos Ícones ---
-                ft.Container(
-                    expand=True,  # Mantém o espaço para empurrar o botão de cor
-                ),
-                # Ícone Cor do Thema
                 ft.PopupMenuButton(
                     icon=ft.Icons.COLOR_LENS_OUTLINED,
                     items=[
@@ -752,11 +718,11 @@ def sidebar_footer(page: ft.Page):
                 ),
             ],
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Garante espaçamento
-            spacing=5,  # Adiciona um pequeno espaço entre os botões
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            spacing=10,
+            scroll=ft.ScrollMode.AUTO,  # Enable horizontal scrolling
         ),
     )
-
 
 def sidebar_container(page: ft.Page):
     """Container Esquerdo vertical na Home page do usuário"""
