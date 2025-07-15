@@ -331,6 +331,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
             usuarios_result: list[Usuario] = []
             quantity_deleted = 0
+            i = 0
             for doc in docs:
                 user_data = doc.to_dict()
                 if user_data: # Garante que o documento não esteja vazio
