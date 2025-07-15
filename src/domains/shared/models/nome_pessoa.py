@@ -81,6 +81,11 @@ class NomePessoa:
         if self.last_name:
             name_dict["last_name"] = self.last_name
             name_dict["last_name_lower"] = self.last_name_lower
+        else:
+            # Para indexação no database
+            name_dict["last_name"] = ""
+            name_dict["last_name_lower"] = ""
+
         return name_dict if name_dict else None
 
     @property
