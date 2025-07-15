@@ -405,6 +405,7 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
         if not empresa_id:
             raise ValueError("ID da empresa logada não pode ser nulo ou vazio")
+
         usuarios_list, quantity = usuarios_services.get_all(empresa_id=empresa_id, status_deleted=status_deleted)
 
         response["status"] = "success"
