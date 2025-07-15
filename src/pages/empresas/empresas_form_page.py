@@ -611,11 +611,19 @@ class EmpresaView:
             return "Email inválido"
         self.email.value = email
 
-        if len(self.cnpj.value) < 14 and self.logo_url: # type: ignore
+        cnpj = None
+        if self.cnpj.value:
+            try:
+                cnpj = CNPJ(self.cnpj.value)
+            except ValueError as e:
+                return str(e)
+
+        # Para salvar o logo_url no bucket, é preciso do cnpj como prefix do arquivo
+        if not cnpj and self.logo_url:
             return "É preciso CNPJ válido para salvar o logo da empresa"
+
         # Se todos os campos obrigatórios estão preenchidos, retorna None
         return None
-
 
     def _page_resize(self, e):
         if self.page.width < 600: # type: ignore
@@ -682,7 +690,10 @@ class EmpresaView:
 
         cnpj = None
         if self.cnpj.value:
-            cnpj = CNPJ(self.cnpj.value)
+            try:
+                cnpj = CNPJ(self.cnpj.value)
+            except ValueError as e:
+                cnpj = None
 
         phone = None
         if self.phone.value:
