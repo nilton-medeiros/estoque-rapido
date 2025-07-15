@@ -78,7 +78,7 @@ def main(page: ft.Page):
                     clear_usuario_ui()
             case "empresa_updated": # Adicionado o tratamento para empresa_updated
                 # Executa a atualização do dashboard em uma task separada (async)
-                page.run_task(refresh_dashboard_session, page)
+                page.run_task(refresh_dashboard_session, page) # type: ingnore [attr: defined]
                 if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
