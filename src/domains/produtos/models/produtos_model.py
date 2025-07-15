@@ -17,6 +17,7 @@ class Produto:
     name_lowercase: str
     categoria_id: str  # ID da categoria (da coleção 'produto_categorias')
     categoria_name: str # Nome da categoria (desnormalizado para ordenação)
+    categoria_name_lower: str # Indice de busca no banco
     ncm: dict
 
     # --- Campos Essenciais do Produto ---
@@ -85,6 +86,10 @@ class Produto:
             self.unit_of_measure = self.unit_of_measure.strip().upper()
         if self.categoria_name: # Normaliza o nome da categoria
             self.categoria_name = self.categoria_name.strip().capitalize()
+            self.categoria_name_lower = self.categoria_name.lower()
+        else:
+            self.categoria_name = "Categoria não definida"
+            self.categoria_name_lower = "categoria não definida"
 
         if not isinstance(self.sale_price, Money):
             self.sale_price = Money.mint("0.00")
@@ -131,6 +136,7 @@ class Produto:
             "name_lowercase": self.name_lowercase,
             "categoria_id": self.categoria_id,
             "categoria_name": self.categoria_name,
+            "categoria_name_lower": self.categoria_name_lower,
             "description": self.description,
             "internal_code": self.internal_code,
             "ean_code": self.ean_code,
@@ -174,6 +180,7 @@ class Produto:
             "name_lowercase": self.name_lowercase,
             "categoria_id": self.categoria_id,
             "categoria_name": self.categoria_name,
+            "categoria_name_lower": self.categoria_name_lower,
             "description": self.description,
             "internal_code": self.internal_code,
             "ean_code": self.ean_code,
@@ -218,6 +225,9 @@ class Produto:
                 status = RegistrationStatus[status_data]
             else:
                 status = RegistrationStatus.ACTIVE
+
+        if not data.get("categoria_name_lower"):
+            data["categoria_name_lower"] = data.get("categoria_name", "categoria não definida").lower()
 
         # Database retorna Timestamps, que precisam ser convertidos para datetime
         created_at = data.get("created_at")
@@ -266,7 +276,8 @@ class Produto:
             name=data["name"],
             name_lowercase=data.get("name_lowercase", data["name"]),
             categoria_id=data["categoria_id"],
-            categoria_name=data["categoria_name"], # Adicionado
+            categoria_name=data["categoria_name"],
+            categoria_name_lower=data["categoria_name_lower"],
             description=data.get("description"),
             internal_code=data.get("internal_code"),
             ean_code=data.get("ean_code"),
