@@ -28,7 +28,8 @@ class ProductCard:
                 ])
             ),
             margin=ft.margin.all(5),
-            col={"xs": 12, "sm": 6, "md": 4, "lg": 3}
+            # width=600,  # Este width é ignorado por causa da responsividade em col abaixo:
+            col={"xs": 12, "sm": 12, "md": 6, "lg": 4}
         )
 
     @staticmethod
@@ -38,7 +39,8 @@ class ProductCard:
             [
                 ProductCard._create_product_image(produto),
                 ft.Text(produto.categoria_name, weight=ft.FontWeight.BOLD,
-                    theme_style=ft.TextThemeStyle.BODY_LARGE),
+                    theme_style=ft.TextThemeStyle.BODY_LARGE,
+                    no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                 ft.Container(expand=True),  # Spacer
                 ProductCard._create_action_menu(produto, on_action_callback),
             ],
