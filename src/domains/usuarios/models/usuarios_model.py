@@ -169,8 +169,7 @@ class Usuario:
             "phone_number": self.phone_number,
             "profile": self.profile.name,
             "empresa_id": self.empresa_id,
-            # Converte conjunto para lista ao salvar
-            "empresas": list(self.empresas),
+            "empresas": self.empresas,
             "photo_url": self.photo_url,
             "user_colors": self.user_colors,
             "status": self.status,
