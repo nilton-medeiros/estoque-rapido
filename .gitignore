@@ -176,3 +176,6 @@ logs/
 
 # tests/ Pasta de testes
 tests/
+
+# Diretório de arquivos não usados no projeto
+unused_codes/
