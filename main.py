@@ -192,6 +192,7 @@ def main(page: ft.Page):
                 pg_view = ft.View(
                     route='/home',
                     appbar=home_container.data,
+                    drawer=page.drawer,
                     controls=[home_container],
                     bgcolor=ft.Colors.BLACK,
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
