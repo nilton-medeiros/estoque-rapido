@@ -245,11 +245,11 @@ def sidebar_header(page: ft.Page):
             if e.progress == 1:
                 progress_bar.visible = False
                 status_text.value = "Upload concluído!"
+                status_text.update()
             else:
                 progress_bar.visible = True
                 progress_bar.value = e.progress
 
-            status_text.update()
             progress_bar.update()
 
         # Cria o FilePicker
@@ -433,15 +433,15 @@ def sidebar_header(page: ft.Page):
         content=ft.Column(
             controls=[
                 photo_section,
-                page.user_name_text,  # type: ignore
-                page.company_name_text_btn,  # type: ignore
-                status_text,
-                progress_bar,
+                page.user_name_text,# type: ignore
                 profile,
+                page.company_name_text_btn,  # type: ignore
+                # status_text,
+                # progress_bar,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
-        padding=ft.padding.symmetric(vertical=20, horizontal=40),
+        padding=ft.padding.symmetric(vertical=20, horizontal=20),
         alignment=ft.alignment.center,
     )
 
@@ -449,113 +449,51 @@ def sidebar_header(page: ft.Page):
 def sidebar_content(page: ft.Page):
     current_company = page.app_state.empresa  # type: ignore
 
-    store = ft.Column(
-        controls=[
-            ft.Row(
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-                    ft.Text(value='Loja:',
-                            theme_style=ft.TextThemeStyle.BODY_LARGE),
-                    ft.Text(value=current_company.get('store_name', 'LOJA NÃO DEFINIDA'),
-                            theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                ],
-            ),
+    col_controls = [
+        ft.Row(
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            controls=[
+                ft.Text(value='Loja:',
+                        theme_style=ft.TextThemeStyle.BODY_LARGE),
+                ft.Text(value=current_company.get('store_name', 'LOJA NÃO DEFINIDA'),
+                        theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+            ],
+        ),
+    ]
+
+    if current_company.get("cnpj"):
+        col_controls.append(
             ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
                     ft.Text(value='CNPJ:',
                             theme_style=ft.TextThemeStyle.BODY_LARGE),
-                    ft.Text(value=current_company.get('cnpj', ''),
+                    ft.Text(value=current_company['cnpj'],
                             theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 ],
             ),
-            ft.Row(
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-                    ft.Text(value='I.E.:',
-                            theme_style=ft.TextThemeStyle.BODY_LARGE),
-                    ft.Text(
-                        value=current_company.get('ie', ''), theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                ],
-            ),
-        ]
-    )
+        )
 
-    circle_praphs = ft.Row(
-        controls=[
-            Functionalities(title='Estoque', value=1),
-            Functionalities(title='Recebíveis', value=0.5),
-            Functionalities(title='Pagamentos', value=0),
-        ]
-    )
+        if current_company.get("ie"):
+            col_controls.append(
+                ft.Row(
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    controls=[
+                        ft.Text(value='I.E.:',
+                                theme_style=ft.TextThemeStyle.BODY_LARGE),
+                        ft.Text(
+                            value=current_company['ie'], theme_style=ft.TextThemeStyle.BODY_MEDIUM),
+                    ],
+                ),
+            )
 
-    line_graphics = ft.Column(
-        controls=[
-            FiscalProgressBar(title='CADASTRO FISCAL', value=0),
-            FiscalProgressBar(title='CETIFICADO', value=0.5),
-            FiscalProgressBar(title='NFC-e', value=1),
-        ],
-        alignment=ft.MainAxisAlignment.START,
-        spacing=0,
-    )
-
-    check_list = ft.Column(
-        controls=[
-            ft.ListTile(
-                leading=ft.Icon(name=ft.Icons.CHECK,
-                                color=ft.Colors.PRIMARY),
-                title=ft.Text(
-                    value='Lista 1', theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                bgcolor='#111418',
-            ),
-            ft.ListTile(
-                leading=ft.Icon(name=ft.Icons.CHECK,
-                                color=ft.Colors.PRIMARY),
-                title=ft.Text(value='Lista 2',
-                              theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                bgcolor='#111418',
-            ),
-            ft.ListTile(
-                leading=ft.Icon(name=ft.Icons.CHECK,
-                                color=ft.Colors.PRIMARY),
-                title=ft.Text(value='Lista 3',
-                              theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                bgcolor='#111418',
-            ),
-            ft.ListTile(
-                leading=ft.Icon(name=ft.Icons.CHECK,
-                                color=ft.Colors.PRIMARY),
-                title=ft.Text(value='Lista 4',
-                              theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                bgcolor='#111418',
-            ),
-            ft.ListTile(
-                leading=ft.Icon(name=ft.Icons.CHECK,
-                                color=ft.Colors.PRIMARY),
-                title=ft.Text(value='Lista 5',
-                              theme_style=ft.TextThemeStyle.BODY_MEDIUM),
-                bgcolor='#111418',
-            ),
-        ],
-        alignment=ft.MainAxisAlignment.START,
-        spacing=0,
-    )
-
-    # ToDo: Criar um manual para o Estoque Rápido e atribuir o link do S3 do manual pdf
-    manual = ft.TextButton(
-        text='MANUAL RÁPIDO',
-        style=ft.ButtonStyle(color=ft.Colors.GREY),
-        icon=ft.Icons.DOWNLOAD,
-        icon_color=ft.Colors.GREY,
-        # url='https://drive.google.com/uc?export=download&id=1vHKz5-tKDC_HMwqaGYMbsAicGrKPwyFL',
-        # https://sites.google.com/site/gdocs2direct/?pli=1
-    )
+    store = ft.Column(controls=col_controls)
 
     return ft.Container(
-        bgcolor=ft.Colors.BLACK12,
+        bgcolor=ft.Colors.BLACK26,
         padding=ft.padding.all(20),
         expand=True,
         content=ft.Column(
@@ -563,13 +501,6 @@ def sidebar_content(page: ft.Page):
             controls=[
                 store,
                 ft.Divider(height=30),
-                circle_praphs,
-                ft.Divider(height=30),
-                line_graphics,
-                ft.Divider(height=30),
-                check_list,
-                ft.Divider(height=30),
-                manual,
             ]
         )
     )
@@ -729,7 +660,8 @@ def sidebar_container(page: ft.Page):
     page.data = page.route  # Armazena a rota atual em `page.data` para uso pela função `page.back()` de navegação.
 
     sidebar = ft.Container(
-        col={"xs": 0, "md": 5, "lg": 4, "xxl": 3},
+        # col={"xs": 0, "md": 5, "lg": 4, "xxl": 3},
+        col={"xs": 0, "md": 4, "lg": 3, "xxl": 2},
         expand=True,
         bgcolor="#111418",
         border_radius=10,
@@ -737,9 +669,8 @@ def sidebar_container(page: ft.Page):
             # Garante que o footer não seja espremido se o conteúdo crescer
             controls=[
                 sidebar_header(page),
-                # Conteúdo principal expansível
-                ft.Container(content=sidebar_content(page), expand=True),
-                sidebar_footer(page),  # Footer com altura fixa
+                sidebar_content(page),
+                sidebar_footer(page),
             ]
         )
     )
