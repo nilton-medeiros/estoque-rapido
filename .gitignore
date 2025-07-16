@@ -135,10 +135,6 @@ desativar_venv.bat
 serviceAccountKey.json
 firebaseAdminSDK_fbsvc_13b6b05ac2.json
 
-# tests/ pasta de testes
-tests/
-src/tests/
-
 
 # Docs
 general_info/
@@ -177,3 +173,6 @@ cython_debug/
 # System log files
 logs/
 *.log
+
+# tests/ Pasta de testes
+tests/
