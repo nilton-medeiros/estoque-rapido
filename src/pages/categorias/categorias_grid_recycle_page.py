@@ -7,6 +7,7 @@ import flet as ft
 
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 import src.pages.categorias.categorias_actions_page as category_actions
+from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.pages.shared.components import create_recycle_bin_card
 import src.pages.shared.recycle_bin_helpers as recycle_helpers
 
@@ -82,27 +83,9 @@ def show_categories_grid_trash(page: ft.Page):
         error_content=ft.Text("Erro"),
     )
 
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(20),
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(
-                    ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home/produtos/categorias/grid"), tooltip="Voltar",
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
-            ),
-        ),
+    appbar = create_appbar_back(
+        page=page,
         title=ft.Text(f"Categorias excluídas", size=18),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
         actions=[
             ft.Container(
                 width=43,

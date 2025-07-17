@@ -11,6 +11,7 @@ from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import RegistrationStatus
 from src.domains.shared.models.address import Address
 from src.pages.partials import build_input_field
+from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.pages.partials.responsive_sizes import get_responsive_sizes
 from src.pages.pedidos.pedido_items_subform import PedidoItemsSubform
 from src.shared.config import get_app_colors
@@ -875,29 +876,9 @@ def show_pedido_form(page: ft.Page):
             0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(100),
-                # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.back(),  # type: ignore [attr-defined]
-                tooltip="Voltar",
-                # Ajuda a garantir que o hover respeite o border_radius
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
-            ),
-        ),
+    appbar = create_appbar_back(
+        page=page,
         title=ft.Text(route_title, size=18, selectable=True),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
     )
 
     # Busca os produtos da empresa logada

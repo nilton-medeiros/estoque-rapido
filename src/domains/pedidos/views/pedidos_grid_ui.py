@@ -4,6 +4,7 @@ from src.domains.pedidos.components import FilterComponents
 from src.domains.pedidos.components.order_card import OrderCard
 from src.domains.pedidos.models.pedidos_subclass import OrderFilterType
 from src.domains.pedidos.models.pedidos_model import Pedido
+from src.pages.partials.app_bars.appbar import create_appbar_menu
 
 if TYPE_CHECKING:
     from src.domains.pedidos.controllers.grid_controller import PedidoGridController
@@ -47,30 +48,15 @@ class PedidoGridUI:
         self.search_field = FilterComponents.create_search_field(
             self._on_search_clicked)
 
-        return ft.AppBar(
-            leading=self._create_back_button(),
-            title=ft.Text("Pedidos", size=18),
-            bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-            adaptive=True,
+        return create_appbar_menu(
+            page=self.controller.page,
+            title=ft.Text("Pedidos de Venda", size=18),
             actions=[
                 ft.Container(content=self.filter_radio,
                              margin=ft.margin.only(left=10, right=10)),
                 ft.Container(content=self.search_field,
                              margin=ft.margin.only(left=10, right=10)),
-            ],
-        )
-
-    def _create_back_button(self) -> ft.Container:
-        return ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40, height=40,
-                border_radius=ft.border_radius.all(20),
-                content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: self.controller.page.go("/home"),
-                tooltip="Voltar",
-            ),
+            ]
         )
 
     def _create_fab_buttons(self) -> ft.Column:

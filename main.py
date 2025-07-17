@@ -10,6 +10,7 @@ from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
+from src.pages.partials.app_bars.sidebar import create_navigation_drawer
 from src.pages.pedidos.pedidos_form_page import show_pedido_form
 from src.pages.pedidos.pedidos_grid_page import show_orders_grid
 from src.pages.pedidos.pedidos_grid_recycle_page import show_orders_grid_trash
@@ -148,6 +149,9 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
 
+        # Criar o NavigationDrawer e adicioná-lo à página
+    page.drawer = create_navigation_drawer(page) # sidebar_page.py
+
     def handle_icon_hover(e):
         """Muda o bgcolor do container no hover"""
         e.control.bgcolor = ft.Colors.with_opacity(
@@ -207,6 +211,7 @@ def main(page: ft.Page):
                 pg_view = ft.View(
                     route='/home/empresas/form/principal',
                     appbar=form.data,
+                    drawer=page.drawer,
                     controls=[form],
                     scroll=ft.ScrollMode.AUTO,
                     bgcolor=ft.Colors.BLACK,
@@ -218,6 +223,7 @@ def main(page: ft.Page):
                 pg_view = ft.View(
                     route='/home/empresas/form/dados-fiscais',
                     appbar=form.data,
+                    drawer=page.drawer,
                     controls=[form],
                     scroll=ft.ScrollMode.AUTO,
                     bgcolor=ft.Colors.BLACK,

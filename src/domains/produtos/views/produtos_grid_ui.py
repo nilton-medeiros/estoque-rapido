@@ -8,6 +8,7 @@ from src.domains.produtos.models.grid_model import StockLevel
 from src.domains.produtos.components.product_card import ProductCard
 from src.domains.produtos.components.filter_components import FilterComponents
 from src.domains.shared.models.filter_type import FilterType
+from src.pages.partials.app_bars.appbar import create_appbar_menu
 
 if TYPE_CHECKING:
     from src.domains.produtos.controllers.grid_controller import ProdutoGridController
@@ -48,29 +49,14 @@ class ProdutoGridUI:
         self.search_field = FilterComponents.create_search_field(self._on_search_clicked)
         self.stock_dropdown = FilterComponents.create_stock_dropdown(self._on_stock_filter_changed)
 
-        return ft.AppBar(
-            leading=self._create_back_button(),
+        return create_appbar_menu(
+            page=self.controller.page,
             title=ft.Text("Produtos", size=18),
-            bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-            adaptive=True,
             actions=[
                 ft.Container(content=self.filter_radio, margin=ft.margin.only(left=10, right=10)),
                 ft.Container(content=self.search_field, margin=ft.margin.only(left=10, right=10)),
                 ft.Container(content=self.stock_dropdown, margin=ft.margin.only(left=10, right=10)),
-            ],
-        )
-
-    def _create_back_button(self) -> ft.Container:
-        return ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40, height=40,
-                border_radius=ft.border_radius.all(20),
-                content=ft.Icon(ft.Icons.ARROW_BACK),
-                on_click=lambda _: self.controller.page.go("/home"),
-                tooltip="Voltar",
-            ),
+            ]
         )
 
     def _create_fab_buttons(self) -> ft.Column:
@@ -105,7 +91,7 @@ class ProdutoGridUI:
 
     def render_grid(self, produtos: list[Produto]):
         """Renderiza o grid com os produtos filtrados"""
-        self.content_area.controls.clear()  
+        self.content_area.controls.clear()
 
         if not produtos:
             self.content_area.controls.append(self._create_empty_content())

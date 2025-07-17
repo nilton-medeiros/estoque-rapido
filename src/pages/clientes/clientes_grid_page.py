@@ -44,6 +44,7 @@ def show_clients_grid(page: ft.Page):
         route="/home/clientes/grid",
         controls=[ui.loading_container, ui.content_area],
         appbar=ui.appbar,
+        drawer=page.drawer,
         floating_action_button=ui.fab_buttons, # type: ignore [attr-defined] floating_action_button type FloatingActionButton | None, aceita sim um ft.Column()
         vertical_alignment=ft.MainAxisAlignment.START,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,

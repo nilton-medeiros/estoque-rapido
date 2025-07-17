@@ -6,6 +6,7 @@ import flet as ft
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 from src.domains.shared import RegistrationStatus
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
+from src.pages.partials.app_bars.appbar import create_appbar_menu
 from src.shared.utils import MessageType, message_snackbar, show_banner
 # Rota: /home/empresas/grid
 
@@ -106,27 +107,9 @@ def show_companies_grid(page: ft.Page):
         e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(20),
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(
-                    ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home"), tooltip="Voltar",
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
-            ),
-        ),
+    appbar = create_appbar_menu(
+        page=page,
         title=ft.Text(f"Empresas", size=18),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
     )
 
     def handle_info_click(e):
@@ -389,6 +372,7 @@ def show_companies_grid(page: ft.Page):
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
+        drawer=page.drawer,
         floating_action_button=ft.Column(  # type: ignore [attr-defined]
             controls=[fab_add, fab_trash],
             alignment=ft.MainAxisAlignment.END,

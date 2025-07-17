@@ -5,6 +5,7 @@ import flet as ft
 
 import src.pages.categorias.categorias_actions_page as cat_actions
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
+from src.pages.partials.app_bars.appbar import create_appbar_menu
 
 
 logger = logging.getLogger(__name__)
@@ -59,32 +60,9 @@ def show_categories_grid(page: ft.Page):
             case _:
                 pass
 
-    def handle_icon_hover(e):
-        """Muda o bgcolor do container no hover."""
-        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
-        e.control.update()
-
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(20),
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(
-                    ft.Icons.ARROW_BACK),
-                on_click=lambda _: page.go("/home"), tooltip="Voltar",
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
-            ),
-        ),
+    appbar = create_appbar_menu(
+        page=page,
         title=ft.Text(f"Categorias de Produtos", size=18),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
         actions=[],
     )
 
@@ -425,6 +403,7 @@ def show_categories_grid(page: ft.Page):
             content_area       # Oculto inicialmente, populado por load_data_and_update_ui
         ],
         appbar=appbar,
+        drawer=page.drawer,
         floating_action_button=ft.Column(  # type: ignore [attr-defined]
             controls=[fab_add, fab_trash],
             alignment=ft.MainAxisAlignment.END,

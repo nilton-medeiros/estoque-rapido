@@ -14,6 +14,7 @@ from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 
 from src.pages.partials import build_input_field
+from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.services import UploadFile
 from src.shared.utils import message_snackbar, MessageType, get_uuid
 from src.shared.utils.find_project_path import find_project_root
@@ -411,34 +412,6 @@ def show_category_form(page: ft.Page):
     else:
         route_title += "/new"
 
-    def handle_icon_hover(e):
-        """Muda o bgcolor do container no hover."""
-        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
-        e.control.update()
-
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(100),
-                ink=True,  # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ARROW_BACK), # type: ignore
-                on_click=lambda _: page.back(), # type: ignore [attr-defined]
-                tooltip="Voltar",
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS # Ajuda a garantir que o hover respeite o border_radius
-            ),
-        ),
-        title=ft.Text(route_title, size=18, selectable=True),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
-    )
-
     categorias_view = ProdutoCategoriaForm(page=page)
     categorias_view.did_mount()
     form_container = categorias_view.build()
@@ -520,5 +493,7 @@ def show_category_form(page: ft.Page):
                 alignment=ft.MainAxisAlignment.END,
             ),
         ],
-        data=appbar,
+        data=create_appbar_back(page=page,
+            title=ft.Text(route_title, size=18, selectable=True),
+        )
     )

@@ -8,6 +8,7 @@ from typing import Any
 
 import flet as ft
 
+from src.pages.partials.app_bars.appbar import create_appbar_back
 import src.shared.config.globals as app_globals
 
 import src.controllers.bucket_controllers as bucket_controllers
@@ -823,29 +824,9 @@ def show_product_form(page: ft.Page):
             0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
         e.control.update()
 
-    appbar = ft.AppBar(
-        leading=ft.Container(
-            alignment=ft.alignment.center_left,
-            padding=ft.padding.only(left=10),
-            content=ft.Container(
-                width=40,
-                height=40,
-                border_radius=ft.border_radius.all(100),
-                # Aplica ink ao wrapper (ao clicar da um feedback visual para o usuário)
-                ink=True,
-                bgcolor=ft.Colors.TRANSPARENT,
-                alignment=ft.alignment.center,
-                on_hover=handle_icon_hover,
-                content=ft.Icon(ft.Icons.ARROW_BACK), # type: ignore
-                on_click=lambda _: page.back(), # type: ignore [attr-defined]
-                tooltip="Voltar",
-                # Ajuda a garantir que o hover respeite o border_radius
-                clip_behavior=ft.ClipBehavior.ANTI_ALIAS
-            ),
-        ),
+    appbar = create_appbar_back(
+        page=page,
         title=ft.Text(route_title, size=18, selectable=True),
-        bgcolor=ft.Colors.with_opacity(0.9, ft.Colors.PRIMARY_CONTAINER),
-        adaptive=True,
     )
 
     produtos_view = ProdutoForm(page=page)
