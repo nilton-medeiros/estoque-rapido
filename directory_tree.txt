@@ -1,0 +1,481 @@
+estoquerapido/
+├── .env
+├── .vscode/
+│   ├── extensions.json
+│   ├── leia-me.txt
+│   └── settings.json
+├── assets/
+│   ├── aula-icones-pwa.txt
+│   ├── favicon.png
+│   ├── fonts/
+│   │   ├── LICENSE.txt
+│   │   ├── Poppins-ThinItalic.ttf
+│   │   ├── Roboto-Black.ttf
+│   │   ├── Roboto-BlackItalic.ttf
+│   │   ├── Roboto-Bold.ttf
+│   │   ├── Roboto-BoldItalic.ttf
+│   │   ├── Roboto-Italic.ttf
+│   │   ├── Roboto-Light.ttf
+│   │   ├── Roboto-LightItalic.ttf
+│   │   ├── Roboto-Medium.ttf
+│   │   ├── Roboto-MediumItalic.ttf
+│   │   ├── RobotoMono-VariableFont_wght.ttf
+│   │   ├── Roboto-Regular.ttf
+│   │   ├── RobotoSlab[wght].ttf
+│   │   ├── Roboto-Thin.ttf
+│   │   └── Roboto-ThinItalic.ttf
+│   ├── ibge_code.json
+│   ├── icon.png
+│   ├── icons/
+│   │   ├── apple-touch-icon-192.png
+│   │   ├── icon-192.png
+│   │   ├── icon-512.png
+│   │   ├── ICONE_SISTROM-TRANSPARENTE.png
+│   │   ├── icon-maskable-192.png
+│   │   ├── icon-maskable-512.png
+│   │   ├── loading-animation.png
+│   │   ├── Recycle_Bin_Full_icon-icons.com_55511.ico
+│   │   ├── Recycle_Bin_icon-icons.com_55510.ico
+│   │   ├── recycle_empy_1771.png
+│   │   ├── recycle_empy_1772.png
+│   │   ├── recycle_full_1771.png
+│   │   ├── recycle_full_1772.png
+│   │   ├── recycle_recyclebin_full_delete_trash_1772.ico
+│   │   └── recycling_recyclebin_empty_delete_trash_1771.ico
+│   ├── images/
+│   │   ├── avatars/
+│   │   │   ├── Angelina Jolie.jpg
+│   │   │   ├── Angelina_Jolie-123e4567e89b12d3a456426655440000.jpg
+│   │   │   ├── avatar_default_123e4567e89b12d3a456426655440000.jpg
+│   │   │   └── user_17b8c9059f03419b9e31f8e4d7a40f60-fundo-transp.png
+│   │   ├── bg.jpg
+│   │   ├── empty_folder.png
+│   │   ├── estoquerapido.svg
+│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000.jpg
+│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000.svg
+│   │   ├── estoquerapido_img_123e4567e89b12d3a456426614174000-b.svg
+│   │   ├── estoquerapido_logo.png
+│   │   ├── estoquerapido_logo_1024x724.png
+│   │   ├── face-1.jpg
+│   │   ├── face-2.png
+│   │   ├── logo_sistrom.png
+│   │   └── steel_cabinets_documents_empty.png
+│   └── manifest.json
+├── env-SAMPLE
+├── estrutura-de-diretorios.txt
+├── general_info/
+│   ├── DOCUMENTO AUXILIAR DA NOTA FISCAL DE CONSUMIDOR ELETRÔNICA.pdf
+│   ├── nuvem_fiscal.txt
+│   ├── response_get_cnpj.json
+│   └── Termos de Uso do Estoque Rápido.docx
+├── libs_instaladas.txt
+├── LICENSE
+├── lista_diretorios_atual.txt
+├── logs/
+│   ├── estoque_rapido.log
+│   └── estoque_rapido_srv-d0v3_20250715_141507_653.jsonl
+├── main.py
+├── README.md
+├── requirements.temp
+├── requirements.txt
+├── serviceAccountKey.json
+├── serviceAccountKey-SAMPLE.json
+├── src/
+│   ├── __init__.py
+│   ├── controllers/
+│   │   ├── __init__.py
+│   │   ├── bucket_controllers.py
+│   │   └── dfe_controller.py
+│   ├── domains/
+│   │   ├── __init__.py
+│   │   ├── app_config/
+│   │   │   ├── __init__.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── app_config_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── app_config_model.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── app_config_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_app_config_repository.py
+│   │   │   └── services/
+│   │   │       ├── __init__.py
+│   │   │       └── app_config_services.py
+│   │   ├── categorias/
+│   │   │   ├── __init__.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── categorias_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── categorias_model.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── categorias_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_categorias_repository.py
+│   │   │   └── services/
+│   │   │       ├── __init__.py
+│   │   │       └── categorias_services.py
+│   │   ├── clientes/
+│   │   │   ├── __init__.py
+│   │   │   ├── components/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── client_card.py
+│   │   │   │   └── filter_components.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── clientes_controllers.py
+│   │   │   │   └── grid_controller.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── clientes_model.py
+│   │   │   │   └── grid_model.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── clientes_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_clientes_repository.py
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── clientes_services.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       └── clientes_grid_ui.py
+│   │   ├── empresas/
+│   │   │   ├── __init__.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── empresas_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── certificate_a1.py
+│   │   │   │   ├── certificate_status.py
+│   │   │   │   ├── cnpj.py
+│   │   │   │   ├── cpf.py.(nao usado)
+│   │   │   │   ├── empresas_model.py
+│   │   │   │   └── empresas_subclass.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── empresas_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_empresas_repository.py
+│   │   │   └── services/
+│   │   │       ├── __init__.py
+│   │   │       └── empresas_services.py
+│   │   ├── pedidos/
+│   │   │   ├── __init__.py
+│   │   │   ├── components/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── filter_components.py
+│   │   │   │   └── order_card.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── grid_controller.py
+│   │   │   │   └── pedidos_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── grid_model.py
+│   │   │   │   ├── pedidos_model.py
+│   │   │   │   └── pedidos_subclass.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── pedidos_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_pedidos_repository.py
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── pedidos_services.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       └── pedidos_grid_ui.py
+│   │   ├── produtos/
+│   │   │   ├── __init__.py
+│   │   │   ├── components/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── filter_components.py
+│   │   │   │   └── product_card.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── grid_controller.py
+│   │   │   │   └── produtos_controllers.py
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── grid_model.py
+│   │   │   │   └── produtos_model.py
+│   │   │   ├── repositories/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── contracts/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── produtos_repository.py
+│   │   │   │   ├── implementations/
+│   │   │   │   │   ├── __init__.py
+│   │   │   │   │   └── firebase_produtos_repository.py
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── produtos_services.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       └── produtos_grid_ui.py
+│   │   ├── shared/
+│   │   │   ├── __init__.py
+│   │   │   ├── controllers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── domain_exceptions.py
+│   │   │   └── models/
+│   │   │       ├── __init__.py
+│   │   │       ├── address.py
+│   │   │       ├── filter_type.py
+│   │   │       ├── nome_pessoa.py
+│   │   │       ├── password.py
+│   │   │       ├── phone_number.py
+│   │   │       ├── registration_status.py
+│   │   │       └── sequential_number.py
+│   │   └── usuarios/
+│   │       ├── __init__.py
+│   │       ├── components/
+│   │       │   ├── __init__.py
+│   │       │   ├── filter_components.py
+│   │       │   └── user_card.py
+│   │       ├── controllers/
+│   │       │   ├── __init__.py
+│   │       │   ├── grid_controller.py
+│   │       │   ├── usuarios_controllers gAuth.py.old
+│   │       │   └── usuarios_controllers.py
+│   │       ├── models/
+│   │       │   ├── __init__.py
+│   │       │   ├── grid_model.py
+│   │       │   ├── usuarios_model.py
+│   │       │   └── usuarios_subclass.py
+│   │       ├── repositories/
+│   │       │   ├── __init__.py
+│   │       │   ├── contracts/
+│   │       │   │   ├── __init__.py
+│   │       │   │   └── usuarios_repository.py
+│   │       │   ├── implementations/
+│   │       │   │   ├── __init__.py
+│   │       │   │   ├── firebase_usuarios_repository.py
+│   │       │   │   └── firebase_usuarios_repository_gAuth.py.old
+│   │       │   └── services/
+│   │       │       ├── __init__.py
+│   │       │       └── usuarios_services.py
+│   │       └── views/
+│   │           ├── __init__.py
+│   │           └── usuarios_grid_ui.py
+│   ├── pages/
+│   │   ├── __init__.py
+│   │   ├── categorias/
+│   │   │   ├── __init__.py
+│   │   │   ├── categorias_actions_page.py
+│   │   │   ├── categorias_form_page.py
+│   │   │   ├── categorias_grid_page.py
+│   │   │   └── categorias_grid_recycle_page.py
+│   │   ├── clientes/
+│   │   │   ├── __init__.py
+│   │   │   ├── clientes_actions_page.py
+│   │   │   ├── clientes_form_page.py
+│   │   │   ├── clientes_grid_page.py
+│   │   │   └── clientes_grid_recycle_page.py
+│   │   ├── empresas/
+│   │   │   ├── __init__.py
+│   │   │   ├── empresas_actions_page.py
+│   │   │   ├── empresas_certificado_a1_form_page.py
+│   │   │   ├── empresas_dados_fiscais_form_page.py
+│   │   │   ├── empresas_form_page.py
+│   │   │   ├── empresas_grid_page.py
+│   │   │   └── empresas_grid_recycle_page.py
+│   │   ├── external_pages/
+│   │   │   ├── __init__.py
+│   │   │   ├── landing_page.py
+│   │   │   ├── login.html
+│   │   │   ├── login_page.py
+│   │   │   └── signup_page.py
+│   │   ├── home/
+│   │   │   ├── __init__.py
+│   │   │   ├── content_page.py
+│   │   │   └── home_page.py
+│   │   ├── partials/
+│   │   │   ├── __init__.py
+│   │   │   ├── app_bars/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── appbar.py
+│   │   │   │   └── sidebar.py
+│   │   │   ├── build_input_responsive.py
+│   │   │   ├── login_button.py
+│   │   │   ├── monetary_field.py
+│   │   │   └── responsive_sizes.py
+│   │   ├── pedidos/
+│   │   │   ├── __init__.py
+│   │   │   ├── pedido_items_subform copy.py
+│   │   │   ├── pedido_items_subform.py
+│   │   │   ├── pedidos_actions_page.py
+│   │   │   ├── pedidos_form_page.py
+│   │   │   ├── pedidos_grid_page.py
+│   │   │   └── pedidos_grid_recycle_page.py
+│   │   ├── produtos/
+│   │   │   ├── __init__.py
+│   │   │   ├── produtos_actions_page.py
+│   │   │   ├── produtos_form_page.py
+│   │   │   ├── produtos_grid_page.py
+│   │   │   └── produtos_grid_recycle_page.py
+│   │   ├── shared/
+│   │   │   ├── __init__.py
+│   │   │   ├── components.py
+│   │   │   ├── dialog_search.py
+│   │   │   ├── dropdown_with_search.py
+│   │   │   ├── recycle_bin_helpers.py
+│   │   │   └── storage/
+│   │   │       ├── __init__.py
+│   │   │       ├── data/
+│   │   │       └── temp/
+│   │   └── usuarios/
+│   │       ├── __init__.py
+│   │       ├── usuarios_actions_page.py
+│   │       ├── usuarios_form_page.py
+│   │       ├── usuarios_grid_page.py
+│   │       └── usuarios_grid_recycle_page.py
+│   ├── presentation/
+│   │   ├── __init__.py
+│   │   └── components/
+│   │       ├── __init__.py
+│   │       ├── carousel.py
+│   │       └── functionality_graphics.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── .keys/
+│   │   │   ├── estoquerapido-s3_accessKeys.csv
+│   │   │   ├── firebaseAdminSDK_fbsvc_13b6b05ac2.json
+│   │   │   ├── logins.txt
+│   │   │   └── serviceAccountKey.json
+│   │   ├── apis/
+│   │   │   ├── __init__.py
+│   │   │   ├── cnpj_api.py
+│   │   │   ├── cosmos_api.py
+│   │   │   ├── dfe_services.py
+│   │   │   └── response_api_brasilapi.json
+│   │   ├── aws/
+│   │   │   ├── __init__.py
+│   │   │   └── s3_file_manager.py
+│   │   ├── buckets/
+│   │   │   ├── __init__.py
+│   │   │   └── bucket_services.py
+│   │   ├── contracts/
+│   │   │   ├── __init__.py
+│   │   │   └── dfe_provider.py
+│   │   ├── emails/
+│   │   │   ├── __init__.py
+│   │   │   └── send_email.py
+│   │   ├── gateways/
+│   │   │   ├── __init__.py
+│   │   │   └── asaas_payment_gateway.py
+│   │   ├── google/
+│   │   │   ├── __init__.py
+│   │   │   ├── firebaseAdminSDK-SAMPLE.json
+│   │   │   └── serviceAccountKey-SAMPLE.json
+│   │   ├── providers/
+│   │   │   ├── __init__.py
+│   │   │   └── nuvemfiscal_provider.py
+│   │   ├── states/
+│   │   │   ├── __init__.py
+│   │   │   ├── app_state_manager.py
+│   │   │   ├── refresh_session.py
+│   │   │   └── state_validator.py
+│   │   └── upload/
+│   │       ├── __init__.py
+│   │       └── upload_files.py
+│   └── shared/
+│       ├── __init__.py
+│       ├── components/
+│       │   ├── __init__.py
+│       │   ├── dialogs/
+│       │   │   ├── __init__.py
+│       │   │   └── change_password_dialog.py
+│       │   ├── forms/
+│       │   │   ├── __init__.py
+│       │   │   └── forms/
+│       │   └── ui/
+│       │       ├── __init__.py
+│       │       └── ui/
+│       ├── config/
+│       │   ├── __init__.py
+│       │   ├── app_theme.py
+│       │   ├── get_app_colors.py
+│       │   ├── globals.py
+│       │   ├── logging_config (old).py.old
+│       │   ├── logging_config.py
+│       │   └── user_session.py
+│       ├── logging/
+│       │   ├── __init__.py
+│       │   └── s3_logging_handler.py
+│       └── utils/
+│           ├── __init__.py
+│           ├── deep_translator.py
+│           ├── field_validation_functions.py
+│           ├── find_project_path.py
+│           ├── gen_uuid.py
+│           ├── gerador_senha.py
+│           ├── messages.py
+│           ├── money_numpy.py
+│           ├── time_zone.py
+│           └── tools.py
+├── storage/
+│   ├── __init__.py
+│   ├── buckets/
+│   │   ├── __init__.py
+│   │   ├── contracts/
+│   │   │   ├── __init__.py
+│   │   │   └── bucket_storage.py
+│   │   └── implementations/
+│   │       ├── __init__.py
+│   │       └── aws_s3_storage.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   └── firebase/
+│   │       ├── __init__.py
+│   │       └── firebase_initialize.py
+│   └── temp/
+├── STYLE_GUIDE.md
+├── tamanhos de tela (xs,sm,md,lg,xl e xxl).txt
+├── tests/
+│   ├── alertdialog_empresa.py
+│   ├── consult_cnpj.py
+│   ├── dialog_search.py
+│   ├── dropdown_fail.py
+│   ├── estoquerapido.svg
+│   ├── expansion-title.py
+│   ├── main.py
+│   ├── main_client_storage.py
+│   ├── main_images.py
+│   ├── main_janela_flutuante.py
+│   ├── main_save_selected_file.py
+│   ├── main_uploads.py
+│   ├── main_user_agent.py
+│   ├── monetary_fieldtext.py
+│   ├── storage/
+│   │   ├── data/
+│   │   └── temp/
+│   ├── test.py
+│   └── test_logger.py
+│   └── test_sync_smtp.py
+├── unused_codes/
+│   ├── home_page-(old).py
+│   └── sidebar_page-(old).py
+└── uploads/
