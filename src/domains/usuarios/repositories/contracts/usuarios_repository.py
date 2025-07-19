@@ -83,7 +83,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def update_colors(self, id: str, new_colors: dict[str, str]) -> bool:
+    def update_colors(self, id: str, theme_color: str) -> bool:
         """Atualiza a cor preferida do um usuário."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 

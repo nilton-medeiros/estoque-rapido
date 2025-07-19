@@ -22,7 +22,7 @@ class LoginView:
         self.password_input: ft.TextField
         self.error_text: ft.Text
         self.login_button: ft.OutlinedButton
-        self.app_colors: dict = page.session.get("user_colors") # type: ignore
+        self.app_colors: dict = page.session.get("theme_colors") # type: ignore
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
         self.page.update()

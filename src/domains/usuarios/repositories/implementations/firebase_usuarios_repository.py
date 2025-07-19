@@ -801,13 +801,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a foto do usuário com ID '{id}': {str(e)}")
 
-    def update_colors(self, id: str, new_colors: dict) -> bool:
+    def update_colors(self, id: str, theme_color: str) -> bool:
         """
         Atualiza cor preferencial de um usuário.
 
         Args:
             id (str): ID do usuário
-            new_colors (dict): Nova cor preferencial a ser atribuída
+            theme_color (str): Nova cor preferencial a ser atribuída
 
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário
@@ -817,16 +817,13 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             ValueError: Se a nova cor não for válida
         """
         try:
-            if not new_colors or not new_colors.get('primary'):
-                raise ValueError("A nova cor não pode ser vazia")
-
             doc_ref = self.collection.document(id)
             doc = doc_ref.get()
 
             if not doc.exists:
                 return False
 
-            doc_ref.update({"user_colors": new_colors})
+            doc_ref.update({"theme_color": theme_color})
             return True
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
@@ -847,12 +844,12 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                     f"Erro desconhecido do Firebase ao atualizar a cor: {e.code}")
             translated_error = deepl_translator(str(e))
             raise Exception(
-                f"Erro ao atualizar a cor do usuário com ID '{id}': {translated_error}")
+                f"Erro ao atualizar a cor base preferencial do usuário com ID '{id}', cor base: '{theme_color}', erro: {translated_error}")
         except Exception as e:
             logger.error(
-                f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
+                f"Erro inesperado ao atualizar a cor base preferencial do usuário com ID '{id}', cor base: '{theme_color}', erro: {str(e)}")
             raise Exception(
-                f"Erro inesperado ao atualizar a cor do usuário com ID '{id}': {str(e)}")
+                f"Erro inesperado ao atualizar a cor base preferencial do usuário com ID '{id}', cor base: '{theme_color}', erro: {str(e)}")
 
     def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """

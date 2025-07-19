@@ -21,7 +21,7 @@ from src.pages.usuarios.usuarios_grid_page import show_users_grid
 from src.pages.usuarios.usuarios_grid_recycle_page import show_users_grid_trash
 from src.services import AppStateManager
 from src.services.states.refresh_session import refresh_dashboard_session
-from src.shared.config import get_app_colors
+from src.shared.config import get_theme_colors
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def main(page: ft.Page):
 
     # Configurar cores padrão imediatamente para evitar erros
     # Garante que há sempre uma cor padrão
-    page.session.set("user_colors", get_app_colors('yellow'))
+    page.session.set("theme_colors", get_theme_colors())
 
     dashboard_data = {
         "repor_produtos": 0,
@@ -63,9 +63,8 @@ def main(page: ft.Page):
     page.session.set("dashboard", dashboard_data)
 
     # Inicialize o estado da aplicação
-    app_state = AppStateManager(page)
     # Torna o app_state acessível globalmente
-    page.app_state = app_state # type: ignore  [attr-defined]
+    page.app_state = AppStateManager(page) # type: ignore  [attr-defined]
 
     # Registrar o evento para mudanças
     def handle_pubsub(message):
@@ -100,6 +99,10 @@ def main(page: ft.Page):
             page.user_name_text.value = page.app_state.usuario['name'].nome_completo # type: ignore  [attr-defined]
             # O update deve ser no controlador que chama o evento após chamar este evento
             # page.user_name_text.update()
+
+        """Atualiza o drawer quando o usuário faz login."""
+        page.drawer = create_navigation_drawer(page)  # Recria o drawer com os dados do usuário
+        page.update()
 
     def update_empresa_dependent_ui():
         # Exemplo: Atualiza o nome da empresa no header
@@ -149,8 +152,7 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
 
-        # Criar o NavigationDrawer e adicioná-lo à página
-    page.drawer = create_navigation_drawer(page) # sidebar_page.py
+    page.drawer = create_navigation_drawer(page)  # Cria o drawer inicial (com placeholder se não logado)
 
     def handle_icon_hover(e):
         """Muda o bgcolor do container no hover"""

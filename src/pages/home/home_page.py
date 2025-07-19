@@ -6,8 +6,8 @@ def show_home_page(page: ft.Page) -> ft.Container:
     """Página Home do usuário logado"""
     page.theme_mode = ft.ThemeMode.DARK
 
-    if colors := page.app_state.usuario.get('user_colors'): # type: ignore [attr-defined]
-        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=colors.get('base_color'))
+    if theme_color := page.app_state.usuario.get('theme_color'): # type: ignore [attr-defined]
+        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=theme_color)
 
     main_content = MainContent(page)
 

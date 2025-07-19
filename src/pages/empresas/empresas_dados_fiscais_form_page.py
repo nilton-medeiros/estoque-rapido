@@ -28,7 +28,7 @@ class EmpresaViewDadosFiscais:
         self.icon_size = 24
         self.padding = 50
         self.input_width = 400,
-        self.app_colors: dict = page.session.get("user_colors")  # type: ignore
+        self.app_colors: dict = page.session.get("theme_colors")  # type: ignore
 
         # Responsividade
         self._create_form_fields()

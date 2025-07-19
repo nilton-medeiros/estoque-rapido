@@ -21,7 +21,6 @@ from src.pages.partials import build_input_field
 from src.services import UploadFile, fetch_product_info_by_ean
 from src.shared.utils import  show_banner, message_snackbar, MessageType, get_uuid, format_datetime_to_utc_minus_3
 from src.shared.utils.find_project_path import find_project_root
-from src.shared.config import get_app_colors
 from src.pages.partials.monetary_field import MonetaryTextField
 from src.shared.utils.money_numpy import Money
 
@@ -43,12 +42,7 @@ class ProdutoForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict[str, str] = get_app_colors('blue')
-
-        if page.session.get("user_colors"):
-            self.app_colors: dict[str, str] = page.session.get(
-                "user_colors")  # type: ignore [attr-defined]     ! page.session é um objeto que contém o método .get(), não é um dict
-
+        self.app_colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]     ! page.session é um objeto que contém o método .get(), não é um dict
         self.input_width = 400
 
         # Obtem a lista das categorias de produtos da empresa logada

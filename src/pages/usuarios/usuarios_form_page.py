@@ -21,7 +21,6 @@ from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.services import UploadFile
 from src.shared.utils import  message_snackbar, get_uuid, gerar_senha, MessageType, ProgressiveMessage
 from src.shared.utils.find_project_path import find_project_root
-from src.shared.config import get_app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +41,7 @@ class UsuarioForm:
         self.icon_size = 24
         self.padding = 50
         # self._usuario_id: str | None = None
-        self.app_colors: dict[str, str] = get_app_colors('blue')
-
-        if page.session.get("user_colors"):
-            self.app_colors: dict[str, str] = page.session.get(
-                "user_colors")  # type: ignore [attr-defined]     ! page.session é um objeto que contém o método .get(), não é um dict
-
+        self.app_colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]
         self.input_width = 400
 
         # Responsividade
@@ -716,7 +710,7 @@ def show_user_form(page: ft.Page):
         save_btn.disabled = True
 
         # Cria o gerenciador de mensagens progressivas
-        progress_msg = ProgressiveMessage(page)
+        progress_msg = ProgressiveMessage(page, center=True)
 
         try:
             # Primeira etapa: Salvando usuário

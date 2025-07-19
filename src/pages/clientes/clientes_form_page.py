@@ -17,7 +17,6 @@ from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.pages.partials.responsive_sizes import get_responsive_sizes
 from src.shared.utils import message_snackbar, MessageType, ProgressiveMessage
-from src.shared.config import get_app_colors
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +30,8 @@ class ClienteForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict[str, str] = get_app_colors('blue')
-
         # ! page.session é um objeto que contém o método .get(), não confundir com um dict
-        if page.session.get("user_colors"):
-            self.app_colors: dict[str, str] = page.session.get(
-                "user_colors")  # type: ignore [attr-defined]
+        self.app_colors: dict[str, str] = page.session.get("theme_colors") # type: ignore [attr-defined]
 
         self.input_width = 400
 

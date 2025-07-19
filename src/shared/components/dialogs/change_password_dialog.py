@@ -3,18 +3,13 @@ import flet as ft
 
 from src.domains.usuarios.controllers import usuarios_controllers as user_controllers
 from src.domains.usuarios.models import Usuario
-from src.shared.config.get_app_colors import get_app_colors
 
 class ChangePasswordDialog:
     def __init__(self, page: ft.Page, user: Usuario):
         self.page = page
-        self.colors: dict[str, str] = get_app_colors('blue')
+        self.colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]
         self.dialog = None
         self.user = user
-
-        if page.session.get("user_colors"):
-            self.colors: dict[str, str] = page.session.get(
-                "user_colors")  # type: ignore [attr-defined]     ! page.session é um objeto que contém o método .get(), não é um dict
 
         self._create_dialog()
 

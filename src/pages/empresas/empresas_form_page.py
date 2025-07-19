@@ -43,7 +43,7 @@ class EmpresaView:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict = page.session.get("user_colors")  # type: ignore
+        self.app_colors: dict = page.session.get("theme_colors")  # type: ignore
         self._empresa_id = None
 
         # Responsividade
@@ -868,10 +868,6 @@ class EmpresaView:
 # Rota: /home/empresas/form/principal
 def show_company_main_form(page: ft.Page):
     """Página de cadastro de empresas"""
-    # if colors := page.app_state.usuario.get('user_colors'):
-    #     page.theme.color_scheme.primary = colors.get('primary')
-    #     page.theme.color_scheme.primary_container = colors.get(
-    #         'container')
 
     route_title = "home/empresas/form"
     empresa_form = page.app_state.form_data # type: ignore

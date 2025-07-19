@@ -8,6 +8,7 @@ from src.domains.shared.controllers.domain_exceptions import AuthenticationExcep
 from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
+from src.shared.config.get_app_colors import THEME_COLOR_NAMES
 from src.domains.usuarios.services.usuarios_services import UsuariosServices
 from src.services.emails.send_email import EmailAuthenticationError, EmailConnectionError, EmailMessage, EmailRecipientError, \
     EmailSendError, EmailValidationError, ModernEmailSender, create_email_config_from_env
@@ -185,22 +186,22 @@ def handle_update_photo(id: str, photo_url: str) -> dict[str, Any]:
 
     return response
 
-def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]:
+def handle_update_user_colors(id: str, theme_color: str) -> dict[str, Any]:
     """
     Update no campo colors do usuário.
 
-    Esta função manipula a operação de atualizar um único campo 'user_colors' do usuário. Ela utiliza um repositório
+    Esta função manipula a operação de atualizar um único campo 'theme_color' do usuário. Ela utiliza um repositório
     específico para realizar as operações necessárias.
 
     Args:
         id (str): ID do usuário.
-        colors (str): String com o nome da cor (const do flet como 'blue', 'orange') do usuário a ser atualizado.
+        theme_color (str): String com o nome da cor de base (const do flet como 'blue', 'orange') do usuário a ser atualizado.
 
     Returns:
-        bool: True se user_colors foi atualizado com sucesso, False caso contrário.
+        bool: True se theme_color foi atualizado com sucesso, False caso contrário.
 
     Raises:
-        ValueError: Se houver um erro de validação ao atualizar o campo user_colors do usuário.
+        ValueError: Se houver um erro de validação ao atualizar o campo theme_color do usuário.
         Exception: Se ocorrer um erro inesperado durante a operação.
 
     Exemplo:
@@ -210,17 +211,24 @@ def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]
     """
     response: dict[str, Any] = {}
 
-    # Verifica se o id ou colors foram passados
-    if not id or not colors:
+    # Verifica se o id ou theme_color foram passados
+    if not id:
         response["status"] = "error"
-        response["message"] = "Um dos argumentos id ou colors deve ser passado"
+        response["message"] = "Id do usuário é necessário para atualizar a cor preferencial"
+        logger.warning(response["message"])
+        return response
+    if not theme_color:
+        response["status"] = "error"
+        response["message"] = "Cor base do usuário é necessário para atualizar a cor preferencial"
         logger.warning(response["message"])
         return response
 
-    # Verifica se colors é um dicionário e contém os campos corretos
-    if not all(key in colors for key in ['base_color', 'primary', 'container', 'accent']):
+    # Verifica se theme_color faz parte das cores bases do sistema
+    theme_color = theme_color.lower()
+
+    if theme_color not in THEME_COLOR_NAMES:
         response["status"] = "error"
-        response["message"] = "O argumento color deve ser um dicionário com os campos 'base_color', 'primary', 'container' e 'accent'"
+        response["message"] = "O argumento theme_color deve ser uma das cores bases do sistema."
         logger.warning(response["message"])
         return response
 
@@ -230,7 +238,7 @@ def handle_update_user_colors(id: str, colors: dict[str, str]) -> dict[str, Any]
         usuarios_services = UsuariosServices(repository)
 
         # Atualiza o campo color no usuário
-        is_updated = usuarios_services.update_colors(id, colors)
+        is_updated = usuarios_services.update_colors(id, theme_color)
 
         if is_updated:
             response["status"] = "success"

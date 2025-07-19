@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.shared.models.password import Password
 from src.domains.usuarios.models.usuarios_subclass import UserProfile
+from src.shared.config.get_app_colors import THEME_COLOR_NAMES
 from src.domains.shared.models.registration_status import RegistrationStatus
-from src.shared.config import get_app_colors
 
 
 @dataclass
@@ -27,7 +27,7 @@ class Usuario:
         temp_password (bool | None = False): Se a senha é temporária (para novos usuários).
         empresas (Set[str]): Conjunto de IDs de empresas associadas ao usuário.
         photo_url (str | None): URL da foto de perfil do usuário.
-        user_colors (dict | None): Cor preferencial do usuário.
+        theme_color (str): Cor preferencial do usuário. Padrão é 'blue'.
         profile (UserProfile): Perfil do usuário.
         status (RegistrationStatus = RegistrationStatus.ACTIVE): Status do usuário.
         # --- Campos de Auditoria
@@ -66,7 +66,7 @@ class Usuario:
     temp_password: bool | None = False
     empresas: Set[str] = field(default_factory=set)
     photo_url: str | None = None
-    user_colors: dict | None = field(default_factory=dict)
+    theme_color: str = 'blue'
     profile: UserProfile = UserProfile.UNDEFINED
 
     # --- Campos de Status e Auditoria
@@ -119,8 +119,9 @@ class Usuario:
 
         self.photo_url = self.photo_url.strip() if self.photo_url else None
 
-        if not isinstance(self.user_colors, dict) or not all(key in self.user_colors for key in ['base_color', 'primary', 'container', 'accent', 'appbar']):
-            self.user_colors = get_app_colors('blue')
+        if not isinstance(self.theme_color, str) or self.theme_color.lower() not in THEME_COLOR_NAMES:
+            self.theme_color = 'blue'
+        self.theme_color = self.theme_color.lower()
 
         # Se o usuário está sendo criado como ACTIVE e não tem activated_at, define-o
         if self.status == RegistrationStatus.ACTIVE and self.created_at and not self.activated_at:
@@ -171,7 +172,7 @@ class Usuario:
             "empresa_id": self.empresa_id,
             "empresas": self.empresas,
             "photo_url": self.photo_url,
-            "user_colors": self.user_colors,
+            "theme_color": self.theme_color,
             "status": self.status,
             "created_at": self.created_at,
             "created_by_id": self.created_by_id,
@@ -211,7 +212,7 @@ class Usuario:
             # Converte conjunto empresas para lista ao salvar
             "empresas": list(self.empresas),
             "photo_url": self.photo_url,
-            "user_colors": self.user_colors,
+            "theme_color": self.theme_color,
             "status": self.status.name,  # Salva o nome do enum no DB
             "created_at": self.created_at if self.created_at else datetime.now(UTC),
             "created_by_id": self.created_by_id,

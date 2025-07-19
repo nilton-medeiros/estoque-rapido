@@ -114,18 +114,18 @@ class UsuariosServices:
         """
         return self.repository.update_photo(usuario_id, photo_url)
 
-    def update_colors(self, usuario_id: str, colors: dict[str, str]) -> bool:
+    def update_colors(self, usuario_id: str, theme_color: str) -> bool:
         """
         Atualiza a cor favorita do usuário para o campo  usando o repositório.
 
         Parâmetros:
             usuario_id (str): ID do usuário a ser alterado
-            colors (str): Cor favorita do usuário a ser atualizado
+            theme_color (str): Cor base favorita do usuário a ser atualizado
 
         Retorna:
             bool: True se a atualização for bem-sucedida, False caso contrário
         """
-        return self.repository.update_colors(usuario_id, colors)
+        return self.repository.update_colors(usuario_id, theme_color)
 
     def update_empresas(self, usuario_id: str, empresas: set[str], empresa_id: str|None = None) -> bool:
         """

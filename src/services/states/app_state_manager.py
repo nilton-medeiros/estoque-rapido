@@ -2,6 +2,9 @@ import logging
 import flet as ft
 
 from typing import Any
+
+from src.shared.config.get_app_colors import get_theme_colors
+
 from .state_validator import StateValidator
 from src.shared.utils import MessageType, message_snackbar
 
@@ -53,10 +56,8 @@ class AppStateManager:
             self._state['usuario'] = usuario_data
 
             # Atualiza as cores do usuário
-            if colors := usuario_data.get('user_colors', {}):
-                if all(key in colors for key in ['base_color', 'primary', 'container', 'accent', 'appbar']):
-                    self.page.session.set("user_colors", colors)
-
+            theme_colors: dict = get_theme_colors(usuario_data['theme_color'])
+            self.page.session.set("theme_colors", theme_colors)
             self.page.pubsub.send_all("usuario_updated")
             return True
 
