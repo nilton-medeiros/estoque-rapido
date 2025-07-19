@@ -10,7 +10,7 @@ class MessageType(Enum):
     PROGRESS = ("progress", ft.Colors.PURPLE, ft.Colors.PURPLE_200)
 
 
-def message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO, duration: int = 5000):
+def  message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO, duration: int = 5000, center: bool = False):
     """
     Exibe uma notificação de mensagem no topo da tela.
 
@@ -35,7 +35,13 @@ def message_snackbar(page: ft.Page, message: str, message_type: MessageType = Me
         padding=ft.padding.all(10),
         duration=duration,
         behavior=ft.SnackBarBehavior.FLOATING,
-        margin=ft.margin.all(10),
+        margin=ft.margin.all(10) if not center else None,
+        # Garante que page.width não é None antes de usar em cálculos, com um fallback.
+        width=(
+            min((page.width or 600) * 0.8, 500)
+            if center
+            else None
+        ),
     )
 
     # ToDo: Refatorar para page.open(snack_bar)
@@ -51,9 +57,18 @@ class ProgressiveMessage:
     Ideal para operações que têm múltiplas etapas sequenciais.
     """
 
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, center: bool = False):
         self.page = page
         self.current_snackbar = None
+        self.center = center
+
+    def _get_centered_width(self) -> int | None:
+        """Calcula a largura para o SnackBar centralizado, com fallback."""
+        if not self.center:
+            return None
+        # Garante que page.width não é None antes de usar em cálculos
+        page_width = self.page.width or 600 # Usa 600 como fallback
+        return int(min(page_width * 0.8, 500))
 
     def show_progress(self, message: str, show_spinner: bool = True, duration: int | None = None):
         """
@@ -94,7 +109,8 @@ class ProgressiveMessage:
             bgcolor=ft.Colors.PURPLE,
             duration=duration or 10000,  # Default longo para progresso
             behavior=ft.SnackBarBehavior.FLOATING,
-            margin=ft.margin.all(10),
+            margin=ft.margin.all(10) if not self.center else None,
+            width=self._get_centered_width(),
             show_close_icon=False if duration is None else True,
         )
 
@@ -151,7 +167,8 @@ class ProgressiveMessage:
             bgcolor=ft.Colors.GREEN,
             duration=duration,
             behavior=ft.SnackBarBehavior.FLOATING,
-            margin=ft.margin.all(10),
+            margin=ft.margin.all(10) if not self.center else None,
+            width=self._get_centered_width(),
             show_close_icon=True,
         )
 
@@ -179,7 +196,8 @@ class ProgressiveMessage:
             bgcolor=ft.Colors.ORANGE, # Cor para aviso
             duration=duration,
             behavior=ft.SnackBarBehavior.FLOATING,
-            margin=ft.margin.all(10),
+            margin=ft.margin.all(10) if not self.center else None,
+            width=self._get_centered_width(),
             show_close_icon=True,
         )
 
@@ -208,7 +226,8 @@ class ProgressiveMessage:
             bgcolor=ft.Colors.RED,
             duration=duration,
             behavior=ft.SnackBarBehavior.FLOATING,
-            margin=ft.margin.all(10),
+            margin=ft.margin.all(10) if not self.center else None,
+            width=self._get_centered_width(),
             show_close_icon=True,
         )
 
