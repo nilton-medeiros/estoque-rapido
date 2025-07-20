@@ -2,6 +2,7 @@ import logging
 import flet as ft
 
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
+from src.shared.config import get_theme_colors
 from src.shared.utils.messages import message_snackbar, MessageType
 
 logger = logging.getLogger(__name__)
@@ -21,36 +22,29 @@ class PopupColorItem(ft.PopupMenuItem):
         self.theme_color: str = color
 
     def seed_color_changed(self, e):
-        # Atualiza a tela com o novo thema de cores com a cor base do usuário
-        # super() trás o self.page por herança
-        self.page.theme = self.page.dark_theme = ft.Theme(color_scheme_seed=self.theme_color)  # type: ignore [attr-defined]
-        usuario_logado = self.page.app_state.usuario  # type: ignore [attr-defined]
-        msg_error = None
+        page = self.page
+        if not page:
+            logger.warning("A página não está mais disponível. Ação de mudança de cor ignorada.")
+            return
 
+        # 1. Atualiza o tema da UI imediatamente para um feedback visual rápido.
+        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=self.theme_color)
+
+        # 2. Atualiza a cor no banco de dados.
+        usuario_logado = page.app_state.usuario  # type: ignore [attr-defined]
         try:
             result = user_controllers.handle_update_user_colors(id=usuario_logado['id'], theme_color=self.theme_color)
 
             if result["status"] == "error":
-                msg_error = result["message"]
-                message_snackbar(page=self.page, message=msg_error,  # type: ignore [attr-defined]
-                                 message_type=MessageType.ERROR)
-                return  # Não continua se houve erro
+                message_snackbar(page=page, message=result["message"], message_type=MessageType.ERROR)
+                return
 
-            # Atualiza o estado local ANTES de atualizar a UI globalmente
-            user_dict = self.page.app_state.usuario  # type: ignore
-            # Atualiza a cor de thema preferencial no dicionário
-            user_dict['theme_color'] = self.theme_color
-            self.page.app_state.set_usuario(user_dict)  # type: ignore [attr-defined]
+            # 3. Atualiza o estado local do usuário.
+            usuario_logado['theme_color'] = self.theme_color
+            page.app_state.set_usuario(usuario_logado)  # type: ignore [attr-defined]
 
-        except ValueError as e:
-            logger.error(str(e))
-            msg_error = f"Erro: {str(e)}"
-        except RuntimeError as e:
-            logger.error(str(e))
-            # Provavelmente um erro de digitação, deveria ser "Erro na atualização"
-            msg_error = f"Erro no upload: {str(e)}"
+        except Exception as ex:
+            logger.error(f"Erro ao atualizar a cor do tema: {ex}")
+            message_snackbar(page=page, message=f"Erro ao atualizar a cor do tema: {ex}", message_type=MessageType.ERROR)
 
-        if msg_error:
-            message_snackbar(page=self.page, message=msg_error,  # type: ignore
-                             message_type=MessageType.ERROR)
-        self.page.update()  # type: ignore
+        page.update()

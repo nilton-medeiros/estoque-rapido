@@ -11,6 +11,7 @@ from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_tras
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
 from src.pages.home import show_home_page
 from src.pages.partials.app_bars.sidebar import create_navigation_drawer
+from src.pages.partials.app_bars.sidebar_header import create_sidebar_header
 from src.pages.pedidos.pedidos_form_page import show_pedido_form
 from src.pages.pedidos.pedidos_grid_page import show_orders_grid
 from src.pages.pedidos.pedidos_grid_recycle_page import show_orders_grid_trash
@@ -51,6 +52,7 @@ def main(page: ft.Page):
 
     # Configurar cores padrão imediatamente para evitar erros
     # Garante que há sempre uma cor padrão
+    page.session.set("user_authenticaded", False)
     page.session.set("theme_colors", get_theme_colors())
 
     dashboard_data = {
@@ -95,13 +97,12 @@ def main(page: ft.Page):
     def update_usuario_dependent_ui():
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            # type: ignore  [attr-defined]
-            page.user_name_text.value = page.app_state.usuario['name'].nome_completo # type: ignore  [attr-defined]
-            # O update deve ser no controlador que chama o evento após chamar este evento
-            # page.user_name_text.update()
+            page.user_name_text.value = page.app_state.usuario['name'].nome_completo  # type: ignore [attr-defined]
+        if page.session.get("user_authenticaded"):
+            if page.drawer:
+                if page.drawer.controls:  # Garante que a lista de controles exista
+                    page.drawer.controls[0] = create_sidebar_header(page)  # Recria apenas o cabeçalho
 
-        """Atualiza o drawer quando o usuário faz login."""
-        page.drawer = create_navigation_drawer(page)  # Recria o drawer com os dados do usuário
         page.update()
 
     def update_empresa_dependent_ui():

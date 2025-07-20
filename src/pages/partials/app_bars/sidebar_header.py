@@ -31,7 +31,6 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
             ),
             padding=ft.padding.symmetric(vertical=20, horizontal=20),
             alignment=ft.alignment.center,
-            bgcolor=ft.Colors.PRIMARY,
         )
 
     # Configuração inicial dos componentes de texto
@@ -62,10 +61,6 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     # Ação do botão de empresa
     page.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page, current_company)  # type: ignore [attr-defined]
 
-    bg_color=ft.Colors.TRANSPARENT
-    if theme_colors := page.session.get("theme_colors"):
-        bg_color=theme_colors["background"]
-
     return ft.Container(
         content=ft.Column(
             controls=[
@@ -82,7 +77,6 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
         ),
         padding=ft.padding.symmetric(vertical=20, horizontal=20),
         alignment=ft.alignment.center,
-        bgcolor=bg_color, # type: ignore [attr-defined]
     )
 
 def _create_user_photo(current_user: dict) -> ft.Control:

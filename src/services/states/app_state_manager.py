@@ -44,6 +44,7 @@ class AppStateManager:
         try:
             if usuario_data is None:
                 self._state['usuario'] = {}
+                self.page.session.set("user_authenticaded", False)
                 self.page.pubsub.send_all("usuario_logout")
                 return True
 
@@ -56,7 +57,9 @@ class AppStateManager:
             self._state['usuario'] = usuario_data
 
             # Atualiza as cores do usuário
+
             theme_colors: dict = get_theme_colors(usuario_data['theme_color'])
+            self.page.session.set("user_authenticaded", True)
             self.page.session.set("theme_colors", theme_colors)
             self.page.pubsub.send_all("usuario_updated")
             return True

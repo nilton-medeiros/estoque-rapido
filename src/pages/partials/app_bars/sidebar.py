@@ -75,6 +75,5 @@ def create_navigation_drawer(page: ft.Page):
             ft.Divider(height=5),
             exit_button,
         ],
-        bgcolor="#111418",
         open=False,
     )
