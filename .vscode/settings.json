@@ -22,8 +22,10 @@
     "categorias": "webpack",
     "clientes": "admin",
     "pedidos": "meta",
+    "formas_pagamento": "other",
   },
   "python.analysis.extraPaths": [
     "./src/shared/config"
   ],
+  "python.analysis.autoImportCompletions": true,
 }
