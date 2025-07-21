@@ -1,6 +1,7 @@
 import flet as ft
 from typing import Optional
 
+from src.domains.shared.context.session import get_session_colors
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios import Usuario
 
@@ -24,7 +25,7 @@ class SignupView:
         self.password_again_input: ft.TextField
         self.error_text: ft.Text
         self.signup_button: ft.OutlinedButton
-        self.app_colors: dict = page.session.get("theme_colors") # type: ignore
+        self.app_colors = get_session_colors(page)
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
 
@@ -84,13 +85,6 @@ class SignupView:
             size=sizes["font_size"],
             visible=False
         )
-
-        # Debug: Dados Fakes como hardcord, remover isto em produção
-        self.name_input.value = 'Angelina Jolie'
-        self.email_input.value = 'ajolie@gmail.com'
-        self.phone_input.value = '11987654321'
-        self.password_input.value = 'Aj#45678'
-        self.password_again_input.value = 'Aj#45678'
 
         self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
         self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso

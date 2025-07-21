@@ -12,6 +12,7 @@ from src.domains.shared import NomePessoa, RegistrationStatus
 import src.domains.clientes.controllers.clientes_controllers as client_controllers
 
 from src.domains.clientes.models import Cliente
+from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.domains.shared.models.address import Address
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
@@ -30,9 +31,7 @@ class ClienteForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        # ! page.session é um objeto que contém o método .get(), não confundir com um dict
-        self.app_colors: dict[str, str] = page.session.get("theme_colors") # type: ignore [attr-defined]
-
+        self.app_colors = get_session_colors(page)
         self.input_width = 400
 
         # Responsividade
@@ -583,7 +582,7 @@ def show_client_form(page: ft.Page):
             # Envia os dados para o backend
             result = client_controllers.handle_save(
                 cliente=cliente,
-                usuario_logado=page.app_state.usuario # type: ignore  [attr-defined]
+                current_user=get_current_user(page)
             )
 
             # Segunda etapa: Salvando no banco

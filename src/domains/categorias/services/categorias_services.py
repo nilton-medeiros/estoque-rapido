@@ -3,6 +3,7 @@ from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import CategoriasRepository
 from src.domains.shared import NomePessoa
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils import get_uuid
 
 
@@ -12,61 +13,61 @@ class CategoriasServices:
     def __init__(self, repository: CategoriasRepository):
         self.repository = repository
 
-    def create(self, categoria: ProdutoCategorias, usuario: dict) -> str:
+    def create(self, categoria: ProdutoCategorias, current_user: Usuario) -> str:
         """Envia os dados da nova categoria para o repositório criar a categoria"""
-        if not usuario.get("id"):
+        if not current_user.id:
             raise ValueError("ID do usuário é necessário")
 
         # Gera por padrão um uuid raw (sem ons hífens) com prefixo 'cat_'
         categoria.id = "cat_" + get_uuid()
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
-        categoria.created_by_id = usuario["id"]
-        user_name: NomePessoa = usuario["name"]
+        categoria.created_by_id = current_user.id
+        user_name: NomePessoa = current_user.name
         # Desnormalização para otimizar indices no banco de dados
         categoria.created_by_name = user_name.nome_completo
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(categoria)
 
-    def update(self, categoria: ProdutoCategorias, usuario: dict) -> str:
+    def update(self, categoria: ProdutoCategorias, current_user: Usuario) -> str:
         """Atualiza os dados de uma categoria existente"""
         if not categoria.id:
             raise ValueError("ID da categoria é necessário")
-        if not usuario.get("id"):
+        if not current_user.id:
             raise ValueError("ID do usuário é necessário")
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
-        categoria.updated_by_id = usuario["id"]
-        user_name: NomePessoa = usuario["name"]
+        categoria.updated_by_id = current_user.id
+        user_name: NomePessoa = current_user.name
         # Desnormalização para otimizar indices no banco de dados
         categoria.updated_by_name = user_name.nome_completo
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(categoria)
 
-    def update_status(self, categoria: ProdutoCategorias, usuario: dict, status: RegistrationStatus) -> bool:
+    def update_status(self, categoria: ProdutoCategorias, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma categoria existente"""
-        user_name: NomePessoa = usuario["name"]
+        user_name: NomePessoa = current_user.name
         categoria.status = status
 
         match status:
             case RegistrationStatus.ACTIVE:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.activated_at = None
-                categoria.activated_by_id = usuario["id"]
+                categoria.activated_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
                 categoria.activated_by_name = user_name.nome_completo
             case RegistrationStatus.INACTIVE:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.inactivated_at = None
-                categoria.inactivated_by_id = usuario["id"]
+                categoria.inactivated_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
                 categoria.inactivated_by_name = user_name.nome_completo
             case RegistrationStatus.DELETED:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.deleted_at = None
-                categoria.deleted_by_id = usuario["id"]
+                categoria.deleted_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
                 categoria.deleted_by_name = user_name.nome_completo
 

@@ -430,16 +430,16 @@ def handle_get_all(empresa_id: str, status_deleted: bool = False) -> dict[str, A
 
     return response
 
-def handle_update_status(usuario: Usuario, logged_user: dict, status: RegistrationStatus) -> dict[str, Any]:
+def handle_update_status(user_to_update: Usuario, current_user: Usuario, status: RegistrationStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletado de um usuário."""
     response = {}
 
     try:
-        if not usuario:
+        if not user_to_update:
             raise ValueError("Usuário não pode ser nulo ou vazio")
-        if not isinstance(usuario, Usuario):
-            raise ValueError("O argumento 'usuario' não é do tipo Usuario")
-        if not usuario.id:
+        if not isinstance(user_to_update, Usuario):
+            raise ValueError("O argumento 'user_to_update' não é do tipo Usuario")
+        if not user_to_update.id:
             raise ValueError("ID do usuário não pode ser nulo ou vazio")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
@@ -449,7 +449,7 @@ def handle_update_status(usuario: Usuario, logged_user: dict, status: Registrati
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        is_updated = usuarios_services.update_status(usuario, logged_user, status)
+        is_updated = usuarios_services.update_status(user_to_update, current_user, status)
         operation = "ativado" if status == RegistrationStatus.ACTIVE else "inativado" if status == RegistrationStatus.INACTIVE else "marcado como excluído"
 
         if is_updated:
@@ -471,26 +471,26 @@ def handle_update_status(usuario: Usuario, logged_user: dict, status: Registrati
 
     return response
 
-def send_mail_password(usuario: Usuario) -> dict[str, Any]:
+def send_mail_password(user_to_email: Usuario) -> dict[str, Any]:
     load_dotenv()
     URL_LOGIN = os.environ.get("URL_LOGIN", "")
 
     try:
-        if not usuario:
+        if not user_to_email:
             raise ValueError("Usuário não pode ser nulo ou vazio")
-        if not isinstance(usuario, Usuario):
+        if not isinstance(user_to_email, Usuario):
             raise ValueError("Usuario não é do tipo Usuario")
-        if not usuario.id:
-            raise ValueError("ID da usuario não pode ser nulo ou vazio")
+        if not user_to_email.id:
+            raise ValueError("ID da user_to_email não pode ser nulo ou vazio")
 
         config = create_email_config_from_env()
         email_sender = ModernEmailSender(config)
-        senha_temp = usuario.password.decrypted # Acessa a property diretamente
+        senha_temp = user_to_email.password.decrypted # Acessa a property diretamente
 
         # 1. Enviar email de forma síncrona
         mensagem = EmailMessage(
             subject="🔑 Sua senha temporária - Ação Necessária",
-            recipients=[usuario.email],
+            recipients=[user_to_email.email],
             body_html=f"""
             <h2>Bem-vindo ao sistema Estoque Rápido!</h2>
             <p>Sua senha temporária é: <strong>{senha_temp}</strong></p>
@@ -503,7 +503,7 @@ def send_mail_password(usuario: Usuario) -> dict[str, Any]:
 
         if resultado['success']:
             # 2. Só marca como "email enviado" se confirmou envio
-            # ToDo: marcar_usuario_email_enviado(usuario.id)
+            # ToDo: marcar_usuario_email_enviado(user_to_email.id)
             return {"success": True, "message": "Usuário criado e email enviado"}
         else:
             # 3. Se email falhou, pode reverter ou tentar novamente

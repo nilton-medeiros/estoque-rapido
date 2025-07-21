@@ -11,6 +11,7 @@ from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
+from src.domains.shared.context.session import get_current_user, get_session_colors
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.pages.partials.app_bars.appbar import create_appbar_back
 import src.shared.utils.tools as tools
@@ -43,7 +44,7 @@ class EmpresaView:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict = page.session.get("theme_colors")  # type: ignore
+        self.app_colors = get_session_colors(page)
         self._empresa_id = None
 
         # Responsividade
@@ -925,30 +926,30 @@ def show_company_main_form(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        user = page.app_state.usuario # type: ignore
-        result: dict = company_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        current_user = get_current_user(page)
+        result: dict = company_controllers.handle_save_empresas(empresa=empresa, current_user=current_user)
 
         if result["status"] == "error":
             message_snackbar(
                 page=page, message=result["message"], message_type=MessageType.ERROR)
             return
 
-        if not page.app_state.empresa:  # type: ignore [attr: defined]
+        if not page.app_state.empresa:  # type: ignore [attr-defined]
             # Atualiza o estado do app com o nova empresa antes da navegação se não existir
             page.app_state.set_empresa(empresa.to_dict()) # type: ignore
 
         # Associa a empresa a lista de empresas do usuário
-        user['empresas'].add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
+        current_user.empresas.add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
 
-        if not user.get('empresa_id'):
+        if not current_user.empresa_id:
             # Se o usuário não tem empresa associada e selecionada, associa a nova empresa
-            user['empresa_id'] = empresa.id
+            current_user.empresa_id = empresa.id
 
         # Atualiza usuário no banco de dados
         result = user_controllers.handle_update_user_companies(
-            usuario_id=user['id'],
-            empresas=user['empresas'],
-            empresa_ativa_id=user['empresa_id'],
+            usuario_id=current_user.id,
+            empresas=current_user.empresas,
+            empresa_ativa_id=current_user.empresa_id,
         )
 
         if result["status"] == "error":

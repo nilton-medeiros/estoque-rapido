@@ -63,7 +63,7 @@ def show_users_grid_trash(page: ft.Page):
 
         match action:
             case "RESTORE":
-                is_restore = users_actions.restore_from_trash(page=page, usuario=usuario)
+                is_restore = users_actions.restore_from_trash(page=page, user_to_restore=usuario)
                 if is_restore:
                     # Reexecuta o carregamento. Atualizar a lista de usuários na tela
                     page.run_task(load_data_and_update_ui)

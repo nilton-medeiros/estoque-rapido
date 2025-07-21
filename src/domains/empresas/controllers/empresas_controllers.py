@@ -6,6 +6,7 @@ from src.domains.empresas.models.empresas_model import Empresa
 from src.domains.shared import RegistrationStatus
 from src.domains.empresas.repositories.implementations.firebase_empresas_repository import FirebaseEmpresasRepository
 from src.domains.empresas.services.empresas_services import EmpresasServices
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e es
 """
 
 
-def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
+def handle_save_empresas(empresa: Empresa, current_user: Usuario) -> dict:
     """
     Manipula a operação de salvar empresa.
 
@@ -26,7 +27,7 @@ def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
 
     Args:
         empresa (Empresa): A instância do empresa a ser salva.
-        usuario (Ususario): Usuário logado.
+        current_user (Ususario): Usuário logado.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e o ID do empresa.
@@ -52,11 +53,11 @@ def handle_save_empresas(empresa: Empresa, usuario: dict) -> dict:
 
         if empresa.id:
             # Alterar empresa existente
-            id = empresas_services.update(empresa, usuario)
+            id = empresas_services.update(empresa, current_user)
         else:
             # Criar novo empresa
             operation = "criada"
-            id = empresas_services.create(empresa, usuario)
+            id = empresas_services.create(empresa, current_user)
 
         response["status"] = "success"
         response["data"] = id
@@ -244,14 +245,14 @@ def handle_get_empresas(ids_empresas: set[str]|list[str], empresas_inativas: boo
     return response
 
 
-def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: RegistrationStatus) -> dict:
+def handle_update_status_empresas(empresa: Empresa, current_user: Usuario, status: RegistrationStatus) -> dict:
     """
     Manipula a operação de status para ativo, deletedo ou arquivado de uma empresa no banco de dados.
     Ela utiliza um repositório específico para realizar a exclusão e retorna True se bem sucedido ou False em caso de erro.
 
     Args:
         empresa (Empresa): A instância da empresa a ser alterada.
-        usuario (Ususario): Usuário logado.
+        current_user (Usuario): Usuário logado.
         status (RegistrationStatus): Novo status da empresa. ARCHIVED, DELETED ou ACTIVE.
 
     Returns:
@@ -271,9 +272,9 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Regis
             raise ValueError("Empresa não informada em args: handle_update_status_empresas")
         if not isinstance(empresa, Empresa):
             raise ValueError("Empresa não é uma instância de Empresa em args: handle_update_status_empresas")
-        if not usuario:
+        if not current_user:
             raise ValueError("Usuário não informado em args: handle_update_status_empresas")
-        if not isinstance(usuario, dict):
+        if not isinstance(current_user, dict):
             raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
         if not status:
             raise ValueError("Status não informado em args: handle_update_status_empresas")
@@ -284,7 +285,7 @@ def handle_update_status_empresas(empresa: Empresa, usuario: dict, status: Regis
         repository = FirebaseEmpresasRepository()
         empresas_services = EmpresasServices(repository)
 
-        is_updated = empresas_services.update_status(empresa=empresa, usuario=usuario, status=status)
+        is_updated = empresas_services.update_status(empresa=empresa, current_user=current_user, status=status)
 
         if is_updated:
             response["status"] = "success"

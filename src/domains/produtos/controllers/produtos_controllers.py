@@ -5,12 +5,13 @@ from src.domains.produtos.models import Produto
 from src.domains.shared import RegistrationStatus
 from src.domains.produtos.repositories import FirebaseProdutosRepository
 from src.domains.produtos.services import ProdutosServices
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 
 logger = logging.getLogger(__name__)
 
 
-def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
+def handle_save(produto: Produto, current_user: Usuario) -> dict[str, Any]:
     """Salva ou atualiza um produto."""
     response = {}
 
@@ -21,9 +22,9 @@ def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
         operation = "atualizado"
 
         if produto.id:
-            id = produtos_services.update(produto, usuario)
+            id = produtos_services.update(produto, current_user)
         else:
-            id = produtos_services.create(produto, usuario)
+            id = produtos_services.create(produto, current_user)
             operation = "criado"
 
         response["status"] = "success"
@@ -41,7 +42,7 @@ def handle_save(produto: Produto, usuario: dict[str,Any]) -> dict[str, Any]:
     return response
 
 
-def handle_update_status(produto: Produto, usuario: dict, status: RegistrationStatus) -> dict[str, Any]:
+def handle_update_status(produto: Produto, current_user: Usuario, status: RegistrationStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletado de um produto."""
     response = {}
 
@@ -50,10 +51,12 @@ def handle_update_status(produto: Produto, usuario: dict, status: RegistrationSt
             raise ValueError("ID da produto não pode ser nulo ou vazio")
         if not isinstance(produto, Produto):
             raise ValueError("Produto não é do tipo Produto")
-        if not usuario:
+        if not current_user:
             raise ValueError("Usuário não pode ser nulo ou vazio")
-        if not isinstance(usuario, dict):
-            raise ValueError("Usuário não é do tipo dict")
+        if not isinstance(current_user, Usuario):
+            raise ValueError("O argumento current_user não é do tipo 'Usuario'")
+        if not isinstance(current_user.id, str):
+            raise ValueError("O Usuário não tem um ID válido")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
         if not isinstance(status, RegistrationStatus):
@@ -62,7 +65,7 @@ def handle_update_status(produto: Produto, usuario: dict, status: RegistrationSt
         repository = FirebaseProdutosRepository(company_id=produto.empresa_id)
         produtos_services = ProdutosServices(repository)
 
-        is_updated = produtos_services.update_status(produto, usuario, status)
+        is_updated = produtos_services.update_status(produto, current_user, status)
 
         if is_updated:
             response["status"] = "success"

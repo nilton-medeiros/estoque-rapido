@@ -19,12 +19,13 @@ class UsuariosServices:
     Métodos:
         create: Cria novo usuário no banco usando repositório
             Parâmetros:
-                usuario: (Usuario)
+                user_to_update: (Usuario) Usuário a ser criado
             Retorna: (Usuario) Novo usuário criado
 
         update: Atualiza usuário no banco usando repositório
             Parâmetros:
-                    usuario: (Usuario)
+                    user_to_update: (Usuario) Usuario a ser atualizado
+
                 Retorna: (Usuario) Usuário atualizado
     '''
 
@@ -36,33 +37,33 @@ class UsuariosServices:
         # Adicione lógica de negócios aqui, se necessário
         return self.repository.authentication(email, password)
 
-    def create(self, usuario: Usuario) -> str:
+    def create(self, user_to_update: Usuario) -> str:
         """
         Envia dados do Usuário para o Repositório do database instânciado (repository) em usuarios_controller.
 
-        :param usuario: Instância do Usuário a salvar
+        :param user_to_update: Instância do Usuário a salvar
         :return: ID do documento do Usuário salvo
         """
-        if not usuario.email:
+        if not user_to_update.email:
             raise ValueError("Email é necessário para criar usuário")
-        if not usuario.password:
+        if not user_to_update.password:
             raise ValueError("Password é necessário para criar usuário")
 
-        existing_usuario = self.repository.exists_by_email(usuario.email)
+        existing_usuario = self.repository.exists_by_email(user_to_update.email)
 
         if existing_usuario:
             raise ValueError("Já existe um usuário com este email")
 
         # Gera por padrão um uuid raw (sem os hífens) com prefixo 'usu_'
-        usuario.id = 'usu_' + get_uuid()
+        user_to_update.id = 'usu_' + get_uuid()
 
         # Envia para o repositório selecionado em usuarios_controllrer salvar
-        return self.repository.save(usuario)
+        return self.repository.save(user_to_update)
 
-    def update(self, usuario: Usuario) -> str:
-        if usuario.id is None:
+    def update(self, user_to_update: Usuario) -> str:
+        if user_to_update.id is None:
             raise ValueError("ID do usuário é necessário para atualização")
-        return self.repository.save(usuario)
+        return self.repository.save(user_to_update)
 
     def find_by_id(self, usuario_id: str) -> Optional[Usuario]:
         """
@@ -145,26 +146,26 @@ class UsuariosServices:
         """Deleta um usuário pelo usuario_id usando o repositório."""
         return self.repository.delete(usuario_id)
 
-    def update_status(self, usuario: Usuario, logged_user: dict, status: RegistrationStatus) -> bool:
+    def update_status(self, user_to_update: Usuario, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma usuário existente"""
-        user_name: NomePessoa = logged_user["name"]
-        usuario.status = status
+        user_name: NomePessoa = current_user.name
+        user_to_update.status = status
 
         match status:
             case RegistrationStatus.ACTIVE:
-                usuario.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
-                usuario.activated_by_id = logged_user["id"]
-                usuario.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                user_to_update.activated_by_id = current_user.id
+                user_to_update.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.INACTIVE:
-                usuario.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
-                usuario.inactivated_by_id = logged_user["id"]
-                usuario.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                user_to_update.inactivated_by_id = current_user.id
+                user_to_update.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.DELETED:
-                usuario.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
-                usuario.deleted_by_id = logged_user["id"]
-                usuario.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
+                user_to_update.deleted_by_id = current_user.id
+                user_to_update.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
 
-        id = self.repository.save(usuario)
+        id = self.repository.save(user_to_update)
         return id is not None
 
     def change_password(self, usuario_id: str, new_password: str) -> bool:

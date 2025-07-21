@@ -10,6 +10,7 @@ import flet as ft
 
 from src.domains.empresas.controllers.empresas_controllers import handle_get_empresas
 from src.domains.shared import NomePessoa, RegistrationStatus
+from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.domains.usuarios.models.usuarios_subclass import UserProfile
 
 import src.controllers.bucket_controllers as bucket_controllers
@@ -41,7 +42,7 @@ class UsuarioForm:
         self.icon_size = 24
         self.padding = 50
         # self._usuario_id: str | None = None
-        self.app_colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]
+        self.app_colors = get_session_colors(page)
         self.input_width = 400
 
         # Responsividade
@@ -51,8 +52,8 @@ class UsuarioForm:
         self.page.on_resized = self._page_resize
 
     def _get_logged_user_companies(self) -> list:
-        logged_user = self.page.app_state.usuario  # type: ignore [attr-defined]
-        empresas = logged_user.get("empresas")
+        current_user = get_current_user(self.page)
+        empresas = current_user.empresas
         if not empresas:
             return []
 
@@ -755,7 +756,7 @@ def show_user_form(page: ft.Page):
 
                 print(f"Enviando email/credenciais para {usuario.email}...")
                 # Envia email para usuário com senha temporária
-                result = user_controllers.send_mail_password(usuario=usuario)
+                result = user_controllers.send_mail_password(user_to_email=usuario)
 
                 # Mensagem final de sucesso
                 if result.get("success") is True: # Verifica a chave "success"

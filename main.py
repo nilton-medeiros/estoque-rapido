@@ -1,14 +1,17 @@
+from click import get_current_context
 import flet as ft
 import logging
 import os
 
 from dotenv import load_dotenv
 
+from src.domains.shared.context.session import get_current_user
 from src.pages.external_pages import show_signup_page, show_landing_page, show_login_page
 from src.pages.clientes.clientes_form_page import show_client_form
 from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
+from src.pages.formas_pagamento.formas_pagamento_grid_page import show_formas_pagamento_grid
 from src.pages.home import show_home_page
 from src.pages.partials.app_bars.sidebar import create_navigation_drawer
 from src.pages.partials.app_bars.sidebar_header import create_sidebar_header
@@ -35,6 +38,14 @@ if flet_key:
 
 
 def main(page: ft.Page):
+    """
+    Single Page Application (SPA)
+    utiliza o sistema de rotas do Flet (page.route e page.on_route_change) para gerenciar a navegação dinamicamente,
+    renderizando diferentes views (ft.View) dentro de uma única página, sem recarregar a aplicação no navegador.
+    Isso proporciona uma experiência de usuário mais fluida, com transições rápidas entre diferentes seções da aplicação como
+    (/home, /login, /home/empresas/grid, etc.), mantendo o estado e os dados no lado do cliente.
+    """
+
     # Força a limpeza do cache no início da aplicação
     page.clean()
     page.user_name_text: ft.Text = ft.Text( # type: ignore  [attr-defined]
@@ -50,10 +61,11 @@ def main(page: ft.Page):
         tooltip="Clique aqui e preencha os dados da empresa"
     )
 
+    # Configuração do page.session (Sessão do usuário)
+
+    page.session.set("user_authenticaded", False)  # Indica se o usuário está logado ou não
     # Configurar cores padrão imediatamente para evitar erros
-    # Garante que há sempre uma cor padrão
-    page.session.set("user_authenticaded", False)
-    page.session.set("theme_colors", get_theme_colors())
+    page.session.set("theme_colors", get_theme_colors())  # Garante que há sempre uma cor padrão
 
     dashboard_data = {
         "repor_produtos": 0,
@@ -72,15 +84,15 @@ def main(page: ft.Page):
     def handle_pubsub(message):
         match message:
             case "usuario_updated":
-                if page.app_state.usuario.get('name'): # type: ignore  [attr-defined]
+                if current_user := get_current_user(page):
                     # Atualiza elementos da UI que dependem do usuário
-                    update_usuario_dependent_ui()
+                    update_usuario_dependent_ui(current_user)
                 else:
                     # Limpa elementos da UI relacionados ao usuário
                     clear_usuario_ui()
             case "empresa_updated": # Adicionado o tratamento para empresa_updated
                 # Executa a atualização do dashboard em uma task separada (async)
-                page.run_task(refresh_dashboard_session, page) # type: ingnore [attr: defined]
+                page.run_task(refresh_dashboard_session, page) # type: ingnore [attr-defined]
                 if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
@@ -94,10 +106,10 @@ def main(page: ft.Page):
                 # Podemos forçar um page.update() aqui se necessário para outras partes da UI global.
                 # page.update()
 
-    def update_usuario_dependent_ui():
+    def update_usuario_dependent_ui(current_user):
         # Exemplo: Atualiza o nome do usuário no header
         if hasattr(page, 'user_name_text'):
-            page.user_name_text.value = page.app_state.usuario['name'].nome_completo  # type: ignore [attr-defined]
+            page.user_name_text.value = current_user.name.nome_completo  # type: ignore [attr-defined]
         if page.session.get("user_authenticaded"):
             if page.drawer:
                 if page.drawer.controls:  # Garante que a lista de controles exista
@@ -166,7 +178,7 @@ def main(page: ft.Page):
         # Centraliza a verificação de autenticação para rotas protegidas
         if e.route.startswith('/home'):
             page.on_resized = None
-            if not page.app_state.usuario.get('id'):  # type: ignore [attr-defined]
+            if not page.session.get("user_authenticaded"):
                 page.go('/login')
                 return  # Interrompe o processamento para redirecionar
 
@@ -299,6 +311,8 @@ def main(page: ft.Page):
                 pg_view = show_orders_grid_trash(page)
             case '/home/pedidos/form':
                 pg_view = show_pedido_form(page)
+            case '/home/formasdepagamento/grid':
+                pg_view = show_formas_pagamento_grid(page)
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',

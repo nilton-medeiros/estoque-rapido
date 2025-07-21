@@ -3,6 +3,7 @@ import flet as ft
 import asyncio
 
 from src.domains.pedidos.models import Pedido
+from src.domains.shared.context.session import get_current_user
 from src.shared.utils import MessageType, message_snackbar
 
 from src.domains.pedidos.controllers import pedidos_controllers as order_controllers
@@ -40,8 +41,8 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
 
             logger.info(
                 f"Iniciando operação 'SOFT_DELETED' para o pedido ID: {pedido.id}")
-            user = page_ctx.app_state.usuario
-            result = order_controllers.handle_delete_pedido(pedido=pedido, usuario_logado=user)
+            current_user = get_current_user(page_ctx)
+            result = order_controllers.handle_delete_pedido(pedido=pedido, current_user=current_user)
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -135,9 +136,8 @@ async def send_to_trash(page: ft.Page, pedido: Pedido) -> bool:
 
 def restore_from_trash(page: ft.Page, pedido: Pedido) -> bool:
     logger.info(f"Restaurando pedido ID: {pedido.id} da lixeira")
-    user = page.app_state.usuario # type: ignore  [attr-defined]
 
-    result = order_controllers.handle_restore_pedido_from_trash(pedido, user)
+    result = order_controllers.handle_restore_pedido_from_trash(pedido, get_current_user(page))
 
     if result["status"] == "error":
         message_snackbar(

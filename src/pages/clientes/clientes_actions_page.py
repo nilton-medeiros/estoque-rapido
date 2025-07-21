@@ -4,6 +4,7 @@ import asyncio
 
 from src.domains.clientes.models import Cliente
 from src.domains.shared import RegistrationStatus
+from src.domains.shared.context.session import get_current_user
 from src.shared.utils import MessageType, message_snackbar
 
 from src.domains.clientes.controllers import clientes_controllers as client_controllers
@@ -56,8 +57,8 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
             # ...
             # Se não há pedido, clientes ou estoque vinculado a esta cliente, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
-            user = page_ctx.app_state.usuario
-            result = client_controllers.handle_update_status(cliente=cliente, logged_user=user, status=RegistrationStatus.DELETED)
+            current_user = get_current_user(page_ctx)
+            result = client_controllers.handle_update_status(cliente=cliente, current_user=current_user, status=RegistrationStatus.DELETED)
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -157,8 +158,8 @@ async def send_to_trash(page: ft.Page, cliente: Cliente) -> bool:
 
 def restore_from_trash(page: ft.Page, cliente: Cliente) -> bool:
     logger.info(f"Restaurando cliente ID: {cliente.id} da lixeira")
-    user = page.app_state.usuario # type: ignore  [attr-defined]
-    result = client_controllers.handle_update_status(cliente=cliente, logged_user=user, status=RegistrationStatus.ACTIVE)
+    current_user = get_current_user(page)
+    result = client_controllers.handle_update_status(cliente=cliente, current_user=current_user, status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

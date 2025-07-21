@@ -1,13 +1,14 @@
 from typing import Any
 import flet as ft
 
+from src.domains.shared.context.session import get_session_colors
 from src.domains.usuarios.controllers import usuarios_controllers as user_controllers
 from src.domains.usuarios.models import Usuario
 
 class ChangePasswordDialog:
     def __init__(self, page: ft.Page, user: Usuario):
         self.page = page
-        self.colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]
+        self.colors = get_session_colors(page)
         self.dialog = None
         self.user = user
 

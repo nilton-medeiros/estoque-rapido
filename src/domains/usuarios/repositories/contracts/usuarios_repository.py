@@ -24,7 +24,7 @@ class UsuariosRepository(ABC):
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 
     @abstractmethod
-    def save(self, usuario: Usuario) -> str:
+    def save(self, user: Usuario) -> str:
         """Salva ou atualiza um usuário no banco de dados."""
         raise NotImplementedError("Este método deve ser implementado pela subclasse")
 

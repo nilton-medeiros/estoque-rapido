@@ -5,7 +5,9 @@ import logging
 from typing import Callable
 
 import src.controllers.bucket_controllers as bucket_controllers
+from src.domains.shared.context.session import get_current_user
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils.gen_uuid import get_uuid
 from src.shared.utils.messages import message_snackbar, MessageType
 
@@ -16,10 +18,10 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     Cria o container do cabeçalho da barra lateral com a foto do usuário, nome, perfil e nome da empresa.
     Inclui funcionalidade de upload de imagem de perfil.
     """
-    current_user = page.app_state.usuario  # type: ignore [attr-defined]
+    current_user = get_current_user(page)
 
     # Se o usuário não está logado, retorna um cabeçalho placeholder
-    if not current_user or not isinstance(current_user, dict) or 'name' not in current_user:
+    if not current_user:
         return ft.Container(
             content=ft.Column(
                 controls=[
@@ -40,7 +42,7 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     page.company_name_text_btn.visible = True  # type: ignore [attr-defined]
 
     profile = ft.Text(
-        value=current_user.get('profile', ''),
+        value=current_user.profile,
         theme_style=ft.TextThemeStyle.BODY_SMALL,
         color=ft.Colors.WHITE
     )
@@ -56,7 +58,7 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     progress_bar = ft.ProgressBar(visible=False)
 
     # Container da foto com ícone de câmera
-    user_avatar, camera_icon = _create_user_avatar(page, user_photo, status_text, progress_bar)
+    user_avatar, camera_icon = _create_user_avatar(page, current_user, user_photo, status_text, progress_bar)
 
     # Ação do botão de empresa
     page.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page, current_company)  # type: ignore [attr-defined]
@@ -79,10 +81,10 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
         alignment=ft.alignment.center,
     )
 
-def _create_user_photo(current_user: dict) -> ft.Control:
+def _create_user_photo(current_user: Usuario) -> ft.Control:
     """Cria o componente de foto do usuário ou iniciais como fallback."""
-    user_name = current_user.get('name')
-    photo_url = current_user.get('photo_url')
+    user_name = current_user.name
+    photo_url = current_user.photo_url
 
     if photo_url:
         return ft.Image(
@@ -115,7 +117,7 @@ def _on_click_empresa_btn(page: ft.Page, current_company: dict):
         page.app_state.clear_form_data()  # type: ignore [attr-defined]
         page.go('/home/empresas/form/principal')
 
-def _create_user_avatar(page: ft.Page, user_photo: ft.Control, status_text: ft.Text, progress_bar: ft.ProgressBar) -> tuple[ft.Container, ft.Container]:
+def _create_user_avatar(page: ft.Page, current_user, user_photo: ft.Control, status_text: ft.Text, progress_bar: ft.ProgressBar) -> tuple[ft.Container, ft.Container]:
     """Cria o container da foto do usuário com o ícone de câmera e funcionalidade de upload."""
     user_avatar = ft.Container(
         content=user_photo,
@@ -125,7 +127,7 @@ def _create_user_avatar(page: ft.Page, user_photo: ft.Control, status_text: ft.T
         width=100,
         height=100,
         border_radius=ft.border_radius.all(100),
-        on_click=lambda e: _show_image_dialog(page, user_avatar, status_text, progress_bar),
+        on_click=lambda e: _show_image_dialog(page, current_user, user_avatar, status_text, progress_bar),
     )
 
     camera_icon = ft.Container(
@@ -137,7 +139,7 @@ def _create_user_avatar(page: ft.Page, user_photo: ft.Control, status_text: ft.T
         margin=ft.margin.only(top=-15),
         ink=True,
         on_hover=lambda e: _on_hover_icon(e, user_avatar),
-        on_click=lambda e: _show_image_dialog(page, user_avatar, status_text, progress_bar),
+        on_click=lambda e: _show_image_dialog(page, current_user, user_avatar, status_text, progress_bar),
         border_radius=ft.border_radius.all(20),
         padding=8,
     )
@@ -161,14 +163,13 @@ def _on_hover_icon(e: ft.ControlEvent, user_avatar: ft.Container):
     else:
         logger.warning("user_avatar não está associado à página, ignorando update")
 
-def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar):
+def _show_image_dialog(page: ft.Page, current_user, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar):
     """Exibe o diálogo para upload de imagem de perfil."""
-    current_user = page.app_state.usuario  # type: ignore [attr-defined]
-    previous_user_photo = current_user.get('photo_url')
+    previous_user_photo = current_user.photo_url
 
     # Cria o FilePicker
     pick_files_dialog = ft.FilePicker(
-        on_result=lambda e: asyncio.run(_handle_file_picker_result(e, page, user_avatar, status_text, progress_bar, pick_files_dialog, dialog)),
+        on_result=lambda e: asyncio.run(_handle_file_picker_result(e, page, current_user, user_avatar, status_text, progress_bar, pick_files_dialog, dialog)),
         on_upload=_handle_upload_progress(status_text, progress_bar)
     )
     page.overlay.append(pick_files_dialog)
@@ -205,8 +206,8 @@ def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft
             )
         else:
             if url_field.value and url_field.value.strip():
-                result = user_controllers.handle_update_photo(id=current_user["id"], photo_url=url_field.value)
-                _handle_update_result(page, user_avatar, current_user, result, previous_user_photo, dialog)
+                result = user_controllers.handle_update_photo(id=current_user.id, photo_url=url_field.value)
+                _handle_update_result(page, user_avatar, result, previous_user_photo, dialog)
                 # A função _handle_update_result agora fecha o diálogo
 
     def close_dialog(e = None):
@@ -234,7 +235,7 @@ def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft
 
     page.open(dialog)
 
-async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar, pick_files_dialog: ft.FilePicker, dialog: ft.AlertDialog):
+async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page, current_user, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar, pick_files_dialog: ft.FilePicker, dialog: ft.AlertDialog):
     """Gerencia o resultado do FilePicker."""
     if not e.files:
         status_text.value = "Nenhum arquivo selecionado"
@@ -244,8 +245,7 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
     status_text.value = f"Arquivo selecionado: {e.files[0].name}"
     status_text.update()
 
-    current_user = page.app_state.usuario  # type: ignore [attr-defined]
-    previous_user_photo = current_user.get('photo_url')
+    previous_user_photo = current_user.photo_url
 
     try:
         file_name = e.files[0].name
@@ -268,7 +268,7 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
         _, dot_extension = os.path.splitext(file_name)
         dot_extension = dot_extension.lower()
         prefix = "usuarios"
-        file_name_bucket = f"{prefix}/{current_user['id']}_img_{file_uid}{dot_extension}"
+        file_name_bucket = f"{prefix}/{current_user.id}_img_{file_uid}{dot_extension}"
         local_file = f"Uploads/{file_name}"
 
         max_retries = 10
@@ -293,7 +293,7 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
             )
             return
 
-        result = user_controllers.handle_update_photo(id=current_user.get("id"), photo_url=avatar_url)
+        result = user_controllers.handle_update_photo(id=current_user.id, photo_url=avatar_url)
 
         # Se a atualização no banco de dados falhar, remove o arquivo recém-enviado do bucket.
         if result.get("status") == "error":
@@ -302,7 +302,7 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
             except Exception as exc_delete:
                 logger.error(f"Falha ao limpar arquivo do bucket após erro no DB: {exc_delete}")
 
-        _handle_update_result(page, user_avatar, current_user, result, previous_user_photo, dialog)
+        _handle_update_result(page, user_avatar, result, previous_user_photo, dialog)
 
         try:
             os.remove(local_file)
@@ -333,7 +333,7 @@ def _handle_upload_progress(status_text: ft.Text, progress_bar: ft.ProgressBar) 
             progress_bar.update()
     return on_upload
 
-def _handle_update_result(page: ft.Page, user_avatar: ft.Container, current_user: dict, result: dict, previous_user_photo: str | None, dialog: ft.AlertDialog):
+def _handle_update_result(page: ft.Page, user_avatar: ft.Container, result: dict, previous_user_photo: str | None, dialog: ft.AlertDialog):
     """Gerencia o resultado da atualização da foto do usuário."""
     if result["status"] == "error":
         page.close(dialog)

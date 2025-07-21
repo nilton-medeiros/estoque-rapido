@@ -4,6 +4,7 @@ import asyncio
 
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.shared import RegistrationStatus
+from src.domains.shared.context.session import get_current_user
 from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
@@ -54,8 +55,8 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta categoria, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
-            user = page_ctx.app_state.usuario
-            result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=RegistrationStatus.DELETED)
+            current_user = get_current_user(page_ctx)
+            result = category_controllers.handle_update_status(categoria=categoria, current_user=current_user, status=RegistrationStatus.DELETED)
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -155,8 +156,8 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
 
 def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     logger.info(f"Restaurando categoria ID: {categoria.id} da lixeira")
-    user = page.app_state.usuario # type: ignore
-    result = category_controllers.handle_update_status(categoria=categoria, usuario=user, status=RegistrationStatus.ACTIVE)
+    current_user = get_current_user(page)
+    result = category_controllers.handle_update_status(categoria=categoria, current_user=current_user, status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
         message_snackbar(

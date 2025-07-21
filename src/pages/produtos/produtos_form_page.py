@@ -8,6 +8,7 @@ from typing import Any
 
 import flet as ft
 
+from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.pages.partials.app_bars.appbar import create_appbar_back
 import src.shared.config.globals as app_globals
 
@@ -42,7 +43,7 @@ class ProdutoForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]     ! page.session é um objeto que contém o método .get(), não é um dict
+        self.app_colors = get_session_colors(page)
         self.input_width = 400
 
         # Obtem a lista das categorias de produtos da empresa logada
@@ -859,7 +860,7 @@ def show_product_form(page: ft.Page):
         # o status da operação.
         result = product_controllers.handle_save(
             produto=produto,
-            usuario=page.app_state.usuario  # type: ignore
+            current_user=get_current_user(page),
         )
 
         if result["status"] == "error":

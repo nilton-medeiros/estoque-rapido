@@ -26,6 +26,7 @@ def show_orders_grid(page: ft.Page):
             case "ITEM_LIST":
                 if pedido:
                     from src.pages.pedidos import pedidos_actions_page as order_actions
+                    # ToDo: Implementar lógica para listar os items de um pedido
                     pass
             case "SOFT_DELETE":
                 if pedido:

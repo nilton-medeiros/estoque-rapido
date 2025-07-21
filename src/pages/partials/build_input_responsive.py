@@ -2,7 +2,7 @@ import flet as ft
 
 from .responsive_sizes import get_responsive_sizes
 
-def build_input_field(page_width: int|float, app_colors: dict[str, str], col: dict|None = None, icon: str|None = None, **kwargs) -> ft.TextField:
+def build_input_field(page_width: int|float, app_colors, col: dict|None = None, icon: str|None = None, **kwargs) -> ft.TextField:
     sizes = get_responsive_sizes(page_width)
     prefix = None
 

@@ -92,7 +92,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             translated_error = deepl_translator(str(e))
             raise AuthenticationException(f"Erro de autenticação: {translated_error}")
 
-    def save(self, usuario: Usuario) -> str | None:
+    def save(self, user: Usuario) -> str | None:
         """
         Salvar um usuário no banco de dados Firestore.
 
@@ -100,17 +100,17 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         de criar um novo.
 
         Args:
-            usuario (Usuario): A instância do usuário a ser salvo.
+            user (Usuario): A instância do usuário a ser salvo.
 
         Retorna:
             str: O ID do documento do usuário salvo.
         """
-        # usuario.id é adicionado em usuarios_services.create(), como o id pode ser None no model, o pylance acusa que o return empresa.id não pode ser str|None
-        if usuario.id is None:
+        # user.id é adicionado em usuarios_services.create(), como o id pode ser None no model, o pylance acusa que o return empresa.id não pode ser str|None
+        if user.id is None:
             raise Exception("Erro ao salvar usuário: ID não informado")
 
         try:
-            data_to_save = usuario.to_dict_db()
+            data_to_save = user.to_dict_db()
 
             # Define created_at apenas na criação inicial
             if not data_to_save.get("created_at"):
@@ -129,7 +129,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             if data_to_save.get("status") == RegistrationStatus.INACTIVE.name and not data_to_save.get("inactivated_at"):
                 data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
-            doc_ref = self.collection.document(usuario.id)
+            doc_ref = self.collection.document(user.id)
             doc_ref.set(data_to_save, merge=True) # Chamada síncrona
 
             # Após salvar, lê o documento de volta para obter os timestamps resolvidos
@@ -138,34 +138,34 @@ class FirebaseUsuariosRepository(UsuariosRepository):
 
                 if not doc_snapshot.exists:
                     logger.warning(
-                        f"Documento {usuario.id} não encontrado imediatamente após o set para releitura dos timestamps."
+                        f"Documento {user.id} não encontrado imediatamente após o set para releitura dos timestamps."
                     )
-                    return None # Retorna None, pois o usuario não foi confirmado ou não pôde ser relido.
+                    return None # Retorna None, pois o user não foi confirmado ou não pôde ser relido.
 
-                # Re-hidrata o objeto 'usuario' em memória com os dados do DB (que incluem os timestamps reais)
+                # Re-hidrata o objeto 'user' em memória com os dados do DB (que incluem os timestamps reais)
                 user_data_from_db = doc_snapshot.to_dict()
 
                 # Garante que o ID esteja presente no dicionário antes de passar para from_dict
                 user_data_from_db['id'] = doc_snapshot.id
 
                 # Cria um novo objeto Usuario a partir dos dados do DB
-                # e transfere os timestamps reais para o objeto 'usuario' original
+                # e transfere os timestamps reais para o objeto 'user' original
                 # que foi passado para o método 'save'.
                 updated_usuario_obj = Usuario.from_dict(user_data_from_db)
 
-                usuario.created_at = updated_usuario_obj.created_at
-                usuario.updated_at = updated_usuario_obj.updated_at
-                usuario.activated_at = updated_usuario_obj.activated_at
-                usuario.deleted_at = updated_usuario_obj.deleted_at
-                usuario.inactivated_at = updated_usuario_obj.inactivated_at
+                user.created_at = updated_usuario_obj.created_at
+                user.updated_at = updated_usuario_obj.updated_at
+                user.activated_at = updated_usuario_obj.activated_at
+                user.deleted_at = updated_usuario_obj.deleted_at
+                user.inactivated_at = updated_usuario_obj.inactivated_at
 
             except Exception as e_read:
                 logger.error(
-                    f"Erro ao reler o documento {usuario.id} para atualizar timestamps no objeto em memória: {str(e_read)}"
+                    f"Erro ao reler o documento {user.id} para atualizar timestamps no objeto em memória: {str(e_read)}"
                 )
                 # A operação de save principal foi bem-sucedida, mas a releitura falhou.
-                # O objeto 'usuario' em memória não terá os timestamps reais, mas o registro no DB está correto.
-                return usuario.id # Ainda retorna o ID, pois o save no DB foi OK.
+                # O objeto 'user' em memória não terá os timestamps reais, mas o registro no DB está correto.
+                return user.id # Ainda retorna o ID, pois o save no DB foi OK.
 
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -851,14 +851,14 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             raise Exception(
                 f"Erro inesperado ao atualizar a cor base preferencial do usuário com ID '{id}', cor base: '{theme_color}', erro: {str(e)}")
 
-    def update_empresas(self, usuario_id: str, empresas: set, empresa_id: str|None = None) -> bool:
+    def update_empresas(self, user_id: str, empresas: set, empresa_id: str|None = None) -> bool:
         """
         Atualiza campos empresa_id e empresas do usuário.
 
         Args:
             user_id (str): ID do usuário.
-            empresa_id (str): ID da empresa ativa.
             empresas (set): Conjunto de empresas associada ao usuário.
+            empresa_id (str): ID da empresa ativa.
 
         Returns:
             bool: True se a atualização foi bem-sucedida, False caso contrário
@@ -868,12 +868,12 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             ValueError: Se os campos não forem válidas
         """
         try:
-            if not usuario_id or empresas is None:
+            if not user_id or empresas is None:
                 raise ValueError(
-                    "Os campos usuario_id e empresas não podem ser vazios")
+                    "Os campos user_id e empresas não podem ser vazios")
 
             # Obtem o documento pelo seu id
-            doc_ref = self.collection.document(usuario_id)
+            doc_ref = self.collection.document(user_id)
             doc = doc_ref.get()
 
             if not doc.exists:
@@ -890,10 +890,10 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         except exceptions.FirebaseError as e:
             if e.code == 'not-found':
                 logger.error(
-                    f"Documento com ID '{usuario_id}' não encontrado.")
+                    f"Documento com ID '{user_id}' não encontrado.")
             elif e.code == 'permission-denied':
                 logger.error(
-                    f"Permissão negada para atualizar a empresa do usuário com ID '{usuario_id}'.")
+                    f"Permissão negada para atualizar a empresa do usuário com ID '{user_id}'.")
             elif e.code == 'resource-exhausted':
                 logger.error(
                     "Cota do Firebase excedida ao tentar atualizar a empresa.")
@@ -907,8 +907,8 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                     f"Erro desconhecido do Firebase ao atualizar a empresa: {e.code}")
             translated_error = deepl_translator(str(e))
             raise Exception(
-                f"Erro ao atualizar a empresa do usuário com ID '{usuario_id}': {translated_error}")
+                f"Erro ao atualizar a empresa do usuário com ID '{user_id}': {translated_error}")
         except Exception as e:
-            msg = f"Erro inesperado ao atualizar a empresa do usuário com ID '{usuario_id}': {str(e)}"
+            msg = f"Erro inesperado ao atualizar a empresa do usuário com ID '{user_id}': {str(e)}"
             logger.error(msg)
             raise Exception(msg)

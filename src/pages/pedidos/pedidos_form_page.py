@@ -9,6 +9,7 @@ from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import RegistrationStatus
+from src.domains.shared.context.session import get_current_user
 from src.domains.shared.models.address import Address
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
@@ -211,7 +212,6 @@ class PedidoForm:
             keyboard_type=ft.KeyboardType.NUMBER,
             bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
             label_style=ft.TextStyle(
-                # Cor do label igual à borda # type: ignore
                 color=self.app_colors["primary"],
                 weight=ft.FontWeight.W_500  # Label um pouco mais grosso
             ),
@@ -922,7 +922,7 @@ def show_pedido_form(page: ft.Page):
             # Envia os dados para o backend
             result = order_controllers.handle_save_pedido(
                 pedido=pedido,
-                usuario_logado=page.app_state.usuario # type: ignore  [attr-defined]
+                current_user=get_current_user(page),
             )
 
             # Segunda etapa: Salvando no banco

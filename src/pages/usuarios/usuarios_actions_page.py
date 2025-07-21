@@ -2,6 +2,7 @@ import logging
 import flet as ft
 import asyncio
 
+from src.domains.shared.context.session import get_current_user
 from src.domains.usuarios.models import Usuario
 from src.domains.shared import RegistrationStatus
 from src.shared.utils import MessageType, message_snackbar
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # ToDo: Refatorar este módulo: Não permitir enviar para lixeira usuários vinculados a pedidos, movimento de estoque, etc, retornar False e msg_error
 
-async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
+async def send_to_trash(page: ft.Page, user_to_delete: Usuario) -> bool:
     operation_complete_future = asyncio.Future()
     # Definir dlg_modal ANTES de usá-lo em send_to_trash_user_async
 
@@ -39,7 +40,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             page_ctx.update()
 
             # OPERAÇÃO SOFT DELETE: Muda o status para excluído o usuario pelo ID
-            # ToDo: Verificar se há pedidos ou estoque para este usuario_id, se houver, alterar para INACTIVE
+            # ToDo: Verificar se há pedidos ou estoque para este user_to_delete_id, se houver, alterar para INACTIVE
             """
             Aviso: Se houver pedidos vinculados, o status será definido como RegistrationStatus.INACTIVE. (Obsoleto)
             Caso contrário, o registro poderá ter o status RegistrationStatus.DELETED.
@@ -50,13 +51,17 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
             """
 
             logger.info(
-                f"Iniciando operação 'DELETED' para usuário ID: {usuario.id}")
+                f"Iniciando operação 'DELETED' para usuário ID: {user_to_delete.id}")
             # Implemente aqui a lógica para buscar usuarios, pedidos e estoque vinculados.
             # ...
-            # Se não há pedido, usuarios ou estoque vinculado a esta usuario, mudar o status para DELETED
+            # Se não há pedido, usuarios ou estoque vinculado a este usuario, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
-            user = page_ctx.app_state.usuario
-            result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=RegistrationStatus.DELETED)
+
+            result = user_controllers.handle_update_status(
+                user_to_update=user_to_delete,
+                current_user=get_current_user(page_ctx),
+                status=RegistrationStatus.DELETED
+            )
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -68,7 +73,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
                 return
 
             logger.info(
-                f"Operação '{status.name}' para usuario ID: {usuario.id} concluída com sucesso.")
+                f"Operação '{status.name}' para usuario ID: {user_to_delete.id} concluída com sucesso.")
             if not operation_complete_future.done():
                 operation_complete_future.set_result(True)
 
@@ -119,9 +124,9 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
         title=ft.Text(action_title),
         content=ft.Column(
             [
-                ft.Text(usuario.name.nome_completo,
+                ft.Text(user_to_delete.name.nome_completo,
                         weight=ft.FontWeight.BOLD, selectable=True),
-                ft.Text(f"ID: {usuario.id}", selectable=True),
+                ft.Text(f"ID: {user_to_delete.id}", selectable=True),
                 ft.Row([ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED), warning_text]),
                 status_processing_text,  # Controle referenciado
             ],
@@ -140,7 +145,7 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
         actions_alignment=ft.MainAxisAlignment.END,
         on_dismiss=lambda e_dismiss: (
             logger.info(
-                f"Modal dialog para usuario {usuario.id} ({status.name}) foi descartado."),
+                f"Modal dialog para usuario {user_to_delete.id} ({status.name}) foi descartado."),
             # Garante que a future seja resolvida se descartado
             close_dlg(e_dismiss)
         )
@@ -152,10 +157,14 @@ async def send_to_trash(page: ft.Page, usuario: Usuario) -> bool:
     return await operation_complete_future
 
 
-def restore_from_trash(page: ft.Page, usuario: Usuario) -> bool:
-    logger.info(f"Restaurando usuario ID: {usuario.id} da lixeira")
-    user = page.app_state.usuario # type: ignore  [attr-defined]
-    result = user_controllers.handle_update_status(usuario=usuario, logged_user=user, status=RegistrationStatus.ACTIVE)
+def restore_from_trash(page: ft.Page, user_to_restore: Usuario) -> bool:
+    logger.info(f"Restaurando usuario ID: {user_to_restore.id} da lixeira")
+
+    result = user_controllers.handle_update_status(
+        user_to_update=user_to_restore,
+        current_user=get_current_user(page),
+        status=RegistrationStatus.ACTIVE
+    )
 
     if result["status"] == "error":
         message_snackbar(

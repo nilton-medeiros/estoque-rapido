@@ -3,6 +3,7 @@ import flet as ft
 
 from typing import Any
 
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.config.get_app_colors import get_theme_colors
 
 from .state_validator import StateValidator
@@ -19,46 +20,39 @@ class AppStateManager:
     def __init__(self, page: ft.Page):
         self.page = page
         self._state: dict[str, Any] = {
-            'usuario': {},  # Usuário logado
-            'empresa': {},  # Empresa logada
+            'usuario': None,  # Usuário logado obj
+            'empresa': {},  # Empresa logada dict
             'form_data': {},  # Armazenamento temporário de dados para preenchimento de formulários em entidades de domínio.
         }
         self._validator = StateValidator()
 
     @property
     def usuario(self):
-        return self._state.get('usuario')
+        return self._state['usuario']
 
     @property
     def empresa(self):
-        return self._state.get('empresa')
+        return self._state['empresa']
 
     @property
     def form_data(self):
-        return self._state.get('form_data')
+        return self._state['form_data']
 
-    def set_usuario(self, usuario_data: dict | None) -> bool:
+    def set_usuario(self, current_user: Usuario) -> bool:
         """
         Atualiza os dados do usuário no estado global.
         """
         try:
-            if usuario_data is None:
-                self._state['usuario'] = {}
-                self.page.session.set("user_authenticaded", False)
-                self.page.pubsub.send_all("usuario_logout")
-                return True
-
-            is_valid, error = self._validator.validate_usuario_data(
-                usuario_data)
+            is_valid, error = self._validator.validate_usuario_data(current_user)
             if not is_valid:
                 self.handle_error(error)
                 return False
 
-            self._state['usuario'] = usuario_data
+            self._state['usuario'] = current_user
 
             # Atualiza as cores do usuário
 
-            theme_colors: dict = get_theme_colors(usuario_data['theme_color'])
+            theme_colors: dict = get_theme_colors(current_user.theme_color)
             self.page.session.set("user_authenticaded", True)
             self.page.session.set("theme_colors", theme_colors)
             self.page.pubsub.send_all("usuario_updated")
@@ -123,12 +117,12 @@ class AppStateManager:
 
     def clear_states(self):
         """Limpa todo o estado (útil para logout)"""
-        self._state['usuario'] = {}
+        self._state['usuario'] = None
         self._state['empresa'] = {}
         self._state['form_data'] = {}
         self.page.pubsub.send_all("usuario_updated")
         self.page.pubsub.send_all("empresa_updated")
-        # self.page.pubsub.send_all("form_data_updated")
+        self.page.session.clear()
 
     def clear_empresa_data(self):
         """Limpa os dados da empresa (útil para logout)"""
@@ -138,4 +132,3 @@ class AppStateManager:
     def clear_form_data(self):
         """Limpa os dados da empresa para formulário (útil para logout)"""
         self._state['form_data'] = {}
-        # self.page.pubsub.send_all("form_data_updated")

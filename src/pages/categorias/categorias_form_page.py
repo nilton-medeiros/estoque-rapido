@@ -13,6 +13,7 @@ import src.domains.categorias.controllers.categorias_controllers as category_con
 from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 
+from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.services import UploadFile
@@ -36,7 +37,7 @@ class ProdutoCategoriaForm:
         self.font_size = 18
         self.icon_size = 24
         self.padding = 50
-        self.app_colors: dict[str, str] = page.session.get("theme_colors") # type: ignore
+        self.app_colors = get_session_colors(page)
         self.input_width = 400,
 
         # Responsividade
@@ -448,7 +449,7 @@ def show_category_form(page: ft.Page):
         # o status da operação.
         result = category_controllers.handle_save(
             categoria=prod_categoria,
-            usuario=page.app_state.usuario # type: ignore
+            current_user=get_current_user(page)
         )
 
         if result["status"] == "error":

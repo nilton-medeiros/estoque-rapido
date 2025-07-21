@@ -5,6 +5,7 @@ import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
 from src.domains.shared import RegistrationStatus
+from src.domains.shared.context.session import get_current_user
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.pages.partials.app_bars.appbar import create_appbar_menu
 from src.shared.utils import MessageType, message_snackbar, show_banner
@@ -65,9 +66,7 @@ def show_companies_grid(page: ft.Page):
             case "SELECT":
                 # Seleciona a empresa para trabalhar
                 page.app_state.set_empresa(empresa.to_dict()) # type: ignore
-                usuario_id = page.app_state.usuario.get('id') # type: ignore
-                empresas = page.app_state.usuario.get('empresas') # type: ignore
-                result = empresas_actions_page.user_update(usuario_id, empresa.id, empresas)
+                result = empresas_actions_page.user_update(get_current_user(page))
 
                 if result['status'] == 'error':
                     logger.warning(result['message'])
@@ -159,8 +158,7 @@ def show_companies_grid(page: ft.Page):
         empresas_data = []
         nonlocal empresas_inactivated
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get( # type: ignore
-            'empresas', [])  # Usar get com default
+        set_empresas = get_current_user(page).empresas or set()
 
         try:
             # *** IMPORTANTE: Garanta que handle_get_empresas seja async ***

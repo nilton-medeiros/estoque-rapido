@@ -2,6 +2,7 @@ from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.pedidos.repositories.contracts.pedidos_repository import PedidosRepository
 from src.domains.shared.models.registration_status import RegistrationStatus
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils.gen_uuid import get_uuid
 
 
@@ -9,7 +10,7 @@ class PedidosServices:
     def __init__(self, repository: PedidosRepository):
         self.repository = repository
 
-    def create_pedido(self, pedido: Pedido, usuario_logado: dict) -> Pedido | None:
+    def create_pedido(self, pedido: Pedido, current_user: Usuario) -> Pedido | None:
         """
         Envia dados do Pedido para o repositorio do database instânciado em pedidos_controllers
 
@@ -28,12 +29,12 @@ class PedidosServices:
 
         # Atribuição de created_at, updated_at será feita pelo repositório do database om o tipo TIMESTAMP do db
         pedido.created_at = None
-        pedido.created_by_id = usuario_logado["id"]
-        pedido.created_by_name = usuario_logado["name"].nome_completo
+        pedido.created_by_id = current_user.id
+        pedido.created_by_name = current_user.name.nome_completo
 
         return self.repository.save_pedido(pedido)
 
-    def update_pedido(self, pedido: Pedido, usuario_logado: dict) -> Pedido | None:
+    def update_pedido(self, pedido: Pedido, current_user: Usuario) -> Pedido | None:
         """
         Envia dados do Pedido para o repositorio do database instânciado em pedidos_controllers
 
@@ -48,8 +49,8 @@ class PedidosServices:
         if not pedido.order_number:
             raise ValueError("Número do pedido é necessário para atualização.")
 
-        pedido.updated_by_id = usuario_logado["id"]
-        pedido.updated_by_name = usuario_logado["name"].nome_completo
+        pedido.updated_by_id = current_user.id
+        pedido.updated_by_name = current_user.name.nome_completo
 
         return self.repository.save_pedido(pedido)
 
@@ -79,7 +80,7 @@ class PedidosServices:
         """
         return self.repository.get_pedidos_by_empresa_id(empresa_id, status)
 
-    def delete_pedido(self, pedido: Pedido, usuario_logado: dict) -> bool:
+    def delete_pedido(self, pedido: Pedido, current_user: Usuario) -> bool:
         """
         Realiza um soft delete em um pedido, definindo deleted_at.
 
@@ -92,12 +93,12 @@ class PedidosServices:
         if pedido.delivery_status == DeliveryStatus.DELIVERED:
             raise ValueError("Não é possível deletar um pedido já entregue.")
 
-        pedido.deleted_by_id = usuario_logado["id"]
-        pedido.deleted_by_name = usuario_logado["name"].nome_completo
+        pedido.deleted_by_id = current_user.id
+        pedido.deleted_by_name = current_user.name.nome_completo
 
         return self.repository.delete_pedido(pedido)
 
-    def restore_pedido(self, pedido: Pedido, usuario_logado: dict) -> bool:
+    def restore_pedido(self, pedido: Pedido, current_user: Usuario) -> bool:
         """
         Restaura um pedido da lixeira.
 
@@ -110,7 +111,7 @@ class PedidosServices:
         if not pedido.id:
             raise ValueError("ID do pedido é necessário para restauração")
 
-        pedido.activated_by_id = usuario_logado["id"]
-        pedido.activated_by_name = usuario_logado["name"].nome_completo
+        pedido.activated_by_id = current_user.id
+        pedido.activated_by_name = current_user.name.nome_completo
 
         return self.repository.restore_pedido(pedido)

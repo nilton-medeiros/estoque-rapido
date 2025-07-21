@@ -2,6 +2,7 @@ import logging
 
 import flet as ft
 
+from src.domains.shared.context.session import get_session_colors
 from src.domains.shared import Password, RegistrationStatus
 from src.pages.partials import get_responsive_sizes, build_input_field
 
@@ -22,7 +23,7 @@ class LoginView:
         self.password_input: ft.TextField
         self.error_text: ft.Text
         self.login_button: ft.OutlinedButton
-        self.app_colors: dict = page.session.get("theme_colors") # type: ignore
+        self.app_colors = get_session_colors(page)
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
         self.page.update()

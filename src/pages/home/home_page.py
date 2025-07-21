@@ -1,13 +1,14 @@
 import flet as ft
+from src.domains.shared.context.session import get_current_user
 from src.pages.home.content_page import MainContent
 from src.pages.partials.app_bars.appbar import create_appbar_menu
 
 def show_home_page(page: ft.Page) -> ft.Container:
     """Página Home do usuário logado"""
     page.theme_mode = ft.ThemeMode.DARK
-
-    if theme_color := page.app_state.usuario.get('theme_color'): # type: ignore [attr-defined]
-        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=theme_color)
+    current_user = get_current_user(page)
+    if current_user and current_user.theme_color:
+        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=current_user.theme_color)
 
     main_content = MainContent(page)
 

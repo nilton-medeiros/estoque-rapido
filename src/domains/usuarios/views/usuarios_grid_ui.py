@@ -3,6 +3,7 @@
 # ==========================================
 from typing import TYPE_CHECKING
 import flet as ft
+from src.domains.shared.context.session import get_current_user
 from src.domains.shared.models.filter_type import FilterType
 from src.domains.usuarios.models.usuarios_model import Usuario
 from src.domains.usuarios.components.user_card import UserCard
@@ -119,8 +120,8 @@ class UsuarioGridUI:
         cards = []
         for usuario in usuarios:
             # Passar o novo método do controller que lida com page.run_task
-            logged_user_id = self.controller.page.app_state.usuario.get('id') # type: ignore [attr-defined]
-            card = UserCard.create(usuario, logged_user_id, self.controller.execute_action_async)
+            current_user = get_current_user(self.controller.page)
+            card = UserCard.create(usuario, current_user.id, self.controller.execute_action_async)
             cards.append(card)
 
         return ft.ResponsiveRow(

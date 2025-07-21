@@ -11,6 +11,7 @@ import src.domains.empresas.controllers.empresas_controllers as company_controll
 
 from src.domains.empresas.models.empresas_model import Empresa
 from src.domains.empresas.models.empresas_subclass import CodigoRegimeTributario, EmpresaSize, Environment
+from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.domains.usuarios.models.usuarios_model import Usuario
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.pages.partials.build_input_responsive import build_input_field
@@ -28,7 +29,7 @@ class EmpresaViewDadosFiscais:
         self.icon_size = 24
         self.padding = 50
         self.input_width = 400,
-        self.app_colors: dict = page.session.get("theme_colors")  # type: ignore
+        self.app_colors = get_session_colors(page)
 
         # Responsividade
         self._create_form_fields()
@@ -403,8 +404,8 @@ def show_company_tax_form(page: ft.Page):
 
         # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
         # o status da operação.
-        user: dict = page.app_state.usuario # type: ignore
-        result: dict = company_controllers.handle_save_empresas(empresa=empresa, usuario=user)
+        current_user = get_current_user(page)
+        result: dict = company_controllers.handle_save_empresas(empresa=empresa, current_user=current_user)
 
         if result["status"] == "error":
             message_snackbar(

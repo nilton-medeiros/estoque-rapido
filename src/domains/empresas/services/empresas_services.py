@@ -4,6 +4,7 @@ from src.domains.empresas.models.empresas_model import Empresa
 from src.domains.shared import RegistrationStatus
 from src.domains.empresas.repositories.contracts.empresas_repository import EmpresasRepository
 from src.domains.shared.models.nome_pessoa import NomePessoa
+from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils import get_uuid
 
 """
@@ -34,7 +35,7 @@ class EmpresasServices:
     def __init__(self, repository: EmpresasRepository):
         self.repository = repository
 
-    def create(self, empresa: Empresa, user: dict) -> str:
+    def create(self, empresa: Empresa, current_user: Usuario) -> str:
         """Envia os dados da nova empresa para o repositório criar.
 
         Este método é responsável por enviar os dados da nova empresa para o repositório,
@@ -42,6 +43,7 @@ class EmpresasServices:
 
         Args:
             empresa (Empresa): Instância da Empresa a ser criada.
+            current_user (Usuario): Usuário logado.
 
         Returns:
             ID do documento da Empresa criada
@@ -60,21 +62,21 @@ class EmpresasServices:
             existing_empresa = self.repository.exists_by_cnpj(empresa.cnpj)
             if existing_empresa:
                 raise ValueError("Já existe uma empresa com este CNPJ")
-        if not user.get("id"):
+        if not current_user.id:
             raise ValueError("ID do usuário é necessário")
 
         # Gera por padrão um uuid raw (sem os hífens) com prefixo 'emp_'
         empresa.id = 'emp_' + get_uuid()
         # A atribuição de created_at e updated_at será feita pelo repositório do banco de dados
         # usando SERVER_TIMESTAMP do banco de dados.
-        empresa.created_by_id = user["id"]
-        user_name: NomePessoa = user["name"]
+        empresa.created_by_id = current_user.id
+        user_name: NomePessoa = current_user.name
         empresa.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(empresa)
 
-    def update(self, empresa: Empresa, usuario: dict) -> str:
+    def update(self, empresa: Empresa, current_user: Usuario) -> str:
         """Atualiza os dados de uma empresa existente.
 
         Este método atualiza os dados de uma empresa existente. Ele envia as informações
@@ -98,35 +100,35 @@ class EmpresasServices:
 
         if not empresa.id:
             raise ValueError("ID da empresa é necessário para atualização")
-        if not usuario.get("id"):
+        if not current_user.id:
             raise ValueError("ID do usuário é necessário")
 
         # A atribuição de updated_at será feita pelo repositório
         # usando SERVER_TIMESTAMP do banco de dados.
-        empresa.updated_by_id = usuario["id"]
-        user_name = usuario["name"]
+        empresa.updated_by_id = current_user.id
+        user_name = current_user.name
         empresa.updated_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         return self.repository.save(empresa=empresa)
 
-    def update_status(self, empresa: Empresa, usuario: dict, status: RegistrationStatus) -> bool:
+    def update_status(self, empresa: Empresa, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Altera o status de uma empresa no banco de dados."""
-        user_name: NomePessoa = usuario["name"]
+        user_name: NomePessoa = current_user.name
 
         if status == RegistrationStatus.ACTIVE:
             empresa.status = RegistrationStatus.ACTIVE
             empresa.activated_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
-            empresa.activated_by_id = usuario.get("id")
+            empresa.activated_by_id = current_user.id
             empresa.activated_by_name = user_name.nome_completo
         elif status == RegistrationStatus.DELETED:
             empresa.status = RegistrationStatus.DELETED
             empresa.deleted_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
-            empresa.deleted_by_id = usuario.get("id")
+            empresa.deleted_by_id = current_user.id
             empresa.deleted_by_name = user_name.nome_completo
         elif status == RegistrationStatus.INACTIVE:
             empresa.status = RegistrationStatus.INACTIVE
             empresa.archived_at = None  # Será atribuido pelo SDK do banco TIMESTAMP
-            empresa.archived_by_id = usuario.get("id")
+            empresa.archived_by_id = current_user.id
             empresa.archived_by_name = user_name.nome_completo
 
         id = self.repository.save(empresa)

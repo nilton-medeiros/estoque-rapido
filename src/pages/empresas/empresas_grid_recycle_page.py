@@ -5,6 +5,7 @@ import math  # Adicionado para a função ceil (arredondar para cima)
 import flet as ft
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
+from src.domains.shared.context.session import get_current_user
 import src.pages.empresas.empresas_actions_page as empresas_actions_page
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.pages.shared.components import create_recycle_bin_card
@@ -139,8 +140,7 @@ def show_companies_grid_trash(page: ft.Page):
     async def load_data_and_update_ui():
 
         # set_empresas: Conjunto de ID's de empresas que o usuário gerencia
-        set_empresas = page.app_state.usuario.get( # type: ignore
-            'empresas', []) # Usar get com default
+        set_empresas = get_current_user(page).empresas or set()
 
         empresas_data = []
         empresas_inactivated = 0

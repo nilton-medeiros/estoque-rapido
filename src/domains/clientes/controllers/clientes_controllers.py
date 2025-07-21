@@ -4,17 +4,18 @@ from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.clientes.repositories.implementations.firebase_clientes_repository import FirebaseClientesRepository
 from src.domains.clientes.services.clientes_services import ClientesServices
 from src.domains.shared.models.registration_status import RegistrationStatus
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 
 logger = logging.getLogger(__name__)
 
 
-def handle_save(cliente: Cliente, usuario_logado: dict) -> dict:
+def handle_save(cliente: Cliente, current_user: Usuario) -> dict:
     """Salva ou atualiza um cliente.
 
     Args:
         cliente (Cliente): Objeto cliente a ser criado ou atualizado.
-        usuario_logado (dict): Usuário logado para campos de auditoria.
+        current_user (dict): Usuário logado para campos de auditoria.
 
     Returns:
         response (dict): Resposta da operação.
@@ -28,9 +29,9 @@ def handle_save(cliente: Cliente, usuario_logado: dict) -> dict:
         operation = "atualizado"
 
         if cliente.id:
-            id = clientes_services.update(cliente, usuario_logado)
+            id = clientes_services.update(cliente, current_user)
         else:
-            id = clientes_services.create(cliente, usuario_logado)
+            id = clientes_services.create(cliente, current_user)
             operation = "criado"
 
         response["status"] = "success"
@@ -127,7 +128,7 @@ def handle_get_all(empresa_logada: str, status_deleted: bool = False) -> dict:
     return response
 
 
-def handle_update_status(cliente: Cliente, logged_user: dict, status: RegistrationStatus) -> dict:
+def handle_update_status(cliente: Cliente, current_user: Usuario, status: RegistrationStatus) -> dict:
     """Manipula o status para ativo, inativo ou deletado de um cliente."""
     response = {}
 
@@ -146,7 +147,7 @@ def handle_update_status(cliente: Cliente, logged_user: dict, status: Registrati
         repository = FirebaseClientesRepository(cliente.empresa_id)
         clientes_services = ClientesServices(repository)
 
-        is_updated = clientes_services.update_status(cliente, logged_user, status)
+        is_updated = clientes_services.update_status(cliente, current_user, status)
         operation = "ativado" if status == RegistrationStatus.ACTIVE else "inativado" if status == RegistrationStatus.INACTIVE else "marcado como excluído"
 
         if is_updated:

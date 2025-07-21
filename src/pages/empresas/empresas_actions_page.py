@@ -3,6 +3,7 @@ import flet as ft
 import asyncio
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
+from src.domains.shared.context.session import get_current_user
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.empresas.models.empresas_model import Empresa
 from src.domains.shared import RegistrationStatus
@@ -49,8 +50,8 @@ async def send_to_trash(page: ft.Page, empresa: Empresa, status: RegistrationSta
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta empresa, mudar o status para DELETED
             # Caso contrário, muda o status para ARCHIVED
-            user = page_ctx.app_state.usuario
-            result = company_controllers.handle_update_status_empresas(empresa=empresa, usuario=user, status=status)
+            current_user = get_current_user(page_ctx)
+            result = company_controllers.handle_update_status_empresas(empresa=empresa, current_user=current_user, status=status)
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -159,7 +160,7 @@ def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     logger.info(f"Restaurando empresa ID: {empresa.id} da lixeira")
     result = company_controllers.handle_update_status_empresas(
         empresa=empresa,
-        usuario=page.app_state.usuario, # type: ignore
+        current_user=get_current_user(page),
         status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
@@ -170,9 +171,9 @@ def restore_from_trash(page: ft.Page, empresa: Empresa) -> bool:
     return True
 
 
-def user_update(usuario_id: str, empresa_id: str, empresas: set) -> dict:
+def user_update(current_user) -> dict:
     return user_controllers.handle_update_user_companies(
-        usuario_id=usuario_id,
-        empresas=empresas,
-        empresa_ativa_id=empresa_id
+        usuario_id=current_user.id,
+        empresas=current_user.empresas,
+        empresa_ativa_id=current_user.empresa_id
     )

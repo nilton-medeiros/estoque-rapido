@@ -1,8 +1,8 @@
 import logging
 import flet as ft
 
+from src.domains.shared.context.session import get_current_user
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
-from src.shared.config import get_theme_colors
 from src.shared.utils.messages import message_snackbar, MessageType
 
 logger = logging.getLogger(__name__)
@@ -31,17 +31,18 @@ class PopupColorItem(ft.PopupMenuItem):
         page.theme = page.dark_theme = ft.Theme(color_scheme_seed=self.theme_color)
 
         # 2. Atualiza a cor no banco de dados.
-        usuario_logado = page.app_state.usuario  # type: ignore [attr-defined]
+        current_user = get_current_user(page)
+
         try:
-            result = user_controllers.handle_update_user_colors(id=usuario_logado['id'], theme_color=self.theme_color)
+            result = user_controllers.handle_update_user_colors(id=current_user.id, theme_color=self.theme_color)
 
             if result["status"] == "error":
                 message_snackbar(page=page, message=result["message"], message_type=MessageType.ERROR)
                 return
 
             # 3. Atualiza o estado local do usuário.
-            usuario_logado['theme_color'] = self.theme_color
-            page.app_state.set_usuario(usuario_logado)  # type: ignore [attr-defined]
+            current_user['theme_color'] = self.theme_color
+            page.app_state.set_usuario(current_user)  # type: ignore [attr-defined]
 
         except Exception as ex:
             logger.error(f"Erro ao atualizar a cor do tema: {ex}")

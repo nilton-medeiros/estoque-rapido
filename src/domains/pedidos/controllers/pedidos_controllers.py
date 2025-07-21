@@ -2,9 +2,10 @@ from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.repositories.implementations.firebase_pedidos_repository import FirebasePedidosRepository
 from src.domains.pedidos.services.pedidos_services import PedidosServices
 from src.domains.shared.models.registration_status import RegistrationStatus
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 
-def handle_save_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
+def handle_save_pedido(pedido: Pedido, current_user: Usuario) -> dict:
     """Cria ou atualiza um pedido."""
     response = {}
     try:
@@ -13,15 +14,15 @@ def handle_save_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
 
         if not pedido:
             raise ValueError("Pedido é necessário para salvar.")
-        if not usuario_logado:
+        if not current_user:
             raise ValueError("Usuário logado é necessário para salvar pedido.")
 
         operation = "atualizado"
 
         if pedido.id:
-            pedido_obj = services.update_pedido(pedido, usuario_logado)
+            pedido_obj = services.update_pedido(pedido, current_user)
         else:
-            pedido_obj = services.create_pedido(pedido, usuario_logado)
+            pedido_obj = services.create_pedido(pedido, current_user)
             operation = "criado"
 
         response["status"] = "success"
@@ -93,19 +94,19 @@ def handle_get_pedidos_by_empresa_id(empresa_id: str, status: RegistrationStatus
     return response
 
 
-def handle_delete_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
+def handle_delete_pedido(pedido: Pedido, current_user: Usuario) -> dict:
     """Realiza um soft delete em um pedido, definindo deleted_at."""
     response = {}
     try:
         if not pedido.id:
             raise ValueError("ID do pedido é necessário para deleção.")
-        if not usuario_logado:
+        if not current_user:
             raise ValueError("Usuário logado é necessário para deleção.")
 
         repository = FirebasePedidosRepository()
         services = PedidosServices(repository)
 
-        is_deleted = services.delete_pedido(pedido, usuario_logado)
+        is_deleted = services.delete_pedido(pedido, current_user)
 
         if is_deleted:
             response["status"] = "success"
@@ -122,19 +123,19 @@ def handle_delete_pedido(pedido: Pedido, usuario_logado: dict) -> dict:
 
     return response
 
-def handle_restore_pedido_from_trash(pedido: Pedido, usuario_logado: dict) -> dict:
+def handle_restore_pedido_from_trash(pedido: Pedido, current_user: Usuario) -> dict:
     """Restaura um pedido da lixeira."""
     response = {}
     try:
         if not pedido.id:
             raise ValueError("ID do pedido é necessário para restauração.")
-        if not usuario_logado:
+        if not current_user:
             raise ValueError("Usuário logado é necessário para restauração.")
 
         repository = FirebasePedidosRepository()
         services = PedidosServices(repository)
 
-        is_restored = services.restore_pedido(pedido, usuario_logado)
+        is_restored = services.restore_pedido(pedido, current_user)
 
         if is_restored:
             response["status"] = "success"

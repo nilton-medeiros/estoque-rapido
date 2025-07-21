@@ -5,11 +5,12 @@ from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import FirebaseCategoriasRepository
 from src.domains.categorias.services import CategoriasServices
+from src.domains.usuarios.models.usuarios_model import Usuario
 
 logger = logging.getLogger(__name__)
 
 
-def handle_save(categoria: ProdutoCategorias, usuario: dict[str, Any]) -> dict[str, Any]:
+def handle_save(categoria: ProdutoCategorias, current_user: Usuario) -> dict[str, Any]:
     """Salva ou atualiza uma categoria de produto."""
     response = {}
 
@@ -20,9 +21,9 @@ def handle_save(categoria: ProdutoCategorias, usuario: dict[str, Any]) -> dict[s
         operation = "atualizada"
 
         if categoria.id:
-            id = categorias_services.update(categoria, usuario)
+            id = categorias_services.update(categoria, current_user)
         else:
-            id = categorias_services.create(categoria, usuario)
+            id = categorias_services.create(categoria, current_user)
             operation = "criada"
 
         response["status"] = "success"
@@ -40,7 +41,7 @@ def handle_save(categoria: ProdutoCategorias, usuario: dict[str, Any]) -> dict[s
     return response
 
 
-def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: RegistrationStatus) -> dict[str, Any]:
+def handle_update_status(categoria: ProdutoCategorias, current_user: Usuario, status: RegistrationStatus) -> dict[str, Any]:
     """Manipula o status para ativo, inativo ou deletada de uma categoria de produto."""
     response = {}
 
@@ -49,9 +50,9 @@ def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: Re
             raise ValueError("ID da categoria não pode ser nulo ou vazio")
         if not isinstance(categoria, ProdutoCategorias):
             raise ValueError("Categoria não é do tipo ProdutoCategorias")
-        if not usuario:
+        if not current_user:
             raise ValueError("Usuário não pode ser nulo ou vazio")
-        if not isinstance(usuario, dict):
+        if not isinstance(current_user, dict):
             raise ValueError("Usuário não é do tipo dict")
         if not status:
             raise ValueError("Status não pode ser nulo ou vazio")
@@ -62,7 +63,7 @@ def handle_update_status(categoria: ProdutoCategorias, usuario: dict, status: Re
         categorias_services = CategoriasServices(repository)
 
         is_updated = categorias_services.update_status(
-            categoria, usuario, status)
+            categoria, current_user, status)
 
         if is_updated:
             response["status"] = "success"

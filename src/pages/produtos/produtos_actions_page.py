@@ -4,6 +4,7 @@ import asyncio
 
 from src.domains.produtos.models import Produto
 from src.domains.shared import  RegistrationStatus
+from src.domains.shared.context.session import get_current_user
 from src.shared.utils import MessageType, message_snackbar
 
 import src.domains.produtos.controllers.produtos_controllers as product_controllers
@@ -55,8 +56,11 @@ async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
             # ...
             # Se não há pedido, produtos ou estoque vinculado a esta produto, mudar o status para DELETED
             # Caso contrário, muda o status para INACTIVE
-            user = page_ctx.app_state.usuario
-            result = product_controllers.handle_update_status(produto=produto, usuario=user, status=RegistrationStatus.DELETED)
+            result = product_controllers.handle_update_status(
+                produto=produto,
+                current_user=get_current_user(page_ctx),
+                status=RegistrationStatus.DELETED
+            )
 
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
@@ -155,8 +159,12 @@ async def send_to_trash(page: ft.Page, produto: Produto) -> bool:
 
 def restore_from_trash(page: ft.Page, produto: Produto) -> bool:
     logger.info(f"Restaurando produto ID: {produto.id} da lixeira")
-    user = page.app_state.usuario # type: ignore  [attr-defined]
-    result = product_controllers.handle_update_status(produto=produto, usuario=user, status=RegistrationStatus.ACTIVE)
+    
+    result = product_controllers.handle_update_status(
+        produto=produto,
+        current_user=get_current_user(page),
+        status=RegistrationStatus.ACTIVE
+    )
 
     if result["status"] == "error":
         message_snackbar(
