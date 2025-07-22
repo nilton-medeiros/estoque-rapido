@@ -1,15 +1,15 @@
+"""
+Essa estrutura garante um controle claro de responsabilidades, onde app_config_controller atua organizando
+e redirecionando os dados ao repositório de dados.
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
+
 import logging
 from typing import Any, Optional
 
 from src.domains.app_config.models.app_config_model import AppConfig
 from src.domains.app_config.repositories.implementations.firebase_app_config_repository import FirebaseAppConfigRepository
 from src.domains.app_config.services.app_config_services import AppConfigServices
-
-"""
-Essa estrutura garante um controle claro de responsabilidades, onde user_controller atua organizando
-e redirecionando os dados ao repositório de dados.
-Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
-"""
 
 logger = logging.getLogger(__name__)
 

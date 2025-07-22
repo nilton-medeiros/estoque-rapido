@@ -1,3 +1,9 @@
+"""
+Essa estrutura garante um controle claro de responsabilidades, onde empresas_controller atua organizando
+e redirecionando os dados ao repositório de dados.
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
+
 import logging
 from typing import Any
 
@@ -9,12 +15,6 @@ from src.domains.empresas.services.empresas_services import EmpresasServices
 from src.domains.usuarios.models.usuarios_model import Usuario
 
 logger = logging.getLogger(__name__)
-
-"""
-Essa estrutura garante um controle claro de responsabilidades, onde empresas_controller atua organizando
-e redirecionando os dados ao repositório de dados.
-Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
-"""
 
 
 def handle_save_empresas(empresa: Empresa, current_user: Usuario) -> dict:
@@ -277,7 +277,9 @@ def handle_update_status_empresas(empresa: Empresa, current_user: Usuario, statu
         if not isinstance(current_user, dict):
             raise ValueError("Usuário não é um dicionário em args: handle_update_status_empresas")
         if not status:
-            raise ValueError("Status não informado em args: handle_update_status_empresas")
+            raise ValueError(
+                "Status não informado em args: handle_update_status_empresas"
+            )
         if not isinstance(status, RegistrationStatus):
             raise ValueError("Argumento status não é uma instância de Status")
 

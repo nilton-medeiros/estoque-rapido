@@ -1,3 +1,8 @@
+"""
+Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,
+organizando e validando os dados antes de delegar a execução das operações ao repositório de dados.
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
 
 from src.domains.empresas.models.cnpj import CNPJ
 from src.domains.empresas.models.empresas_model import Empresa
@@ -7,11 +12,6 @@ from src.domains.shared.models.nome_pessoa import NomePessoa
 from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils import get_uuid
 
-"""
-Essa estrutura garante uma separação clara de responsabilidades, onde a EmpresasServices atua como intermediária,
-organizando e validando os dados antes de delegar a execução das operações ao repositório de dados.
-Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
-"""
 
 class EmpresasServices:
     """Serviço de gerenciamento de empresas.

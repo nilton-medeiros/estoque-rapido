@@ -1,3 +1,9 @@
+"""
+Essa estrutura garante um controle claro de responsabilidades, onde dfe_controller atua organizando
+e redirecionando os dados ao repositório de dados do provedor DFe (Documento Fiscal Eletrônico).
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
+
 import logging
 from src.domains.empresas import Environment
 from src.services.providers.nuvemfiscal_provider import NuvemFiscalDFeProvider
@@ -5,20 +11,14 @@ from src.services.apis.dfe_services import DFeServices
 
 logger = logging.getLogger(__name__)
 
-"""
-Essa estrutura garante um controle claro de responsabilidades, onde dfe_controller atua organizando
-e redirecionando os dados ao repositório de dados do provedor DFe (Documento Fiscal Eletrônico).
-Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
-"""
-
 async def handle_upload_certificate_a1(
         cpf_cnpj: str, certificate_content: bytes,
         a1_password: str, ambiente: Environment) -> dict:
     """
     Manipula a operação de upload do certificado A1 (pfx/p12).
 
-    Esta função manipula a operação de enviar (upload) um binário do certificado A1 codificado na base64 para
-    o provedor de API de DFe's (Documentos Fiscais Eletronicos).
+    Esta função manipula a operação de enviar (upload) um binário do certificado A1
+    codificado na base64 para o provedor de API de DFe's (Documentos Fiscais Eletronicos).
     Este controller utiliza um repositório específico para realizar as operações necessárias com o provider.
     Aqui o provider de API pode ser trocado facilmente: Nuvem Fiscal, Focus NFe, WebManiaBR, etc.
 

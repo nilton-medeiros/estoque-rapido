@@ -1,8 +1,13 @@
+"""
+Essa estrutura garante um controle claro de responsabilidades, onde usuarios_controller atua organizando
+e redirecionando os dados ao repositório de dados.
+Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
+"""
+
 import logging
 import os
 from typing import Any
 from dotenv import load_dotenv
-
 
 from src.domains.shared.controllers.domain_exceptions import AuthenticationException, InvalidCredentialsException, UserNotFoundException
 from src.domains.usuarios.models.usuarios_model import Usuario
@@ -14,12 +19,6 @@ from src.services.emails.send_email import EmailAuthenticationError, EmailConnec
     EmailSendError, EmailValidationError, ModernEmailSender, create_email_config_from_env
 
 logger = logging.getLogger(__name__)
-
-"""
-Essa estrutura garante um controle claro de responsabilidades, onde usuarios_controller atua organizando
-e redirecionando os dados ao repositório de dados.
-Isso promove uma arquitetura mais limpa e modular, facilitando manutenção e escalabilidade do sistema.
-"""
 
 def handle_login(email: str, password: str) -> dict[str, Any]:
     response: dict[str, Any] = {}

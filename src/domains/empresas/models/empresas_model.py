@@ -1,13 +1,13 @@
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any
-
-
 """
 ToDo: Refatorar. Aqui não deveria invocar diretamente a AsaasPaymentGateway (Está quebrando regra DDD)
 e sim um handle de serviço de pagamento que invocaria os serviços de Asaas
 from src.services.gateways.asaas_payment_gateway import AsaasPaymentGateway
 """
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
 from src.domains.shared import Password, PhoneNumber, Address, RegistrationStatus
 from src.services import AsaasPaymentGateway
 from src.domains.empresas.models.empresas_subclass import Environment, EmpresaSize, CodigoRegimeTributario
