@@ -1,8 +1,8 @@
 import logging
 from typing import Any
 
+from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
 from src.domains.formas_pagamento.services.formas_pagamento_service import FormasPagamentoService
-from src.domains.shared import RegistrationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -11,31 +11,24 @@ class FormasPagamentoController:
     def __init__(self, service: FormasPagamentoService):
         self.service = service
 
-    def get_formas_pagamento(self, empresa_id: str, status: str = "ACTIVE") -> list[dict[str, Any]]:
+    def get_formas_pagamento(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[FormaPagamento], int]:
         """
         Obtém todas as formas de pagamento para uma empresa, com tratamento de status.
 
         Args:
             empresa_id (str): ID da empresa.
-            status (str): Status para filtrar (opcional, padrão: "ACTIVE").
+            status_deleted (bool): Status para filtrar Ativos&Inativos ou apenas deletados.
 
         Returns:
-            list[dict[str, Any]]: Lista de formas de pagamento como dicionários.
+            tuple[list[FormaPagamento], int]: Lista de formas de pagamento e a quantidade de deletados.
         """
         try:
-            status_enum = RegistrationStatus[status]
-        except KeyError:
-            logger.warning(f"Status inválido fornecido: {status}. Usando 'ACTIVE' como padrão.")
-            status_enum = RegistrationStatus.ACTIVE
-
-        try:
-            formas_pagamento = self.service.get_all_formas_pagamento(empresa_id, status_enum)
-            return [fp.to_dict_db() for fp in formas_pagamento]  # Converte para dicionários
+            return self.service.get_all_formas_pagamento(empresa_id, status_deleted)
         except Exception as e:
             logger.error(f"Erro no controller ao obter formas de pagamento: {e}")
             raise  # Re-lança para ser tratado em uma camada superior (ex: API)
 
-    def get_forma_pagamento(self, empresa_id: str, forma_pagamento_id: str) -> dict[str, Any] | None:
+    def get_forma_pagamento(self, empresa_id: str, forma_pagamento_id: str) -> FormaPagamento | None:
         """
         Obtém uma forma de pagamento específica pelo ID.
 
@@ -44,11 +37,10 @@ class FormasPagamentoController:
             forma_pagamento_id (str): ID da forma de pagamento.
 
         Returns:
-            dict[str, Any] | None: A forma de pagamento como dicionário ou None.
+            FormaPagamento: A forma de pagamento encontrada ou uma excessão
         """
         try:
-            forma_pagamento = self.service.get_forma_pagamento_by_id(empresa_id, forma_pagamento_id)
-            return forma_pagamento.to_dict_db() if forma_pagamento else None
+            return self.service.get_forma_pagamento_by_id(empresa_id, forma_pagamento_id)
         except Exception as e:
             logger.error(f"Erro no controller ao obter forma de pagamento por ID: {e}")
             raise

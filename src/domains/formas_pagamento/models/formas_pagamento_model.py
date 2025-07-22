@@ -24,17 +24,19 @@ class FormaPagamento:
         id (str | None): ID do documento no Firestore.
         empresa_id (str): ID da empresa à qual esta forma de pagamento pertence.
         nome (str): Nome de exibição da forma de pagamento (ex: "Crédito à Vista").
+        nome_lower (str|None): Nome em lowercase para indices e busca no banco de dados
         tipo (TipoPagamento): O tipo padronizado de pagamento.
         status (RegistrationStatus): Status do registro (ATIVO, INATIVO).
         desconto_percentual (float): Percentual de desconto a ser aplicado (ex: 5.0 para 5%).
         acrescimo_percentual (float): Percentual de acréscimo a ser aplicado.
-        ordem (int): Posição para ordenação na interface.
+        # ordem (int): Posição para ordenação na interface. Não está em uso por enquanto
         created_at (datetime | None): Data e hora de criação.
         ... (outros campos de auditoria)
     """
     empresa_id: str
     nome: str
     tipo: TipoPagamento
+    nome_lower: str | None = None
     id: str | None = None
     status: RegistrationStatus = RegistrationStatus.ACTIVE
     desconto_percentual: float = 0.0
@@ -56,16 +58,18 @@ class FormaPagamento:
         if not self.nome:
             raise ValueError("O campo 'nome' é obrigatório.")
         self.nome = self.nome.strip()
+        self.nome_lower = self.nome.lower()
 
         if not isinstance(self.tipo, TipoPagamento):
             raise ValueError("O campo 'tipo' deve ser uma instância de TipoPagamento.")
 
-    def to_dict_db(self) -> dict:
+    def to_dict(self) -> dict:
         """Converte o objeto para um dicionário para salvar no Firestore."""
         dict_db = {
             "id": self.id,
             "empresa_id": self.empresa_id,
             "nome": self.nome,
+            "nome_lower": self.nome_lower,
             "tipo": self.tipo.name,  # Salva o nome do enum (ex: "PIX")
             "status": self.status.name,
             "desconto_percentual": self.desconto_percentual,
@@ -109,6 +113,7 @@ class FormaPagamento:
             id=data.get("id"),
             empresa_id=data["empresa_id"],
             nome=data["nome"],
+            nome_lower=data["nome_lower"],
             tipo=tipo,
             status=status,
             desconto_percentual=data.get("desconto_percentual", 0.0),

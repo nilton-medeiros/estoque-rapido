@@ -38,7 +38,7 @@ class FirebaseFormasPagamentoRepository:
         """
         try:
             subcollection_ref = self._get_subcollection_ref(forma_pagamento.empresa_id)
-            data_to_save = forma_pagamento.to_dict_db()
+            data_to_save = forma_pagamento.to_dict()
 
             # Define timestamps do servidor para criação e atualização
             if not forma_pagamento.id:  # Novo documento
@@ -85,7 +85,7 @@ class FirebaseFormasPagamentoRepository:
             logger.error(f"Erro ao buscar forma de pagamento {forma_pagamento_id} da empresa {empresa_id}: {e}")
             raise
 
-    def get_all_by_empresa(self, empresa_id: str, status: RegistrationStatus = RegistrationStatus.ACTIVE) -> List[FormaPagamento]:
+    def get_all_by_empresa(self, empresa_id: str, status_deleted: bool = False) -> tuple[List[FormaPagamento], int]:
         """
         Busca todas as formas de pagamento de uma empresa, opcionalmente filtrando por status.
 
@@ -94,22 +94,38 @@ class FirebaseFormasPagamentoRepository:
             status (RegistrationStatus): Filtra pelo status (padrão: ACTIVE).
 
         Returns:
-            List[FormaPagamento]: Uma lista com as formas de pagamento encontradas.
+            tuple[list[FormaPagamento], int]: Lista de formas de pagamento e a quantidade de deletados.
         """
-        formas_pagamento = []
-        try:
-            query = (self._get_subcollection_ref(empresa_id)
-                     .where(filter=FieldFilter("status", "==", status.name))
-                     .order_by("ordem")
-                     .order_by("nome"))
+        formas_pagamentos: List[FormaPagamento] = []
+        quantity_deleted: int = 0
 
-            docs = query.stream()
+        try:
+            # query = (self._get_subcollection_ref(empresa_id)
+            #          .where(filter=FieldFilter("status", "==", status.name))
+            #          .order_by("nome"))
+            query = self._get_subcollection_ref(empresa_id).order_by("nome")
+
+            docs = query.get()
+
             for doc in docs:
                 data = doc.to_dict()
-                data['id'] = doc.id
-                formas_pagamento.append(FormaPagamento.from_dict(data))
+                if not data:
+                    continue
 
-            return formas_pagamento
+                data['id'] = doc.id
+                fp = FormaPagamento.from_dict(data)
+
+                if fp.status == RegistrationStatus.DELETED:
+                    # Registro marcado como deletado
+                    quantity_deleted += 1
+                    if status_deleted:
+                        # Filtro: Somente deletados
+                        formas_pagamentos.append(fp)
+                elif not status_deleted:
+                    # Filtro: Não deletados [Ativos&Inativos] (padrão)
+                    formas_pagamentos.append(fp)
+
+            return formas_pagamentos, quantity_deleted
         except google_api_exceptions.FailedPrecondition as e:
             logger.error(f"Índice do Firestore ausente para a consulta de formas de pagamento: {e}")
             raise Exception("Erro de configuração no banco de dados. Um índice para formas de pagamento é necessário.")

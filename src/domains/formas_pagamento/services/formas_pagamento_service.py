@@ -12,7 +12,7 @@ class FormasPagamentoService:
     def __init__(self, repository: FirebaseFormasPagamentoRepository):
         self.repository = repository
 
-    def get_all_formas_pagamento(self, empresa_id: str, status: RegistrationStatus = RegistrationStatus.ACTIVE) -> list[FormaPagamento]:
+    def get_all_formas_pagamento(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[FormaPagamento], int]:
         """
         Obtém todas as formas de pagamento para uma determinada empresa.
 
@@ -21,11 +21,10 @@ class FormasPagamentoService:
             status (RegistrationStatus): Status para filtrar as formas de pagamento (opcional).
 
         Returns:
-            list[FormaPagamento]: Lista de formas de pagamento.
+            tuple[list[FormaPagamento], int]: Lista de formas de pagamento e a quantidade de deletados.
         """
         try:
-            formas_pagamento = self.repository.get_all_by_empresa(empresa_id, status)
-            return formas_pagamento
+            return self.repository.get_all_by_empresa(empresa_id, status_deleted)
         except Exception as e:
             logger.error(f"Erro ao obter formas de pagamento para empresa {empresa_id}: {e}")
             raise
@@ -76,6 +75,5 @@ class FormasPagamentoService:
             tipo=tipo_pagamento,
             desconto_percentual=desconto_percentual,
             acrescimo_percentual=acrescimo_percentual,
-            ordem=ordem
         )
         return self.repository.save(forma_pagamento)
