@@ -23,9 +23,8 @@ class CategoriasServices:
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
         categoria.created_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
         # Desnormalização para otimizar indices no banco de dados
-        categoria.created_by_name = user_name.nome_completo
+        categoria.created_by_name = current_user.name.nome_completo
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(categoria)
@@ -39,16 +38,14 @@ class CategoriasServices:
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
         categoria.updated_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
         # Desnormalização para otimizar indices no banco de dados
-        categoria.updated_by_name = user_name.nome_completo
+        categoria.updated_by_name = current_user.name.nome_completo
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(categoria)
 
     def update_status(self, categoria: ProdutoCategorias, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma categoria existente"""
-        user_name: NomePessoa = current_user.name
         categoria.status = status
 
         match status:
@@ -57,19 +54,19 @@ class CategoriasServices:
                 categoria.activated_at = None
                 categoria.activated_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
-                categoria.activated_by_name = user_name.nome_completo
+                categoria.activated_by_name = current_user.name.nome_completo
             case RegistrationStatus.INACTIVE:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.inactivated_at = None
                 categoria.inactivated_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
-                categoria.inactivated_by_name = user_name.nome_completo
+                categoria.inactivated_by_name = current_user.name.nome_completo
             case RegistrationStatus.DELETED:
                 # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 categoria.deleted_at = None
                 categoria.deleted_by_id = current_user.id
                 # Desnormalização p/ otimização de índices no db
-                categoria.deleted_by_name = user_name.nome_completo
+                categoria.deleted_by_name = current_user.name.nome_completo
 
         id = self.repository.save(categoria)
         return True if id else False

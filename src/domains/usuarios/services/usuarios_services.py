@@ -148,22 +148,21 @@ class UsuariosServices:
 
     def update_status(self, user_to_update: Usuario, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma usuário existente"""
-        user_name: NomePessoa = current_user.name
         user_to_update.status = status
 
         match status:
             case RegistrationStatus.ACTIVE:
                 user_to_update.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 user_to_update.activated_by_id = current_user.id
-                user_to_update.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.activated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.INACTIVE:
                 user_to_update.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 user_to_update.inactivated_by_id = current_user.id
-                user_to_update.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.inactivated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.DELETED:
                 user_to_update.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 user_to_update.deleted_by_id = current_user.id
-                user_to_update.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                user_to_update.deleted_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
 
         id = self.repository.save(user_to_update)
         return id is not None

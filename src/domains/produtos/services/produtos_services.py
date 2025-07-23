@@ -24,8 +24,7 @@ class ProdutosServices:
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
         produto.created_at = None  # Garante None para ser atribuído pelo banco um SERVER_TIMESTAMP
         produto.created_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
-        produto.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
+        produto.created_by_name = current_user.name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(produto)
@@ -40,8 +39,7 @@ class ProdutosServices:
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do db
         produto.updated_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
-        produto.updated_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
+        produto.updated_by_name = current_user.name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em empresas_controllrer salvar
         return self.repository.save(produto)
@@ -49,22 +47,21 @@ class ProdutosServices:
 
     def update_status(self, produto: Produto, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de um produto existente"""
-        user_name: NomePessoa = current_user.name
         produto.status = status
 
         match status:
             case RegistrationStatus.ACTIVE:
                 produto.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.activated_by_id = current_user.id
-                produto.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                produto.activated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.INACTIVE:
                 produto.inactivated_at = None# Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.inactivated_by_id = current_user.id
-                produto.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                produto.inactivated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.DELETED:
                 produto.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 produto.deleted_by_id = current_user.id
-                produto.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                produto.deleted_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
 
         id = self.repository.save(produto)
         return id is not None

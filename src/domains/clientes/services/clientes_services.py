@@ -39,8 +39,7 @@ class ClientesServices:
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do database
         cliente.created_at = None # Garante None para ser atribuido pelo banco um SERVER_TIMESTAMP
         cliente.created_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
-        cliente.created_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
+        cliente.created_by_name = current_user.name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em clientes_controllrer salvar
         return self.repository.save(cliente)
@@ -64,8 +63,7 @@ class ClientesServices:
 
         # Atribuição de created_at, updated_at será feita pelo repositório do banco de dados com o tipo TIMESTAMP do database
         cliente.updated_by_id = current_user.id
-        user_name: NomePessoa = current_user.name
-        cliente.updated_by_name = user_name.nome_completo  # Desnormalização para otimizar indices no banco de dados
+        cliente.updated_by_name = current_user.name.nome_completo  # Desnormalização para otimizar indices no banco de dados
 
         # Envia para o repositório selecionado em clientes_controllrer salvar
         return self.repository.save(cliente)
@@ -92,7 +90,6 @@ class ClientesServices:
 
     def update_status(self, cliente: Cliente, current_user: Usuario, status: RegistrationStatus) -> bool:
         """Atualiza o status de uma cliente existente"""
-        user_name: NomePessoa = current_user.name
         previous_status = cliente.status
         cliente.status = status
 
@@ -100,15 +97,15 @@ class ClientesServices:
             case RegistrationStatus.ACTIVE:
                 cliente.activated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 cliente.activated_by_id = current_user.id
-                cliente.activated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                cliente.activated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.INACTIVE:
                 cliente.inactivated_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 cliente.inactivated_by_id = current_user.id
-                cliente.inactivated_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                cliente.inactivated_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
             case RegistrationStatus.DELETED:
                 cliente.deleted_at = None # Remove o datetime, será atribuido pelo SDK do banco TIMESTAMP
                 cliente.deleted_by_id = current_user.id
-                cliente.deleted_by_name = user_name.nome_completo  # Desnormalização p/ otimização de índices no db
+                cliente.deleted_by_name = current_user.name.nome_completo  # Desnormalização p/ otimização de índices no db
 
         id = self.repository.save(cliente)
         if not id:
