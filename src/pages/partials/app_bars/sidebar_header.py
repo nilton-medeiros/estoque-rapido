@@ -5,7 +5,7 @@ import logging
 from typing import Callable
 
 import src.controllers.bucket_controllers as bucket_controllers
-from src.domains.shared.context.session import get_current_user
+from src.domains.shared.context.session import get_current_user, get_current_company
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios.models.usuarios_model import Usuario
 from src.shared.utils.gen_uuid import get_uuid
@@ -50,18 +50,17 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     # Configuração da foto do usuário
     user_photo = _create_user_photo(current_user)
 
-    current_company = page.app_state.empresa  # type: ignore [attr-defined]
-    _update_company_text_btn(page, current_company)
+    _update_company_text_btn(page)
 
     # Componentes para upload
     status_text = ft.Text()
     progress_bar = ft.ProgressBar(visible=False)
 
     # Container da foto com ícone de câmera
-    user_avatar, camera_icon = _create_user_avatar(page, current_user, user_photo, status_text, progress_bar)
+    user_avatar, camera_icon = _create_user_avatar(page, user_photo, status_text, progress_bar)
 
     # Ação do botão de empresa
-    page.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page, current_company)  # type: ignore [attr-defined]
+    page.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page)  # type: ignore [attr-defined]
 
     return ft.Container(
         content=ft.Column(
@@ -99,8 +98,9 @@ def _create_user_photo(current_user: Usuario) -> ft.Control:
     # Se não tem foto, mostra as iniciais. Se não tem nome, mostra um ícone.
     return ft.Text(user_name.iniciais) if user_name else ft.Icon(ft.Icons.PERSON)
 
-def _update_company_text_btn(page: ft.Page, current_company: dict):
+def _update_company_text_btn(page: ft.Page):
     """Atualiza o texto e tooltip do botão de empresa."""
+    current_company = get_current_company(page)
     if current_company.get('id'):
         page.company_name_text_btn.tooltip = "Empresa selecionada"  # type: ignore [attr-defined]
         cia_name = current_company.get('trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
@@ -109,15 +109,17 @@ def _update_company_text_btn(page: ft.Page, current_company: dict):
         page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"  # type: ignore [attr-defined]
         page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"  # type: ignore [attr-defined]
 
-def _on_click_empresa_btn(page: ft.Page, current_company: dict):
+def _on_click_empresa_btn(page: ft.Page):
     """Gerencia o clique no botão de empresa."""
+    current_company = get_current_company(page)
+
     if current_company.get('id'):
         page.go('/home/empresas/grid')
     else:
         page.app_state.clear_form_data()  # type: ignore [attr-defined]
         page.go('/home/empresas/form/principal')
 
-def _create_user_avatar(page: ft.Page, current_user, user_photo: ft.Control, status_text: ft.Text, progress_bar: ft.ProgressBar) -> tuple[ft.Container, ft.Container]:
+def _create_user_avatar(page: ft.Page, user_photo: ft.Control, status_text: ft.Text, progress_bar: ft.ProgressBar) -> tuple[ft.Container, ft.Container]:
     """Cria o container da foto do usuário com o ícone de câmera e funcionalidade de upload."""
     user_avatar = ft.Container(
         content=user_photo,
@@ -127,7 +129,7 @@ def _create_user_avatar(page: ft.Page, current_user, user_photo: ft.Control, sta
         width=100,
         height=100,
         border_radius=ft.border_radius.all(100),
-        on_click=lambda e: _show_image_dialog(page, current_user, user_avatar, status_text, progress_bar),
+        on_click=lambda e: _show_image_dialog(page, user_avatar, status_text, progress_bar),
     )
 
     camera_icon = ft.Container(
@@ -139,7 +141,7 @@ def _create_user_avatar(page: ft.Page, current_user, user_photo: ft.Control, sta
         margin=ft.margin.only(top=-15),
         ink=True,
         on_hover=lambda e: _on_hover_icon(e, user_avatar),
-        on_click=lambda e: _show_image_dialog(page, current_user, user_avatar, status_text, progress_bar),
+        on_click=lambda e: _show_image_dialog(page, user_avatar, status_text, progress_bar),
         border_radius=ft.border_radius.all(20),
         padding=8,
     )
@@ -163,13 +165,14 @@ def _on_hover_icon(e: ft.ControlEvent, user_avatar: ft.Container):
     else:
         logger.warning("user_avatar não está associado à página, ignorando update")
 
-def _show_image_dialog(page: ft.Page, current_user, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar):
+def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar):
     """Exibe o diálogo para upload de imagem de perfil."""
+    current_user = get_current_user(page)
     previous_user_photo = current_user.photo_url
 
     # Cria o FilePicker
     pick_files_dialog = ft.FilePicker(
-        on_result=lambda e: asyncio.run(_handle_file_picker_result(e, page, current_user, user_avatar, status_text, progress_bar, pick_files_dialog, dialog)),
+        on_result=lambda e: asyncio.run(_handle_file_picker_result(e, page, user_avatar, status_text, progress_bar, pick_files_dialog, dialog)),
         on_upload=_handle_upload_progress(status_text, progress_bar)
     )
     page.overlay.append(pick_files_dialog)
@@ -235,7 +238,7 @@ def _show_image_dialog(page: ft.Page, current_user, user_avatar: ft.Container, s
 
     page.open(dialog)
 
-async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page, current_user, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar, pick_files_dialog: ft.FilePicker, dialog: ft.AlertDialog):
+async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar, pick_files_dialog: ft.FilePicker, dialog: ft.AlertDialog):
     """Gerencia o resultado do FilePicker."""
     if not e.files:
         status_text.value = "Nenhum arquivo selecionado"
@@ -244,7 +247,7 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
 
     status_text.value = f"Arquivo selecionado: {e.files[0].name}"
     status_text.update()
-
+    current_user = get_current_user(page)
     previous_user_photo = current_user.photo_url
 
     try:
@@ -359,7 +362,7 @@ def _handle_update_result(page: ft.Page, user_avatar: ft.Container, result: dict
 
     user_avatar.content = user_photo
     user_avatar.update()
-    page.app_state.set_usuario(user_updated.to_dict())  # type: ignore [attr-defined]
+    page.app_state.set_usuario(user_updated)  # type: ignore [attr-defined]
 
     if previous_user_photo and previous_user_photo != user_updated.photo_url:
         parts = previous_user_photo.split("public/")
