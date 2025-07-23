@@ -1,9 +1,12 @@
 from flet import Page
-from get_app_colors import get_theme_colors
+from src.shared.config import get_theme_colors
 from src.domains.usuarios.models import Usuario
 
 def get_current_user(page: Page):
     return page.app_state.usuario # type: ignore [attr-defined]
+
+def get_current_company(page: Page):
+    return page.app_state.empresa # type: ignore [attr=defined]
 
 def get_session_colors(page: Page) -> dict:
     # Garante que há sempre uma cor padrão
