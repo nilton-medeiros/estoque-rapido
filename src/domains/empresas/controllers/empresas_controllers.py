@@ -109,7 +109,7 @@ def handle_get_empresas_by_id(id: str) -> dict:
             empresa = empresas_services.find_by_id(id)
         else:
             raise ValueError("Busca empresa por ID: O id deve ser informado")
-
+        
         if empresa:
             response["status"] = "success"
             response["data"] = empresa
