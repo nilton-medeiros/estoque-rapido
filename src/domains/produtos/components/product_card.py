@@ -29,7 +29,7 @@ class ProductCard:
             ),
             margin=ft.margin.all(5),
             # width=600,  # Este width é ignorado por causa da responsividade em col abaixo:
-            col={"xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 4, "xxl": 3}
+            col={"xs": 12, "sm": 12, "md": 6, "lg": 6, "xl": 4, "xxl": 4}
         )
 
     @staticmethod
