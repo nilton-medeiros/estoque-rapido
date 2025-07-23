@@ -41,7 +41,7 @@ class PopupColorItem(ft.PopupMenuItem):
                 return
 
             # 3. Atualiza o estado local do usuário.
-            current_user['theme_color'] = self.theme_color
+            current_user.theme_color = self.theme_color
             page.app_state.set_usuario(current_user)  # type: ignore [attr-defined]
 
         except Exception as ex:
