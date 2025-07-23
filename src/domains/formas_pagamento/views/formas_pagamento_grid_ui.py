@@ -46,7 +46,7 @@ class FormasPagamentoGridUI:
 
         return create_appbar_menu(
             page=self.controller.page,
-            title=ft.Text("Produtos", size=18),
+            title=ft.Text("Formas de Pagamento", size=18),
             actions=[
                 ft.Container(content=self.filter_radio, margin=ft.margin.only(left=10, right=10)),
             ]
