@@ -11,7 +11,7 @@ class FilterComponents:
             content=ft.Row([
                 ft.Radio(value="all", label="Todos"),
                 ft.Radio(value="active", label="Ativos"),
-                ft.Radio(value="inactive", label="Descontinuados"),
+                ft.Radio(value="inactive", label="Inativos"),
             ]),
             on_change=on_change_callback,
         )
