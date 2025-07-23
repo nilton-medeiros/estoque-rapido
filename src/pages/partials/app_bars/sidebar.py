@@ -24,8 +24,8 @@ def create_navigation_drawer(page: ft.Page):
         {"icon": ft.Icons.GROUPS, "label": "Usuários", "tooltip": "Usuários cadastrados", "route": "/home/usuarios/grid"},
         {"icon": ft.Icons.ASSIGNMENT_OUTLINED, "label": "Categorias", "tooltip": "Categorias de produtos", "route": "/home/produtos/categorias/grid"},
         {"icon": ft.Icons.SHOPPING_BAG_OUTLINED, "label": "Produtos", "tooltip": "Produtos cadastrados", "route": "/home/produtos/grid"},
-        {"icon": ft.Icons.FACT_CHECK_OUTLINED, "label": "Estoque", "route": None},
         {"icon": ft.Icons.POINT_OF_SALE_OUTLINED, "label": "Pedidos", "tooltip": "Pedidos de venda", "route": "/home/pedidos/grid"},
+        {"icon": ft.Icons.CREDIT_CARD, "label": "Formas de Pagamento", "tooltip": "Cadastro das formas de pagamento", "route": "/home/formasdepagamento/grid"},
     ]
 
     # Empilha os menus iniciais do menu_items na lista
