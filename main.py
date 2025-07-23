@@ -101,7 +101,8 @@ def main(page: ft.Page):
                     clear_empresa_ui()
 
             case "dashboard_refreshed":
-                print("Debug -> Evento 'dashboard_refreshed' recebido em main.py")
+                pass
+                # print("Debug -> Evento 'dashboard_refreshed' recebido em main.py")
                 # A UI específica (MainContent) irá lidar com a atualização.
                 # Podemos forçar um page.update() aqui se necessário para outras partes da UI global.
                 # page.update()
