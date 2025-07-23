@@ -225,7 +225,7 @@ class SignupView:
 
             usuario.id = result["data"]["id"]
             # Atualiza o estado do app com o novo usuário antes da navegação
-            self.page.app_state.set_usuario(usuario.to_dict()) # type: ignore
+            self.page.app_state.set_usuario(usuario) # type: ignore
 
             # No registro de um novo usuario, não há empresas definidas para este usuário
             self.page.app_state.clear_empresa_data() # type: ignore

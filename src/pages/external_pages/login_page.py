@@ -187,7 +187,7 @@ class LoginView:
 
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["data"]["authenticated_user"]
-            self.page.app_state.set_usuario(user.to_dict()) # type: ignore
+            self.page.app_state.set_usuario(user) # type: ignore
 
             if user.empresa_id is None:
                 self.page.app_state.clear_empresa_data() # type: ignore
