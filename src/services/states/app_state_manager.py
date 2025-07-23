@@ -4,7 +4,7 @@ import flet as ft
 from typing import Any
 
 from src.domains.usuarios.models.usuarios_model import Usuario
-from src.shared.config.get_app_colors import get_theme_colors
+from src.shared.config import get_theme_colors
 
 from .state_validator import StateValidator
 from src.shared.utils import MessageType, message_snackbar
