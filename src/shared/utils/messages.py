@@ -10,7 +10,7 @@ class MessageType(Enum):
     PROGRESS = ("progress", ft.Colors.PURPLE, ft.Colors.PURPLE_200)
 
 
-def  message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO, duration: int = 5000, center: bool = False):
+def  message_snackbar(page: ft.Page, message: str, message_type: MessageType = MessageType.INFO, center: bool = False, duration: int = 5000):
     """
     Exibe uma notificação de mensagem no topo da tela.
 
@@ -24,9 +24,17 @@ def  message_snackbar(page: ft.Page, message: str, message_type: MessageType = M
             - MessageType.INFO: Para informações gerais (azul)
             - MessageType.WARNING: Para advertências (laranja)
             - MessageType.PROGRESS: Para mensagens de progresso (roxo)
+        center (bool): Se True, a mensagem será centralizada na tela com tamanho máximo de 600px
+        duration (int): Duração em milissegundos da mensagem. Padrão é 5 segundos.
     """
 
     bg_color = message_type.value[1]
+
+    if page.drawer and page.drawer.open:
+       page.drawer.open = False
+       page.update()
+       # Se o menu lateral esquerdo está aberto, será fechado e mensagem será centralizada
+       center = True
 
     snack_bar = ft.SnackBar(
         content=ft.Text(message),
@@ -44,11 +52,30 @@ def  message_snackbar(page: ft.Page, message: str, message_type: MessageType = M
         ),
     )
 
-    # ToDo: Refatorar para page.open(snack_bar)
-    page.overlay.append(snack_bar)
-    page.update()
-    snack_bar.open = True
-    page.update()
+    # A forma correta e mais moderna de exibir um SnackBar
+    page.open(snack_bar)
+
+def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
+    def close_banner(e):
+        page.close(banner)
+
+    banner = ft.Banner(
+        bgcolor=ft.Colors.PRIMARY,
+        leading=ft.Icon(ft.Icons.WARNING_AMBER,
+                        color=ft.Colors.ON_PRIMARY, size=40),
+        content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
+        actions=[ft.ElevatedButton(
+            text=btn_text,
+            icon=ft.Icons.CLOSE,
+            style=ft.ButtonStyle(
+                color=ft.Colors.ON_PRIMARY_CONTAINER,
+                bgcolor=ft.Colors.PRIMARY_CONTAINER,
+            ),
+            on_click=close_banner
+        )],
+    )
+
+    page.open(banner)
 
 
 class ProgressiveMessage:
@@ -81,7 +108,7 @@ class ProgressiveMessage:
         """
         # Fecha snackbar anterior se existir
         if self.current_snackbar:
-            self.current_snackbar.open = False
+            self.page.close(self.current_snackbar)
 
         # Conteúdo da mensagem
         content_controls = []
@@ -114,9 +141,7 @@ class ProgressiveMessage:
             show_close_icon=False if duration is None else True,
         )
 
-        self.page.overlay.append(self.current_snackbar)
-        self.current_snackbar.open = True
-        self.page.update()
+        self.page.open(self.current_snackbar)
 
     def update_progress(self, message: str, show_spinner: bool = True):
         """
@@ -154,8 +179,8 @@ class ProgressiveMessage:
         """
         # Fecha snackbar de progresso
         if self.current_snackbar:
-            self.current_snackbar.open = False
-
+            self.page.close(self.current_snackbar)
+            self.current_snackbar = None
         success_snackbar = ft.SnackBar(
             content=ft.Row(
                 controls=[
@@ -172,10 +197,7 @@ class ProgressiveMessage:
             show_close_icon=True,
         )
 
-        self.page.overlay.append(success_snackbar)
-        success_snackbar.open = True
-        self.page.update()
-        self.current_snackbar = None
+        self.page.open(success_snackbar)
 
     def show_warning(self, message: str, duration: int = 5000):
         """
@@ -183,8 +205,8 @@ class ProgressiveMessage:
         """
         # Fecha snackbar de progresso
         if self.current_snackbar:
-            self.current_snackbar.open = False
-
+            self.page.close(self.current_snackbar)
+            self.current_snackbar = None
         warning_snackbar = ft.SnackBar(
             content=ft.Row(
                 controls=[
@@ -201,11 +223,7 @@ class ProgressiveMessage:
             show_close_icon=True,
         )
 
-        self.page.overlay.append(warning_snackbar)
-        warning_snackbar.open = True
-        self.page.update()
-        self.current_snackbar = None
-
+        self.page.open(warning_snackbar)
 
     def show_error(self, message: str, duration: int = 6000):
         """
@@ -213,8 +231,8 @@ class ProgressiveMessage:
         """
         # Fecha snackbar de progresso
         if self.current_snackbar:
-            self.current_snackbar.open = False
-
+            self.page.close(self.current_snackbar)
+            self.current_snackbar = None
         error_snackbar = ft.SnackBar(
             content=ft.Row(
                 controls=[
@@ -231,42 +249,12 @@ class ProgressiveMessage:
             show_close_icon=True,
         )
 
-        self.page.overlay.append(error_snackbar)
-        error_snackbar.open = True
-        self.page.update()
-        self.current_snackbar = None
+        self.page.open(error_snackbar)
 
     def close(self):
         """
         Fecha a mensagem de progresso atual.
         """
         if self.current_snackbar:
-            self.current_snackbar.open = False
-            self.page.update()
+            self.page.close(self.current_snackbar)
             self.current_snackbar = None
-
-
-def show_banner(page: ft.Page, message: str, btn_text: str = 'Entendi') -> None:
-    def close_banner(e):
-        banner.open = False
-        e.control.page.update()
-
-    banner = ft.Banner(
-        bgcolor=ft.Colors.PRIMARY,
-        leading=ft.Icon(ft.Icons.WARNING_AMBER,
-                        color=ft.Colors.ON_PRIMARY, size=40),
-        content=ft.Text(message, color=ft.Colors.ON_PRIMARY),
-        actions=[ft.ElevatedButton(
-            text=btn_text,
-            icon=ft.Icons.CLOSE,
-            style=ft.ButtonStyle(
-                color=ft.Colors.ON_PRIMARY_CONTAINER,
-                bgcolor=ft.Colors.PRIMARY_CONTAINER,
-            ),
-            on_click=close_banner
-        )],
-    )
-
-    page.overlay.append(banner)
-    banner.open = True
-    page.update()
