@@ -61,8 +61,7 @@ async def send_to_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
             page.close(dlg_modal)  # Fechar diálogo antes de um possível snackbar
 
             if result["status"] == "error":
-                message_snackbar(
-                    message=result['message'], message_type=MessageType.WARNING, page=page_ctx)
+                message_snackbar(page_ctx, result['message'], MessageType.WARNING)
                 if not operation_complete_future.done():
                     operation_complete_future.set_result(False)
                 return
@@ -160,8 +159,7 @@ def restore_from_trash(page: ft.Page, categoria: ProdutoCategorias) -> bool:
     result = category_controllers.handle_update_status(categoria=categoria, current_user=current_user, status=RegistrationStatus.ACTIVE)
 
     if result["status"] == "error":
-        message_snackbar(
-            page=page, message=result["message"], message_type=MessageType.ERROR)
+        message_snackbar(page, result["message"], MessageType.ERROR)
         return False
-    message_snackbar(page=page, message="Categoria restaurada com sucesso!")
+    message_snackbar(page, message="Categoria restaurada com sucesso!")
     return True
