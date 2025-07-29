@@ -1,7 +1,5 @@
 import logging
 import traceback
-import datetime
-import math # Adicionado para a função ceil (arredondar para cima)
 
 import flet as ft
 
