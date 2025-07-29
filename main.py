@@ -55,7 +55,7 @@ def main(page: ft.Page):
         style=ft.ButtonStyle(
             alignment=ft.alignment.center,  # type: ignore  [attr-defined]
             # mouse_cursor="pointer",
-            text_style=ft.TextStyle( 
+            text_style=ft.TextStyle(
                 color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.NORMAL) # type: ignore  [attr-defined]
         ),
         tooltip="Clique aqui e preencha os dados da empresa"
@@ -187,7 +187,8 @@ def main(page: ft.Page):
         pg_view = None
 
         match e.route:
-            case '/':  # Raiz: Landing Page
+            # Raiz: Landing Page
+            case '/':
                 pg_view = ft.View(
                     route='/',
                     controls=[show_landing_page(page)],
@@ -195,6 +196,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Tela de login
             case '/login':
                 pg_view = ft.View(
                     route='/login',
@@ -203,9 +206,13 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Tela de logout
             case '/logout':
                 page.app_state.clear_states()  # type: ignore [attr-defined]
                 page.go('/')  # Redireciona para a página inicial
+
+            # Página inicial do usuário logado (Dashboard)
             case '/home':
                 # Acesso a página /home somente usuários logados
                 home_container = show_home_page(page)
@@ -218,6 +225,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Empresas
             case '/home/empresas/grid':
                 pg_view = show_companies_grid(page)
             case '/home/empresas/grid/lixeira':
@@ -246,6 +255,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Usuarios
             case '/home/usuarios/grid':
                 pg_view = show_users_grid(page)
             case '/home/usuarios/grid/lixeira':
@@ -261,6 +272,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Clientes
             case '/home/clientes/grid':
                 pg_view = show_clients_grid(page)
             case '/home/clientes/grid/lixeira':
@@ -276,6 +289,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Produtos
             case '/home/produtos/grid':
                 pg_view = show_products_grid(page)
             case '/home/produtos/grid/lixeira':
@@ -291,6 +306,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Categorias de Produtos
             case '/home/produtos/categorias/grid':
                 pg_view = show_categories_grid(page)
             case '/home/produtos/categorias/grid/lixeira':
@@ -306,14 +323,20 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Domínio Pedidos
             case '/home/pedidos/grid':
                 pg_view = show_orders_grid(page)
             case '/home/pedidos/grid/lixeira':
                 pg_view = show_orders_grid_trash(page)
             case '/home/pedidos/form':
                 pg_view = show_pedido_form(page)
+
+            # Domínio Formas de Pagamento
             case '/home/formasdepagamento/grid':
                 pg_view = show_formas_pagamento_grid(page)
+
+            # Tela de Registrar novo usuário
             case '/signup':  # Registro
                 pg_view = ft.View(
                     route='/signup',
@@ -322,6 +345,8 @@ def main(page: ft.Page):
                     vertical_alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
+
+            # Tela 404 - Página nao encontrada
             case _:  # Rota não encontrada (page 404)
                 # Opcional: tratamento para rotas não encontradas
                 pg_view = ft.View(
