@@ -863,12 +863,6 @@ def show_pedido_form(page: ft.Page):
     else:
         route_title += "/new"
 
-    def handle_icon_hover(e):
-        """Muda o bgcolor do container no hover."""
-        e.control.bgcolor = ft.Colors.with_opacity(
-            0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
-        e.control.update()
-
     appbar = create_appbar_back(
         page=page,
         title=ft.Text(route_title, size=18, selectable=True),

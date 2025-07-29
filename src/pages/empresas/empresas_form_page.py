@@ -878,11 +878,6 @@ def show_company_main_form(page: ft.Page):
     else:
         route_title += "/new"
 
-    def handle_icon_hover(e):
-        """Muda o bgcolor do container no hover."""
-        e.control.bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE) if e.data == "true" else ft.Colors.TRANSPARENT
-        e.control.update()
-
     appbar = create_appbar_back(
         page=page,
         title=ft.Text(route_title, size=18, selectable=True),
@@ -903,8 +898,8 @@ def show_company_main_form(page: ft.Page):
         save_btn.disabled = True
 
         """
-        ! O método .get_form_object() deve ser executado antes do envio do logo para o bucket.
-        ! Ele garantirá a criação de um ID para a empresa, caso ainda não exista, permitindo sua identificação no bucket.
+        O método .get_form_object() deve ser executado antes do envio do logo para o bucket.
+        Ele garantirá a criação de um ID para a empresa, caso ainda não exista, permitindo sua identificação no bucket.
         """
         # Cria o objeto Empresa com os dados do formulário para enviar para o backend
         empresa: Empresa = empresa_view.get_form_object()
@@ -939,23 +934,28 @@ def show_company_main_form(page: ft.Page):
             page.app_state.set_empresa(empresa.to_dict()) # type: ignore
 
         # Associa a empresa a lista de empresas do usuário
-        current_user.empresas.add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
+        if empresa.id:
+            current_user.empresas.add(empresa.id)  # Atributo 'empresas' é do tipo set, não permite duplicidade
 
-        if not current_user.empresa_id:
+        if not current_user.empresa_id and empresa.id:
             # Se o usuário não tem empresa associada e selecionada, associa a nova empresa
             current_user.empresa_id = empresa.id
 
-        # Atualiza usuário no banco de dados
-        result = user_controllers.handle_update_user_companies(
-            usuario_id=current_user.id,
-            empresas=current_user.empresas,
-            empresa_ativa_id=current_user.empresa_id,
-        )
+        if current_user.id:
+            # Atualiza usuário no banco de dados
+            result = user_controllers.handle_update_user_companies(
+                usuario_id=current_user.id,
+                empresas=current_user.empresas,
+                empresa_ativa_id=current_user.empresa_id,
+            )
 
-        if result["status"] == "error":
-            message_snackbar(
-                page=page, message=result["message"], message_type=MessageType.ERROR)
-            return
+            if result["status"] == "error":
+                message_snackbar(
+                    page=page, message=result["message"], message_type=MessageType.ERROR)
+                return
+        else:
+            logger.error(f"Id do Usuário não encontrado! {current_user.name.nome_completo}")
+            message_snackbar(page=page, message="Id do Usuário não encontrado!")
 
         # Limpa o formulário salvo e volta para a página inicial do usuário
         empresa_view.clear_form()
