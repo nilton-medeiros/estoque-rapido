@@ -1,3 +1,9 @@
+"""
+Lista dos diretórios e arquivos do projeto Estoque Rápido:
+Ambiente: Desenvolvimento
+Sistema Operacional: Windows 11
+O diretório completo do projeto estoquerapido está em estoquerapido
+"""
 estoquerapido\.env
 estoquerapido\.vscode
 estoquerapido\assets
@@ -7,6 +13,7 @@ estoquerapido\estrutura-de-diretorios.txt
 estoquerapido\general_info
 estoquerapido\libs_instaladas.txt
 estoquerapido\LICENSE
+estoquerapido\lista_bruta_diretorios.txt
 estoquerapido\lista_de_diretorios_atual.txt
 estoquerapido\lista_diretorios_atual.txt
 estoquerapido\logs
@@ -23,6 +30,7 @@ estoquerapido\tamanhos de tela (xs,sm,md,lg,xl e xxl).txt
 estoquerapido\tests
 estoquerapido\unused_codes
 estoquerapido\uploads
+estoquerapido\verificar_src.py
 estoquerapido\.vscode\extensions.json
 estoquerapido\.vscode\leia-me.txt
 estoquerapido\.vscode\settings.json
@@ -181,7 +189,6 @@ estoquerapido\src\domains\empresas\models\__init__.py
 estoquerapido\src\domains\empresas\models\certificate_a1.py
 estoquerapido\src\domains\empresas\models\certificate_status.py
 estoquerapido\src\domains\empresas\models\cnpj.py
-estoquerapido\src\domains\empresas\models\cpf.py.(nao usado)
 estoquerapido\src\domains\empresas\models\empresas_model.py
 estoquerapido\src\domains\empresas\models\empresas_subclass.py
 estoquerapido\src\domains\empresas\repositories\__init__.py
@@ -194,20 +201,29 @@ estoquerapido\src\domains\empresas\repositories\implementations\firebase_empresa
 estoquerapido\src\domains\empresas\services\__init__.py
 estoquerapido\src\domains\empresas\services\empresas_services.py
 estoquerapido\src\domains\formas_pagamento\__init__.py
+estoquerapido\src\domains\formas_pagamento\components
 estoquerapido\src\domains\formas_pagamento\controllers
 estoquerapido\src\domains\formas_pagamento\models
 estoquerapido\src\domains\formas_pagamento\repositories
 estoquerapido\src\domains\formas_pagamento\services
+estoquerapido\src\domains\formas_pagamento\views
+estoquerapido\src\domains\formas_pagamento\components\__init__.py
+estoquerapido\src\domains\formas_pagamento\components\filter_components.py
+estoquerapido\src\domains\formas_pagamento\components\formas_pagamento_card.py
 estoquerapido\src\domains\formas_pagamento\controllers\__init__.py
-estoquerapido\src\domains\formas_pagamento\controllers\formas_pagmento_controller.py
+estoquerapido\src\domains\formas_pagamento\controllers\formas_pagamento_controller.py
+estoquerapido\src\domains\formas_pagamento\controllers\grid_controller.py
 estoquerapido\src\domains\formas_pagamento\models\__init__.py
 estoquerapido\src\domains\formas_pagamento\models\formas_pagamento_model.py
+estoquerapido\src\domains\formas_pagamento\models\grid_model.py
 estoquerapido\src\domains\formas_pagamento\repositories\__init__.py
 estoquerapido\src\domains\formas_pagamento\repositories\implementations
 estoquerapido\src\domains\formas_pagamento\repositories\implementations\__init__.py
 estoquerapido\src\domains\formas_pagamento\repositories\implementations\firebase_formas_pagamento_repository.py
 estoquerapido\src\domains\formas_pagamento\services\__init__.py
 estoquerapido\src\domains\formas_pagamento\services\formas_pagamento_service.py
+estoquerapido\src\domains\formas_pagamento\views\__init__.py
+estoquerapido\src\domains\formas_pagamento\views\formas_pagamento_grid_ui.py
 estoquerapido\src\domains\pedidos\__init__.py
 estoquerapido\src\domains\pedidos\components
 estoquerapido\src\domains\pedidos\controllers
@@ -263,8 +279,11 @@ estoquerapido\src\domains\produtos\services\produtos_services.py
 estoquerapido\src\domains\produtos\views\__init__.py
 estoquerapido\src\domains\produtos\views\produtos_grid_ui.py
 estoquerapido\src\domains\shared\__init__.py
+estoquerapido\src\domains\shared\context
 estoquerapido\src\domains\shared\controllers
 estoquerapido\src\domains\shared\models
+estoquerapido\src\domains\shared\context\__init__.py
+estoquerapido\src\domains\shared\context\session.py
 estoquerapido\src\domains\shared\controllers\__init__.py
 estoquerapido\src\domains\shared\controllers\domain_exceptions.py
 estoquerapido\src\domains\shared\models\__init__.py
@@ -310,6 +329,7 @@ estoquerapido\src\pages\categorias
 estoquerapido\src\pages\clientes
 estoquerapido\src\pages\empresas
 estoquerapido\src\pages\external_pages
+estoquerapido\src\pages\formas_pagamento
 estoquerapido\src\pages\home
 estoquerapido\src\pages\partials
 estoquerapido\src\pages\pedidos
@@ -337,6 +357,10 @@ estoquerapido\src\pages\external_pages\landing_page.py
 estoquerapido\src\pages\external_pages\login.html
 estoquerapido\src\pages\external_pages\login_page.py
 estoquerapido\src\pages\external_pages\signup_page.py
+estoquerapido\src\pages\formas_pagamento\__init__.py
+estoquerapido\src\pages\formas_pagamento\formas_pagamento_actions_page.py
+estoquerapido\src\pages\formas_pagamento\formas_pagamento_grid_page.py
+estoquerapido\src\pages\formas_pagamento\formas_pagamento_grid_recycle_page.py
 estoquerapido\src\pages\home\__init__.py
 estoquerapido\src\pages\home\content_page.py
 estoquerapido\src\pages\home\home_page.py
@@ -348,7 +372,9 @@ estoquerapido\src\pages\partials\monetary_field.py
 estoquerapido\src\pages\partials\responsive_sizes.py
 estoquerapido\src\pages\partials\app_bars\__init__.py
 estoquerapido\src\pages\partials\app_bars\appbar.py
+estoquerapido\src\pages\partials\app_bars\popup_color_item.py
 estoquerapido\src\pages\partials\app_bars\sidebar.py
+estoquerapido\src\pages\partials\app_bars\sidebar_header.py
 estoquerapido\src\pages\pedidos\__init__.py
 estoquerapido\src\pages\pedidos\pedido_items_subform copy.py
 estoquerapido\src\pages\pedidos\pedido_items_subform.py
@@ -428,12 +454,10 @@ estoquerapido\src\shared\components\ui
 estoquerapido\src\shared\components\dialogs\__init__.py
 estoquerapido\src\shared\components\dialogs\change_password_dialog.py
 estoquerapido\src\shared\config\__init__.py
-estoquerapido\src\shared\config\app_theme.py
 estoquerapido\src\shared\config\get_app_colors.py
 estoquerapido\src\shared\config\globals.py
 estoquerapido\src\shared\config\logging_config (old).py.old
 estoquerapido\src\shared\config\logging_config.py
-estoquerapido\src\shared\config\user_session.py
 estoquerapido\src\shared\logging\__init__.py
 estoquerapido\src\shared\logging\s3_logging_handler.py
 estoquerapido\src\shared\utils\__init__.py
@@ -493,8 +517,11 @@ estoquerapido\tests\domains\formas_pagamento\services\__init__.py
 estoquerapido\tests\domains\formas_pagamento\services\test_formas_pagamento_service.py
 estoquerapido\tests\storage\data
 estoquerapido\tests\storage\temp
+estoquerapido\unused_codes\app_theme.py
+estoquerapido\unused_codes\cpf.py.(nao usado)
 estoquerapido\unused_codes\home_page-(old).py
 estoquerapido\unused_codes\nao_utilizadas
 estoquerapido\unused_codes\sidebar_page-(old).py
+estoquerapido\unused_codes\user_session.py
 estoquerapido\unused_codes\nao_utilizadas\DALL�E 2025-01-11 14.29.53 - Estoque R�pido.webp
 estoquerapido\unused_codes\nao_utilizadas\estoque_rapido_logo.png
