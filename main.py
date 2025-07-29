@@ -55,7 +55,7 @@ def main(page: ft.Page):
         style=ft.ButtonStyle(
             alignment=ft.alignment.center,  # type: ignore  [attr-defined]
             # mouse_cursor="pointer",
-            text_style=ft.TextStyle(  # type: ignore  [attr-defined]
+            text_style=ft.TextStyle( 
                 color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.NORMAL) # type: ignore  [attr-defined]
         ),
         tooltip="Clique aqui e preencha os dados da empresa"
