@@ -11,7 +11,9 @@ from src.pages.clientes.clientes_form_page import show_client_form
 from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
+from src.pages.formas_pagamento.formas_pagamento_form_page import show_formas_pagamento_form
 from src.pages.formas_pagamento.formas_pagamento_grid_page import show_formas_pagamento_grid
+from src.pages.formas_pagamento.formas_pagamento_grid_recycle_page import show_formas_pagamento_grid_trash
 from src.pages.home import show_home_page
 from src.pages.partials.app_bars.sidebar import create_navigation_drawer
 from src.pages.partials.app_bars.sidebar_header import create_sidebar_header
@@ -53,7 +55,7 @@ def main(page: ft.Page):
     page.company_name_text_btn: ft.TextButton = ft.TextButton(  # type: ignore  [attr-defined]
         text="NENHUMA EMPRESA SELECIONADA",
         style=ft.ButtonStyle(
-            alignment=ft.alignment.center,  # type: ignore  [attr-defined]
+            alignment=ft.alignment.center,
             # mouse_cursor="pointer",
             text_style=ft.TextStyle(
                 color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.NORMAL) # type: ignore  [attr-defined]
@@ -332,9 +334,13 @@ def main(page: ft.Page):
             case '/home/pedidos/form':
                 pg_view = show_pedido_form(page)
 
-            # Domínio Formas de Pagamento
+            # Domínio Formas de Pagamento do pedido de produtos
             case '/home/formasdepagamento/grid':
                 pg_view = show_formas_pagamento_grid(page)
+            case '/home/formasdepagamento/grid/lixeira':
+                pg_view = show_formas_pagamento_grid_trash(page)
+            case '/home/formasdepagamento/form':
+                pg_view = show_formas_pagamento_form(page)
 
             # Tela de Registrar novo usuário
             case '/signup':  # Registro
