@@ -1,5 +1,5 @@
 import flet as ft
-from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
+from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento, TipoPercentual
 from src.domains.shared import RegistrationStatus
 
 class FormasPagamentoCard:
@@ -13,15 +13,16 @@ class FormasPagamentoCard:
                 padding=15,
                 content=ft.Column([
                     FormasPagamentoCard._create_card_header(formas_pagamento, on_action_callback),
-                    ft.Text(f"Tipo: {formas_pagamento.tipo}",
+                    ft.Text(f"Tipo: {formas_pagamento.payment_type.name}",
                            theme_style=ft.TextThemeStyle.BODY_SMALL,
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Row(
                         [
-                            ft.Text(f"Desconto: {formas_pagamento.desconto_percentual}%",
+                            ft.Text(f"Percentual: {formas_pagamento.percentage}%",
                                 theme_style=ft.TextThemeStyle.BODY_SMALL),
-                            ft.Text(f"Acréscimo: {formas_pagamento.acrescimo_percentual}%",
-                                theme_style=ft.TextThemeStyle.BODY_SMALL),
+                            ft.Text(f"{formas_pagamento.percentage_type.value}",
+                                theme_style=ft.TextThemeStyle.BODY_SMALL,
+                                color=ft.Colors.BLUE_900 if formas_pagamento.percentage_type == TipoPercentual.ACRESCIMO else ft.Colors.AMBER_900),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     ),
@@ -38,7 +39,7 @@ class FormasPagamentoCard:
         """Cria o cabeçalho do card com imagem e menu"""
         return ft.Row(
             [
-                ft.Text(formas_pagamento.nome, weight=ft.FontWeight.BOLD,
+                ft.Text(formas_pagamento.name, weight=ft.FontWeight.BOLD,
                     theme_style=ft.TextThemeStyle.BODY_LARGE,
                     no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                 ft.Container(expand=True),  # Spacer
@@ -80,7 +81,7 @@ class FormasPagamentoCard:
                 color=ft.Colors.GREEN if formas_pagamento.status == RegistrationStatus.ACTIVE else ft.Colors.RED,
             ),
             ft.Text(
-                value=f"Ordem: {formas_pagamento.ordem}",
+                value=f"Ordem de apresentação: {formas_pagamento.order}",
                 theme_style=ft.TextThemeStyle.BODY_SMALL,
             )
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
