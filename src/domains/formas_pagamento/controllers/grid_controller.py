@@ -1,15 +1,18 @@
 from typing import Callable, TYPE_CHECKING, Optional
 import asyncio
 import flet as ft
+import logging
 from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
 from src.domains.formas_pagamento.models.grid_model import FormasPagamentoGridState
 from src.domains.formas_pagamento.repositories.implementations.firebase_formas_pagamento_repository import FirebaseFormasPagamentoRepository
 from src.domains.formas_pagamento.services.formas_pagamento_service import FormasPagamentoService
 from src.domains.shared.models.filter_type import FilterType
-from src.domains.formas_pagamento.controllers.formas_pagmento_controller import FormasPagamentoController
+from src.domains.formas_pagamento.controllers.formas_pagamento_controller import FormasPagamentoController
 
 if TYPE_CHECKING:
     from src.domains.formas_pagamento.views.formas_pagamento_grid_ui import FormasPagamentoGridUI
+
+logger = logging.getLogger(__name__)
 
 class FormaPagamentoGridController:
     """Controlador do grid de formas de pagamento"""
@@ -56,16 +59,13 @@ class FormaPagamentoGridController:
 
             formas_pagamentos, quantidade_deletados = await self._fetch_formas_pagamentos_async(empresa_id)
 
-            if not formas_pagamentos:
-                raise Exception("Nenhuma forma de pagamento encontrada para empresa selecionada.")
-
             self.state.formas_pagamentos = formas_pagamentos
             self.state.inactive_count = quantidade_deletados
 
         except Exception as e:
             self.state.formas_pagamentos = []
             self.state.inactive_count = 0
-            raise e
+            logger.error(f"Erro ao carregar formas de pagamento: {e}", exc_info=True)
         finally:
             self.state.is_loading = False
             if self.ui_components:

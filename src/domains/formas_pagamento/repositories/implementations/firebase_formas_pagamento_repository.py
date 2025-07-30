@@ -1,7 +1,5 @@
 import logging
-from typing import List
 
-from google.cloud.firestore_v1.base_query import FieldFilter
 from firebase_admin import firestore, exceptions
 from google.api_core import exceptions as google_api_exceptions
 
@@ -16,7 +14,10 @@ class FirebaseFormasPagamentoRepository:
     """
     Repositório para gerenciar as formas de pagamento de uma empresa,
     armazenadas em uma subcoleção do Firestore.
+
+    Args: Nenhum argumento é necessário.
     """
+
     def __init__(self):
         get_firebase_app()
         self.db = firestore.client()
@@ -38,26 +39,57 @@ class FirebaseFormasPagamentoRepository:
         """
         try:
             subcollection_ref = self._get_subcollection_ref(forma_pagamento.empresa_id)
-            data_to_save = forma_pagamento.to_dict()
+            data_to_save = forma_pagamento.to_dict_db()
 
             # Define timestamps do servidor para criação e atualização
-            if not forma_pagamento.id:  # Novo documento
+            if not data_to_save.get('created_at'):  # Novo documento
                 data_to_save['created_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
             data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
+
+            # SOFT DELETE: Marca a entidade como DELETADA.
+            # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("deleted_at") for None, significa que é uma entidade marcada como DELETED
+            if data_to_save.get("status") == RegistrationStatus.DELETED.name and not data_to_save.get("deleted_at"):
+                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore [attr-defined]
 
             # O ID pode ser o nome normalizado (ex: 'pix') ou um UUID
             doc_ref = subcollection_ref.document(forma_pagamento.id)
             doc_ref.set(data_to_save, merge=True)
 
-            # O ID do documento é sempre uma string após a criação/referência.
-            saved_id = doc_ref.id
-            forma_pagamento.id = saved_id  # Atualiza o objeto em memória
+            try:
+                saved_id = doc_ref.id
+                # Após salvar, lê o documento de volta para obter os timestamps resolvidos.
+                doc_snapshot = doc_ref.get()
+                if not doc_snapshot.exists:
+                    # Esta é uma condição de erro inesperada. A escrita foi confirmada, mas a leitura imediata falhou.
+                    logger.error(
+                        f"Falha de consistência: Documento {saved_id} não encontrado imediatamente após a escrita.")
+                    raise Exception(
+                        f"Não foi possível confirmar o salvamento da forma de pagamento {saved_id}.")
+                else:
+                    data_from_db = doc_snapshot.to_dict()
+                    if data_from_db:
+                        # Garante que o ID está no dict
+                        data_from_db['id'] = doc_snapshot.id
+                        # Cria um objeto temporário para obter os timestamps resolvidos.
+                        temp_fp = FormaPagamento.from_dict(data_from_db)
+                        # Atualiza o objeto original com os timestamps do servidor.
+                        forma_pagamento.created_at = temp_fp.created_at
+                        forma_pagamento.updated_at = temp_fp.updated_at
+                        forma_pagamento.deleted_at = temp_fp.deleted_at
+
+            except Exception as e_read:
+                logger.error(
+                    f"Erro ao reler documento {forma_pagamento.id}: {str(e_read)}")
+                raise
+            # Retorna o ID que é garantidamente uma string, resolvendo o alerta do Pylance.
             return saved_id
         except exceptions.FirebaseError as e:
-            logger.error(f"Erro do Firebase ao salvar forma de pagamento para empresa {forma_pagamento.empresa_id}: {e}")
+            logger.error(
+                f"Erro do Firebase ao salvar forma de pagamento para empresa {forma_pagamento.empresa_id}: {e}")
             raise
         except Exception as e:
-            logger.error(f"Erro inesperado ao salvar forma de pagamento para empresa {forma_pagamento.empresa_id}: {e}")
+            logger.error(
+                f"Erro inesperado ao salvar forma de pagamento para empresa {forma_pagamento.empresa_id}: {e}")
             raise
 
     def get_by_id(self, empresa_id: str, forma_pagamento_id: str) -> FormaPagamento | None:
@@ -72,7 +104,8 @@ class FirebaseFormasPagamentoRepository:
             FormaPagamento | None: O objeto encontrado ou None.
         """
         try:
-            doc_ref = self._get_subcollection_ref(empresa_id).document(forma_pagamento_id)
+            doc_ref = self._get_subcollection_ref(
+                empresa_id).document(forma_pagamento_id)
             doc = doc_ref.get()
 
             if not doc.exists:
@@ -82,10 +115,11 @@ class FirebaseFormasPagamentoRepository:
             data['id'] = doc.id
             return FormaPagamento.from_dict(data)
         except Exception as e:
-            logger.error(f"Erro ao buscar forma de pagamento {forma_pagamento_id} da empresa {empresa_id}: {e}")
+            logger.error(
+                f"Erro ao buscar forma de pagamento {forma_pagamento_id} da empresa {empresa_id}: {e}")
             raise
 
-    def get_all_by_empresa(self, empresa_id: str, status_deleted: bool = False) -> tuple[List[FormaPagamento], int]:
+    def get_all_by_empresa(self, empresa_id: str, status_deleted: bool = False) -> tuple[list[FormaPagamento], int]:
         """
         Busca todas as formas de pagamento de uma empresa, opcionalmente filtrando por status.
 
@@ -94,16 +128,13 @@ class FirebaseFormasPagamentoRepository:
             status (RegistrationStatus): Filtra pelo status (padrão: ACTIVE).
 
         Returns:
-            tuple[list[FormaPagamento], int]: Lista de formas de pagamento e a quantidade de deletados.
+            tuple (list[FormaPagamento], int): Lista de formas de pagamento e a quantidade de deletados.
         """
-        formas_pagamentos: List[FormaPagamento] = []
+        formas_pagamentos: list[FormaPagamento] = []
         quantity_deleted: int = 0
 
         try:
-            # query = (self._get_subcollection_ref(empresa_id)
-            #          .where(filter=FieldFilter("status", "==", status.name))
-            #          .order_by("nome"))
-            query = self._get_subcollection_ref(empresa_id).order_by("nome")
+            query = self._get_subcollection_ref(empresa_id).order_by("order").order_by("name_lower")
 
             docs = query.get()
 
@@ -127,8 +158,11 @@ class FirebaseFormasPagamentoRepository:
 
             return formas_pagamentos, quantity_deleted
         except google_api_exceptions.FailedPrecondition as e:
-            logger.error(f"Índice do Firestore ausente para a consulta de formas de pagamento: {e}")
-            raise Exception("Erro de configuração no banco de dados. Um índice para formas de pagamento é necessário.")
+            logger.error(
+                f"Índice do Firestore ausente para a consulta de formas de pagamento: {e}")
+            raise Exception(
+                "Erro de configuração no banco de dados. Um índice para formas de pagamento é necessário.")
         except Exception as e:
-            logger.error(f"Erro ao buscar formas de pagamento da empresa {empresa_id}: {e}")
+            logger.error(
+                f"Erro ao buscar formas de pagamento da empresa {empresa_id}: {e}")
             raise

@@ -1,0 +1,1 @@
+from .firebase_formas_pagamento_repository import FirebaseFormasPagamentoRepository

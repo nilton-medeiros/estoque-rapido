@@ -1,7 +1,15 @@
 from enum import Enum
 
 class RegistrationStatus(Enum):
-    """Status de Registro com labels contextuais."""
+    """
+    Status de Registro com labels contextuais.
+
+    ACTIVE = "Ativo"
+
+    INACTIVE = {"default": "Inativo", "empresa": "Arquivado", "produto": "Descontinuado"}
+
+    DELETED = "Lixeira"
+    """
     ACTIVE = "Ativo"
     INACTIVE = {"default": "Inativo", "empresa": "Arquivado", "produto": "Descontinuado"}
     DELETED = "Lixeira"

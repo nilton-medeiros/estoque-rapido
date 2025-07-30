@@ -14,13 +14,11 @@ def show_formas_pagamento_grid(page: ft.Page) -> ft.View:
 
         match action:
             case "INSERT":
-                # Limpa dados para iniciar campos do Form vazio no insert
-                page.app_state.clear_form_data() # type: ignore [attr-defined]
+                page.app_state.clear_form_data()  # type: ignore [attr-defined]
                 page.go('/home/formasdepagamento/form')
             case "EDIT":
                 if forma_pagamento:
-                    # Preenche dados para iniciar campos do Form no edit
-                    page.app_state.set_form_data(forma_pagamento.to_dict()) # type: ignore [attr-defined]"
+                    page.app_state.set_form_data(forma_pagamento.to_dict()) # type: ignore [attr-defined]
                     page.go("/home/formasdepagamento/form")
             case "SOFT_DELETE":
                 if forma_pagamento:
@@ -45,7 +43,8 @@ def show_formas_pagamento_grid(page: ft.Page) -> ft.View:
         controls=[ui.loading_container, ui.content_area],
         appbar=ui.appbar,
         drawer=page.drawer,
-        floating_action_button=ui.fab_buttons, # type: ignore [attr-defined] floating_action_button type FloatingActionButton | None aceita sim um ft.Column()
+        # floating_action_button type FloatingActionButton | None aceita sim ft.Column()
+        floating_action_button=ui.fab_buttons, # type: ignore [attr-defined]
         vertical_alignment=ft.MainAxisAlignment.START,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
         padding=ft.padding.all(10)
