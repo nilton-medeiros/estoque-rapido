@@ -42,7 +42,7 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     page.company_name_text_btn.visible = True  # type: ignore [attr-defined]
 
     profile = ft.Text(
-        value=current_user.profile,
+        value=current_user.profile.value,
         theme_style=ft.TextThemeStyle.BODY_SMALL,
         color=ft.Colors.WHITE
     )
@@ -208,7 +208,7 @@ def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft
                 allowed_extensions=["png", "jpg", "jpeg", "svg"]
             )
         else:
-            if url_field.value and url_field.value.strip():
+            if url_field.value and url_field.value.strip() and current_user.id:
                 result = user_controllers.handle_update_photo(id=current_user.id, photo_url=url_field.value)
                 _handle_update_result(page, user_avatar, result, previous_user_photo, dialog)
                 # A função _handle_update_result agora fecha o diálogo
@@ -296,6 +296,10 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
             )
             return
 
+        if not current_user.id:
+            # Condição improvável
+            logger.warning("current_id.id não está definido")
+            return
         result = user_controllers.handle_update_photo(id=current_user.id, photo_url=avatar_url)
 
         # Se a atualização no banco de dados falhar, remove o arquivo recém-enviado do bucket.
