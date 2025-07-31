@@ -11,9 +11,54 @@ def show_landing_page(page: ft.Page):
         color=ft.Colors.WHITE,
     )
 
+    # Containers do footer para controle dinâmico de alinhamento
+    footer_version_container = ft.Container(
+        content=ft.Text(
+            "Estoque Rápido v1.00.7",
+            size=12,
+            color=ft.Colors.WHITE,
+            weight=ft.FontWeight.W_500,
+        ),
+        col={"xs": 12, "md": 6},
+        alignment=ft.alignment.center_left,  # Inicial: esquerda
+    )
+
+    footer_copyright_row = ft.Row(
+        controls=[
+            ft.Text(
+                "© 2025 Desenvolvido por",
+                size=12,
+                color=ft.Colors.GREY_400,
+            ),
+            ft.TextButton(
+                text="Sistrom Sistemas Web.",
+                url="https://sistrom.com.br/site/#sistemas",
+                tooltip="Clique para acessar o site",
+                style=ft.ButtonStyle(
+                    padding=ft.padding.only(left=4, right=4),
+                    overlay_color=ft.Colors.TRANSPARENT,
+                    color={
+                        ft.ControlState.DEFAULT: ft.Colors.WHITE,
+                        ft.ControlState.HOVERED: ft.Colors.BLUE_200
+                    },
+                ),
+            ),
+        ],
+        spacing=0,
+        alignment=ft.MainAxisAlignment.END,  # Inicial: direita
+        tight=True,
+    )
+
+    footer_copyright_container = ft.Container(
+        content=footer_copyright_row,
+        col={"xs": 12, "md": 6},
+        alignment=ft.alignment.center_right,  # Inicial: direita
+    )
+
+    # Modifique a função handle_page_resize para incluir o controle do footer:
     def handle_page_resize(e):
         # Obtém a largura da página de forma segura
-        width: int|float = page.width if page.width else 0
+        width: int | float = page.width if page.width is not None else 600
         size = 18
 
         title_bar.value = "ESTOQUE RÁPIDO: Soluções Eficientes para Gestão de Estoque e Finanças"
@@ -41,7 +86,38 @@ def show_landing_page(page: ft.Page):
         # Atualiza o botão de login
         login_btn.update_sizes(width)
 
+        # NOVO: Controle dinâmico de alinhamento do footer
+        if width < 768:  # Breakpoint md (telas pequenas)
+            # Centraliza ambos os elementos
+            footer_version_container.alignment = ft.alignment.center
+            footer_copyright_container.alignment = ft.alignment.center
+            footer_copyright_row.alignment = ft.MainAxisAlignment.CENTER
+        else:  # Telas grandes
+            # Mantém alinhamento original (esquerda e direita)
+            footer_version_container.alignment = ft.alignment.center_left
+            footer_copyright_container.alignment = ft.alignment.center_right
+            footer_copyright_row.alignment = ft.MainAxisAlignment.END
+
         page.update()
+
+    # Atualize a definição do footer para usar os containers criados:
+    footer = ft.Container(
+        expand=True,
+        padding=ft.padding.symmetric(horizontal=20, vertical=10),
+        bgcolor=ft.Colors.BLUE_700,
+        content=ft.ResponsiveRow(
+            columns=12,
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
+            spacing=0,
+            run_spacing=10,
+            controls=[
+                footer_version_container,
+                footer_copyright_container,
+            ],
+        ),
+    )
 
     login_btn = LoginButton(page)
 
@@ -90,7 +166,7 @@ def show_landing_page(page: ft.Page):
 
         page.open(dlg_modal)
 
-    def landing_card(icons: list, title: str, description: str, show_more: str) -> ft.Card:
+    def landing_card(icons: list[ft.Icon], title: str, description: str, show_more: str) -> ft.Card:
         return ft.Card(
             col={'xs': 12, 'md': 6, 'lg': 4},
             width=350,
@@ -149,29 +225,25 @@ def show_landing_page(page: ft.Page):
             run_spacing=30,
             controls=[
                 landing_card(
-                    icons=[ft.Icon(ft.Icons.INVENTORY, size=40,
-                                   color=ft.Colors.BLUE_400)],
+                    icons=[ft.Icon(ft.Icons.INVENTORY, size=40, color=ft.Colors.BLUE_400, tooltip="Ícone de gestão de estoque")],
                     title="Gestão de Estoque",
                     description="Controle total do seu inventário",
                     show_more="A Gestão de Estoque permite monitorar e controlar todos os produtos disponíveis, garantindo que você tenha sempre a quantidade certa em mãos. Com relatórios detalhados e alertas de reabastecimento, você pode otimizar seu inventário e evitar perdas."
                 ),
                 landing_card(
-                    icons=[ft.Icon(ft.Icons.ADD_BUSINESS, size=40,
-                                   color=ft.Colors.BLUE_400)],
+                    icons=[ft.Icon(ft.Icons.ADD_BUSINESS, size=40, color=ft.Colors.BLUE_400, tooltip="Ícone de gestão de vendas")],
                     title="Gestão Vendas",
                     description="Otimização de processos e estratégias para maximizar as vendas e fidelizar clientes.",
                     show_more="A Gestão de Vendas oferece uma visão clara das suas transações, permitindo acompanhar o desempenho das vendas em tempo real. Com análises detalhadas, você pode identificar tendências e ajustar suas estratégias para maximizar a receita."
                 ),
                 landing_card(
-                    icons=[ft.Icon(ft.Icons.ATTACH_MONEY_OUTLINED,
-                                   size=40, color=ft.Colors.BLUE_400)],
+                    icons=[ft.Icon(ft.Icons.ATTACH_MONEY_OUTLINED, size=40, color=ft.Colors.BLUE_400, tooltip="Ícone de gestão de financeira")],
                     title="Gestão Financeira",
                     description="Controle eficiente de recursos financeiros para garantir estabilidade e crescimento sustentável.",
                     show_more="A Gestão Financeira proporciona um controle completo sobre suas finanças, incluindo receitas, despesas e lucros. Com relatórios financeiros precisos, você pode tomar decisões informadas e garantir a saúde financeira do seu negócio."
                 ),
                 landing_card(
-                    icons=[ft.Icon(ft.Icons.BAR_CHART, size=40,
-                                   color=ft.Colors.BLUE_400)],
+                    icons=[ft.Icon(ft.Icons.BAR_CHART, size=40, color=ft.Colors.BLUE_400, tooltip="Ícone do fluxo de caixa")],
                     title="Fluxo de Caixa",
                     description="Monitoramento de entradas e saídas de dinheiro para manter a saúde financeira da empresa.",
                     show_more="O Fluxo de Caixa é essencial para entender a movimentação de dinheiro no seu negócio. Com uma visão clara das entradas e saídas, você pode planejar melhor seus investimentos e garantir que sempre haja liquidez."
@@ -214,7 +286,7 @@ def show_landing_page(page: ft.Page):
 
     main_content = ft.Container(
         expand=True,
-        width=1400,
+        # width=1920,
         alignment=ft.alignment.center,
         padding=20,
         content=ft.Column(
@@ -228,43 +300,14 @@ def show_landing_page(page: ft.Page):
         ),
     )
 
-    footer = ft.Container(
-        padding=10,
-        bgcolor=ft.Colors.BLUE_700,
-        alignment=ft.alignment.center,
-        content=ft.Row(
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER,
-            controls=[
-                ft.TextButton(
-                    content=ft.Row(
-                        controls=[
-                            ft.Text(
-                                value="© 2025 Sistrom Sistemas Web. Todos os direitos reservados.",
-                                color=ft.Colors.GREY_400,
-                                size=12,
-                                text_align=ft.TextAlign.CENTER,
-                            ),
-                            ft.Icon(
-                                name="images/logo_sistrom.png", size=14),
-                        ],
-                        tight=True,
-                    ),
-                    url="https://sistrom.com.br/site/#sistemas",
-                    tooltip="Clique aqui para acessar o site",
-                ),
-            ],
-        ),
-    )
-
     page.on_resized = handle_page_resize
 
     parent_container = ft.Container(
         expand=True,
-        height=page.height,
         alignment=ft.alignment.center,
         content=ft.Column(
             spacing=0,
+            expand=True,
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=ft.ScrollMode.AUTO,
