@@ -1,5 +1,4 @@
 import logging
-from tkinter import NO
 
 from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
 from src.domains.formas_pagamento.repositories.implementations import FirebaseFormasPagamentoRepository
