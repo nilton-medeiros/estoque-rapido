@@ -1,6 +1,6 @@
 THEME_COLOR_NAMES = ['red', 'pink', 'purple', 'deeppurple', 'indigo', 'blue',
-                     'lightblue', 'cyan', 'teal', 'green', 'lightgreen', 'lime',
-                     'yellow', 'amber', 'orange', 'deeporange', 'brown', 'grey', 'bluegrey']
+                     'cyan', 'teal', 'green', 'lime', 'yellow', 'amber',
+                     'orange', 'deeporange', 'brown', 'grey',]
 
 COLOR_DISPLAY_NAMES = {
     'red': 'Red',
@@ -9,7 +9,6 @@ COLOR_DISPLAY_NAMES = {
     'deeppurple': 'Deep Purple',
     'indigo': 'Indigo',
     'blue': 'Blue',
-    'lightblue': 'Light Blue',
     'cyan': 'Cyan',
     'teal': 'Teal',
     'green': 'Green',
@@ -17,11 +16,9 @@ COLOR_DISPLAY_NAMES = {
     'yellow': 'Yellow',
     'amber': 'Amber',
     'orange': 'Orange',
+    'deeporange': 'Deep Orange',
     'brown': 'Brown',
     'grey': 'Grey',
-    'lightgreen': 'Light Green',
-    'deeporange': 'Deep Orange',
-    'bluegrey': 'Blue Grey'
 }
 
 def get_theme_colors(color_name: str = 'blue') -> dict[str, str]:
