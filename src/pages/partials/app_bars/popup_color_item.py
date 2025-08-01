@@ -28,13 +28,18 @@ class PopupColorItem(ft.PopupMenuItem):
             return
 
         # 1. Atualiza o tema da UI imediatamente para um feedback visual rápido.
-        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=self.theme_color)
+        page.theme = page.dark_theme = ft.Theme(color_scheme_seed=self.theme_color) # type: ignore [attr-defined]
 
-        # 2. Atualiza a cor no banco de dados.
-        current_user = get_current_user(page)
 
         try:
-            result = user_controllers.handle_update_user_colors(id=current_user.id, theme_color=self.theme_color)
+            # 2. Atualiza a cor no banco de dados.
+            current_user = get_current_user(page)
+            if not current_user:
+                logger.warning("Usuário não encontrado. Ação de mudança de cor ignorada.")
+                message_snackbar(page=page, message="Usuário não encontrado. Ação de mudança de cor ignorada.", message_type=MessageType.ERROR)
+                return
+
+            result = user_controllers.handle_update_user_colors(id=current_user.id, theme_color=self.theme_color)  # type: ignore [attr-defined]
 
             if result["status"] == "error":
                 message_snackbar(page=page, message=result["message"], message_type=MessageType.ERROR)
