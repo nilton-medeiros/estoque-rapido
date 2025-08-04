@@ -975,6 +975,10 @@ def show_pedido_form(page: ft.Page):
             # Instância do objeto Pedido com os dados do formulário para enviar para o backend
             pedido: Pedido = pedidos_view.get_form_object_updated()
 
+            # ToDo: Implementar no controller `pedidos_controllers.py` a função `handle_save_pedido()` para baixar os ítens do pedido no estoque produtos e salvar pedido.
+            # ToDo: A baixa dos ítens do pedido e salvar pedido deve ser atômico, os dois tem que ter sucesso ou todos falham.
+            # ToDo: Usar uma transação do Firestore para garantir a atomicidade.
+
             # Envia os dados para o backend
             result = order_controllers.handle_save_pedido(
                 pedido=pedido,
