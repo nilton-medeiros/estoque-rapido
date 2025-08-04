@@ -1,11 +1,19 @@
 import logging
-import re  # Adicionado para expressões regulares
+from math import exp
+import re
+from turtle import bgcolor  # Adicionado para expressões regulares
 
 import flet as ft
+
 from datetime import datetime  # Adicionado para validação de data
+from typing import Any
 
 from src.domains.clientes.controllers.clientes_controllers import handle_get_by_name_cpf_or_phone
 from src.domains.clientes.models.clientes_model import Cliente
+from src.domains.formas_pagamento.controllers import FormasPagamentoController
+from src.domains.formas_pagamento.models import TipoPagamento
+from src.domains.formas_pagamento.repositories.implementations import FirebaseFormasPagamentoRepository
+from src.domains.formas_pagamento.services import FormasPagamentoService
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import RegistrationStatus
@@ -42,6 +50,10 @@ class PedidoForm:
         self.app_colors: dict[str, str] = page.session.get("theme_colors")  # type: ignore [attr-defined]
         self.input_width = 400
 
+        # Obtem a lista das Formas de Pagamento da empresa logada
+        self.formas_pagmento_list = self._get_formas_pagmento_list(self.empresa_logada["id"])
+        self.selected_formas_pagmento_name: str | None = None
+
         # Responsividade
         self._create_form_fields()
 
@@ -55,6 +67,17 @@ class PedidoForm:
 
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
+
+    def _get_formas_pagmento_list(self, empresa_id: str) -> list[dict[str, Any]]:
+        service = FormasPagamentoService(FirebaseFormasPagamentoRepository())
+        controller = FormasPagamentoController(service)
+        result = controller.get_formas_pagamento_summary(empresa_id)
+
+        if result["status"] == "success":
+            return result["data"]
+
+        messages.message_snackbar(self.page, result["message"], messages.MessageType.ERROR)
+        return []
 
     def on_change_status(self, e):
         status = e.control
@@ -90,6 +113,15 @@ class PedidoForm:
         self.quantity_items.update()
         self.quantity_products.update()
 
+    def _update_dropdown_tooltip(self, e: ft.ControlEvent):
+        """Atualiza o tooltip do Dropdown com o texto da opção selecionada."""
+        dropdown = e.control
+        selected_option = next((opt for opt in dropdown.options if opt.key == dropdown.value), None)
+        if selected_option:
+            dropdown.tooltip = selected_option.text
+        else:
+            dropdown.tooltip = dropdown.data
+        dropdown.update()
 
     def _create_form_fields(self):
         """Cria os campos do formulário de Pedido"""
@@ -100,7 +132,7 @@ class PedidoForm:
         self.order_number = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 4, 'lg': 3},
             label="Pedido Nº",
             icon=ft.Icons.NUMBERS,
             read_only=True,
@@ -109,7 +141,7 @@ class PedidoForm:
         self.total_amount = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 4, 'lg': 3},
             label="Total Pedido",
             icon=ft.Icons.ATTACH_MONEY,
             read_only=True,
@@ -118,28 +150,40 @@ class PedidoForm:
         self.quantity_items = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
+            col={'xs': 12, 'md': 4, 'lg': 3},
             label="Total Itens",
+            icon=ft.Icons.NUMBERS,
+            read_only=True,
+        )
+        # Quantidade de Produtos
+        self.quantity_products = build_input_field(
+            page_width=self.page.width, # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 4, 'lg': 3},
+            label="Qtde. Produtos",
             icon=ft.Icons.NUMBERS,
             read_only=True,
         )
 
         # Segundo responsive row
-        # Quantidade de Produtos
-        self.quantity_products = build_input_field(
-            page_width=self.page.width, # type: ignore [attr-defined]
-            app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 4},
-            label="Qtde. Produtos",
-            icon=ft.Icons.NUMBERS,
-            read_only=True,
-        )
-        # Status do Pedido: Switch Ativo/Inativo
-        self.status = ft.Switch(
-            col={'xs': 12, 'md': 2, 'lg': 2},
-            label="Pedido Ativo",
-            value=True,
-            on_change=self.on_change_status,
+        # Forma de Pagamento
+        self.forma_de_pagamento = ft.Dropdown(
+            label="Forma de Pagamento",
+            text_size=self.font_size,
+            expanded_insets=ft.padding.all(10),
+            width=374,
+            options=[
+                ft.dropdown.Option(key=fp["id"], text=fp["name"])
+                for fp in self.formas_pagmento_list
+            ],
+            enable_filter=True,
+            hint_text="Selecione a forma de pagamento",
+            tooltip="Selecione a forma de pagamento",
+            data="Selecione a forma de pagamento",
+            on_change=self._update_dropdown_tooltip,
+            filled=True,
+            border=ft.InputBorder.OUTLINE,
+            border_color=self.app_colors["primary"],
         )
         # Status de Entrega
         self.delivery_status = ft.CupertinoSlidingSegmentedButton(
@@ -150,7 +194,7 @@ class PedidoForm:
             on_change=self.on_change_delivery_status,
         )
         self.entrega_column = ft.Column(
-            col={'xs': 12, 'md': 6, 'lg': 6},
+            col={'xs': 12, 'md': 12, 'lg': 6},
             alignment=ft.MainAxisAlignment.START,
             spacing=20,
             run_spacing=20,
@@ -159,6 +203,13 @@ class PedidoForm:
                 ft.Divider(height=5),
                 self.delivery_status,
             ],
+        )
+        # Status do Pedido: Switch Ativo/Inativo
+        self.status = ft.Switch(
+            col={'xs': 12, 'md': 6, 'lg': 2},
+            label="Pedido Ativo",
+            value=True,
+            on_change=self.on_change_status,
         )
 
         # Identificação do Cliente (Opcional) ---------------------------------
@@ -586,17 +637,23 @@ class PedidoForm:
             expanded_cross_axis_alignment=ft.CrossAxisAlignment.START,
         )
 
+        dropdown_row = ft.Container(
+            col={'xs': 12, 'md': 6, 'lg': 4},
+            content=self.forma_de_pagamento,
+        )
+
         build_content = ft.Column(
             controls=[
                 ft.Text("Identificação do Pedido", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(controls=[self.order_number, self.total_amount, self.quantity_items]),
+                responsive_row(controls=[self.order_number, self.total_amount, self.quantity_items, self.quantity_products,]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(controls=[self.quantity_products, self.status, self.entrega_column]),
+                # responsive_row(controls=[dropdown_row, self.entrega_column, self.status]),
+                responsive_row(controls=[dropdown_row, self.status, self.entrega_column]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 client_identifications,
                 ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
-                items_section,  # Substitui a linha antiga "Itens do Pedido"
+                items_section,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=5,
@@ -624,6 +681,7 @@ class PedidoForm:
         self.total_amount.value = str(self.data["total_amount"])
         self.quantity_items.value = str(self.data["total_items"])
         self.quantity_products.value = str(self.data["total_products"])
+        self.forma_de_pagamento.value = self.data["forma_pagamento_id"]
 
         index_status = {
             "PENDING": 0,
@@ -712,6 +770,7 @@ class PedidoForm:
         }
         self.data["delivery_status"] = index_status[self.delivery_status.selected_index]
         self.data["status"] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
+        self.data["forma_pagamento_id"] = self.forma_de_pagamento.value
         self.data["client_cpf"] = self.client_cpf.value if self.client_cpf.value else None
         self.data['client_name'] = self.client_name.value if self.client_name.value else None
         self.data["client_email"] = self.client_email.value if self.client_email.value else None
@@ -777,6 +836,10 @@ class PedidoForm:
         # Validação dos itens
         if not self.items_subform.get_items():
             return "Adicione pelo menos um item ao pedido."
+        if not self.forma_de_pagamento.value:
+            return "Selecione uma forma de pagamento."
+        if self.client_birthday.value and not self._validate_birthday_format(self.client_birthday.value):
+            return "Formato de aniversário inválido. Use DD/MM."
 
         selected_index = self.delivery_status.selected_index
         if selected_index in [1, 2]:
@@ -785,9 +848,6 @@ class PedidoForm:
             qtty_products = int(self.items_subform.get_total_quantity())
             if qtty_items == 0 or qtty_products == 0:
                 return "O Pedido não pode estar em trânsito ou entregue sem itens."
-
-        if self.client_birthday.value and not self._validate_birthday_format(self.client_birthday.value):
-            return "Formato de aniversário inválido. Use DD/MM."
 
         return None
 
@@ -813,6 +873,8 @@ class PedidoForm:
         self.total_amount.text_size = self.font_size
         self.quantity_items.text_size = self.font_size
         self.quantity_products.text_size = self.font_size
+        self.forma_de_pagamento.text_size = self.font_size
+        self.forma_de_pagamento.width = self.input_width if self.input_width < 374 else 374
         self.consult_client.text_size = self.font_size
         self.client_cpf.text_size = self.font_size
         self.client_name.text_size = self.font_size

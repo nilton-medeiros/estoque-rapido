@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, UTC
+from turtle import st
 from typing import Any
 
+from src.domains.formas_pagamento.models.formas_pagamento_model import TipoPagamento
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import Address
 from src.domains.shared.models.registration_status import RegistrationStatus
@@ -65,6 +67,7 @@ class Pedido:
     Representa um Pedido no sistema.
     """
     empresa_id: str
+    forma_pagamento_id: str
     total_amount: Money # Novo campo para o total do pedido
     items: list[PedidoItem] = field(default_factory=list)
     total_items: int = 0
@@ -112,6 +115,8 @@ class Pedido:
         # Validações e normalizações
         if not self.empresa_id:
             raise ValueError("O ID da empresa é obrigatório para um pedido.")
+        if not self.forma_pagamento_id:
+            raise ValueError("O ID da forma de pagamento é obrigatório para um pedido.")
         if self.delivery_status == DeliveryStatus.IN_TRANSIT or self.delivery_status == DeliveryStatus.DELIVERED:
             if not self.order_number:
                 raise ValueError("O número do pedido é obrigatório para pedidos em trânsito ou entregues.")
@@ -146,6 +151,7 @@ class Pedido:
         return {
             "id": self.id,
             "empresa_id": self.empresa_id,
+            "forma_pagamento_id": self.forma_pagamento_id,
             "order_number": self.order_number,
             "total_amount": self.total_amount,
             "items": [item.to_dict() for item in self.items],
@@ -185,6 +191,7 @@ class Pedido:
         """
         dict_db: dict[str, Any] = {
             "empresa_id": self.empresa_id,
+            "forma_pagamento_id": self.forma_pagamento_id,
             "order_number": self.order_number,
             "total_amount": self.total_amount.to_dict(),
             "items": [item.to_dict() for item in self.items],
@@ -269,6 +276,7 @@ class Pedido:
         return cls(
             id=doc_id or data.get("id"),
             empresa_id=data["empresa_id"],
+            forma_pagamento_id=data["forma_pagamento_id"],
             order_number=data.get("order_number"),
             total_amount=get_money(total),
             items=items,
