@@ -1,4 +1,3 @@
-from click import get_current_context
 import flet as ft
 import logging
 import os
@@ -47,7 +46,6 @@ def main(page: ft.Page):
     Isso proporciona uma experiência de usuário mais fluida, com transições rápidas entre diferentes seções da aplicação como
     (/home, /login, /home/empresas/grid, etc.), mantendo o estado e os dados no lado do cliente.
     """
-
     # Força a limpeza do cache no início da aplicação
     page.clean()
     page.user_name_text: ft.Text = ft.Text( # type: ignore  [attr-defined]
