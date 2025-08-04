@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from firebase_admin import exceptions
 from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
@@ -36,6 +37,37 @@ class FormasPagamentoController:
             logger.error(
                 f"Erro no controller ao obter formas de pagamento: {e}")
             raise  # Re-lança para ser tratado em uma camada superior (ex: API)
+
+    def get_formas_pagamento_summary(self, empresa_id: str) -> dict[str, Any]:
+        """
+        Obtém um resumo das formas de pagamento para uma empresa.
+
+        Args:
+            empresa_id (str): ID da empresa logada.
+
+        Returns:
+            dict: Resumo das formas de pagamento.
+                 sucesso: {"status": "success", "data": [summary_list]}
+                 erro: {"status": "error", "message": "mensagem de erro"}
+        """
+        response = {}
+        try:
+            if not empresa_id:
+                logger.error("ID da empresa não pode ser nulo ou vazio.")
+                return {"status": "error", "message": "ID da empresa não pode ser nulo ou vazio."}
+
+            summary_list = self.service.get_summary(empresa_id)
+
+            if summary_list:
+                response = {"status": "success", "data": summary_list}
+            else:
+                response = {"status": "error", "message": "Nenhuma forma de pagamento encontrada."}
+        except ValueError as e:
+            response = {"status": "error", "message": f"ValueError: Erro de validação: {str(e)}"}
+        except Exception as e:
+            response = {"status": "error", "message": "Erro ao obter resumo das formas de pagamento."}
+        return response
+
 
     def get_forma_pagamento(self, empresa_id: str, forma_pagamento_id: str) -> FormaPagamento | None:
         """
