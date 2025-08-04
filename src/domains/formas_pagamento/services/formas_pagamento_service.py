@@ -1,5 +1,7 @@
 import logging
 
+from typing import Any
+
 from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
 from src.domains.formas_pagamento.repositories.implementations import FirebaseFormasPagamentoRepository
 from src.domains.shared.models.registration_status import RegistrationStatus
@@ -36,6 +38,24 @@ class FormasPagamentoService:
             logger.error(
                 f"Erro ao obter formas de pagamento para empresa {empresa_id}: {e}")
             raise
+
+    def get_summary(self, empresa_id: str) -> list[dict[str, Any]]:
+        """
+        Obtém um resumo das formas de pagamento ativas para uma determinada empresa.
+
+        Args:
+            empresa_id (str): ID da empresa.
+
+        Returns:
+            list[dict[str, Any]]: Resumo das formas de pagamento.
+        """
+        try:
+            return self.repository.get_summary(empresa_id)
+        except Exception as e:
+            logger.error(
+                f"Erro ao obter resumo formas de pagamento para empresa {empresa_id}: {e}")
+            raise
+
 
     def get_forma_pagamento_by_id(self, empresa_id: str, forma_pagamento_id: str) -> FormaPagamento | None:
         """

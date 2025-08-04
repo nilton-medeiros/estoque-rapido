@@ -1,5 +1,6 @@
 import logging
 
+from typing import Any
 from firebase_admin import firestore, exceptions
 from google.api_core import exceptions as google_api_exceptions
 
@@ -38,7 +39,8 @@ class FirebaseFormasPagamentoRepository:
             str: O ID do documento salvo.
         """
         try:
-            subcollection_ref = self._get_subcollection_ref(forma_pagamento.empresa_id)
+            subcollection_ref = self._get_subcollection_ref(
+                forma_pagamento.empresa_id)
             data_to_save = forma_pagamento.to_dict_db()
 
             # Define timestamps do servidor para criação e atualização
@@ -134,7 +136,8 @@ class FirebaseFormasPagamentoRepository:
         quantity_deleted: int = 0
 
         try:
-            query = self._get_subcollection_ref(empresa_id).order_by("order").order_by("name_lower")
+            query = self._get_subcollection_ref(
+                empresa_id).order_by("order").order_by("name_lower")
 
             docs = query.get()
 
@@ -165,4 +168,69 @@ class FirebaseFormasPagamentoRepository:
         except Exception as e:
             logger.error(
                 f"Erro ao buscar formas de pagamento da empresa {empresa_id}: {e}")
+            raise
+
+    def get_summary(self, empresa_id: str) -> list[dict[str, Any]]:
+        """
+        Retorna um resumo (ID, name, percentage e percentage_type) das formas de pagamento de uma empresa.
+
+        Args:
+            empresa_id (str): O ID da empresa.
+
+        Returns:
+            list[dict[str, Any]]: Lista de dicionários com resumo das formas de pagamento.
+        """
+        try:
+            query = (self._get_subcollection_ref(empresa_id)
+                     .where("status", "==", RegistrationStatus.ACTIVE.name)
+                     .select(["name", "percentage", "percentage_type"])
+                     .order_by("order").order_by("name_lower"))
+            docs = query.get()
+
+            return [{
+                "id": doc.id,
+                "name": doc.get("name"),
+                "percentage": doc.get("percentage"),
+                "percentage_type": doc.get("percentage_type")
+            } for doc in docs]
+        except google_api_exceptions.FailedPrecondition as e:
+            # Esta é a exceção específica para erros de "índice ausente".
+            # A mensagem de erro 'e' já contém o link para criar o índice.
+            logger.error(
+                f"Erro de pré-condição ao consultar resumo formas de pagamento (provavelmente índice ausente): {e}. "
+                "O Firestore requer um índice para esta consulta. "
+                f"A mensagem de erro original geralmente inclui um link para criá-lo: {str(e)}"
+            )
+            raise Exception(
+                "Erro ao buscar resumo formas de pagamento: Um índice necessário não foi encontrado no banco de dados. "
+                "Verifique os logs do servidor para uma mensagem de erro do Firestore que inclui um link para criar o índice automaticamente. "
+                f"Detalhe original: {str(e)}"
+            )
+        except exceptions.FirebaseError as e:
+            if hasattr(e, 'code') and e.code == 'permission-denied':
+                logger.warning(
+                    f"Permissão negada ao consultar lista de resumo formas de pagamento: {e}"
+                )
+                # Decide se quer re-lançar ou tratar aqui. Se re-lançar, a camada superior lida.
+                # Por ora, vamos re-lançar para manter o comportamento anterior.
+                raise
+            elif hasattr(e, 'code') and e.code == 'unavailable':
+                logger.error(
+                    f"Serviço do Firestore indisponível ao consultar lista de resumo formas de pagamento: {e}"
+                )
+                raise Exception(
+                    "Serviço do Firestore temporariamente indisponível."
+                )
+            else:
+                # Outros erros FirebaseError
+                logger.error(
+                    f"Erro do Firebase ao consultar lista de resumo formas de pagamento: Código: {e.code}, Detalhes: {e}"
+                )
+            raise  # Re-lança o FirebaseError original ou a Exception customizada
+
+        except Exception as e:  # Captura exceções que não são FirebaseError
+            # Logar o tipo da exceção pode ajudar a diagnosticar por que não foi pega antes.
+            logger.error(
+                f"Erro inesperado (Tipo: {type(e)}, empresa_id {empresa_id}) ao consultar lista de resumo formas de pagamento: {e}"
+            )
             raise
