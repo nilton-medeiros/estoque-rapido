@@ -36,6 +36,7 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
         )
 
     # Configuração inicial dos componentes de texto
+    page.user_name_text.value = current_user.name.primeiro_e_ultimo_nome  # type: ignore [attr-defined]
     page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE  # type: ignore [attr-defined]
     page.user_name_text.visible = True  # type: ignore [attr-defined]
     page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM  # type: ignore [attr-defined]
@@ -157,13 +158,13 @@ def _on_hover_icon(e: ft.ControlEvent, user_avatar: ft.Container):
     # Verifica se os controles estão associados à página antes de atualizar
     if icon_container.page:
         icon_container.update()
-    else:
-        logger.warning("icon_container não está associado à página, ignorando update")
+    # else:
+    #     logger.warning("icon_container não está associado à página, ignorando update")
 
     if user_avatar.page:
         user_avatar.update()
-    else:
-        logger.warning("user_avatar não está associado à página, ignorando update")
+    # else:
+    #     logger.warning("user_avatar não está associado à página, ignorando update")
 
 def _show_image_dialog(page: ft.Page, user_avatar: ft.Container, status_text: ft.Text, progress_bar: ft.ProgressBar):
     """Exibe o diálogo para upload de imagem de perfil."""
