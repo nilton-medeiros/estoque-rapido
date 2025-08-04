@@ -2,7 +2,13 @@ import flet as ft
 
 from .responsive_sizes import get_responsive_sizes
 
-def build_input_field(page_width: int|float, app_colors, col: dict|None = None, icon: str|None = None, **kwargs) -> ft.TextField:
+def build_input_field(
+        page_width: int|float,
+        app_colors,
+        col: dict|None = None,
+        icon: str|None = None,
+        read_only: bool = False,
+        **kwargs) -> ft.TextField:
     sizes = get_responsive_sizes(page_width)
     prefix = None
 
@@ -15,15 +21,27 @@ def build_input_field(page_width: int|float, app_colors, col: dict|None = None, 
             padding=ft.padding.only(right=10),
         )
 
+    if read_only:
+        text_color = ft.Colors.GREY_600  # Cor um pouco mais escuro
+        weight = ft.FontWeight.W_400
+        bgcolor = ft.Colors.with_opacity(0.05, ft.Colors.WHITE)  # Fundo mais sutil
+        border_color = ft.Colors.with_opacity(0.5, app_colors["primary"])  # Borda menos destacada
+    else:
+        text_color = ft.Colors.WHITE
+        weight = ft.FontWeight.NORMAL
+        bgcolor = ft.Colors.with_opacity(0.1, ft.Colors.WHITE)
+        border_color = app_colors["primary"]
+
     return ft.TextField(
         col=col,
+        read_only=read_only,
         **kwargs,
         width=sizes["input_width"],
         text_size=sizes["font_size"],
-        border_color=app_colors["primary"],
+        border_color=border_color,
         focused_border_color=app_colors["container"],
         prefix=prefix,
-        bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
+        bgcolor=bgcolor,
         label_style=ft.TextStyle(
             color=app_colors["primary"], # type: ignore # Cor do label igual à borda
             weight=ft.FontWeight.W_500 # Label um pouco mais grosso
@@ -36,7 +54,7 @@ def build_input_field(page_width: int|float, app_colors, col: dict|None = None, 
         cursor_color=app_colors["primary"],
         focused_color=ft.Colors.GREY_500,
         text_style=ft.TextStyle(                        # Estilo do texto digitado
-            color=ft.Colors.WHITE,
-            weight=ft.FontWeight.W_400
+            color=text_color,
+            weight=weight
         ),
     )
