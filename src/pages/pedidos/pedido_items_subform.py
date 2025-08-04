@@ -207,6 +207,8 @@ class PedidoItemsSubform:
         self.new_item_quantity.value = ""
         self.new_item_unit_price.value = ""
         self.new_item_total.value = "0,00"
+        self.new_item_quantity_on_hand = 0
+        self.new_item_quantity.counter_text=f"Estoque: {self.new_item_quantity_on_hand}"
         self.page.update()
 
     def _remove_item(self, item_id):
