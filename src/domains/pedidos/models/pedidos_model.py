@@ -72,6 +72,7 @@ class Pedido:
     items: list[PedidoItem] = field(default_factory=list)
     total_items: int = 0
     total_products: int = 0
+    stock_reduction: bool = False
 
     # Dados do Cliente (desnormalizados e opcionais)
     client_id: str | None = None
@@ -157,6 +158,7 @@ class Pedido:
             "items": [item.to_dict() for item in self.items],
             "total_items": self.total_items,
             "total_products": self.total_products,
+            "stock_reduction": self.stock_reduction,
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
@@ -197,6 +199,7 @@ class Pedido:
             "items": [item.to_dict() for item in self.items],
             "total_items": self.total_items,
             "total_products": self.total_products,
+            "stock_reduction": self.stock_reduction,
             "client_id": self.client_id,
             "client_name": self.client_name,
             "client_phone": self.client_phone,
@@ -282,6 +285,7 @@ class Pedido:
             items=items,
             total_items=data.get("total_items", 0),
             total_products=data.get("total_products", 0),
+            stock_reduction=data.get("stock_reduction", False),
             client_id=data.get("client_id"),
             client_name=data.get("client_name"),
             client_phone=data.get("client_phone"),
