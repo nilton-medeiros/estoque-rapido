@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, UTC
-from turtle import st
+# from turtle import st
 from typing import Any
 
 from src.domains.formas_pagamento.models.formas_pagamento_model import TipoPagamento

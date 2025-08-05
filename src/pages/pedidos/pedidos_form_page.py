@@ -1,7 +1,7 @@
 import logging
-from math import exp
+# from math import exp
 import re
-from turtle import bgcolor  # Adicionado para expressões regulares
+# from turtle import bgcolor  # Adicionado para expressões regulares
 
 import flet as ft
 
@@ -16,6 +16,7 @@ from src.domains.formas_pagamento.repositories.implementations import FirebaseFo
 from src.domains.formas_pagamento.services import FormasPagamentoService
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
+from src.domains.produtos.models.grid_model import StockLevel
 from src.domains.shared import RegistrationStatus
 from src.domains.shared.context.session import get_current_user
 from src.domains.shared.models.address import Address
@@ -88,15 +89,15 @@ class PedidoForm:
         delivery_index = e.control.selected_index
 
         match delivery_index:
-            case 0:
+            case 0:  # PENDENTE
                 e.control.thumb_color = ft.Colors.AMBER_900
-            case 1:
+            case 1:  # EM TRÂNSITO
                 e.control.thumb_color = ft.Colors.GREEN_900
-            case 2:
+            case 2:  # ENTREGUE
                 e.control.thumb_color = ft.Colors.BLUE_900
-            case 3:
+            case 3:  # CANCELADO
                 e.control.thumb_color = ft.Colors.RED_900
-            case _:
+            case _:  # DEFAULT
                 e.control.thumb_color = ft.Colors.AMBER_900
 
         e.control.update()
