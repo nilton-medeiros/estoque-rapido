@@ -270,7 +270,7 @@ class LoginView:
         return self.form
 
 
-def show_login_page(page: ft.Page):
+def show_login_page(page: ft.Page) -> ft.View:
     '''
     Cria uma página Container de formulário de login de usuários.
 
@@ -282,7 +282,7 @@ def show_login_page(page: ft.Page):
     '''
     login_view = LoginView(page)
 
-    return ft.Stack(
+    stack = ft.Stack(
         alignment=ft.alignment.center,
         controls=[
             # Imagem de fundo do login
@@ -301,4 +301,12 @@ def show_login_page(page: ft.Page):
             )
         ],
         expand=True
+    )
+
+    return ft.View(
+        route='/login',
+        controls=[stack],
+        bgcolor=ft.Colors.BLACK,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )

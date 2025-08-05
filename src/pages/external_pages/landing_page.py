@@ -1,9 +1,9 @@
 import flet as ft
-import src.shared.config.globals as app_globals
+from src.shared.config.version import APP_VERSION
 
 from src.pages.partials import LoginButton
 
-def show_landing_page(page: ft.Page):
+def show_landing_page(page: ft.Page) -> ft.View:
     page.theme_mode = ft.ThemeMode.LIGHT
 
     title_bar = ft.Text(
@@ -14,7 +14,7 @@ def show_landing_page(page: ft.Page):
     # Containers do footer para controle dinâmico de alinhamento
     footer_version_container = ft.Container(
         content=ft.Text(
-            f"Estoque Rápido v{app_globals.app_version}",
+            f"Estoque Rápido v{APP_VERSION}",
             size=12,
             color=ft.Colors.WHITE,
             weight=ft.FontWeight.W_500,
@@ -120,20 +120,6 @@ def show_landing_page(page: ft.Page):
     )
 
     login_btn = LoginButton(page)
-
-    page.appbar = ft.AppBar(
-        leading=ft.Icon(name=ft.Icons.INVENTORY_OUTLINED,
-                        color=ft.Colors.WHITE),
-        leading_width=40,
-        title=title_bar,
-        bgcolor=ft.Colors.BLUE_700,
-        actions=[
-            ft.Container(
-                content=login_btn.build(),
-                margin=ft.margin.only(right=10),
-            )
-        ],
-    )
 
     lp_title = ft.Text(
         "Bem-vindo ao Estoque Rápido!",
@@ -318,4 +304,24 @@ def show_landing_page(page: ft.Page):
         )
     )
 
-    return parent_container
+    appbar = ft.AppBar(
+        leading=ft.Icon(name=ft.Icons.INVENTORY_OUTLINED,
+                        color=ft.Colors.WHITE),
+        leading_width=40,
+        title=title_bar,
+        bgcolor=ft.Colors.BLUE_700,
+        actions=[
+            ft.Container(
+                content=login_btn.build(),
+                margin=ft.margin.only(right=10),
+            )
+        ],
+    )
+
+    return ft.View(
+        route="/",
+        controls=[parent_container],
+        appbar=appbar,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )

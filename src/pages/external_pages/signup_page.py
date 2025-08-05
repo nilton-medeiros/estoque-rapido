@@ -297,7 +297,7 @@ class SignupView:
         return self.form
 
 
-def show_signup_page(page: ft.Page):
+def show_signup_page(page: ft.Page) -> ft.View:
     '''
     Cria uma página Container de formulário de registro para novos usuários.
 
@@ -309,7 +309,7 @@ def show_signup_page(page: ft.Page):
     '''
     signup_view = SignupView(page)
 
-    return ft.Stack(
+    form_content = ft.Stack(
         alignment=ft.alignment.center,
         controls=[
             # Imagem de fundo - background
@@ -327,4 +327,12 @@ def show_signup_page(page: ft.Page):
             )
         ],
         expand=True
+    )
+
+    return ft.View(
+        route='/signup',
+        controls=[form_content],
+        bgcolor=ft.Colors.BLACK,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )

@@ -540,7 +540,7 @@ class ClienteForm:
 
 
 # Rota: /home/clientes/form
-def show_client_form(page: ft.Page):
+def show_client_form(page: ft.Page) -> ft.View:
     """Página de cadastro de usuarios."""
     route_title = "home/clientes/form"
     cliente_data = page.app_state.form_data  # type: ignore
@@ -622,7 +622,8 @@ def show_client_form(page: ft.Page):
     exit_btn = ft.ElevatedButton(
         text="Cancelar", col={'xs': 5, 'md': 5, 'lg': 5}, on_click=exit_form_clientes)
     space_between = ft.Container(col={'xs': 2, 'md': 2, 'lg': 2})
-    return ft.Column(
+
+    form_content = ft.Column(
         controls=[
             form_container,
             ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
@@ -637,5 +638,14 @@ def show_client_form(page: ft.Page):
                 alignment=ft.MainAxisAlignment.END,
             ),
         ],
-        data=appbar,
+    )
+
+    return ft.View(
+        route='home/clientes/form',
+        appbar=appbar,
+        controls=[form_content],
+        scroll=ft.ScrollMode.AUTO,
+        bgcolor=ft.Colors.BLACK,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
