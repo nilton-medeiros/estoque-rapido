@@ -5,25 +5,9 @@ import os
 from dotenv import load_dotenv
 
 from src.domains.shared.context.session import get_current_user
-from src.pages.external_pages import show_signup_page, show_landing_page, show_login_page
-from src.pages.clientes.clientes_form_page import show_client_form
-from src.pages.clientes.clientes_grid_page import show_clients_grid
-from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
-from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
-from src.pages.formas_pagamento.formas_pagamento_form_page import show_formas_pagamento_form
-from src.pages.formas_pagamento.formas_pagamento_grid_page import show_formas_pagamento_grid
-from src.pages.formas_pagamento.formas_pagamento_grid_recycle_page import show_formas_pagamento_grid_trash
-from src.pages.home import show_home_page
 from src.pages.partials.app_bars.sidebar import create_navigation_drawer
 from src.pages.partials.app_bars.sidebar_header import create_sidebar_header
-from src.pages.pedidos.pedidos_form_page import show_pedido_form
-from src.pages.pedidos.pedidos_grid_page import show_orders_grid
-from src.pages.pedidos.pedidos_grid_recycle_page import show_orders_grid_trash
-from src.pages.produtos import show_products_grid, show_products_grid_trash, show_product_form
-from src.pages.categorias import show_categories_grid, show_categories_grid_trash, show_category_form
-from src.pages.usuarios.usuarios_form_page import show_user_form
-from src.pages.usuarios.usuarios_grid_page import show_users_grid
-from src.pages.usuarios.usuarios_grid_recycle_page import show_users_grid_trash
+from src.routes import ROUTE_HANDLERS
 from src.services import AppStateManager
 from src.services.states.refresh_session import refresh_dashboard_session
 from src.shared.config import get_theme_colors
@@ -186,174 +170,22 @@ def main(page: ft.Page):
         page.views.clear()
         pg_view = None
 
-        match e.route:
-            # Raiz: Landing Page
-            case '/':
-                pg_view = ft.View(
-                    route='/',
-                    controls=[show_landing_page(page)],
-                    appbar=page.appbar,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
+        # --- Lógica de Roteamento Refatorada ---
 
-            # Tela de login
-            case '/login':
-                pg_view = ft.View(
-                    route='/login',
-                    controls=[show_login_page(page)],
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
+        # Tratar casos especiais primeiro
+        if e.route == '/logout':
+            page.app_state.clear_states()  # type: ignore [attr-defined]
+            page.go('/')  # Redireciona para a página inicial
+            return  # Interrompe o processamento
 
-            # Tela de logout
-            case '/logout':
-                page.app_state.clear_states()  # type: ignore [attr-defined]
-                page.go('/')  # Redireciona para a página inicial
+        # Busca o handler da rota no dicionário
+        handler = ROUTE_HANDLERS.get(e.route)
 
-            # Página inicial do usuário logado (Dashboard)
-            case '/home':
-                # Acesso a página /home somente usuários logados
-                home_container = show_home_page(page)
-                pg_view = ft.View(
-                    route='/home',
-                    appbar=home_container.data,
-                    drawer=page.drawer,
-                    controls=[home_container],
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Empresas
-            case '/home/empresas/grid':
-                pg_view = show_companies_grid(page)
-            case '/home/empresas/grid/lixeira':
-                pg_view = show_companies_grid_trash(page)
-            case '/home/empresas/form/principal':
-                form = show_company_main_form(page)
-                pg_view = ft.View(
-                    route='/home/empresas/form/principal',
-                    appbar=form.data,
-                    drawer=page.drawer,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-            case '/home/empresas/form/dados-fiscais':
-                form = show_company_tax_form(page)
-                pg_view = ft.View(
-                    route='/home/empresas/form/dados-fiscais',
-                    appbar=form.data,
-                    drawer=page.drawer,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Usuarios
-            case '/home/usuarios/grid':
-                pg_view = show_users_grid(page)
-            case '/home/usuarios/grid/lixeira':
-                pg_view = show_users_grid_trash(page)
-            case '/home/usuarios/form':
-                form = show_user_form(page)
-                pg_view = ft.View(
-                    route='home/usuarios/form',
-                    appbar=form.data,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Clientes
-            case '/home/clientes/grid':
-                pg_view = show_clients_grid(page)
-            case '/home/clientes/grid/lixeira':
-                pg_view = show_clients_grid_trash(page)
-            case '/home/clientes/form':
-                form = show_client_form(page)
-                pg_view = ft.View(
-                    route='home/clientes/form',
-                    appbar=form.data,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Produtos
-            case '/home/produtos/grid':
-                pg_view = show_products_grid(page)
-            case '/home/produtos/grid/lixeira':
-                pg_view = show_products_grid_trash(page)
-            case '/home/produtos/form':
-                form = show_product_form(page)
-                pg_view = ft.View(
-                    route='home/produtos/form',
-                    appbar=form.data,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Categorias de Produtos
-            case '/home/produtos/categorias/grid':
-                pg_view = show_categories_grid(page)
-            case '/home/produtos/categorias/grid/lixeira':
-                pg_view = show_categories_grid_trash(page)
-            case '/home/produtos/categorias/form':
-                form = show_category_form(page)
-                pg_view = ft.View(
-                    route='home/produtos/categorias/form',
-                    appbar=form.data,
-                    controls=[form],
-                    scroll=ft.ScrollMode.AUTO,
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Domínio Pedidos
-            case '/home/pedidos/grid':
-                pg_view = show_orders_grid(page)
-            case '/home/pedidos/grid/lixeira':
-                pg_view = show_orders_grid_trash(page)
-            case '/home/pedidos/form':
-                pg_view = show_pedido_form(page)
-
-            # Domínio Formas de Pagamento do pedido de produtos
-            case '/home/formasdepagamento/grid':
-                pg_view = show_formas_pagamento_grid(page)
-            case '/home/formasdepagamento/grid/lixeira':
-                pg_view = show_formas_pagamento_grid_trash(page)
-            case '/home/formasdepagamento/form':
-                pg_view = show_formas_pagamento_form(page)
-
-            # Tela de Registrar novo usuário
-            case '/signup':  # Registro
-                pg_view = ft.View(
-                    route='/signup',
-                    controls=[show_signup_page(page)],
-                    bgcolor=ft.Colors.BLACK,
-                    vertical_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-            # Tela 404 - Página nao encontrada
-            case _:  # Rota não encontrada (page 404)
-                # Opcional: tratamento para rotas não encontradas
-                pg_view = ft.View(
+        if handler:
+            pg_view = handler(page) # chama a função vinda o dict
+        else:
+            # Rota não encontrada (page 404)
+            pg_view = ft.View(
                     route="/404",
                     controls=[
                         ft.AppBar(
@@ -384,7 +216,7 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 )
 
-        # Adiciona a view à página, no caso das rota /logout, pg_view é None e /home, pg_view pode ser None ou não
+        # Adiciona a view à página
         if pg_view:
             page.views.append(pg_view)
             page.update()
@@ -409,4 +241,5 @@ if __name__ == '__main__':
         upload_dir="uploads",
         port=10000,
         view=ft.AppView.WEB_BROWSER
+        # view=ft.WEB_BROWSER
     )
