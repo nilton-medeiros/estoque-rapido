@@ -358,7 +358,7 @@ class EmpresaViewDadosFiscais:
 
 
 # Rota: /home/empresas/form/dados-fiscais
-def show_company_tax_form(page: ft.Page):
+def show_company_tax_form(page: ft.Page) -> ft.View:
     """Página de cadstro dos dados fiscais da empresa"""
 
     route_title = "home/empresas/form/dados-fiscais"
@@ -427,7 +427,7 @@ def show_company_tax_form(page: ft.Page):
     exit_btn = ft.ElevatedButton(
         text="Cancelar", col={'xs': 6, 'md': 6, 'lg': 6}, on_click=exit_form_empresa)
 
-    return ft.Column(
+    form_content = ft.Column(
         controls=[
             form_container,
             ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
@@ -439,8 +439,18 @@ def show_company_tax_form(page: ft.Page):
                 spacing=20,
                 run_spacing=20,
                 controls=[save_btn, exit_btn],
-                alignment=ft.MainAxisAlignment.END,
-            ),
+                alignment=ft.MainAxisAlignment.END
+            )
         ],
-        data=appbar,
+    )
+
+    return ft.View(
+        route='/home/empresas/form/dados-fiscais',
+        appbar=appbar,
+        drawer=page.drawer,
+        controls=[form_content],
+        scroll=ft.ScrollMode.AUTO,
+        bgcolor=ft.Colors.BLACK,
+        vertical_alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
