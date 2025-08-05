@@ -6,6 +6,7 @@ from firebase_admin import exceptions, firestore
 from google.api_core import exceptions as google_api_exceptions
 
 from src.domains.pedidos.models.pedidos_model import Pedido
+from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.pedidos.repositories.contracts.pedidos_repository import PedidosRepository
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.domains.shared.models.sequential_number import SequentialNumber
@@ -67,77 +68,28 @@ class FirebasePedidosRepository(PedidosRepository):
             raise
 
     def save_pedido(self, pedido: Pedido) -> Pedido | None:
-        """Adiciona um novo pedido ou altera um existente ao Firestore."""
+        """
+        Adiciona um novo pedido ou altera um existente ao Firestore.
+        Realiza baixa de estoque quando necessário usando transação atômica.
+        """
         try:
             # Obtém e incrementa o número do pedido antes de salvar caso seja um novo pedido
             if not pedido.order_number:  # Garante que só obtenha um novo número se não houver um já atribuído
                 pedido.order_number = self.get_next_pedido_number(
                     pedido.empresa_id)
 
-            # Os itens do pedido são convertidos em uma lista (items) de dict pelo método to_dict_db() para o Firestore
-            pedido_data = pedido.to_dict_db()
+            # Verifica se é necessário realizar baixa de estoque
+            needs_stock_reduction = (
+                not pedido.stock_reduction and
+                pedido.delivery_status in [DeliveryStatus.IN_TRANSIT, DeliveryStatus.DELIVERED]
+            )
 
-            # Firestore não suporta nativamente objetos `datetime.date`.
-            # É necessário convertê-los para `datetime.datetime` antes de salvar.
-            client_birthday = pedido_data.get('client_birthday')
-            if client_birthday and isinstance(client_birthday, datetime.date) and not isinstance(client_birthday, datetime.datetime):
-                # Converte a data para um datetime à meia-noite.
-                pedido_data['client_birthday'] = datetime.datetime.combine(client_birthday, datetime.time.min)
-
-            # Define created_at apenas na criação inicial
-            if not pedido_data.get("created_at"):
-                pedido_data['created_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            # updated_at é sempre definido/atualizado com o timestamp do servidor
-            pedido_data['updated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-            if pedido_data.get("status") == RegistrationStatus.ACTIVE.name and not pedido_data.get("activated_at"):
-                pedido_data['activated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            if pedido_data.get("status") == RegistrationStatus.DELETED.name and not pedido_data.get("deleted_at"):
-                pedido_data['deleted_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            if pedido_data.get("status") == RegistrationStatus.INACTIVE.name and not pedido_data.get("inactivated_at"):
-                pedido_data['inactivated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-            # Salva o pedido no Firestore, se é um novo pedido, o pedido.id foi definido em services antes de vir para este método save
-            # Se existe, faz o update, se não, cria um novo pedido no Firestore
-            doc_ref = self.pedidos_collection.document(pedido.id)
-            # Se update, será sem merge (merge=False), garante que o pedido no banco tenha somente os campos enviados em pedido_data
-            doc_ref.set(pedido_data)
-
-            # Após salvar, lê o documento de volta para obter os timestamps resolvidos
-            try:
-                doc_snapshot = doc_ref.get()  # Chamada síncrona
-
-                if not doc_snapshot.exists:
-                    logger.warning(
-                        f"Documento {pedido.id} não encontrado imediatamente após o set para releitura dos timestamps."
-                    )
-                    # Retorna None, pois o pedido não foi confirmado ou não pôde ser relido.
-                    return None
-
-                # Re-hidrata o objeto 'pedido' em memória com os dados do DB (que incluem os timestamps reais)
-                pedido_data_from_db = doc_snapshot.to_dict()
-
-                # Garante que o ID esteja presente no dicionário antes de passar para from_dict
-                pedido_data_from_db['id'] = doc_snapshot.id
-
-                # Cria um novo objeto Pedido a partir dos dados do DB
-                # e transfere os timestamps reais para o objeto 'pedido' original
-                # que foi passado para o método 'save'.
-                updated_pedido_obj = Pedido.from_dict(pedido_data_from_db)
-                return updated_pedido_obj
-
-            except Exception as e_read:
-                logger.error(
-                    f"Erro ao reler o documento {pedido.id} para atualizar timestamps no objeto em memória: {str(e_read)}"
-                )
-                # A operação de save principal foi bem-sucedida, mas a releitura falhou.
-                # O objeto 'pedido' em memória não terá os timestamps reais, mas o registro no DB está correto.
-                # Ainda retorna o ID, pois o save no DB foi OK.
-                return pedido
+            if needs_stock_reduction:
+                # Usa transação para garantir atomicidade entre baixa de estoque e salvamento do pedido
+                return self._save_pedido_with_stock_reduction(pedido)
+            else:
+                # Salva apenas o pedido sem alteração de estoque
+                return self._save_pedido_only(pedido)
 
         except exceptions.FirebaseError as e:
             if e.code == 'invalid-argument':
@@ -158,6 +110,171 @@ class FirebasePedidosRepository(PedidosRepository):
             logger.error(
                 f"Erro inesperado ao salvar pedido: {translated_error} [{str(e)}]")
             raise
+
+    def _save_pedido_with_stock_reduction(self, pedido: Pedido) -> Pedido | None:
+        """
+        Salva o pedido e realiza baixa de estoque em uma transação atômica.
+        """
+        @firestore.transactional  # type: ignore [attr-defined]
+        def save_with_stock_transaction(transaction):
+            # 1. Verifica disponibilidade de estoque para todos os itens antes de qualquer alteração
+            produtos_refs = {}
+            produtos_data = {}
+
+            for item in pedido.items:
+                produto_ref = (self.db.collection("empresas")
+                               .document(pedido.empresa_id)
+                               .collection("produtos")
+                               .document(item.product_id))
+                produtos_refs[item.product_id] = produto_ref
+
+                # Busca o produto atual
+                produto_doc = produto_ref.get(transaction=transaction)
+                if not produto_doc.exists:
+                    raise ValueError(f"Produto {item.product_id} não encontrado.")
+
+                produto_data = produto_doc.to_dict()
+                produtos_data[item.product_id] = produto_data
+
+                # Verifica se há estoque suficiente
+                current_stock = produto_data.get('quantity_on_hand', 0)
+                if current_stock < item.quantity:
+                    raise ValueError(
+                        f"Estoque insuficiente para o produto '{item.description}'. "
+                        f"Disponível: {current_stock}, Solicitado: {item.quantity}"
+                    )
+
+            # 2. Se chegou até aqui, há estoque suficiente para todos os itens
+            # Realiza a baixa de estoque para cada item
+            for item in pedido.items:
+                produto_ref = produtos_refs[item.product_id]
+                produto_data = produtos_data[item.product_id]
+
+                # Calcula o novo estoque
+                new_stock = produto_data['quantity_on_hand'] - item.quantity
+
+                # Prepara os dados de atualização do produto
+                produto_updates = {
+                    'quantity_on_hand': new_stock,
+                    'updated_at': firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+                }
+
+                # Atualiza o produto
+                transaction.update(produto_ref, produto_updates)
+
+                logger.info(
+                    f"Estoque do produto {item.product_id} reduzido em {item.quantity} unidades. "
+                    f"Estoque atual: {new_stock}"
+                )
+
+            # 3. Marca que a baixa de estoque foi realizada
+            pedido.stock_reduction = True
+
+            # 4. Salva o pedido
+            pedido_data = self._prepare_pedido_data_for_save(pedido)
+            pedido_ref = self.pedidos_collection.document(pedido.id)
+            transaction.set(pedido_ref, pedido_data)
+
+            return pedido_ref
+
+        try:
+            # Executa a transação
+            pedido_ref = save_with_stock_transaction(self.db.transaction())
+
+            # Relê o pedido salvo para obter os timestamps atualizados
+            return self._read_saved_pedido(pedido_ref, pedido)
+
+        except ValueError as e:
+            # Erros de negócio (estoque insuficiente, produto não encontrado)
+            logger.error(f"Erro de validação ao salvar pedido com baixa de estoque: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Erro na transação de salvamento com baixa de estoque: {str(e)}")
+            raise
+
+    def _save_pedido_only(self, pedido: Pedido) -> Pedido | None:
+        """
+        Salva apenas o pedido, sem alteração de estoque.
+        """
+        # Prepara os dados do pedido para salvamento
+        pedido_data = self._prepare_pedido_data_for_save(pedido)
+
+        # Salva o pedido no Firestore
+        pedido_ref = self.pedidos_collection.document(pedido.id)
+        pedido_ref.set(pedido_data)
+
+        # Relê o pedido salvo para obter os timestamps atualizados
+        return self._read_saved_pedido(pedido_ref, pedido)
+
+    def _prepare_pedido_data_for_save(self, pedido: Pedido) -> dict:
+        """
+        Prepara os dados do pedido para salvamento no Firestore.
+        """
+        # Os itens do pedido são convertidos em uma lista (items) de dict pelo método to_dict_db() para o Firestore
+        pedido_data = pedido.to_dict_db()
+
+        # Firestore não suporta nativamente objetos `datetime.date`.
+        # É necessário convertê-los para `datetime.datetime` antes de salvar.
+        client_birthday = pedido_data.get('client_birthday')
+        if client_birthday and isinstance(client_birthday, datetime.date) and not isinstance(client_birthday, datetime.datetime):
+            # Converte a data para um datetime à meia-noite.
+            pedido_data['client_birthday'] = datetime.datetime.combine(client_birthday, datetime.time.min)
+
+        # Define created_at apenas na criação inicial
+        if not pedido_data.get("created_at"):
+            pedido_data['created_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+
+        # updated_at é sempre definido/atualizado com o timestamp do servidor
+        pedido_data['updated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+
+        # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
+        if pedido_data.get("status") == RegistrationStatus.ACTIVE.name and not pedido_data.get("activated_at"):
+            pedido_data['activated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+
+        if pedido_data.get("status") == RegistrationStatus.DELETED.name and not pedido_data.get("deleted_at"):
+            pedido_data['deleted_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+
+        if pedido_data.get("status") == RegistrationStatus.INACTIVE.name and not pedido_data.get("inactivated_at"):
+            pedido_data['inactivated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+
+        return pedido_data
+
+    def _read_saved_pedido(self, pedido_ref, original_pedido: Pedido) -> Pedido | None:
+        """
+        Relê o pedido salvo para obter os timestamps atualizados.
+        """
+        try:
+            doc_snapshot = pedido_ref.get()  # Chamada síncrona
+
+            if not doc_snapshot.exists:
+                logger.warning(
+                    f"Documento {original_pedido.id} não encontrado imediatamente após o set para releitura dos timestamps."
+                )
+                # Retorna None, pois o pedido não foi confirmado ou não pôde ser relido.
+                return None
+
+            # Re-hidrata o objeto 'pedido' em memória com os dados do DB (que incluem os timestamps reais)
+            pedido_data_from_db = doc_snapshot.to_dict()
+
+            # Garante que o ID esteja presente no dicionário antes de passar para from_dict
+            pedido_data_from_db['id'] = doc_snapshot.id
+
+            # Cria um novo objeto Pedido a partir dos dados do DB
+            # e transfere os timestamps reais para o objeto 'pedido' original
+            # que foi passado para o método 'save'.
+            updated_pedido_obj = Pedido.from_dict(pedido_data_from_db)
+            return updated_pedido_obj
+
+        except Exception as e_read:
+            logger.error(
+                f"Erro ao reler o documento {original_pedido.id} para atualizar timestamps no objeto em memória: {str(e_read)}"
+            )
+            # A operação de save principal foi bem-sucedida, mas a releitura falhou.
+            # O objeto 'pedido' em memória não terá os timestamps reais, mas o registro no DB está correto.
+            # Ainda retorna o pedido original, pois o save no DB foi OK.
+            return original_pedido
+
+    # ... resto dos métodos permanecem inalterados ...
 
     def get_pedido_by_id(self, pedido_id: str) -> Pedido | None:
         """Busca um pedido pelo seu ID."""
@@ -261,18 +378,6 @@ class FirebasePedidosRepository(PedidosRepository):
                 f"Erro inesperado (Tipo: {type(e)}) ao consultar lista de pedido: {e}"
             )
             raise
-
-    # def update_pedido(self, pedido: Pedido) -> Pedido:
-    #     """Atualiza um pedido existente no Firestore."""
-    #     if not pedido.id:
-    #         raise ValueError("ID do pedido é necessário para atualização.")
-    #     try:
-    #         self.pedidos_collection.document(pedido.id).update(pedido.to_dict_db())
-    #         logger.info(f"Pedido {pedido.id} atualizado com sucesso.")
-    #         return pedido
-    #     except Exception as e:
-    #         logger.error(f"Erro ao atualizar pedido {pedido.id}: {e}")
-    #         raise
 
     def delete_pedido(self, pedido: Pedido) -> bool:
         """Realiza um soft delete em um pedido, definindo deleted_at."""
