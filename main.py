@@ -409,5 +409,4 @@ if __name__ == '__main__':
         upload_dir="uploads",
         port=10000,
         view=ft.AppView.WEB_BROWSER
-        # view=ft.WEB_BROWSER
     )
