@@ -1,13 +1,25 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, UTC
-# from turtle import st
 from typing import Any
 
-from src.domains.formas_pagamento.models.formas_pagamento_model import TipoPagamento
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared import Address
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.shared.utils.money_numpy import Money
+
+
+def _get_money_from_dict(value: Any) -> Money:
+    """Converte um valor (dict, int, float) para um objeto Money."""
+    if isinstance(value, Money):
+        return value
+    if isinstance(value, dict):
+        return Money.from_dict(value)
+    if isinstance(value, int):
+        # Assume que o valor inteiro está em centavos
+        return Money.mint(str(value / 100))
+    if isinstance(value, float):
+        return Money.mint(str(value))
+    return Money.mint("0.00")  # Fallback para outros tipos
 
 
 @dataclass
@@ -36,29 +48,14 @@ class PedidoItem:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PedidoItem":
-        def get_money(value: Any) -> Money:
-            if isinstance(value, Money):
-                return value
-            elif isinstance(value, dict):
-                return Money.from_dict(value)
-            elif isinstance(value, int):
-                # Assume que o valor inteiro está em centavos
-                return Money.mint(str(value / 100))
-            elif isinstance(value, float):
-                return Money.mint(str(value))
-            return Money.mint("0.00")  # Fallback para outros tipos
-
-        price = data["unit_price"]
-        total = data["total"]
-
         return cls(
             id=data.get("id"),
             product_id=data["product_id"],
             description=data["description"],
             quantity=data["quantity"],
             unit_of_measure=data["unit_of_measure"],
-            unit_price=get_money(price),
-            total=get_money(total),
+            unit_price=_get_money_from_dict(data["unit_price"]),
+            total=_get_money_from_dict(data["total"]),
         )
 
 @dataclass
@@ -113,42 +110,56 @@ class Pedido:
 
 
     def __post_init__(self):
-        # Validações e normalizações
+        """Executa validações e normalizações após a inicialização do objeto."""
+        self._validate_required_fields()
+        self._validate_delivery_status_consistency()
+        self._validate_total_amount()
+        self._normalize_client_data()
+        self._set_initial_activation_audit()
+
+    def _validate_required_fields(self):
+        """Valida se os campos essenciais do pedido estão preenchidos."""
         if not self.empresa_id:
             raise ValueError("O ID da empresa é obrigatório para um pedido.")
         if not self.forma_pagamento_id:
             raise ValueError("O ID da forma de pagamento é obrigatório para um pedido.")
-        if self.delivery_status == DeliveryStatus.IN_TRANSIT or self.delivery_status == DeliveryStatus.DELIVERED:
+        if not isinstance(self.total_amount, Money):
+            raise TypeError("total_amount deve ser uma instância de Money.")
+
+    def _validate_delivery_status_consistency(self):
+        """Valida a consistência dos dados para pedidos em trânsito ou entregues."""
+        if self.delivery_status in [DeliveryStatus.IN_TRANSIT, DeliveryStatus.DELIVERED]:
             if not self.order_number:
                 raise ValueError("O número do pedido é obrigatório para pedidos em trânsito ou entregues.")
             if not self.items:
                 raise ValueError("Um pedido deve conter pelo menos um item para pedidos em trânsito ou entregues.")
-        if not isinstance(self.total_amount, Money):
-            raise TypeError("total_amount deve ser uma instância de Money.")
 
-        # Validação de consistência: o total do pedido deve ser igual à soma dos itens.
-        # Isso garante a integridade dos dados no momento da criação do objeto.
+    def _validate_total_amount(self):
+        """Valida se o total do pedido corresponde à soma dos itens."""
         calculated_total = self.calcular_total()
         if self.total_amount != calculated_total:
             raise ValueError(f"O total do pedido ({self.total_amount}) não corresponde à soma dos itens ({calculated_total}).")
 
-        # Normaliza dados do cliente se existirem
+    def _normalize_client_data(self):
+        """Normaliza os dados do cliente, como nome, telefone e CPF."""
         if self.client_name:
             self.client_name = self.client_name.strip().title()
         if self.client_phone:
             self.client_phone = self.client_phone.strip()
         if self.client_cpf:
-            # Remove formatação e mantém apenas dígitos
             self.client_cpf = ''.join(filter(str.isdigit, self.client_cpf))
 
-        # Se o pedido está sendo criado como ACTIVE e não tem activated_at, define-o
+    def _set_initial_activation_audit(self):
+        """Define os campos de auditoria de ativação se o pedido for criado como ativo."""
         if self.status == RegistrationStatus.ACTIVE and self.created_at and not self.activated_at:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, recalculate: bool = True) -> dict[str, Any]:
         """Converte o objeto Pedido para um dicionário, usado no gerenciamento de formulários."""
+        if recalculate:
+            self._recalculate_and_update_totals()
         return {
             "id": self.id,
             "empresa_id": self.empresa_id,
@@ -183,7 +194,6 @@ class Pedido:
             "deleted_at": self.deleted_at,
             "deleted_by_id": self.deleted_by_id,
             "deleted_by_name": self.deleted_by_name,
-            **self.get_totais(),
         }
 
     def to_dict_db(self) -> dict[str, Any]:
@@ -191,6 +201,8 @@ class Pedido:
         Converte o objeto Pedido para um dicionário para persistência no banco de dados.
         Filtra chaves com valor None.
         """
+        # Garante que os totais estão corretos antes de salvar no DB
+        self._recalculate_and_update_totals()
         dict_db: dict[str, Any] = {
             "empresa_id": self.empresa_id,
             "forma_pagamento_id": self.forma_pagamento_id,
@@ -229,88 +241,49 @@ class Pedido:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any], doc_id: str | None = None) -> "Pedido":
-        """Cria uma instância de Pedido a partir de um dicionário."""
-        # Converte enums Order Status
-        status_data = data.get("status", RegistrationStatus.ACTIVE)
-        status = status_data # Por padrão status_data é do tipo RegistrationStatus
+        """
+        Cria uma instância de Pedido a partir de um dicionário (geralmente do Firestore).
+        Utiliza desempacotamento de dicionário (**) para maior manutenibilidade.
+        """
+        processed_data = data.copy()
 
-        if not isinstance(status_data, RegistrationStatus):
-            if isinstance(status_data, str) and status_data in RegistrationStatus.__members__:
-                status = RegistrationStatus[status_data]
-            else:
-                status = RegistrationStatus.ACTIVE
+        # 1. Adiciona o ID do documento
+        processed_data['id'] = doc_id or data.get("id")
 
-        # Converte enums Delivery Status
-        status_data = data.get("delivery_status", DeliveryStatus.PENDING)
-        delivery_status = status_data # Por padrão delivery_status é do tipo DeliveryStatus
+        # 2. Converte campos que precisam de tratamento especial
+        # Enums
+        if 'status' in processed_data and isinstance(processed_data['status'], str):
+            processed_data['status'] = RegistrationStatus[processed_data['status']]
+        elif 'status' not in processed_data:
+            processed_data['status'] = RegistrationStatus.ACTIVE
 
-        if not isinstance(status_data, DeliveryStatus):
-            if isinstance(status_data, str) and status_data in DeliveryStatus.__members__:
-                delivery_status = DeliveryStatus[status_data]
-            else:
-                delivery_status = DeliveryStatus.PENDING
+        if 'delivery_status' in processed_data and isinstance(processed_data['delivery_status'], str):
+            processed_data['delivery_status'] = DeliveryStatus[processed_data['delivery_status']]
+        elif 'delivery_status' not in processed_data:
+            processed_data['delivery_status'] = DeliveryStatus.PENDING
 
-        # Converte Timestamps do Firestore para datetime
+        # Timestamps do Firestore para datetime
         for key in ['created_at', 'updated_at', 'activated_at', 'inactivated_at', 'deleted_at']:
-            if key in data and data.get(key) and hasattr(data[key], 'to_datetime'):
-                data[key] = data[key].to_datetime()
+            if key in processed_data and hasattr(processed_data[key], 'to_datetime'):
+                processed_data[key] = processed_data[key].to_datetime()
 
-        items_data = data.get("items", [])
-        items = [PedidoItem.from_dict(item_data) for item_data in items_data]
+        # Objetos aninhados
+        if 'items' in processed_data:
+            processed_data['items'] = [PedidoItem.from_dict(item) for item in processed_data.get('items', [])]
 
-        client_address_obj = None
-        if address_data := data.get("client_address"):
-            client_address_obj = Address(**address_data) # Assumindo que Address pode ser instanciado diretamente de um dict
+        if 'client_address' in processed_data and processed_data['client_address']:
+            processed_data['client_address'] = Address(**processed_data['client_address'])
 
-        def get_money(value: Any) -> Money:
-            if isinstance(value, Money):
-                return value
-            elif isinstance(value, dict):
-                return Money.from_dict(value)
-            elif isinstance(value, int):
-                # Assume que o valor inteiro está em centavos
-                return Money.mint(str(value / 100))
-            elif isinstance(value, float):
-                return Money.mint(str(value))
-            return Money.mint("0.00")  # Fallback para outros tipos
+        if 'total_amount' in processed_data:
+            processed_data['total_amount'] = _get_money_from_dict(processed_data['total_amount'])
 
-        total = data["total_amount"]
+        # O Firestore armazena 'date' como um 'datetime', então convertemos de volta.
+        if 'client_birthday' in processed_data and isinstance(processed_data['client_birthday'], datetime):
+            processed_data['client_birthday'] = processed_data['client_birthday'].date()
 
-        return cls(
-            id=doc_id or data.get("id"),
-            empresa_id=data["empresa_id"],
-            forma_pagamento_id=data["forma_pagamento_id"],
-            order_number=data.get("order_number"),
-            total_amount=get_money(total),
-            items=items,
-            total_items=data.get("total_items", 0),
-            total_products=data.get("total_products", 0),
-            stock_reduction=data.get("stock_reduction", False),
-            client_id=data.get("client_id"),
-            client_name=data.get("client_name"),
-            client_phone=data.get("client_phone"),
-            client_is_whatsapp=data.get("client_is_whatsapp", False),
-            client_cpf=data.get("client_cpf"),
-            client_birthday=data.get("client_birthday"),
-            client_address=client_address_obj,
-            status=status,
-            delivery_status=delivery_status,
-            created_at=data.get("created_at"),
-            created_by_id=data.get("created_by_id"),
-            created_by_name=data.get("created_by_name"),
-            updated_at=data.get("updated_at"),
-            updated_by_id=data.get("updated_by_id"),
-            updated_by_name=data.get("updated_by_name"),
-            activated_at=data.get("activated_at"),
-            activated_by_id=data.get("activated_by_id"),
-            activated_by_name=data.get("activated_by_name"),
-            inactivated_at=data.get("inactivated_at"),
-            inactivated_by_id=data.get("inactivated_by_id"),
-            inactivated_by_name=data.get("inactivated_by_name"),
-            deleted_at=data.get("deleted_at"),
-            deleted_by_id=data.get("deleted_by_id"),
-            deleted_by_name=data.get("deleted_by_name"),
-        )
+        # 3. Instancia a classe usando o dicionário processado
+        # O dataclass irá ignorar chaves extras que não são campos definidos.
+        return cls(**processed_data)
 
     def calcular_total(self) -> Money:
         """Calcula o total do pedido com base na soma dos itens."""
@@ -320,13 +293,12 @@ class Pedido:
         total = sum((item.total for item in self.items), zero)
         return total
 
-    def get_totais(self) -> dict[str, Any]:
-        # Garante uma atualização nos totais em caso de alteração de algum item
+    def _recalculate_and_update_totals(self) -> None:
+        """
+        Recalcula os totais (valor, quantidade de itens, quantidade de produtos)
+        com base na lista de itens e atualiza os atributos da instância.
+        Este método tem o efeito colateral de modificar o estado do objeto.
+        """
         self.total_amount = self.calcular_total()
         self.total_items = len(self.items)
         self.total_products = sum(item.quantity for item in self.items)
-        return {
-            "total_amount": self.total_amount,
-            "total_items": self.total_items,
-            "total_products": self.total_products,
-        }

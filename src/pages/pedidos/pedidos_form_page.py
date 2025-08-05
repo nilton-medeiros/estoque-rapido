@@ -1,7 +1,6 @@
 import logging
-# from math import exp
 import re
-# from turtle import bgcolor  # Adicionado para expressões regulares
+import asyncio
 
 import flet as ft
 
@@ -11,12 +10,10 @@ from typing import Any
 from src.domains.clientes.controllers.clientes_controllers import handle_get_by_name_cpf_or_phone
 from src.domains.clientes.models.clientes_model import Cliente
 from src.domains.formas_pagamento.controllers import FormasPagamentoController
-from src.domains.formas_pagamento.models import TipoPagamento
 from src.domains.formas_pagamento.repositories.implementations import FirebaseFormasPagamentoRepository
 from src.domains.formas_pagamento.services import FormasPagamentoService
 from src.domains.pedidos.models.pedidos_model import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
-from src.domains.produtos.models.grid_model import StockLevel
 from src.domains.shared import RegistrationStatus
 from src.domains.shared.context.session import get_current_user
 from src.domains.shared.models.address import Address
@@ -383,7 +380,7 @@ class PedidoForm:
         self.consult_client_btn.disabled = not self.consult_client.value
         self.consult_client_btn.update()
 
-    def _consult_client(self, e) -> None:
+    async def _consult_client(self, e) -> None:
         research_data = self.consult_client.value
         if not research_data or len(research_data.strip()) < 3:
             return
@@ -402,9 +399,9 @@ class PedidoForm:
             return
         elif len(clientes_list) == 1:
             cliente = clientes_list[0]
-        else:
+        else: # Mais de um cliente encontrado
             # Mais de um cliente encontrado, pedir para o usuário escolher um deles
-            cliente = self.select_a_client(clientes_list)
+            cliente = await self.select_a_client(clientes_list)
 
         if not cliente:
             messages.show_banner(self.page, "Nenhum cliente selecionado", "Fechar")
@@ -435,18 +432,15 @@ class PedidoForm:
         self.page.update()
         return
 
-    def select_a_client(self, clientes: list[Cliente]) -> Cliente | None:
-        selected_cliente: Cliente | None = None
+    async def select_a_client(self, clientes: list[Cliente]) -> Cliente | None:
+        future_result = asyncio.Future()
         dialog = ft.AlertDialog(modal=True)
         list_controls = []
 
-        def close_dialog(e):
-            self.page.close(dialog)
-
         def select_and_close(cliente: Cliente):
             def handler(e):
-                nonlocal selected_cliente
-                selected_cliente = cliente
+                if not future_result.done():
+                    future_result.set_result(cliente)
                 self.page.close(dialog)
             return handler
 
@@ -474,19 +468,16 @@ class PedidoForm:
                         controls=list_controls,
                     ),
                     ft.Divider(),
-                    ft.TextButton("Cancelar", on_click=lambda _: self.page.close(dialog)),
+                    ft.TextButton("Cancelar", on_click=lambda _: (
+                        not future_result.done() and future_result.set_result(None),
+                        self.page.close(dialog)
+                    )),
                 ],
             )
         )
 
         self.page.open(dialog)
-
-        # Espera de forma síncrona até o usuário interagir (hack)
-        import time
-        while dialog.open:
-            time.sleep(0.1)
-
-        return selected_cliente
+        return await future_result
 
     def _apply_cpf_mask(self, cpf_str: str) -> str:
         """Aplica a máscara de CPF (XXX.XXX.XXX-XX) a uma string."""
@@ -956,7 +947,7 @@ def show_pedido_form(page: ft.Page):
     pedidos_view.did_mount()
     form_container = pedidos_view.build()
 
-    def save_form_pedidos(e):
+    async def save_form_pedidos(e):
         # Valida os dados do formulário
         if msg := pedidos_view.validate_form():
             messages.message_snackbar(
@@ -1006,14 +997,9 @@ def show_pedido_form(page: ft.Page):
             save_btn.disabled = False
         finally:
             # Sempre reabilita o botão após um tempo
-            def renable_button():
-                save_btn.disabled = False
-                page.update()
-
-            # Reagenda reabilitação do botão após 3 segundos
-            import threading
-            timer = threading.Timer(3.0, renable_button)
-            timer.start()
+            await asyncio.sleep(3.0)
+            save_btn.disabled = False
+            page.update()
 
     def exit_form_pedidos(e):
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
