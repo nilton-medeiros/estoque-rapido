@@ -1,7 +1,7 @@
 import flet as ft
+import src.shared.config.globals as app_globals
 
 from src.pages.partials import LoginButton
-
 
 def show_landing_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
@@ -14,7 +14,7 @@ def show_landing_page(page: ft.Page):
     # Containers do footer para controle dinâmico de alinhamento
     footer_version_container = ft.Container(
         content=ft.Text(
-            "Estoque Rápido v1.00.8",
+            f"Estoque Rápido v{app_globals.app_version}",
             size=12,
             color=ft.Colors.WHITE,
             weight=ft.FontWeight.W_500,

@@ -10,7 +10,7 @@ Para evitar esse tipo de situação, o ideal é usar mecanismos como:
 - Contextos de thread ou objetos locais, como threading.local(), para isolar dados por requisição.
 """
 ean_gtin_api = {"blocked_until": None, "blocked": False}
-
+app_version = "1.00.8"
 
 """
 # arquivo globals.py

@@ -1,4 +1,6 @@
 import flet as ft
+import src.shared.config.globals as app_globals
+
 from src.domains.shared.context.session import get_current_user
 from src.pages.home.content_page import MainContent
 from src.pages.partials.app_bars.appbar import create_appbar_menu
@@ -42,7 +44,10 @@ def show_home_page(page: ft.Page) -> ft.Container:
         ),
     ]
 
-    appbar = create_appbar_menu(page=page, actions=actions)
+    appbar = create_appbar_menu(
+        page=page,
+        title=ft.Text(f"v{app_globals.app_version}", size=12),
+        actions=actions)
 
     # O conteúdo principal da página home.
     # Usamos um container que encapsula o conteúdo e anexa o appbar
