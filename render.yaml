@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: estoque-rapido
+    env: python
+    region: oregon
+    branch: main
+    buildCommand: bash scripts/deploy_version.sh && pip install -r requirements.txt
+    startCommand: gunicorn app:app  # ajuste conforme sua aplicação
+    autoDeploy: true

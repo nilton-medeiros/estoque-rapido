@@ -1,0 +1,27 @@
+# .github/workflows/deploy.yml
+# NÃO USADO NO MOMENTO
+name: Atualizar Versão e Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Obter versão
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          COMMIT=$(git rev-parse --short HEAD)
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          echo "APP_VERSION = '$VERSION'" > src/shared/config/version.py
+          echo "COMMIT_HASH = '$COMMIT'" >> src/shared/config/version.py
+          echo "BUILD_DATE = '$BUILD_DATE'" >> src/shared/config/version.py
+
+      - name: Fazer o deploy (exemplo)
+        run: echo "Fazendo deploy com versão $VERSION"
