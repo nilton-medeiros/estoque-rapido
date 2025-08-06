@@ -1,3 +1,4 @@
+from heapq import merge
 import logging
 import datetime
 
@@ -11,6 +12,7 @@ from src.domains.pedidos.repositories.contracts.pedidos_repository import Pedido
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.domains.shared.models.sequential_number import SequentialNumber
 from src.shared.utils.deep_translator import deepl_translator
+from src.domains.shared.repositories.utils import set_audit_timestamps
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
@@ -125,16 +127,16 @@ class FirebasePedidosRepository(PedidosRepository):
                 produto_ref = (self.db.collection("empresas")
                                .document(pedido.empresa_id)
                                .collection("produtos")
-                               .document(item.product_id))
-                produtos_refs[item.product_id] = produto_ref
+                               .document(item.id))
+                produtos_refs[item.id] = produto_ref
 
                 # Busca o produto atual
                 produto_doc = produto_ref.get(transaction=transaction)
                 if not produto_doc.exists:
-                    raise ValueError(f"Produto {item.product_id} não encontrado.")
+                    raise ValueError(f"Produto {item.id} não encontrado.")
 
                 produto_data = produto_doc.to_dict()
-                produtos_data[item.product_id] = produto_data
+                produtos_data[item.id] = produto_data
 
                 # Verifica se há estoque suficiente
                 current_stock = produto_data.get('quantity_on_hand', 0)
@@ -147,11 +149,11 @@ class FirebasePedidosRepository(PedidosRepository):
             # 2. Se chegou até aqui, há estoque suficiente para todos os itens
             # Realiza a baixa de estoque para cada item
             for item in pedido.items:
-                produto_ref = produtos_refs[item.product_id]
-                produto_data = produtos_data[item.product_id]
+                produto_ref = produtos_refs[item.id]
+                produto_data = produtos_data[item.id]
 
                 # Calcula o novo estoque
-                new_stock = produto_data['quantity_on_hand'] - item.quantity
+                new_stock = int(produto_data.get('quantity_on_hand', 0)) - int(item.quantity)
 
                 # Prepara os dados de atualização do produto
                 produto_updates = {
@@ -163,7 +165,7 @@ class FirebasePedidosRepository(PedidosRepository):
                 transaction.update(produto_ref, produto_updates)
 
                 logger.info(
-                    f"Estoque do produto {item.product_id} reduzido em {item.quantity} unidades. "
+                    f"Estoque do produto {item.id} reduzido em {item.quantity} unidades. "
                     f"Estoque atual: {new_stock}"
                 )
 
@@ -173,7 +175,7 @@ class FirebasePedidosRepository(PedidosRepository):
             # 4. Salva o pedido
             pedido_data = self._prepare_pedido_data_for_save(pedido)
             pedido_ref = self.pedidos_collection.document(pedido.id)
-            transaction.set(pedido_ref, pedido_data)
+            transaction.set(pedido_ref, pedido_data, merge=False)
 
             return pedido_ref
 
@@ -201,7 +203,7 @@ class FirebasePedidosRepository(PedidosRepository):
 
         # Salva o pedido no Firestore
         pedido_ref = self.pedidos_collection.document(pedido.id)
-        pedido_ref.set(pedido_data)
+        pedido_ref.set(pedido_data, merge=False)
 
         # Relê o pedido salvo para obter os timestamps atualizados
         return self._read_saved_pedido(pedido_ref, pedido)
@@ -213,29 +215,21 @@ class FirebasePedidosRepository(PedidosRepository):
         # Os itens do pedido são convertidos em uma lista (items) de dict pelo método to_dict_db() para o Firestore
         pedido_data = pedido.to_dict_db()
 
-        # Firestore não suporta nativamente objetos `datetime.date`.
-        # É necessário convertê-los para `datetime.datetime` antes de salvar.
-        client_birthday = pedido_data.get('client_birthday')
-        if client_birthday and isinstance(client_birthday, datetime.date) and not isinstance(client_birthday, datetime.datetime):
-            # Converte a data para um datetime à meia-noite.
-            pedido_data['client_birthday'] = datetime.datetime.combine(client_birthday, datetime.time.min)
+        # Converte a data do pedido para datetime, se necessário
+        if order_date := pedido_data.get('order_date'):
+            if isinstance(order_date, datetime.date) and not isinstance(order_date, datetime.datetime):
+                # Converte a data para um datetime à meia-noite para ser compatível com o Firestore.
+                pedido_data['order_date'] = datetime.datetime.combine(order_date, datetime.time.min)
 
-        # Define created_at apenas na criação inicial
-        if not pedido_data.get("created_at"):
-            pedido_data['created_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+        # Firestore não suporta nativamente objetos `datetime.date`. É necessário
+        # convertê-los para `datetime.datetime` antes de salvar.
+        if (client_data := pedido_data.get('client')) and (birthday := client_data.get('birthday')):
+            if isinstance(birthday, datetime.date) and not isinstance(birthday, datetime.datetime):
+                # Converte a data para um datetime à meia-noite para ser compatível com o Firestore.
+                client_data['birthday'] = datetime.datetime.combine(birthday, datetime.time.min)
 
-        # updated_at é sempre definido/atualizado com o timestamp do servidor
-        pedido_data['updated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-        # Gerencia os timestamps de status (ACTIVE, DELETED, INACTIVE)
-        if pedido_data.get("status") == RegistrationStatus.ACTIVE.name and not pedido_data.get("activated_at"):
-            pedido_data['activated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-        if pedido_data.get("status") == RegistrationStatus.DELETED.name and not pedido_data.get("deleted_at"):
-            pedido_data['deleted_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
-
-        if pedido_data.get("status") == RegistrationStatus.INACTIVE.name and not pedido_data.get("inactivated_at"):
-            pedido_data['inactivated_at'] = firestore.SERVER_TIMESTAMP  # type: ignore [attr-defined]
+        # Centraliza a lógica de timestamps de auditoria
+        pedido_data = set_audit_timestamps(pedido_data)
 
         return pedido_data
 
@@ -306,37 +300,34 @@ class FirebasePedidosRepository(PedidosRepository):
     def get_pedidos_by_empresa_id(self, empresa_id: str, status: RegistrationStatus | None = None) -> tuple[list[Pedido], int]:
         """Busca todos os pedidos de uma empresa, opcionalmente filtrando por status."""
         try:
-            query = (self.pedidos_collection
-                     .where(filter=FieldFilter("empresa_id", "==", empresa_id)))
-            if status:
-                # Filtros para somente pedidos 'ACTIVE' ou 'INACTIVE', não haverá contagem de deletados
-                query = query.where(filter=FieldFilter("status", "==", status.name))
-            query = query.order_by("order_number")
+            # 1. Contar os pedidos deletados separadamente para simplificar a lógica.
+            deleted_count_query = (self.pedidos_collection
+                                   .where(filter=FieldFilter("empresa_id", "==", empresa_id))
+                                   .where(filter=FieldFilter("status", "==", RegistrationStatus.DELETED.name)))
+            # Usar .stream() com um campo chave (`__name__`) é uma forma eficiente de contar documentos.
+            quantidade_deletados = len(list(deleted_count_query.select(["__name__"]).stream()))
 
-            docs = query.get()
+            # 2. Construir a query principal para buscar os pedidos.
+            query = self.pedidos_collection.where(filter=FieldFilter("empresa_id", "==", empresa_id))
+
+            if status:
+                # Se um status específico for fornecido (ex: DELETED), filtra por ele.
+                query = query.where(filter=FieldFilter("status", "==", status.name))
+            else:
+                # Caso contrário, busca todos os que NÃO são DELETED (padrão).
+                query = query.where(filter=FieldFilter("status", "!=", RegistrationStatus.DELETED.name))
+
+            # Ordena os resultados.
+            docs = query.order_by("order_number", direction="DESCENDING").stream()
 
             pedidos_result: list[Pedido] = []
-            quantidade_deletados = 0
-
             for doc in docs:
                 pedido_data = doc.to_dict()
                 if pedido_data:
-                    pedido_obj = Pedido.from_dict(pedido_data, doc.id)
-
-                    # Se for um pedido 'DELETED', independente do filtro 'status', adiciona em quantidade_deletados
-                    if pedido_obj.status == RegistrationStatus.DELETED:
-                        quantidade_deletados += 1
-
-                    # Adiciona o pedido à lista de resultados com base no filtro 'status'
-                    if status == RegistrationStatus.DELETED:
-                        # Adiciona somente os deletados
-                        pedidos_result.append(pedido_obj)
-                    else:
-                        # Adiciona somente os ativos e inativos, mas envia a contagem de deletados
-                        if pedido_obj.status != RegistrationStatus.DELETED:
-                            pedidos_result.append(pedido_obj)
+                    pedidos_result.append(Pedido.from_dict(pedido_data, doc.id))
 
             return pedidos_result, quantidade_deletados
+
         except google_api_exceptions.FailedPrecondition as e:
             # Esta é a exceção específica para erros de "índice ausente".
             # A mensagem de erro 'e' já contém o link para criar o índice.
