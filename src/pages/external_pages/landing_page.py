@@ -11,7 +11,7 @@ def show_landing_page(page: ft.Page) -> ft.View:
         color=ft.Colors.WHITE,
     )
     from src.shared.config import version
-    print(f"🧾 App rodando com versão {version.APP_VERSION}")
+
     # Containers do footer para controle dinâmico de alinhamento
     footer_version_container = ft.Container(
         content=ft.Text(
