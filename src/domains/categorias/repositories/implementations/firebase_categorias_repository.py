@@ -10,6 +10,7 @@ from src.domains.shared import RegistrationStatus
 from src.domains.categorias.models import ProdutoCategorias
 from src.domains.categorias.repositories import CategoriasRepository
 from src.shared.utils import deepl_translator
+from src.domains.shared.repositories.utils import set_audit_timestamps
 from storage.data import get_firebase_app
 
 logger = logging.getLogger(__name__)
@@ -44,31 +45,8 @@ class FirebaseCategoriasRepository(CategoriasRepository):
         try:
             data_to_save = categoria.to_dict_db()
 
-            if not data_to_save.get("created_at"):
-                # Se não existe o campo created_at ou é None, atribui TIMESTAMP
-                # type: ignore
-                data_to_save['created_at'] = firestore.SERVER_TIMESTAMP # type: ignore
-                categoria.created_at = datetime.now(UTC)  # placeholders
-
-            # updated_at é sempre definido/atualizado com o timestamp do servidor.
-            data_to_save['updated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
-            categoria.updated_at = datetime.now(UTC)  # placeholders
-
-            # Se data_to_save.get("status") for 'ACTIVE' e data_to_save.get("activated_at") for None, significa que é uma entidade marcada como ACTIVE
-            if data_to_save.get("status") == 'ACTIVE' and not data_to_save.get("activated_at"):
-                data_to_save['activated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
-                categoria.activated_at = datetime.now(UTC)  # placeholders
-
-            # SOFT DELETE: Marca a entidade como DELETADA.
-            # Se data_to_save.get("status") for 'DELETED' e data_to_save.get("deleted_at") for None, significa que é uma entidade marcada como DELETED
-            if data_to_save.get("status") == 'DELETED' and not data_to_save.get("deleted_at"):
-                data_to_save['deleted_at'] = firestore.SERVER_TIMESTAMP # type: ignore
-                categoria.deleted_at = datetime.now(UTC)  # placeholders
-
-            # Se data_to_save.get("status") for 'INACTIVE' e data_to_save.get("inactivated_at") for None, significa que é uma entidade marcada como INACTIVE
-            if data_to_save.get("status") == 'INACTIVE' and not data_to_save.get("inactivated_at"):
-                data_to_save['inactivated_at'] = firestore.SERVER_TIMESTAMP # type: ignore
-                categoria.inactivated_at = datetime.now(UTC)  # placeholders
+            # Centraliza a lógica de timestamps de auditoria
+            data_to_save = set_audit_timestamps(data_to_save)
 
             doc_ref = self.collection.document(categoria.id)
             # Insere ou atualiza o documento na coleção 'produto_categorias'

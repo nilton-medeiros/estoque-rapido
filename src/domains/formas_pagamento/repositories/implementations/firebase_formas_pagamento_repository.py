@@ -3,6 +3,7 @@ import logging
 from typing import Any
 from firebase_admin import firestore, exceptions
 from google.api_core import exceptions as google_api_exceptions
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from src.domains.formas_pagamento.models.formas_pagamento_model import FormaPagamento
 from src.domains.shared import RegistrationStatus
@@ -182,7 +183,7 @@ class FirebaseFormasPagamentoRepository:
         """
         try:
             query = (self._get_subcollection_ref(empresa_id)
-                     .where("status", "==", RegistrationStatus.ACTIVE.name)
+                     .where(filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name))
                      .select(["name", "percentage", "percentage_type"])
                      .order_by("order").order_by("name_lower"))
             docs = query.get()
