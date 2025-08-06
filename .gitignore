@@ -179,6 +179,3 @@ tests/
 
 # Diretório de arquivos não usados no projeto
 unused_codes/
-
-# Excluindo o arquivo de versionamento
-version.py

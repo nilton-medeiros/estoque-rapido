@@ -15,7 +15,7 @@ def show_landing_page(page: ft.Page) -> ft.View:
     # Containers do footer para controle dinâmico de alinhamento
     footer_version_container = ft.Container(
         content=ft.Text(
-            f"Estoque Rápido v{APP_VERSION}",
+            f"Estoque Rápido {APP_VERSION}",
             size=12,
             color=ft.Colors.WHITE,
             weight=ft.FontWeight.W_500,

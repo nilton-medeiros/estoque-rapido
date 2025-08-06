@@ -14,7 +14,7 @@ class HomePageView:
         self.current_user = get_current_user(page)
         self._setup_theme()
         self.appbar = self._create_appbar()
-        
+
     def _setup_theme(self):
         """Configura o tema da página com base no usuário atual."""
         self.page.theme_mode = ft.ThemeMode.DARK
@@ -51,7 +51,7 @@ class HomePageView:
 
         return create_appbar_menu(
             page=self.page,
-            title=ft.Text(f"v{APP_VERSION}", size=12),
+            title=ft.Text(f"{APP_VERSION}", size=12),
             actions=actions
         )
 
