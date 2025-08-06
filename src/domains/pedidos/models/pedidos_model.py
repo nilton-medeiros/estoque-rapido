@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date, UTC
+from datetime import datetime, date, UTC, timedelta
 from typing import Any
 
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
@@ -27,18 +27,16 @@ class PedidoItem:
     """
     Representa um item individual dentro de um Pedido.
     """
-    product_id: str
+    id: str # ID do item na sub-coleção, o mesmo id do produto
     description: str # Desnormalizado
     quantity: int
     unit_price: Money
     total: Money
     unit_of_measure: str = "UN"
-    id: str | None = None # ID do item na sub-coleção
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
-            "product_id": self.product_id,
             "description": self.description,
             "quantity": self.quantity,
             "unit_of_measure": self.unit_of_measure,
@@ -49,8 +47,7 @@ class PedidoItem:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "PedidoItem":
         return cls(
-            id=data.get("id"),
-            product_id=data["product_id"],
+            id=data["id"],
             description=data["description"],
             quantity=data["quantity"],
             unit_of_measure=data["unit_of_measure"],
@@ -66,19 +63,14 @@ class Pedido:
     empresa_id: str
     forma_pagamento_id: str
     total_amount: Money # Novo campo para o total do pedido
+    order_date: date = field(default_factory=date.today)  # Data do pedido
     items: list[PedidoItem] = field(default_factory=list)
     total_items: int = 0
     total_products: int = 0
     stock_reduction: bool = False
 
     # Dados do Cliente (desnormalizados e opcionais)
-    client_id: str | None = None
-    client_name: str | None = None
-    client_phone: str | None = None
-    client_is_whatsapp: bool = False
-    client_cpf: str | None = None
-    client_birthday: date | None = None
-    client_address: Address | None = None
+    client: dict = field(default_factory=dict)
 
     # Status do pedido e entrega
     status: RegistrationStatus = RegistrationStatus.ACTIVE # Ex: ACTIVE, INACTIVE, DELETED
@@ -114,6 +106,7 @@ class Pedido:
         self._validate_required_fields()
         self._validate_delivery_status_consistency()
         self._validate_total_amount()
+        self._validate_order_date()
         self._normalize_client_data()
         self._set_initial_activation_audit()
 
@@ -140,14 +133,24 @@ class Pedido:
         if self.total_amount != calculated_total:
             raise ValueError(f"O total do pedido ({self.total_amount}) não corresponde à soma dos itens ({calculated_total}).")
 
+    def _validate_order_date(self):
+        """Valida se a data do pedido é válida."""
+        if not isinstance(self.order_date, date):
+            raise TypeError("order_date deve ser uma instância de date.")
+
+        # Opcional: validar se a data não é muito no futuro
+        max_future_days = 30  # Permite até 30 dias no futuro
+        if self.order_date > date.today() + timedelta(days=max_future_days):
+            raise ValueError(f"A data do pedido não pode ser mais de {max_future_days} dias no futuro.")
+
     def _normalize_client_data(self):
         """Normaliza os dados do cliente, como nome, telefone e CPF."""
-        if self.client_name:
-            self.client_name = self.client_name.strip().title()
-        if self.client_phone:
-            self.client_phone = self.client_phone.strip()
-        if self.client_cpf:
-            self.client_cpf = ''.join(filter(str.isdigit, self.client_cpf))
+        if self.client.get("name"):
+            self.client["name"] = self.client["name"].strip().title()
+        if self.client.get("phone"):
+            self.client["phone"] = self.client["phone"].strip()
+        if self.client.get("cpf"):
+            self.client["cpf"] = ''.join(filter(str.isdigit, self.client["cpf"]))
 
     def _set_initial_activation_audit(self):
         """Define os campos de auditoria de ativação se o pedido for criado como ativo."""
@@ -155,6 +158,36 @@ class Pedido:
             self.activated_at = self.created_at
             self.activated_by_id = self.created_by_id
             self.activated_by_name = self.created_by_name
+
+    @property
+    def client_name(self) -> str | None:
+        """Retorna o nome do cliente do dicionário 'client'."""
+        return self.client.get("name")
+
+    @property
+    def client_phone(self) -> str | None:
+        """Retorna o telefone do cliente do dicionário 'client'."""
+        return self.client.get("phone")
+
+    @property
+    def client_cpf(self) -> str | None:
+        """Retorna o CPF do cliente do dicionário 'client'."""
+        return self.client.get("cpf")
+
+    @property
+    def client_email(self) -> str | None:
+        """Retorna o email do cliente do dicionário 'client'."""
+        return self.client.get("email")
+
+    @property
+    def client_birthday(self) -> date | None:
+        """Retorna a data de aniversário do cliente do dicionário 'client'."""
+        return self.client.get("birthday")
+
+    @property
+    def client_address(self) -> Address | None:
+        """Retorna o endereço do cliente do dicionário 'client'."""
+        return self.client.get("address")
 
     def to_dict(self, recalculate: bool = True) -> dict[str, Any]:
         """Converte o objeto Pedido para um dicionário, usado no gerenciamento de formulários."""
@@ -165,18 +198,13 @@ class Pedido:
             "empresa_id": self.empresa_id,
             "forma_pagamento_id": self.forma_pagamento_id,
             "order_number": self.order_number,
+            "order_date": self.order_date,
             "total_amount": self.total_amount,
             "items": [item.to_dict() for item in self.items],
             "total_items": self.total_items,
             "total_products": self.total_products,
             "stock_reduction": self.stock_reduction,
-            "client_id": self.client_id,
-            "client_name": self.client_name,
-            "client_phone": self.client_phone,
-            "client_is_whatsapp": self.client_is_whatsapp,
-            "client_cpf": self.client_cpf,
-            "client_birthday": self.client_birthday,
-            "client_address": self.client_address.__dict__ if self.client_address else None,
+            "client": self.client,
             "status": self.status,
             "delivery_status": self.delivery_status,
             "created_at": self.created_at,
@@ -203,22 +231,25 @@ class Pedido:
         """
         # Garante que os totais estão corretos antes de salvar no DB
         self._recalculate_and_update_totals()
+
+        client_db = None
+        if self.client:
+            client_db = self.client.copy()
+            if address := client_db.get("address"):
+                if isinstance(address, Address):
+                    client_db["address"] = address.__dict__
+
         dict_db: dict[str, Any] = {
             "empresa_id": self.empresa_id,
             "forma_pagamento_id": self.forma_pagamento_id,
             "order_number": self.order_number,
+            "order_date": self.order_date,
             "total_amount": self.total_amount.to_dict(),
             "items": [item.to_dict() for item in self.items],
             "total_items": self.total_items,
             "total_products": self.total_products,
             "stock_reduction": self.stock_reduction,
-            "client_id": self.client_id,
-            "client_name": self.client_name,
-            "client_phone": self.client_phone,
-            "client_is_whatsapp": self.client_is_whatsapp,
-            "client_cpf": self.client_cpf,
-            "client_birthday": self.client_birthday,
-            "client_address": self.client_address.__dict__ if self.client_address else None,
+            "client": client_db,
             "status": self.status.name,
             "delivery_status": self.delivery_status.name,
             "created_at": self.created_at,
@@ -267,19 +298,39 @@ class Pedido:
             if key in processed_data and hasattr(processed_data[key], 'to_datetime'):
                 processed_data[key] = processed_data[key].to_datetime()
 
+        # Conversão da data do pedido
+        if 'order_date' in processed_data:
+            order_date = processed_data['order_date']
+            if hasattr(order_date, 'to_datetime'):  # Timestamp do Firestore
+                processed_data['order_date'] = order_date.to_datetime().date()
+            elif isinstance(order_date, datetime):
+                processed_data['order_date'] = order_date.date()
+            elif isinstance(order_date, str):
+                # Parse de string no formato ISO (YYYY-MM-DD)
+                try:
+                    processed_data['order_date'] = datetime.fromisoformat(order_date).date()
+                except ValueError:
+                    processed_data['order_date'] = date.today()  # Fallback
+        elif 'order_date' not in processed_data:
+            processed_data['order_date'] = date.today()
+
         # Objetos aninhados
         if 'items' in processed_data:
             processed_data['items'] = [PedidoItem.from_dict(item) for item in processed_data.get('items', [])]
 
-        if 'client_address' in processed_data and processed_data['client_address']:
-            processed_data['client_address'] = Address(**processed_data['client_address'])
+        if client := processed_data.get("client"):
+            if address_data := client.get("address"):
+                if isinstance(address_data, dict):
+                    client["address"] = Address(**address_data)
 
         if 'total_amount' in processed_data:
             processed_data['total_amount'] = _get_money_from_dict(processed_data['total_amount'])
 
-        # O Firestore armazena 'date' como um 'datetime', então convertemos de volta.
-        if 'client_birthday' in processed_data and isinstance(processed_data['client_birthday'], datetime):
-            processed_data['client_birthday'] = processed_data['client_birthday'].date()
+        # O Firestore armazena 'date' como um 'datetime', então convertemos de volta para 'date'.
+        if client := processed_data.get("client"):
+            if birthday := client.get("birthday"):
+                if isinstance(birthday, datetime):
+                    client["birthday"] = birthday.date()
 
         # 3. Instancia a classe usando o dicionário processado
         # O dataclass irá ignorar chaves extras que não são campos definidos.

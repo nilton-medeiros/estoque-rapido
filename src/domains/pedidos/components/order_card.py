@@ -18,10 +18,10 @@ class OrderCard:
                     ft.Text(f"Total do pedido: {pedido.total_amount}", weight=ft.FontWeight.BOLD,
                            theme_style=ft.TextThemeStyle.BODY_MEDIUM,
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                    ft.Text(pedido.client_name,
+                    ft.Text(pedido.client.get("name", "Cliente não informado"),
                            theme_style=ft.TextThemeStyle.BODY_SMALL,
                            no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                    ft.Text(pedido.client_phone,
+                    ft.Text(pedido.client.get("phone"),
                            theme_style=ft.TextThemeStyle.BODY_SMALL),
                     OrderCard._create_status_row(pedido),
                 ])

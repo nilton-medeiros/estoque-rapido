@@ -27,10 +27,11 @@ class PedidoGridController:
     def _search_in_pedido(self, pedido: Pedido, search_lower: str) -> bool:
         if pedido.order_number and search_lower in pedido.order_number:
             return True
-        if pedido.client_name and search_lower in pedido.client_name:
-            return True
-        if pedido.client_phone and search_lower in pedido.client_phone:
-            return True
+        if pedido.client:
+            if search_lower in pedido.client["name"].lower():
+                return True
+            if search_lower in pedido.client.get("phone", ""):
+                return True
         return False
 
     def filter_pedidos(self) -> list[Pedido]:
