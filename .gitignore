@@ -181,5 +181,4 @@ tests/
 unused_codes/
 
 # Excluindo o arquivo de versionamento
-src/shared/config/version.py
 version.py
