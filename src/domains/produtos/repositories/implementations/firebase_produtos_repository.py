@@ -272,7 +272,7 @@ class FirebaseProdutosRepository(ProdutosRepository):
         try:
             # Filtra por produtos com status "ACTIVE" no nível do banco de dados
             query = (self.products_collection_ref
-                     .where(filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)))
+                    .where(filter=FieldFilter("status", "==", RegistrationStatus.ACTIVE.name)))
             documents = query.stream()  # Usa stream() para iterar sobre os resultados
 
             for doc in documents:
@@ -281,29 +281,32 @@ class FirebaseProdutosRepository(ProdutosRepository):
                     quantity_on_hand = product_data.get('quantity_on_hand')
                     minimum_stock_level = product_data.get('minimum_stock_level')
 
-                    # Verifica se ambos os campos são inteiros e existem
-                    if isinstance(quantity_on_hand, int) and isinstance(minimum_stock_level, int):
+                    # Verifica se ambos os campos existem e são números (int ou float)
+                    if (quantity_on_hand is not None and minimum_stock_level is not None and
+                            isinstance(quantity_on_hand, (int, float)) and isinstance(minimum_stock_level, (int, float))):
+                        # Converte para int, garantindo que valores float como 2.0 sejam tratados como 2
+                        quantity_on_hand = int(quantity_on_hand)
+                        minimum_stock_level = int(minimum_stock_level)
+
                         if quantity_on_hand < minimum_stock_level:
                             low_stock_count += 1
                     else:
-                        # Loga um aviso se campos importantes estiverem faltando ou com tipo incorreto para um produto ativo
+                        # Loga um aviso se campos importantes estiverem faltando ou com tipo inválido
                         logger.warning(
-                            f"Produto ativo ID {doc.id} possui 'quantity_on_hand' ({quantity_on_hand}) ou "
-                            f"'minimum_stock_level' ({minimum_stock_level}) ausente ou com tipo inválido. Ignorando para contagem."
+                            f"Produto ativo ID {doc.id} possui 'quantity_on_hand' ({quantity_on_hand}, tipo: {type(quantity_on_hand)}) ou "
+                            f"'minimum_stock_level' ({minimum_stock_level}, tipo: {type(minimum_stock_level)}) ausente ou com tipo inválido. Ignorando para contagem."
                         )
             return low_stock_count
 
         except exceptions.FirebaseError as e:
             logger.error(f"Erro do Firebase ao contar produtos com baixo estoque: Código: {getattr(e, 'code', 'N/A')}, Detalhes: {e}")
-            # Consistente com o método save, traduz o erro.
-            # Se deepl_translator não estiver disponível ou configurado, esta linha pode causar outro erro.
             try:
                 translated_error = deepl_translator(str(e))
                 raise Exception(f"Erro ao contar produtos com baixo estoque: {translated_error}")
-            except Exception as te: # Captura erro do tradutor ou se deepl_translator não estiver definido
+            except Exception as te:
                 logger.error(f"Erro ao traduzir mensagem de erro do Firebase: {te}")
                 raise Exception(f"Erro do Firebase ao contar produtos com baixo estoque: {e}")
-
         except Exception as e:
             logger.error(f"Erro inesperado ao contar produtos com baixo estoque: {e}")
-            raise # Re-lança para que a camada de serviço/aplicação possa tratar
+            raise
+    

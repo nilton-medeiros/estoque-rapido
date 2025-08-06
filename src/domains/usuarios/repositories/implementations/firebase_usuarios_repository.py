@@ -186,7 +186,7 @@ class FirebaseUsuariosRepository(UsuariosRepository):
             logger.error(f"Erro inesperado ao salvar usuário: {translated_error} [{str(e)}]")
             raise
 
-        return usuario.id
+        return user.id
 
     def count(self, empresa_id: str) -> int:
         """
@@ -201,7 +201,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
         try:
             query = (self.collection
                      .where(filter=FieldFilter("empresas", "array_contains", empresa_id)))
-            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id) # método antigo
             docs = query.get()
             return len(docs)
         except exceptions.FirebaseError as e:
@@ -540,7 +539,6 @@ class FirebaseUsuariosRepository(UsuariosRepository):
                      .where(filter=FieldFilter("profile", "==", profile))
                      .order_by("name.first_name_lower")
                      .order_by("name.last_name_lower"))
-            # query = self.collection.where(field_path='empresas', op_string='array_contains', value=empresa_id).where(field_path='profile', op_string='==', value=profile)  # Método antigo
 
             docs = query.stream()
             usuarios: list[Usuario] = []
