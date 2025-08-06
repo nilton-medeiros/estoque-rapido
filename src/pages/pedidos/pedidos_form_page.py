@@ -4,7 +4,7 @@ import asyncio
 
 import flet as ft
 
-from datetime import datetime  # Adicionado para validação de data
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from src.domains.clientes.controllers.clientes_controllers import handle_get_by_name_cpf_or_phone
@@ -49,7 +49,7 @@ class PedidoForm:
         self.input_width = 400
 
         # Obtem a lista das Formas de Pagamento da empresa logada
-        self.formas_pagmento_list = self._get_formas_pagmento_list(self.empresa_logada["id"])
+        self.formas_pagmento_list = self._get_formas_pagamento_list(self.empresa_logada["id"])
         self.selected_formas_pagmento_name: str | None = None
 
         # Responsividade
@@ -66,7 +66,7 @@ class PedidoForm:
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
 
-    def _get_formas_pagmento_list(self, empresa_id: str) -> list[dict[str, Any]]:
+    def _get_formas_pagamento_list(self, empresa_id: str) -> list[dict[str, Any]]:
         service = FormasPagamentoService(FirebaseFormasPagamentoRepository())
         controller = FormasPagamentoController(service)
         result = controller.get_formas_pagamento_summary(empresa_id)
@@ -130,11 +130,37 @@ class PedidoForm:
         self.order_number = build_input_field(
             page_width=self.page.width,  # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 3},
+            col={'xs': 12, 'md': 4, 'lg': 2},
             label="Pedido Nº",
             icon=ft.Icons.NUMBERS,
             read_only=True,
         )
+
+        # Data do Pedido (NOVO CAMPO)
+        self.order_date = ft.DatePicker(
+            first_date=datetime(2020, 1, 1),
+            last_date=datetime(2030, 12, 31),
+            date_picker_entry_mode=ft.DatePickerEntryMode.CALENDAR_ONLY,
+            on_change=self._handle_order_date_change,
+        )
+
+        # Campo de texto para mostrar a data selecionada
+        self.order_date_field = build_input_field(
+            page_width=self.page.width,  # type: ignore [attr-defined]
+            app_colors=self.app_colors,
+            col={'xs': 12, 'md': 6, 'lg': 3},
+            label="Data do Pedido",
+            icon=ft.Icons.CALENDAR_TODAY,
+            read_only=True,
+            on_click=self._open_date_picker,
+            hint_text="Clique para selecionar",
+        )
+
+        # Define a data inicial como hoje
+        today = date.today()
+        self.order_date.value = today
+        self.order_date_field.value = today.strftime('%d/%m/%Y')
+
         # Total do pedido
         self.total_amount = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
@@ -148,7 +174,7 @@ class PedidoForm:
         self.quantity_items = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 3},
+            col={'xs': 12, 'md': 4, 'lg': 2},
             label="Total Itens",
             icon=ft.Icons.NUMBERS,
             read_only=True,
@@ -157,7 +183,7 @@ class PedidoForm:
         self.quantity_products = build_input_field(
             page_width=self.page.width, # type: ignore [attr-defined]
             app_colors=self.app_colors,
-            col={'xs': 12, 'md': 4, 'lg': 3},
+            col={'xs': 12, 'md': 6, 'lg': 2},
             label="Qtde. Produtos",
             icon=ft.Icons.NUMBERS,
             read_only=True,
@@ -194,11 +220,10 @@ class PedidoForm:
         self.entrega_column = ft.Column(
             col={'xs': 12, 'md': 12, 'lg': 6},
             alignment=ft.MainAxisAlignment.START,
-            spacing=20,
+            spacing=10,
             run_spacing=20,
             controls=[
                 ft.Text("Status de Entrega", size=16),
-                ft.Divider(height=5),
                 self.delivery_status,
             ],
         )
@@ -374,6 +399,17 @@ class PedidoForm:
         )
 
         # self.order_items será gerenciado pelo subformulário
+
+    def _handle_order_date_change(self, e):
+        """Callback para quando a data é alterada no DatePicker"""
+        if e.control.value:
+            selected_date = e.control.value
+            self.order_date_field.value = selected_date.strftime('%d/%m/%Y')
+            self.order_date_field.update()
+
+    def _open_date_picker(self, e):
+        """Abre o seletor de data"""
+        self.page.open(self.order_date)
 
     def _handle_consult_client_change(self, e) -> None:
         """Atualiza o estado do botão de consulta de clientes baseado no valor do campo de consulta"""
@@ -583,7 +619,6 @@ class PedidoForm:
             return ft.ResponsiveRow(
                 columns=12,
                 expand=True,
-                # alignment=ft.MainAxisAlignment.START,
                 spacing=20,
                 run_spacing=20,
                 controls=controls,
@@ -638,7 +673,7 @@ class PedidoForm:
             controls=[
                 ft.Text("Identificação do Pedido", size=16),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
-                responsive_row(controls=[self.order_number, self.total_amount, self.quantity_items, self.quantity_products,]),
+                responsive_row(controls=[self.order_number, self.total_amount, self.quantity_items, self.quantity_products, self.order_date_field,]),
                 ft.Divider(height=5, color=ft.Colors.TRANSPARENT),
                 # responsive_row(controls=[dropdown_row, self.entrega_column, self.status]),
                 responsive_row(controls=[dropdown_row, self.status, self.entrega_column]),
@@ -646,6 +681,7 @@ class PedidoForm:
                 client_identifications,
                 ft.Divider(height=15, color=ft.Colors.TRANSPARENT),
                 items_section,
+                self.order_date,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.START,
             spacing=5,
@@ -670,6 +706,16 @@ class PedidoForm:
         from src.shared.utils.money_numpy import Money
 
         self.order_number.value = self.data["order_number"]
+
+        if order_date := self.data.get("order_date"):
+            if isinstance(order_date, date):
+                self.order_date.value = order_date
+                self.order_date_field.value = order_date.strftime('%d/%m/%Y')
+            elif isinstance(order_date, datetime):
+                order_date_as_date = order_date.date()
+                self.order_date.value = order_date_as_date
+                self.order_date_field.value = order_date_as_date.strftime('%d/%m/%Y')
+
         self.total_amount.value = str(self.data["total_amount"])
         self.quantity_items.value = str(self.data["total_items"])
         self.quantity_products.value = str(self.data["total_products"])
@@ -689,26 +735,28 @@ class PedidoForm:
         self.status.label = f"Pedido {str(self.data['status'])}"
         self.consult_client.value = ""
         self.consult_client_btn.disabled = True
-        self.client_cpf.value = self.data.get("client_cpf", "")
-        self.client_name.value = self.data.get("client_name", "")
-        self.client_email.value = self.data.get("client_email", "")
-        self.client_phone.value = self.data.get("client_phone", "")
-        self.client_is_whatsapp_check.value = self.data.get("client_is_whatsapp", False)
 
-        # Converte o objeto 'date' do modelo para uma string 'DD/MM' para a UI
-        birthday_date = self.data.get("client_birthday")
-        if isinstance(birthday_date, datetime):
-            # Formata a data para o formato DD/MM
-            self.client_birthday.value = birthday_date.strftime('%d/%m')
+        if client := self.data.get("client"):
+            self.client_cpf.value = client.get("cpf", "")
+            self.client_name.value = client.get("name", "")
+            self.client_email.value = client.get("email", "")
+            self.client_phone.value = client.get("phone", "")
+            self.client_is_whatsapp_check.value = client.get("is_whatsapp", False)
 
-        if address := self.data.get("client_address"):
-            self.client_street.value = address.street
-            self.client_number.value = address.number
-            self.client_complement.value = address.complement
-            self.client_neighborhood.value = address.neighborhood
-            self.client_city.value = address.city
-            self.client_state.value = address.state
-            self.client_postal_code.value = address.postal_code
+            # Converte o objeto 'date' do modelo para uma string 'DD/MM' para a UI
+            birthday_date = client.get("birthday")
+            if isinstance(birthday_date, datetime):
+                # Formata a data para o formato DD/MM
+                self.client_birthday.value = birthday_date.strftime('%d/%m')
+
+            if address := client.get("address"):
+                self.client_street.value = address.street
+                self.client_number.value = address.number
+                self.client_complement.value = address.complement
+                self.client_neighborhood.value = address.neighborhood
+                self.client_city.value = address.city
+                self.client_state.value = address.state
+                self.client_postal_code.value = address.postal_code
 
         items_data = []
         for i, item in enumerate(self.data.get("items", [])):
@@ -729,7 +777,7 @@ class PedidoForm:
                 total = Money.from_dict(total).get_decimal()
 
             items_data.append({
-                'id': i + 1,
+                'id': item['id'],
                 'description': item.get('description', ''),
                 'quantity': item.get('quantity', 0),
                 'unit_price': float(unit_price),  # Garante que é float
@@ -754,6 +802,9 @@ class PedidoForm:
 
     def get_form_object_updated(self) -> Pedido:
         """Atualiza self.data com os dados do formulário e o retorna atualizado."""
+
+        self.data["order_date"] = self.order_date.value or date.today()
+
         index_status = {
             0: DeliveryStatus.PENDING,
             1: DeliveryStatus.IN_TRANSIT,
@@ -763,11 +814,6 @@ class PedidoForm:
         self.data["delivery_status"] = index_status[self.delivery_status.selected_index]
         self.data["status"] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
         self.data["forma_pagamento_id"] = self.forma_de_pagamento.value
-        self.data["client_cpf"] = self.client_cpf.value if self.client_cpf.value else None
-        self.data['client_name'] = self.client_name.value if self.client_name.value else None
-        self.data["client_email"] = self.client_email.value if self.client_email.value else None
-        self.data["client_phone"] = self.client_phone.value if self.client_phone.value else None
-        self.data["client_is_whatsapp"] = self.client_is_whatsapp_check.value
 
         birthday_str = self.client_birthday.value
         birthday_date = None
@@ -782,11 +828,19 @@ class PedidoForm:
             except ValueError:
                 birthday_date = None  # Garante que datas inválidas não quebrem a aplicação
 
-        self.data["client_birthday"] = birthday_date  # Armazena o objeto date ou None
+        self.data["client"] = {
+            "cpf": self.client_cpf.value if self.client_cpf.value else None,
+            "name": self.client_name.value if self.client_name.value else None,
+            "email": self.client_email.value if self.client_email.value else None,
+            "phone": self.client_phone.value if self.client_phone.value else None,
+            "is_whatsapp": self.client_is_whatsapp_check.value,
+            "birthday": birthday_date,
+        }
 
         if self.client_street.value and self.client_number.value and self.client_neighborhood.value and\
            self.client_city.value and self.client_state.value and self.client_postal_code.value:
-            self.data["client_address"] = Address(
+
+            self.data["client"]["address"] = Address(
                 street=self.client_street.value,
                 number=self.client_number.value,
                 complement=self.client_complement.value,
@@ -800,12 +854,12 @@ class PedidoForm:
             self.data["empresa_id"] = self.empresa_logada["id"]
 
         items_data = []
-        # parei aki parei aqui Parei aki Parei aqui
+
         for item in self.items_subform.get_items():
             items_data.append({
-                'product_id': item['id'],
+                'id': item['id'],
                 'description': item['description'],
-                'quantity': item['quantity'],
+                'quantity': int(item['quantity']),
                 'unit_of_measure': item['unit_of_measure'] or 'UN',
                 'unit_price': item['unit_price'],   # float, em Pedido.from_dict() trata isto
                 'total': item['total'],   # float, em Pedido.from_dict() trata isto
@@ -824,6 +878,23 @@ class PedidoForm:
 
     def validate_form(self) -> str | None:
         """Valida os campos do formulário. Retorna uma mensagem de erro se algum campo obrigatório não estiver preenchido."""
+
+        # Validação da data do pedido
+        if not self.order_date.value:
+            return "Selecione a data do pedido."
+
+        # Garante que a comparação seja entre objetos 'date'
+        order_date_value = self.order_date.value
+        if isinstance(order_date_value, datetime):
+            order_date_value = order_date_value.date()
+
+        # Validação se a data não está muito no passado (opcional)
+        if order_date_value < date.today() - timedelta(days=365):
+            return "A data do pedido não pode ser mais de 1 ano no passado."
+
+        # Validação se a data não está muito no futuro (opcional)
+        if order_date_value > date.today() + timedelta(days=30):
+            return "A data do pedido não pode ser mais de 30 dias no futuro."
 
         # Validação dos itens
         if not self.items_subform.get_items():
@@ -862,6 +933,7 @@ class PedidoForm:
 
         # Atualiza os tamanhos dos campos do formulário
         self.order_number.text_size = self.font_size
+        self.order_date_field.text_size = self.font_size
         self.total_amount.text_size = self.font_size
         self.quantity_items.text_size = self.font_size
         self.quantity_products.text_size = self.font_size
@@ -899,6 +971,11 @@ class PedidoForm:
                 field.value = False  # Por default, o "tem whatsapp" é False
             if isinstance(field, ft.CupertinoSlidingSegmentedButton):
                 field.selected_index = 0  # Por default, o status é pendente
+
+                # NOVO: Resetar data para hoje
+        today = date.today()
+        self.order_date.value = today
+        self.order_date_field.value = today.strftime('%d/%m/%Y')
 
         # Limpa os itens do subformulário
         self.items_subform.clear_items()
@@ -966,10 +1043,6 @@ def show_pedido_form(page: ft.Page):
 
             # Instância do objeto Pedido com os dados do formulário para enviar para o backend
             pedido: Pedido = pedidos_view.get_form_object_updated()
-
-            # ToDo: Implementar no controller `pedidos_controllers.py` a função `handle_save_pedido()` para baixar os ítens do pedido no estoque produtos e salvar pedido.
-            # ToDo: A baixa dos ítens do pedido e salvar pedido deve ser atômico, os dois tem que ter sucesso ou todos falham.
-            # ToDo: Usar uma transação do Firestore para garantir a atomicidade.
 
             # Envia os dados para o backend
             result = order_controllers.handle_save_pedido(
