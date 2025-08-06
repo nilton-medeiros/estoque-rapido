@@ -31,6 +31,9 @@ class PedidoItemsSubform:
 
     def _handle_product_selection(self, selected_item):
         """Callback para selecionar um produto"""
+        #  print(selected_item):
+        #  {'id': 'pro_445532dd85914c84a57c82a178d4ba3e', 'description': 'Lava roupas em po karina 5kg',
+        #   'price': Decimal('48'), 'quantity_on_hand': 4, 'unit_of_measure': 'KG'}
         self.new_item_id = selected_item["id"]
         self.new_item_description.value = selected_item["description"]
         # Converte o Decimal para string no formato esperado (com vírgula)
@@ -175,12 +178,11 @@ class PedidoItemsSubform:
         if any(item['id'] == self.new_item_id for item in self.items):
             self._show_error("Produto já adicionado")
             return
-
         # Cria o item
         item = {
             'id': self.new_item_id,
             'description': self.new_item_description.value,
-            'quantity': float(self.new_item_quantity.value),  # Quantidade de compra
+            'quantity': int(float(self.new_item_quantity.value or 0)),  # Garante que a quantidade seja sempre um inteiro
             'quantity_on_hand': self.new_item_quantity_on_hand,    # Quantidade disponível no estoque
             'unit_price': float(self.new_item_unit_price.value.replace(',', '.')),  # Preço de venda por unidade
             'unit_of_measure': self.new_item_unit_of_measure,   # Unidade de Medida
