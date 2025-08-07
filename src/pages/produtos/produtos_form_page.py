@@ -20,7 +20,8 @@ from src.domains.produtos.models import Produto
 from src.domains.shared import RegistrationStatus
 from src.pages.partials import build_input_field
 from src.services import UploadFile, fetch_product_info_by_ean
-from src.shared.utils import  show_banner, message_snackbar, MessageType, get_uuid, format_datetime_to_utc_minus_3
+from src.shared.utils import  show_banner, message_snackbar, MessageType, format_datetime_to_utc_minus_3
+from src.shared.utils.file_helpers import generate_unique_bucket_filename
 from src.shared.utils.find_project_path import find_project_root
 from src.pages.partials.monetary_field import MonetaryTextField
 from src.shared.utils.money_numpy import Money
@@ -733,18 +734,10 @@ class ProdutoForm:
             # Não há arquivo local para enviar
             return False
 
-        prefix = "empresas/" + self.empresa_logada["id"] + "/produtos"
-
-        file_uid = get_uuid()   # Obtem um UUID único para o arquivo
-
-        _, dot_extension = os.path.splitext(self.local_upload_file)
-        # Padroniza a extensão para caracteres minúsculos
-        dot_extension = dot_extension.lower()
-
-        # A lógica aqui depende do Bucket utilizado, neste caso usamos o S3 da AWS, usamos o CNPJ ou user_id como diretório no bucket.
-        file_name_bucket = f"{prefix}/img_{file_uid}{dot_extension}"
-
         try:
+            prefix = f"empresas/{self.empresa_logada['id']}/produtos"
+            file_name_bucket = generate_unique_bucket_filename(
+                original_filename=self.local_upload_file, prefix=prefix)
             self.image_url = bucket_controllers.handle_upload_bucket(
                 local_path=self.local_upload_file, key=file_name_bucket)
 

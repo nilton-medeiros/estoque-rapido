@@ -8,8 +8,8 @@ import src.controllers.bucket_controllers as bucket_controllers
 from src.domains.shared.context.session import get_current_user, get_current_company
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios.models.usuarios_model import Usuario
-from src.shared.utils.gen_uuid import get_uuid
 from src.shared.utils.messages import message_snackbar, MessageType
+from src.shared.utils.file_helpers import generate_unique_bucket_filename
 
 logger = logging.getLogger(__name__)
 
@@ -268,12 +268,8 @@ async def _handle_file_picker_result(e: ft.FilePickerResultEvent, page: ft.Page,
         while not upload_complete:
             await asyncio.sleep(0.1)
 
-        file_uid = get_uuid()
-        _, dot_extension = os.path.splitext(file_name)
-        dot_extension = dot_extension.lower()
-        prefix = "usuarios"
-        file_name_bucket = f"{prefix}/{current_user.id}_img_{file_uid}{dot_extension}"
         local_file = f"Uploads/{file_name}"
+        file_name_bucket = generate_unique_bucket_filename(original_filename=local_file, prefix="usuarios")
 
         max_retries = 10
         retry_count = 0

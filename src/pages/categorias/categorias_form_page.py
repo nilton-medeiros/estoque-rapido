@@ -17,7 +17,8 @@ from src.domains.shared.context.session import get_current_user, get_session_col
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.services import UploadFile
-from src.shared.utils import message_snackbar, MessageType, get_uuid
+from src.shared.utils import message_snackbar, MessageType
+from src.shared.utils.file_helpers import generate_unique_bucket_filename
 from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
@@ -335,18 +336,10 @@ class ProdutoCategoriaForm:
             # Não há arquivo local para enviar
             return False
 
-        prefix = "empresas/" + self.empresa_logada["id"] + "/categorias"
-
-        file_uid = get_uuid()   # Obtem um UUID único para o arquivo
-
-        _, dot_extension = os.path.splitext(self.local_upload_file)
-        # Padroniza a extensão para caracteres minúsculos
-        dot_extension = dot_extension.lower()
-
-        # A lógica aqui depende do Bucket utilizado, neste caso usamos o S3 da AWS, usamos o CNPJ ou user_id como diretório no bucket.
-        file_name_bucket = f"{prefix}/img_{file_uid}{dot_extension}"
-
         try:
+            prefix = f"empresas/{self.empresa_logada['id']}/categorias"
+            file_name_bucket = generate_unique_bucket_filename(
+                original_filename=self.local_upload_file, prefix=prefix)
             self.image_url = bucket_controllers.handle_upload_bucket(local_path=self.local_upload_file, key=file_name_bucket)
 
             if self.image_url:

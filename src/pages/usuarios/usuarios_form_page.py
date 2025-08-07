@@ -20,7 +20,8 @@ from src.domains.usuarios.models import Usuario
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
 from src.services import UploadFile
-from src.shared.utils import  message_snackbar, get_uuid, gerar_senha, MessageType, ProgressiveMessage
+from src.shared.utils import  message_snackbar, gerar_senha, MessageType, ProgressiveMessage
+from src.shared.utils.file_helpers import generate_unique_bucket_filename
 from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
@@ -599,18 +600,9 @@ class UsuarioForm:
             # Não há arquivo local para enviar
             return False
 
-        file_uid = get_uuid()   # Obtem um UUID único para o arquivo
-        _, dot_extension = os.path.splitext(self.local_upload_file)
-        # Padroniza a extensão para caracteres minúsculos
-        dot_extension = dot_extension.lower()
-        file_name = f"img_{file_uid}{dot_extension}"
-
-        prefix = "usuarios"
-
-        # A lógica aqui depende do Bucket utilizado, neste caso usamos o S3 da AWS, usamos o CNPJ ou user_id como diretório no bucket.
-        file_name_bucket = f"{prefix}/{file_name}"
-
         try:
+            file_name_bucket = generate_unique_bucket_filename(
+                original_filename=self.local_upload_file, prefix="usuarios")
             self.photo_url = bucket_controllers.handle_upload_bucket(
                 local_path=self.local_upload_file, key=file_name_bucket)
 
@@ -721,6 +713,11 @@ def show_user_form(page: ft.Page) -> ft.View:
                 # Envia o arquivo de imagem para o bucket
                 if usuarios_view.send_to_bucket():
                     usuario.photo_url = usuarios_view.photo_url
+                    # Apaga a foto anterior do usuário no bucket se existir
+                    if usuarios_view.previous_photo_url:
+                        progress_msg.update_progress("Deletando imagem anterior do servidor...")
+                        bucket_controllers.handle_delete_bucket(
+                            usuarios_view.previous_photo_url)
                 else:
                     progress_msg.show_error("Erro ao enviar imagem para o bucket")
                     save_btn.disabled = False
@@ -731,6 +728,7 @@ def show_user_form(page: ft.Page) -> ft.View:
                     os.remove(usuarios_view.local_upload_file)
                 except:
                     pass  # Ignora erros na limpeza do arquivo
+
                 usuarios_view.local_upload_file = None
 
             # Segunda etapa: Salvando no banco
