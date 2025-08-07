@@ -1,5 +1,5 @@
 # Adicionado para tipagem, embora pytz lide com datetime
-from datetime import datetime
+from datetime import datetime, date
 import pytz  # Adicionado para manipulação de fuso horário
 
 # Nomes em português para dias da semana e meses
@@ -15,10 +15,21 @@ MESES_PT = [
 # Função para formatar datetime para UTC-3 e no formato desejado
 
 
-def format_datetime_to_utc_minus_3(dt_object: datetime | None = None, format_str: str = "%d/%m/%Y %H:%M:%S") -> str:
+def format_datetime_to_utc_minus_3(dt_object: datetime | date | None = None, format_str: str | None = None) -> str:
     if dt_object is None:
         return "N/A"  # Ou uma string vazia, como preferir
 
+    # Se for um objeto date (e não datetime), não tem fuso horário nem hora.
+    if isinstance(dt_object, date) and not isinstance(dt_object, datetime):
+        final_format = format_str or "%d/%m/%Y"
+        return dt_object.strftime(final_format)
+
+    # A partir daqui, o código lida com objetos datetime
+    # Garante que o datetime é um objeto datetime para o type checker
+    if not isinstance(dt_object, datetime):
+        return "N/A" # Fallback, não deve acontecer devido à lógica anterior
+
+    final_format = format_str or "%d/%m/%Y %H:%M:%S"
     # Garante que o datetime está em UTC
     if dt_object.tzinfo is None or dt_object.tzinfo.utcoffset(dt_object) is None:
         # Se for naive (sem informação de fuso), assume que é UTC
@@ -35,7 +46,7 @@ def format_datetime_to_utc_minus_3(dt_object: datetime | None = None, format_str
 
     # Processa a string de formato para substituir %A e %B por nomes em português
     # Isso garante que os nomes sejam em português, independentemente do locale do sistema.
-    processed_format_str = format_str
+    processed_format_str = final_format
 
     if "%A" in processed_format_str:
         # Escapa '%' nos nomes dos dias/meses caso eles contenham '%', para strftime
