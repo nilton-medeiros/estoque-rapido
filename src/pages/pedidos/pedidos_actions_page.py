@@ -3,6 +3,7 @@ import flet as ft
 import asyncio
 
 from src.domains.pedidos.models import Pedido
+from src.domains.pedidos.models.pedidos_model import PedidoItem
 from src.domains.shared.context.session import get_current_user
 from src.shared.utils import MessageType, message_snackbar
 
@@ -145,3 +146,284 @@ def restore_from_trash(page: ft.Page, pedido: Pedido) -> bool:
         return False
     message_snackbar(page=page, message="Pedido restaurado com sucesso!")
     return True
+
+def show_orders_items_grid(page: ft.Page, items: list[PedidoItem]):
+    """
+    Exibe a lista de itens de um pedido em uma interface responsiva com DataTable.
+
+    Args:
+        page: Instância da página Flet
+        items: Lista de itens do pedido (PedidoItem)
+    """
+
+    def close_dialog(e):
+        """Fecha o diálogo de itens do pedido"""
+        page.close(items_dialog)
+
+    def create_data_table():
+        """Cria o DataTable com os itens do pedido"""
+
+        # Cabeçalhos das colunas
+        columns = [
+            ft.DataColumn(
+                label=ft.Text("Produto", weight=ft.FontWeight.BOLD, size=14)
+            ),
+            ft.DataColumn(
+                label=ft.Text("Qtd", weight=ft.FontWeight.BOLD, size=14),
+                numeric=True
+            ),
+            ft.DataColumn(
+                label=ft.Text("Unidade", weight=ft.FontWeight.BOLD, size=14)
+            ),
+            ft.DataColumn(
+                label=ft.Text("Valor Unit.", weight=ft.FontWeight.BOLD, size=14),
+                numeric=True
+            ),
+            ft.DataColumn(
+                label=ft.Text("Total", weight=ft.FontWeight.BOLD, size=14),
+                numeric=True
+            ),
+        ]
+
+        # Linhas de dados
+        rows = []
+        for item in items:
+            rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(
+                                    item.description,
+                                    size=13,
+                                    selectable=True,
+                                    max_lines=2,
+                                    overflow=ft.TextOverflow.ELLIPSIS
+                                ),
+                                padding=ft.padding.symmetric(vertical=8),
+                                width=200  # Largura fixa para consistência
+                            )
+                        ),
+                        ft.DataCell(
+                            ft.Text(
+                                str(item.quantity),
+                                size=13,
+                                text_align=ft.TextAlign.CENTER,
+                                weight=ft.FontWeight.W_500
+                            )
+                        ),
+                        ft.DataCell(
+                            ft.Text(
+                                item.unit_of_measure,
+                                size=13,
+                                text_align=ft.TextAlign.CENTER
+                            )
+                        ),
+                        ft.DataCell(
+                            ft.Text(
+                                str(item.unit_price),
+                                size=13,
+                                text_align=ft.TextAlign.RIGHT,
+                                color=ft.colors.GREEN_700
+                            )
+                        ),
+                        ft.DataCell(
+                            ft.Text(
+                                str(item.total),
+                                size=13,
+                                text_align=ft.TextAlign.RIGHT,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.colors.GREEN_800
+                            )
+                        ),
+                    ],
+                    selected=False,
+                )
+            )
+
+        return ft.DataTable(
+            columns=columns,
+            rows=rows,
+            border=ft.border.all(1, ft.colors.OUTLINE),
+            border_radius=10,
+            vertical_lines=ft.border.BorderSide(1, ft.colors.OUTLINE_VARIANT),
+            horizontal_lines=ft.border.BorderSide(1, ft.colors.OUTLINE_VARIANT),
+            heading_row_color=ft.colors.SURFACE_VARIANT,
+            heading_row_height=50,
+            data_row_min_height=60,
+            data_row_max_height=80,
+            column_spacing=20,
+        )
+
+    def create_summary_card():
+        """Cria um card com resumo dos totais"""
+        total_items = len(items)
+        total_quantity = sum(item.quantity for item in items)
+
+        # Calcula o total geral (assumindo que o primeiro item tem a moeda correta)
+        if items:
+            zero_money = items[0].total.__class__.mint("0.00", currency_symbol=items[0].total.currency_symbol)
+            total_amount = sum((item.total for item in items), zero_money)
+        else:
+            total_amount = "R$ 0,00"
+
+        return ft.Card(
+            content=ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "Total de Itens",
+                                    size=12,
+                                    color=ft.colors.ON_SURFACE_VARIANT,
+                                    weight=ft.FontWeight.W_500
+                                ),
+                                ft.Text(
+                                    str(total_items),
+                                    size=20,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.colors.PRIMARY
+                                ),
+                            ],
+                            spacing=2,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            expand=True
+                        ),
+                        ft.VerticalDivider(width=1),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "Quantidade Total",
+                                    size=12,
+                                    color=ft.colors.ON_SURFACE_VARIANT,
+                                    weight=ft.FontWeight.W_500
+                                ),
+                                ft.Text(
+                                    str(total_quantity),
+                                    size=20,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.colors.SECONDARY
+                                ),
+                            ],
+                            spacing=2,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            expand=True
+                        ),
+                        ft.VerticalDivider(width=1),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "Valor Total",
+                                    size=12,
+                                    color=ft.colors.ON_SURFACE_VARIANT,
+                                    weight=ft.FontWeight.W_500
+                                ),
+                                ft.Text(
+                                    str(total_amount),
+                                    size=20,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.colors.GREEN_700
+                                ),
+                            ],
+                            spacing=2,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            expand=True
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ),
+                padding=ft.padding.all(20),
+            ),
+            elevation=2,
+        )
+
+    def create_empty_state():
+        """Cria o estado vazio quando não há itens"""
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Icon(
+                        ft.icons.INVENTORY_2_OUTLINED,
+                        size=64,
+                        color=ft.colors.ON_SURFACE_VARIANT
+                    ),
+                    ft.Text(
+                        "Nenhum item encontrado",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.colors.ON_SURFACE_VARIANT
+                    ),
+                    ft.Text(
+                        "Este pedido não possui itens cadastrados.",
+                        size=14,
+                        color=ft.colors.ON_SURFACE_VARIANT,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10
+            ),
+            alignment=ft.alignment.center,
+            padding=ft.padding.all(40)
+        )
+
+    # Constrói o conteúdo baseado na existência de itens
+    if not items:
+        content_controls = [create_empty_state()]
+    else:
+        content_controls = [
+            create_summary_card(),
+            ft.Divider(height=1, color=ft.colors.OUTLINE_VARIANT),
+            ft.Container(
+                content=create_data_table(),
+                padding=ft.padding.all(10)
+            )
+        ]
+
+    # Container principal com scroll
+    content_container = ft.Container(
+        content=ft.Column(
+            controls=content_controls,
+            spacing=20,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True
+        ),
+        width=900,  # Largura fixa para o diálogo
+        height=600,  # Altura fixa para o diálogo
+        padding=ft.padding.all(20)
+    )
+
+    # Cria o diálogo modal
+    items_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Row(
+            controls=[
+                ft.Icon(ft.icons.LIST_ALT, color=ft.colors.PRIMARY),
+                ft.Text(
+                    "Itens do Pedido",
+                    size=20,
+                    weight=ft.FontWeight.BOLD
+                )
+            ],
+            spacing=10
+        ),
+        content=content_container,
+        actions=[
+            ft.TextButton(
+                "Fechar",
+                icon=ft.icons.CLOSE,
+                on_click=close_dialog,
+                style=ft.ButtonStyle(
+                    color=ft.colors.PRIMARY,
+                )
+            ),
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        on_dismiss=lambda e: logger.info("Diálogo de itens do pedido foi fechado")
+    )
+
+    # Abre o diálogo
+    page.open(items_dialog)
+
+    logger.info(f"Exibindo {len(items)} itens do pedido")
