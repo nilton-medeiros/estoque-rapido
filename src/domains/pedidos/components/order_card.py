@@ -3,6 +3,7 @@ import flet as ft
 from src.domains.pedidos.models import Pedido
 from src.domains.pedidos.models.pedidos_subclass import DeliveryStatus
 from src.domains.shared.models.registration_status import RegistrationStatus
+from src.shared.utils.time_zone import format_datetime_to_utc_minus_3
 
 class OrderCard:
     """Componente reutilizável para card de pedido"""
@@ -35,12 +36,18 @@ class OrderCard:
         """Cria o cabeçalho do card com imagem e menu"""
         return ft.Row(
             [
-                ft.Text(f"Nº: {pedido.order_number}", weight=ft.FontWeight.BOLD, theme_style=ft.TextThemeStyle.BODY_LARGE),
+                ft.Text(f"Nº: {pedido.order_number}",
+                    weight=ft.FontWeight.BOLD,
+                    theme_style=ft.TextThemeStyle.BODY_LARGE),
                 ft.Container(expand=True),  # Spacer
+                ft.Text(
+                    f"Data: {format_datetime_to_utc_minus_3(pedido.order_date)}",
+                    weight=ft.FontWeight.NORMAL,
+                    theme_style=ft.TextThemeStyle.BODY_MEDIUM),
                 OrderCard._create_action_menu(pedido, on_action_callback),
             ],
             alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
     @staticmethod
