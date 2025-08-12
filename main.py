@@ -224,7 +224,8 @@ def main(page: ft.Page):
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()
         top_view = page.views[-1]
-        page.go(top_view.route)  # type: ignore
+        if top_view.route:
+            page.go(top_view.route)
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop
