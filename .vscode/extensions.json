@@ -1,5 +1,14 @@
 {
     "recommendations": [
-        "google.geminicodeassist"
+        "ms-python.python",
+        "ms-ceintl.vscode-language-pack-pt-br",
+        "tamasfe.even-better-toml",
+        "esbenp.prettier-vscode",
+        "charliermarsh.ruff",
+        "formulahendry.code-runner",
+        "bradlc.vscode-tailwindcss",
+        "pkief.material-icon-theme",
+        "omthemes.omthemes",
+        "google.geminicodeassist",
     ]
 }
