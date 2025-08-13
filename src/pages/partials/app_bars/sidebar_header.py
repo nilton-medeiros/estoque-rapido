@@ -8,6 +8,7 @@ import src.controllers.bucket_controllers as bucket_controllers
 from src.domains.shared.context.session import get_current_user, get_current_company
 import src.domains.usuarios.controllers.usuarios_controllers as user_controllers
 from src.domains.usuarios.models.usuarios_model import Usuario
+from src.services.states.app_state_manager import AppStateManager
 from src.shared.utils.messages import message_snackbar, MessageType
 from src.shared.utils.file_helpers import generate_unique_bucket_filename
 
@@ -35,13 +36,6 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
             alignment=ft.alignment.center,
         )
 
-    # Configuração inicial dos componentes de texto
-    page.user_name_text.value = current_user.name.primeiro_e_ultimo_nome  # type: ignore [attr-defined]
-    page.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE  # type: ignore [attr-defined]
-    page.user_name_text.visible = True  # type: ignore [attr-defined]
-    page.company_name_text_btn.theme_style = ft.TextThemeStyle.BODY_MEDIUM  # type: ignore [attr-defined]
-    page.company_name_text_btn.visible = True  # type: ignore [attr-defined]
-
     profile = ft.Text(
         value=current_user.profile.value,
         theme_style=ft.TextThemeStyle.BODY_SMALL,
@@ -60,8 +54,19 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
     # Container da foto com ícone de câmera
     user_avatar, camera_icon = _create_user_avatar(page, user_photo, status_text, progress_bar)
 
+    # Configuração inicial dos componentes de texto
+    app_state: AppStateManager = page.app_state  # type: ignore [attr-defined]
+    app_state.user_name_text.value = current_user.name.primeiro_e_ultimo_nome
+    app_state.user_name_text.theme_style = ft.TextThemeStyle.BODY_LARGE
+    app_state.user_name_text.visible = True
+    app_state.company_name_text_btn.style = ft.ButtonStyle(
+        text_style=ft.TextStyle(
+            color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.BOLD)
+    )
+    app_state.company_name_text_btn.visible = True
+
     # Ação do botão de empresa
-    page.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page)  # type: ignore [attr-defined]
+    app_state.company_name_text_btn.on_click = lambda e: _on_click_empresa_btn(page)
 
     return ft.Container(
         content=ft.Column(
@@ -71,9 +76,9 @@ def create_sidebar_header(page: ft.Page) -> ft.Container:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=0,
                 ),
-                page.user_name_text,  # type: ignore [attr-defined]
+                app_state.user_name_text,
                 profile,
-                page.company_name_text_btn,  # type: ignore [attr-defined]
+                app_state.company_name_text_btn,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
@@ -102,13 +107,15 @@ def _create_user_photo(current_user: Usuario) -> ft.Control:
 def _update_company_text_btn(page: ft.Page):
     """Atualiza o texto e tooltip do botão de empresa."""
     current_company = get_current_company(page)
+    app_state: AppStateManager = page.app_state  # type: ignore [attr-defined]
+
     if current_company.get('id'):
-        page.company_name_text_btn.tooltip = "Empresa selecionada"  # type: ignore [attr-defined]
+        app_state.company_name_text_btn.tooltip = "Empresa selecionada"  # type: ignore [attr-defined]
         cia_name = current_company.get('trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
-        page.company_name_text_btn.text = cia_name  # type: ignore [attr-defined]
+        app_state.company_name_text_btn.text = cia_name  # type: ignore [attr-defined]
     else:
-        page.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"  # type: ignore [attr-defined]
-        page.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"  # type: ignore [attr-defined]
+        app_state.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"  # type: ignore [attr-defined]
+        app_state.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"  # type: ignore [attr-defined]
 
 def _on_click_empresa_btn(page: ft.Page):
     """Gerencia o clique no botão de empresa."""

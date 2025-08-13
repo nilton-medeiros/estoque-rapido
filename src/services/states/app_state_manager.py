@@ -1,9 +1,9 @@
 import logging
 import flet as ft
 
-from typing import Any
-
+from typing import Any, Optional, TypedDict
 from src.domains.usuarios.models.usuarios_model import Usuario
+
 from src.shared.config import get_theme_colors
 
 from .state_validator import StateValidator
@@ -12,19 +12,35 @@ from src.shared.utils import MessageType, message_snackbar
 logger = logging.getLogger(__name__)
 
 
+class AppStateDict(TypedDict):
+    """Define a estrutura do dicionário de estado para melhor type-hinting."""
+    usuario: Optional[Usuario]
+    empresa: dict[str, Any]
+    form_data: dict[str, Any]
+
+
 class AppStateManager:
     """
     Gerencia o estado global da aplicação e suas atualizações.
     """
-
     def __init__(self, page: ft.Page):
         self.page = page
-        self._state: dict[str, Any] = {
+        self._state: AppStateDict = {
             'usuario': None,  # Usuário logado obj
             'empresa': {},  # Empresa logada dict
             'form_data': {},  # Armazenamento temporário de dados para preenchimento de formulários em entidades de domínio.
         }
         self._validator = StateValidator()
+        self.user_name_text: ft.Text = ft.Text("Nenhum Usuário logado")
+        self.company_name_text_btn: ft.TextButton = ft.TextButton(
+            text="NENHUMA EMPRESA SELECIONADA",
+            style=ft.ButtonStyle(
+                alignment=ft.alignment.center,
+                text_style=ft.TextStyle(
+                    color=ft.Colors.WHITE, size=14, weight=ft.FontWeight.NORMAL)
+            ),
+            tooltip="Clique aqui e preencha os dados da empresa"
+        )
 
     @property
     def usuario(self):

@@ -6,6 +6,7 @@ from src.domains.shared.context.session import get_session_colors
 from src.domains.shared import Password, RegistrationStatus
 from src.pages.partials import get_responsive_sizes, build_input_field
 
+from src.services.states.app_state_manager import AppStateManager
 from src.shared.utils import MessageType, message_snackbar, validate_email
 
 import src.domains.empresas.controllers.empresas_controllers as company_controllers
@@ -23,10 +24,11 @@ class LoginView:
         self.password_input: ft.TextField
         self.error_text: ft.Text
         self.login_button: ft.OutlinedButton
+        self.title_text: ft.Text
+        self.subtitle_text: ft.Text
         self.app_colors = get_session_colors(page)
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
-        self.page.update()
 
     def build_login_button(self, sizes: dict) -> ft.OutlinedButton:
         return ft.OutlinedButton(
@@ -74,9 +76,23 @@ class LoginView:
         self.login_button: ft.OutlinedButton = self.build_login_button(sizes)
         self.error_text: ft.Text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
-
-        self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
-        self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso
+        self.title_text = ft.Text(
+            "Bem-vindo",
+            size=sizes["font_size"] * 2,
+            weight=ft.FontWeight.BOLD,
+            color=ft.Colors.WHITE
+        )
+        self.subtitle_text = ft.Text(
+            "Faça o login para entrar",
+            size=sizes["font_size"],
+            color=ft.Colors.WHITE70,
+            weight=ft.FontWeight.W_300
+        )
+        self.app_state: AppStateManager = self.page.app_state  # type: ignore [attr-defined]
+        if self.app_state.user_name_text:
+            self.app_state.user_name_text.visible = False
+        if self.app_state.company_name_text_btn:
+            self.app_state.company_name_text_btn.visible = False
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -95,25 +111,13 @@ class LoginView:
             height=700,
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        "Bem-vindo",
-                        size=sizes["font_size"] * 2,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.WHITE
-                    ),
-                    ft.Text(
-                        "Faça o login para entrar",
-                        size=sizes["font_size"],
-                        color=ft.Colors.WHITE70,
-                        weight=ft.FontWeight.W_300
-                    ),
+                    self.title_text,
+                    self.subtitle_text,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.email_input,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
                     self.password_input,
                     self.error_text,
-                    self.page.user_name_text,   # Invisible, sem uso # type: ignore
-                    self.page.company_name_text_btn,   # Invisible, sem uso # type: ignore
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
@@ -187,10 +191,10 @@ class LoginView:
 
             # Atualiza o estado do app com o novo usuário antes da navegação
             user = result["data"]["authenticated_user"]
-            self.page.app_state.set_usuario(user) # type: ignore
+            self.app_state.set_usuario(user) # type: ignore
 
             if user.empresa_id is None:
-                self.page.app_state.clear_empresa_data() # type: ignore
+                self.app_state.clear_empresa_data() # type: ignore
                 self.page.on_resized = None
                 self.page.go('/home')
                 return
@@ -200,7 +204,7 @@ class LoginView:
 
             if result["status"] == "error":
                 user.empresa_id = None
-                self.page.app_state.clear_empresa_data() # type: ignore
+                self.app_state.clear_empresa_data()
                 self.page.on_resized = None
                 self.page.go('/home')
                 return
@@ -209,10 +213,10 @@ class LoginView:
 
             # Adiciona o empresa_id no state e publica-a
             if cia.status == RegistrationStatus.ACTIVE:
-                self.page.app_state.set_empresa(cia.to_dict()) # type: ignore
+                self.app_state.set_empresa(cia.to_dict())
             else:
                 user.empresa_id = None
-                self.page.app_state.clear_empresa_data() # type: ignore
+                self.app_state.clear_empresa_data()
 
             self.page.on_resized = None
             self.page.go('/home')
@@ -255,9 +259,8 @@ class LoginView:
         )
 
         # Atualiza o container principal
-        form_column = self.form.content
-        form_column.controls[0].size = sizes["font_size"] * 2  # type: ignore # Título
-        form_column.controls[1].size = sizes["font_size"]      # type: ignore # Subtítulo
+        self.title_text.size = sizes["font_size"] * 2
+        self.subtitle_text.size = sizes["font_size"]
 
         self.error_text.size = sizes["font_size"]
 

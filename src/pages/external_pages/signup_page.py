@@ -63,7 +63,7 @@ class SignupView:
                 )
             ),
             on_click=self.handle_signup,
-            # animate=ft.animation.Animation(300, ft.AnimationCurve.EASE_OUT)
+            # animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT)
         )
 
     def build_form(self) -> ft.Container:
@@ -85,9 +85,6 @@ class SignupView:
             size=sizes["font_size"],
             visible=False
         )
-
-        self.page.user_name_text.visible = False  # type: ignore # Invisible, sem uso
-        self.page.company_name_text_btn.visible = False  # type: ignore # Invisible, sem uso
 
         return ft.Container(
             alignment=ft.alignment.center,
@@ -117,8 +114,6 @@ class SignupView:
                         color=ft.Colors.WHITE70,
                         weight=ft.FontWeight.W_300
                     ),
-                    self.page.user_name_text,   # Invisible, sem uso # type: ignore
-                    self.page.company_name_text_btn,   # Invisible, sem uso # type: ignore
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.name_input,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
