@@ -1,13 +1,7 @@
 import logging
-import os
-import base64
-import mimetypes
-
-from enum import Enum
 
 import flet as ft
 
-import src.controllers.bucket_controllers as bucket_controllers
 import src.domains.categorias.controllers.categorias_controllers as category_controllers
 
 from src.domains.shared import RegistrationStatus
@@ -16,10 +10,8 @@ from src.domains.categorias.models import ProdutoCategorias
 from src.domains.shared.context.session import get_current_user, get_session_colors
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
-from src.services import UploadFile
+from src.pages.partials.image_uploader import ImageUploadHandler
 from src.shared.utils import message_snackbar, MessageType
-from src.shared.utils.file_helpers import generate_unique_bucket_filename
-from src.shared.utils.find_project_path import find_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +35,11 @@ class ProdutoCategoriaForm:
 
         # Responsividade
         self._create_form_fields()
+        self.image_uploader = ImageUploadHandler(
+            page=self.page,
+            image_frame=self.image_frame,
+            bucket_prefix=f"empresas/{self.empresa_logada['id']}/categorias"
+        )
         self.form = self.build_form()
         self.page.on_resized = self._page_resize
 
@@ -96,7 +93,7 @@ class ProdutoCategoriaForm:
             height=250,
             border=ft.border.all(color=ft.Colors.GREY_400, width=1),
             border_radius=ft.border_radius.all(20),
-            on_click=self._show_image_dialog,  # Também
+            on_click=lambda e: self.page.run_task(self.image_uploader.open_dialog, e),
             on_hover=on_hover_image,
             tooltip="Clique aqui para adicionar uma imagem da categoria",
         )
@@ -109,7 +106,7 @@ class ProdutoCategoriaForm:
             margin=ft.margin.only(top=-5),
             ink=True,
             on_hover=on_hover_image,
-            on_click=self._show_image_dialog,
+            on_click=lambda e: self.page.run_task(self.image_uploader.open_dialog, e),
             border_radius=ft.border_radius.all(100),
             padding=8,
         )
@@ -121,81 +118,6 @@ class ProdutoCategoriaForm:
             width=1400,
         )
 
-    async def _show_image_dialog(self, e) -> None:
-        self.image_frame.border = ft.border.all(
-            color=self.app_colors["primary"], width=1)
-        self.image_frame.update()
-
-        upload_file = UploadFile(
-            page=self.page,
-            title_dialog="Selecionar imagem dos Produtos da Categoria",
-            allowed_extensions=["png", "jpg", "jpeg", "svg"],
-        )
-
-        local_upload_file = await upload_file.open_dialog()
-
-        # O arquivo ou URL do logo foi obtido. Não há erros.
-        self.is_image_url_web = upload_file.is_url_web
-        self.image_url = None
-
-        if upload_file.is_url_web:
-            # Obtem a url do arquivo para a imagem, atualiza a tela com a imagem da categoria e termina
-            self.image_url = upload_file.url_file
-            self.local_upload_file = None
-
-            categoria_img = ft.Image(
-                src=self.image_url,
-                error_content=ft.Text("Erro!"),
-                repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.CONTAIN,
-                border_radius=ft.border_radius.all(20),
-            )
-            self.image_frame.content = categoria_img
-            self.image_section.update()
-            return
-
-        """
-        O arquivo de Imagem da Categoria está salvo no diretório local do servidor em "uploads/"
-        do projeto e está em self.local_upload_file.
-        """
-        if local_upload_file:
-            self.local_upload_file = local_upload_file
-            project_root = find_project_root(__file__)  # Obtem o diretório raiz do projeto
-            # O operador / é usado para concatenar partes de caminhos de forma segura e independente do sistema operacional.
-            img_file = project_root / self.local_upload_file
-
-            try:
-                with open(img_file, "rb") as f_img:
-                    img_data = f_img.read()
-
-                base64_data = base64.b64encode(img_data).decode('utf-8')
-                mime_type, _ = mimetypes.guess_type(str(img_file))
-                if not mime_type:
-                    # Tenta inferir pela extensão se mimetypes falhar
-                    ext = str(img_file).split('.')[-1].lower()
-                    if ext == "jpg" or ext == "jpeg":
-                        mime_type = "image/jpeg"
-                    elif ext == "png":
-                        mime_type = "image/png"
-                    elif ext == "svg":
-                        mime_type = "image/svg+xml"
-                    else:
-                        mime_type = "application/octet-stream" # Fallback genérico
-
-                categoria_img = ft.Image(
-                    src_base64=base64_data,
-                    error_content=ft.Text("Erro ao carregar (base64)!"),
-                    repeat=ft.ImageRepeat.NO_REPEAT,
-                    fit=ft.ImageFit.CONTAIN,
-                    border_radius=ft.border_radius.all(20),
-                )
-            except Exception as ex:
-                logger.error(f"Erro ao ler arquivo de imagem {img_file} para base64: {ex}")
-                categoria_img = ft.Image(
-                    error_content=ft.Text(f"Erro crítico ao carregar imagem: {ex}"),
-                )
-            self.image_frame.content = categoria_img
-            self.image_frame.update()
 
     def build_form(self) -> ft.Container:
         """Constrói o formulário de Categoria de Produtos"""
@@ -259,23 +181,7 @@ class ProdutoCategoriaForm:
 
         self.description.value = self.data.get('description', '')
 
-        if self.data.get("image_url"):
-            # vars, não são fields do formulário
-            self.image_url = self.data.get("image_url")
-            self.previous_image_url = self.data.get("image_url")
-
-            # Monta a imagem e associa ao campo do formulário
-            categoria_img = ft.Image(
-                src=self.image_url,
-                error_content=ft.Text("Erro!"),
-                repeat=ft.ImageRepeat.NO_REPEAT,
-                fit=ft.ImageFit.CONTAIN,
-                border_radius=ft.border_radius.all(20),
-            )
-            self.image_frame.content = categoria_img
-        else:
-            self.image_url = None
-            self.previous_image_url = None
+        self.image_uploader.set_initial_image(self.data.get("image_url"))
 
 
     def validate_form(self) -> str | None:
@@ -321,64 +227,12 @@ class ProdutoCategoriaForm:
         self.data['status'] = RegistrationStatus.ACTIVE if self.status.value else RegistrationStatus.INACTIVE
         self.data['description'] = self.description.value
 
-        if self.image_url:
-            self.data['image_url'] = self.image_url
+        self.data['image_url'] = self.image_uploader.get_final_image_url()
 
         if not self.data.get('empresa_id'):
             self.data["empresa_id"] = self.empresa_logada["id"]
 
         return ProdutoCategorias.from_dict(self.data)
-
-
-    def send_to_bucket(self):
-        # Faz o upload do arquivo de imagem da categoria para o bucket
-        if not self.local_upload_file:
-            # Não há arquivo local para enviar
-            return False
-
-        try:
-            prefix = f"empresas/{self.empresa_logada['id']}/categorias"
-            file_name_bucket = generate_unique_bucket_filename(
-                original_filename=self.local_upload_file, prefix=prefix)
-            self.image_url = bucket_controllers.handle_upload_bucket(local_path=self.local_upload_file, key=file_name_bucket)
-
-            if self.image_url:
-                # Atualiza logo na tela
-                categoria_img = ft.Image(
-                    src=self.image_url,
-                    error_content=ft.Text("Erro!"),
-                    repeat=ft.ImageRepeat.NO_REPEAT,
-                    fit=ft.ImageFit.CONTAIN,
-                    border_radius=ft.border_radius.all(20),
-                )
-                self.image_frame.content = categoria_img
-                self.image_frame.update()
-                return True
-
-            # A Imagem não é válida, URL não foi gerada, mantém a imagem anterior se houver
-            if self.previous_image_url:
-                self.image_url = self.previous_image_url
-
-            message_snackbar(
-                page=self.page, message="Não foi possível carregar imagem da categoria de produtos!", message_type=MessageType.ERROR)
-
-            return False
-        except ValueError as e:
-            msg = f"Erro de validação ao carregar imagem: {str(e)}"
-            message_snackbar(page=self.page, message=msg,
-                             message_type=MessageType.ERROR)
-            logger.error(msg)
-        except RuntimeError as e:
-            msg = f"Erro ao carregar imagem: {str(e)}"
-            message_snackbar(page=self.page, message=msg,
-                             message_type=MessageType.ERROR)
-            logger.error(msg)
-        finally:
-            # Independente de sucesso, remove o arquivo de imagem do diretório local uploads/
-            try:
-                os.remove(self.local_upload_file)
-            except:
-                pass  # Ignora erros na limpeza do arquivo
 
     def build(self) -> ft.Container:
         return self.form
@@ -423,22 +277,16 @@ def show_category_form(page: ft.Page) -> ft.View:
         # Instância do objeto ProdutoCategorias com os dados do formulário para enviar para o backend
         prod_categoria: ProdutoCategorias = categorias_view.get_form_object()
 
-        if not categorias_view.is_image_url_web and categorias_view.local_upload_file:
-            # Envia o arquivo de imagem para o bucket
-            if categorias_view.send_to_bucket():
-                prod_categoria.image_url = categorias_view.image_url
+        if categorias_view.image_uploader.local_upload_path:
+            if categorias_view.image_uploader.send_to_bucket():
+                # A URL da imagem já foi atualizada no handler, agora atualizamos o objeto do modelo
+                prod_categoria.image_url = categorias_view.image_uploader.get_final_image_url()
             else:
-                message_snackbar(
-                    page=page, message="Erro ao enviar imagem para o bucket", message_type=MessageType.WARNING)
+                # A mensagem de erro já é exibida pelo handler
+                save_btn.disabled = False
+                return
 
-            # Apaga arquivo do servidor local
-            try:
-                os.remove(categorias_view.local_upload_file)
-            except:
-                pass  # Ignora erros na limpeza do arquivo
-            categorias_view.local_upload_file = None
-
-        # Envia os dados para o backend, os exceptions foram tratadas no controller e result contém
+        # Envia os dados para o backend, as exceptions foram tratadas no controller e result contém
         # o status da operação.
         result = category_controllers.handle_save(
             categoria=prod_categoria,
@@ -455,13 +303,7 @@ def show_category_form(page: ft.Page) -> ft.View:
         page.back() # type: ignore [attr-defined]
 
     def exit_form_categorias(e):
-        if not categorias_view.is_image_url_web and categorias_view.local_upload_file:
-            try:
-                os.remove(categorias_view.local_upload_file)
-            except:
-                pass  # Ignora erros na limpeza do arquivo
-            categorias_view.local_upload_file = None
-
+        categorias_view.image_uploader.cleanup_local_file()
         # Limpa o formulário sem salvar e volta para à página anterior que a invocou
         categorias_view.clear_form()
         page.back() # type: ignore [attr-defined]
