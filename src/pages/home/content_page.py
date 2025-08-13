@@ -149,7 +149,7 @@ class MainContent(ft.Container):
                         ft.Text("Hoje", style=ft.TextStyle(color=ft.Colors.WHITE, weight=ft.FontWeight.W_900, size=20)),
                         ft.Container(
                             content=ft.Text(".", style=ft.TextStyle(color=ft.Colors.WHITE, weight=ft.FontWeight.W_900, size=40)),
-                            offset=ft.transform.Offset(0, -0.2),
+                            offset=ft.Offset(0, -0.2),
                         ),
                         ft.Text(date_description, style=ft.TextStyle(color=ft.Colors.PRIMARY, size=18)),
                     ],

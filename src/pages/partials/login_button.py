@@ -100,11 +100,11 @@ class LoginButton:
                 }
             ),
             on_click=self.handle_login,
-            animate_size=ft.animation.Animation(
+            animate_size=ft.Animation(
                 300, ft.AnimationCurve.EASE_OUT),
-            animate_opacity=ft.animation.Animation(
+            animate_opacity=ft.Animation(
                 300, ft.AnimationCurve.EASE_OUT),
-            animate_scale=ft.animation.Animation(
+            animate_scale=ft.Animation(
                 300, ft.AnimationCurve.EASE_OUT)
         )
 
