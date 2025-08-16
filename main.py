@@ -63,8 +63,9 @@ def main(page: ft.Page):
                     clear_usuario_ui()
             case PubSubTopics.EMPRESA_UPDATED:
                 # Executa a atualização do dashboard em uma task separada (async)
-                page.run_task(refresh_dashboard_session, page) # type: ingnore [attr-defined]
-                if page.app_state.empresa.get('corporate_name'): # type: ignore  [attr-defined]
+                page.run_task(refresh_dashboard_session, page)
+                empresa = page.app_state.empresa  # type: ignore [attr-defined]
+                if empresa.get('corporate_name'):
                     # Atualiza elementos da UI que dependem da empresa
                     update_empresa_dependent_ui()
                 else:
