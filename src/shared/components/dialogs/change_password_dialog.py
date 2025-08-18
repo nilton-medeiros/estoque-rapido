@@ -224,7 +224,7 @@ class ChangePasswordDialog:
         """
         # Simulação - implemente a lógica real aqui
         user_id = self.user.id if self.user.id else ""
-        response = user_controllers.handle_change_password(user_id=user_id, new_password=new_password)
+        response = user_controllers.handle_update_user_password(user_id=user_id, new_password=new_password)
         return response
 
     def _cancel_dialog(self, e):
@@ -232,7 +232,7 @@ class ChangePasswordDialog:
         self._clear_fields()
         if isinstance(self.dialog, ft.AlertDialog):
             self.page.close(self.dialog)
-        e.control.page.update()
+        self.page.update()
 
     def show(self):
         """Exibe o dialog de alteração de senha"""

@@ -15,8 +15,16 @@ from src.domains.shared import RegistrationStatus
 from src.domains.usuarios.repositories.implementations.firebase_usuarios_repository import FirebaseUsuariosRepository
 from src.shared.config.get_app_colors import THEME_COLOR_NAMES
 from src.domains.usuarios.services.usuarios_services import UsuariosServices
-from src.services.emails.send_email import EmailAuthenticationError, EmailConnectionError, EmailMessage, EmailRecipientError, \
-    EmailSendError, EmailValidationError, ModernEmailSender, create_email_config_from_env
+from src.services.emails.send_email import (
+    EmailAuthenticationError,
+    EmailConnectionError,
+    EmailMessage,
+    EmailRecipientError,
+    EmailSendError,
+    EmailValidationError,
+    ModernEmailSender,
+    create_email_config_from_env
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +63,7 @@ def handle_login(email: str, password: str) -> dict[str, Any]:
 
     return response
 
-def handle_change_password(user_id: str, new_password: str) -> dict[str, Any]:
+def handle_update_user_password(user_id: str, new_password: str) -> dict[str, Any]:
 
     response: dict[str, Any] = {}
 
@@ -315,7 +323,7 @@ def handle_update_user_companies(usuario_id: str, empresas: set, empresa_ativa_i
 
     return response
 
-def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[str, Any]:
+def handle_get_user_by_id(id: str) -> dict[str, Any]:
     """
     Manipula a operação de buscar usuário.
 
@@ -323,8 +331,63 @@ def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[
     Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
 
     Args:
-        id (str): O ID do usuário a ser buscado. Se for None, verifica se é para buscar por email
-        email (str): O email do usuário a ser buscado. Se for None, verifica se é para buscar por id
+        id (str): O ID do usuário a ser buscado.
+
+    Returns:
+        dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
+
+    Raises:
+        ValueError: Se houver um erro de validação ao buscar o usuário.
+        Exception: Se ocorrer um erro inesperado durante a operação.
+
+    Exemplo:
+        >>> response = handle_get_user_by_id('12345678901234567890123456')
+        >>> print(response)
+    """
+    response: dict[str, Any] = {}
+
+    # Verifica se o id ou email foram passados
+    if not id:
+        response["status"] = "error"
+        response["message"] = "ID deve ser passado"
+        logger.warning(response["message"])
+        return response
+
+    try:
+        # Usa o repositório do Firebase para buscar o usuário
+        repository = FirebaseUsuariosRepository()
+        usuarios_services = UsuariosServices(repository)
+
+        usuario = usuarios_services.find_by_id(id)
+
+        if usuario:
+            response["status"] = "success"
+            response["data"] = {"usuario": usuario, "message": "Usuário encontrado com sucesso!"}
+        else:
+            response["status"] = "error"
+            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id}"
+
+    except ValueError as e:
+        response["status"] = "error"
+        response["message"] = f"Erro de validação: {str(e)}"
+        logger.error(response["message"])
+    except Exception as e:
+        response["status"] = "error"
+        response["message"] = str(e)
+        logger.error(response["message"])
+
+    return response
+
+
+def handle_get_user_by_email(email: str) -> dict[str, Any]:
+    """
+    Manipula a operação de buscar usuário.
+
+    Esta função manipula a operação de buscar um usuário no banco de dados utilizando o email fornecido.
+    Ela utiliza um repositório específico para realizar a busca e retorna os detalhes do usuário, se encontrado.
+
+    Args:
+        email (str): O email do usuário a ser buscado.
 
     Returns:
         dict: Um dicionário contendo o status da operação, uma mensagem de sucesso ou erro, e os dados do usuário ou None.
@@ -335,15 +398,15 @@ def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[
 
     Exemplo:
         >>> email = "angelina.jolie@gmail.com"
-        >>> response = get_by_id_or_email(email)
+        >>> response = handle_get_user_by_email(email)
         >>> print(response)
     """
     response: dict[str, Any] = {}
 
     # Verifica se o id ou email foram passados
-    if not id and not email:
+    if not email:
         response["status"] = "error"
-        response["message"] = "Um dos argumentos id ou email deve ser passado"
+        response["message"] = "Email deve ser passado"
         logger.warning(response["message"])
         return response
 
@@ -352,19 +415,14 @@ def get_by_id_or_email(id: str | None = None, email: str | None = None) -> dict[
         repository = FirebaseUsuariosRepository()
         usuarios_services = UsuariosServices(repository)
 
-        usuario = None
-
-        if id:
-            usuario = usuarios_services.find_by_id(id)
-        elif email:
-            usuario = usuarios_services.find_by_email(email)
+        usuario = usuarios_services.find_by_email(email)
 
         if usuario:
             response["status"] = "success"
             response["data"] = {"usuario": usuario, "message": "Usuário encontrado com sucesso!"}
         else:
             response["status"] = "error"
-            response["message"] = f"Usuário não encontrado. Verifique o id ou email: {id or email}"
+            response["message"] = f"Usuário não encontrado. Verifique o email: {email}"
 
     except ValueError as e:
         response["status"] = "error"
