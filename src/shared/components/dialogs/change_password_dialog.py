@@ -191,7 +191,6 @@ class ChangePasswordDialog:
                 self._show_message("Senha atual incorreta", is_error=True)
                 return
 
-            # Simulação de salvamento da nova senha
             new_password = self.new_password_field.value if self.new_password_field.value else ""
             result = self._save_new_password(new_password)
 
