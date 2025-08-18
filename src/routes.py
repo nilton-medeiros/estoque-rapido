@@ -4,6 +4,7 @@ from src.pages.clientes.clientes_form_page import show_client_form
 from src.pages.clientes.clientes_grid_page import show_clients_grid
 from src.pages.clientes.clientes_grid_recycle_page import show_clients_grid_trash
 from src.pages.empresas import show_companies_grid, show_company_main_form, show_company_tax_form, show_companies_grid_trash
+from src.pages.external_pages.forgot_password_page import show_forgot_pswd_page
 from src.pages.formas_pagamento.formas_pagamento_form_page import show_formas_pagamento_form
 from src.pages.formas_pagamento.formas_pagamento_grid_page import show_formas_pagamento_grid
 from src.pages.formas_pagamento.formas_pagamento_grid_recycle_page import show_formas_pagamento_grid_trash
@@ -24,6 +25,8 @@ ROUTE_HANDLERS = {
     '/': show_landing_page,
     '/login': show_login_page,
     '/signup': show_signup_page,
+    '/forgot-password': show_forgot_pswd_page,
+
 
     # Rotas protegidas (requerem login)
     '/home': show_home_page,

@@ -2,6 +2,7 @@ import logging
 
 import flet as ft
 
+from src.domains.shared.context import session
 from src.domains.shared.context.session import get_session_colors
 from src.domains.shared import Password, RegistrationStatus
 from src.pages.partials import get_responsive_sizes, build_input_field
@@ -27,6 +28,7 @@ class LoginView:
         self.title_text: ft.Text
         self.subtitle_text: ft.Text
         self.app_colors = get_session_colors(page)
+        self.page_width: int = session.get_current_page_width(page)
         self.form = self.build_form()
         self.page.on_resized = self.page_resize
 
@@ -67,12 +69,12 @@ class LoginView:
         )
 
     def build_form(self) -> ft.Container:
-        sizes = get_responsive_sizes(self.page.width)
+        sizes = get_responsive_sizes(self.page_width)
 
         self.email_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL) # type: ignore
+            page_width=self.page_width, app_colors=self.app_colors, label="Email", icon=ft.Icons.EMAIL) # type: ignore
         self.password_input = build_input_field(
-            page_width=self.page.width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True) # type: ignore
+            page_width=self.page_width, app_colors=self.app_colors, label="Senha", icon=ft.Icons.LOCK, password=True, can_reveal_password=True) # type: ignore
         self.login_button: ft.OutlinedButton = self.build_login_button(sizes)
         self.error_text: ft.Text = ft.Text(
             color=ft.Colors.RED_400, size=sizes["font_size"], visible=False)
@@ -121,6 +123,11 @@ class LoginView:
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.login_button,
                     ft.Divider(height=10, color=ft.Colors.TRANSPARENT),
+                    ft.TextButton(
+                        content=ft.Text(value="Esqueceu a senha?",
+                                        color=self.app_colors["accent"]),
+                        on_click=lambda _: self.page.go('/forgot-password'),
+                    ),
                     ft.TextButton(
                         content=ft.Text(value="Criar uma conta",
                                         color=self.app_colors["accent"]),
@@ -227,6 +234,7 @@ class LoginView:
             self.login_button.update()
 
     def page_resize(self, e):
+        self.page_width: int = session.get_current_page_width(e.page)
         sizes = get_responsive_sizes(e.page.width)
 
         # Atualiza tamanhos dos inputs
