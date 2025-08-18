@@ -207,10 +207,12 @@ def main(page: ft.Page):
             page.update()
 
     def view_pop(e: ft.ViewPopEvent):
-        page.views.pop()
-        top_view = page.views[-1]
-        if top_view.route:
-            page.go(top_view.route)
+        # Só remove a view se houver mais de uma na pilha.
+        if len(page.views) > 1:
+            page.views.pop()
+            top_view = page.views[-1]
+            if top_view.route:
+                page.go(top_view.route)
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop
