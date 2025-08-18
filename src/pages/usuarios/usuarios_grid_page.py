@@ -26,7 +26,7 @@ def show_users_grid(page: ft.Page):
             case "SOFT_DELETE":
                 if usuario:
                     from src.pages.usuarios import usuarios_actions_page as user_actions
-                    is_deleted = await user_actions.send_to_trash(page=page, usuario=usuario)
+                    is_deleted = await user_actions.send_to_trash(page=page, user_to_delete=usuario)
                     if is_deleted:
                         await controller.load_usuarios()
 
