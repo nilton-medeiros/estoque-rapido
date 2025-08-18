@@ -25,9 +25,8 @@ class FormasPagamentoForm:
         self.app_colors: dict[str, str] = session.get_session_colors(page)
 
         # Campos de redimencionamento do formulário
-        self.page_width: int | float = page.width if page.width else 0
-        self.responsive_sizes: dict = get_responsive_sizes(page.width)
-        self.page_width = session.get_current_page_width(page)
+        self.page_width: int = session.get_current_page_width(page)
+        self.responsive_sizes: dict = get_responsive_sizes(self.page_width)
         # Referências a variáveis de campos para redimencionamento
         self.title_ref = ft.Ref[ft.Text]()
 

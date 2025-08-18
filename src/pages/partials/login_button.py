@@ -1,5 +1,7 @@
 import flet as ft
 
+from src.domains.shared.context import session
+
 
 class LoginButton:
     '''
@@ -26,7 +28,7 @@ class LoginButton:
 
     def __init__(self, page: ft.Page):
         self.page = page
-        self.page_width: int|float = page.width if page.width else 0
+        self.page_width: int = session.get_current_page_width(page)
         self.btn_login = self.build_login_button()
 
 
