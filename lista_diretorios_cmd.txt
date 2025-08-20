@@ -1,0 +1,4 @@
+# Lista de diretórios do projeto Estoque Rápido
+
+# Comando usado para gerar esta lista:
+# Terminal do windows: dir *.* /o:n /b /s | findstr /v "\.venv" | findstr /v "^\." | findstr /v "__pycache__" | findstr /v ".git" > lista_bruta_diretorios.txt
