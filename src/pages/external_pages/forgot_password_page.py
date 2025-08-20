@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import os
 from typing import Dict, Any
 
 import flet as ft
@@ -247,6 +248,8 @@ class ForgotPasswordView:
         Returns:
             EmailMessage: Objeto de email formatado
         """
+        URL_LOGIN = os.getenv("URL_LOGIN")
+
         html_body = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
             <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -277,7 +280,7 @@ class ForgotPasswordView:
                 </div>
 
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://estoque-rapido.com/login"
+                    <a href="{URL_LOGIN}"
                        style="background-color: {self.app_colors.get('accent', '#007bff')}; color: white; padding: 15px 30px;
                               text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
                         🚀 Fazer Login Agora
