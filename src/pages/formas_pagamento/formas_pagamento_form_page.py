@@ -6,7 +6,7 @@ from src.domains.formas_pagamento.models import FormaPagamento, TipoPagamento, T
 from src.domains.formas_pagamento.repositories.implementations import FirebaseFormasPagamentoRepository
 from src.domains.formas_pagamento.services import FormasPagamentoService
 import src.domains.shared.context.session as session
-#from src.domains.shared.context.session import get_current_company, get_current_data_form, get_current_page_width, get_current_user, get_session_colors
+
 from src.domains.shared.models.registration_status import RegistrationStatus
 from src.pages.partials import build_input_field
 from src.pages.partials.app_bars.appbar import create_appbar_back
