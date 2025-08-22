@@ -12,10 +12,20 @@ from src.shared.utils import MessageType, message_snackbar
 logger = logging.getLogger(__name__)
 
 
+class EmpresaStateDict(TypedDict, total=False): # total=False porque o estado pode começar vazio
+    """Define a estrutura do dicionário de estado da empresa para a UI."""
+    id: str
+    corporate_name: str
+    trade_name: str
+    store_name: str
+    cnpj: dict[str, Any] # ou str, dependendo de como é armazenado
+    email: str
+    # Adicione outros campos que são frequentemente acessados no estado
+
 class AppStateDict(TypedDict):
     """Define a estrutura do dicionário de estado para melhor type-hinting."""
     usuario: Optional[Usuario]
-    empresa: dict[str, Any]
+    empresa: EmpresaStateDict
     form_data: dict[str, Any]
 
 
@@ -27,7 +37,7 @@ class AppStateManager:
         self.page = page
         self._state: AppStateDict = {
             'usuario': None,  # Usuário logado obj
-            'empresa': {},  # Empresa logada dict
+            'empresa': {},  # Empresa logada dict (usando EmpresaStateDict)
             'form_data': {},  # Armazenamento temporário de dados para preenchimento de formulários em entidades de domínio.
         }
         self._validator = StateValidator()
@@ -78,7 +88,7 @@ class AppStateManager:
             self.handle_error(f"Erro ao atualizar usuário: {str(e)}")
             return False
 
-    def set_empresa(self, empresa_data: dict | None) -> bool:
+    def set_empresa(self, empresa_data: EmpresaStateDict | None) -> bool:
         """
         Atualiza os dados da empresa no estado global.
         """

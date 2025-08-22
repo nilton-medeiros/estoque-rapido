@@ -1,7 +1,10 @@
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 from src.domains.shared import NomePessoa, PhoneNumber
 from src.domains.usuarios.models.usuarios_model import Usuario
+
+if TYPE_CHECKING:
+    from src.services.states.app_state_manager import EmpresaStateDict
 
 
 class StateValidator:
@@ -19,7 +22,7 @@ class StateValidator:
         return True, ""
 
     @staticmethod
-    def validate_empresa_data(company_data: dict) -> Tuple[bool, str]:
+    def validate_empresa_data(company_data: "EmpresaStateDict") -> Tuple[bool, str]:
         """
         Valida os dados da empresa.
         """

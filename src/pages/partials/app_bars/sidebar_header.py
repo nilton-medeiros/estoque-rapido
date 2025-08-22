@@ -111,8 +111,8 @@ def _update_company_text_btn(page: ft.Page):
 
     if current_company.get('id'):
         app_state.company_name_text_btn.tooltip = "Empresa selecionada"  # type: ignore [attr-defined]
-        cia_name = current_company.get('trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
-        app_state.company_name_text_btn.text = cia_name  # type: ignore [attr-defined]
+        company_name = current_company.get('trade_name') or current_company.get('corporate_name', 'EMPRESA NÃO DEFINIDA')
+        app_state.company_name_text_btn.text = company_name  # type: ignore [attr-defined]
     else:
         app_state.company_name_text_btn.tooltip = "Clique aqui e preencha os dados da empresa"  # type: ignore [attr-defined]
         app_state.company_name_text_btn.text = "NENHUMA EMPRESA SELECIONADA"  # type: ignore [attr-defined]
