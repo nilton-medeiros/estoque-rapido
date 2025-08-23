@@ -8,6 +8,7 @@ from src.domains.usuarios.models.usuarios_model import Usuario
 def handle_save_pedido(pedido: Pedido, current_user: Usuario) -> dict:
     """Cria ou atualiza um pedido."""
     response = {}
+    operation = "atualizado"  # Inicializa a variável fora do try
     try:
         repository = FirebasePedidosRepository()
         services = PedidosServices(repository)
@@ -16,8 +17,6 @@ def handle_save_pedido(pedido: Pedido, current_user: Usuario) -> dict:
             raise ValueError("Pedido é necessário para salvar.")
         if not current_user:
             raise ValueError("Usuário logado é necessário para salvar pedido.")
-
-        operation = "atualizado"
 
         if pedido.id:
             pedido_obj = services.update_pedido(pedido, current_user)
