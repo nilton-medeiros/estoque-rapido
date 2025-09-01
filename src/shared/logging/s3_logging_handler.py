@@ -1,4 +1,4 @@
-# s3_logging_handler.py - VERSÃO CORRIGIDA
+# s3_logging_handler.py
 import logging
 import boto3
 import json
@@ -469,7 +469,7 @@ def setup_estoque_rapido_logging():
         print("   Configure as variáveis de ambiente para logging em S3")
 
     # Inicializa a configuração
-    log_config = EstoqueRapidoLogConfig()
+    EstoqueRapidoLogConfig()
 
     # Retorna um logger pronto para uso
     return logging.getLogger("estoque_rapido")
