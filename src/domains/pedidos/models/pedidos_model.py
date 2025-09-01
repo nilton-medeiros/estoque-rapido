@@ -271,11 +271,14 @@ class Pedido:
         return {k: v for k, v in dict_db.items() if v is not None}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any], doc_id: str | None = None) -> "Pedido":
+    def from_dict(cls, data: dict[str, Any] | None, doc_id: str | None = None) -> "Pedido":
         """
         Cria uma instância de Pedido a partir de um dicionário (geralmente do Firestore).
         Utiliza desempacotamento de dicionário (**) para maior manutenibilidade.
         """
+        if not data:
+            raise ValueError("Dados inválidos para criar Pedido.")
+
         processed_data = data.copy()
 
         # 1. Adiciona o ID do documento
