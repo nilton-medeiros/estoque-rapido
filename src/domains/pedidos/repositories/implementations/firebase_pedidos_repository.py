@@ -1,4 +1,3 @@
-from heapq import merge
 import logging
 import datetime
 
@@ -286,7 +285,7 @@ class FirebasePedidosRepository(PedidosRepository):
                     f"Serviço do Firestore indisponível ao consultar pedido com id '{pedido_id}': {e}")
                 # Pode considerar re-lançar uma exceção específica para tratamento de disponibilidade
                 raise Exception(
-                    f"Serviço do Firestore temporariamente indisponível.")
+                    "Serviço do Firestore temporariamente indisponível.")
             else:
                 logger.error(
                     f"Erro do Firebase ao consultar pedido com id '{pedido_id}': Código: {e.code}, Detalhes: {e}")
@@ -392,11 +391,12 @@ class FirebasePedidosRepository(PedidosRepository):
             raise Exception(
                 f"Erro inesperado ao deletar pedido com id '{pedido.id}': {e}")
 
-    def hard_delete_pedido(self, pedido_id: str):
+    def hard_delete_pedido(self, pedido_id: str) -> bool:
         """Remove um pedido completamente do Firestore (uso cauteloso)."""
         try:
             self.pedidos_collection.document(pedido_id).delete()
             logger.info(f"Pedido {pedido_id} removido permanentemente.")
+            return True
         except Exception as e:
             logger.error(f"Erro ao remover pedido {pedido_id}: {e}")
             raise Exception(f"Erro inesperado ao remover pedido: {e}")
