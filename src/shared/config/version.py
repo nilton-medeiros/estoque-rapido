@@ -17,4 +17,4 @@ echo "COMMIT_HASH = '$COMMIT'" >> src/shared/config/version.py
 echo "BUILD_DATE = '$BUILD_DATE'" >> src/shared/config/version.py
 """
 
-APP_VERSION = "1.00.20"
+APP_VERSION = "1.00.21"
