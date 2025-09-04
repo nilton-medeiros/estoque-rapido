@@ -76,7 +76,9 @@ class ImageUploadHandler:
             border_radius=ft.border_radius.all(20),
         )
         self.image_frame.content = image_control
-        self.image_frame.update()
+        # A atualização deve ser feita pelo chamador, que tem o contexto se o controle está na página.
+        if self.image_frame.page:
+            self.image_frame.update()
 
     def _display_image_from_local_path(self, local_path: str):
         """Lê um arquivo local, converte para base64 e exibe."""
@@ -100,7 +102,9 @@ class ImageUploadHandler:
             image_control = ft.Image(error_content=ft.Text(f"Erro crítico: {ex}"))
 
         self.image_frame.content = image_control
-        self.image_frame.update()
+        # A atualização deve ser feita pelo chamador, que tem o contexto se o controle está na página.
+        if self.image_frame.page:
+            self.image_frame.update()
 
     def set_initial_image(self, image_url: str | None):
         """Define a imagem inicial ao carregar um formulário existente."""

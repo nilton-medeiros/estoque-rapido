@@ -56,7 +56,7 @@ source venv/bin/activate
 #### Windows command:
 
 ```bash
-venv\Scripts\activate
+.\.venv\Scripts\activate.ps1
 ```
 
 #### Em alguns Windows: Apenas 'activate' na raiz do projeto:
