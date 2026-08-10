@@ -5,8 +5,6 @@ import mimetypes
 
 # import asyncio
 
-from enum import Enum  # Certifique-se de importar o módulo 'Enum'
-
 from typing import Optional
 
 import src.controllers.bucket_controllers as bucket_controllers

@@ -1,7 +1,4 @@
 import logging
-import os
-import base64
-import mimetypes
 import re  # Adicionado para expressões regulares
 
 import flet as ft
